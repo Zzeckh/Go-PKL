@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  student
+  teacher
+  mentor
+  hubin
+}
+
+enum AbsensiStatus {
+  hadir
+  izin
+  sakit
+}
+
+enum LogbookStatus {
+  pending
+  approved
+  rejected
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  password  String
+  role      Role
+  createdAt DateTime  @default(now())
+  absensis  Absensi[]
+  logbooks  Logbook[]
+}
+
+model Absensi {
+  id        Int           @id @default(autoincrement())
+  user      User          @relation(fields: [userId], references: [id])
+  userId    Int
+  status    AbsensiStatus
+  location  String
+  date      DateTime      @default(now())
+  imageUrl  String?
+  createdAt DateTime      @default(now())
+}
+
+model Logbook {
+  id            Int           @id @default(autoincrement())
+  user          User          @relation(fields: [userId], references: [id])
+  userId        Int
+  activityTitle String
+  description   String
+  status        LogbookStatus
+  date          DateTime
+  createdAt     DateTime      @default(now())
+}
+
+model Company {
+  id        Int      @id @default(autoincrement())
+  name      String
+  address   String
+  quota     Int
+  filled    Int      @default(0)
+  mentor    String?
+  createdAt DateTime @default(now())
+}
+
+model Perizinan {
+  id         Int      @id @default(autoincrement())
+  name       String
+  company    String
+  date       DateTime
+  type       String
+  reason     String
+  attachment String?
+  status     String   @default("pending")
+  createdAt  DateTime @default(now())
+}
+
+model MapLocation {
+  id          Int      @id @default(autoincrement())
+  companyName String
+  address     String
+  category    String
+  internsCount Int
+  mentorName  String
+  coordX      Int
+  coordY      Int
+  distance    String
+  status      String
+  createdAt   DateTime @default(now())
+}

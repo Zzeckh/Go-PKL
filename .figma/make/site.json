@@ -1,0 +1,10 @@
+{
+  "description": "Delivers a responsive, visually consistent dashboard that enhances data visualization and user interaction for streamlined decision-making across devices.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
