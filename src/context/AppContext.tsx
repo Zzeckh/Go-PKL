@@ -84,6 +84,7 @@ interface AppContextType {
   submitEvaluation: (siswaId: number, nilaiDUDI: string, nilaiGuru: string, berkasPct: number) => void;
   addSiswa: (newSiswa: Omit<SiswaItem, 'id' | 'kehadiran' | 'logs' | 'nilaiDUDI' | 'nilaiGuru' | 'finalNilai' | 'berkasPct'>) => void;
   addPerusahaan: (newComp: Omit<PerusahaanItem, 'id' | 'filled'>) => void;
+  updateSiswaMapping: (id: number, patch: { perusahaan?: string; guruPembimbing?: string; mentor?: string }) => void;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
   logout: () => void;
@@ -465,6 +466,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setPerusahaanList([...perusahaanList, item]);
   };
 
+  const updateSiswaMapping = (id: number, patch: { perusahaan?: string; guruPembimbing?: string; mentor?: string }) => {
+    setSiswaList(prev => prev.map(s => s.id === id ? { ...s, ...patch } : s));
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -495,6 +500,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         submitEvaluation,
         addSiswa,
         addPerusahaan,
+        updateSiswaMapping,
         login,
         register,
         logout,

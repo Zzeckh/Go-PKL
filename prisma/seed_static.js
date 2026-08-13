@@ -29,6 +29,9 @@ async function main() {
   await prisma.mapLocation.createMany({
     data: [
       { companyName: 'PT Tokopedia (Tokopedia Tower)', address: 'Jl. Prof. DR. Satrio No.11, Setiabudi, Jakarta Selatan', category: 'E-Commerce & Tech', internsCount: 12, mentorName: 'Siti Rahma, S.T.', coordX: 38, coordY: 45, distance: '0.4 km', status: 'geofenced' },
+      { companyName: 'Gojek Indonesia', address: 'Pasaraya Blok M, Melawai, Jakarta Selatan', category: 'Transportasi & Teknologi', internsCount: 4, mentorName: 'Ahmad Yasin, M.Kom.', coordX: 24, coordY: 62, distance: '1.1 km', status: 'geofenced' },
+      { companyName: 'Traveloka', address: 'Traveloka Campus, ICE BSD, Tangerang Selatan', category: 'Travel & Tech', internsCount: 3, mentorName: 'Budi Hartono, S.Kom.', coordX: 72, coordY: 30, distance: '2.3 km', status: 'geofenced' },
+      { companyName: 'Shopee Indonesia', address: 'Pacific Century Place, SCBD, Jakarta Selatan', category: 'E-Commerce & Tech', internsCount: 6, mentorName: 'Rina Kusuma, S.T.', coordX: 55, coordY: 72, distance: '0.9 km', status: 'geofenced' },
     ],
   });
 

@@ -12,6 +12,7 @@ import { TeacherDashboard } from './components/TeacherDashboard';
 import { TeacherMonitoring, TeacherPerizinan, TeacherRekap } from './components/TeacherPages';
 import { HubinDashboard } from './components/HubinDashboard';
 import { HubinSiswa, HubinPembimbing } from './components/HubinPages';
+import { HubinPemetaan } from './components/HubinPemetaan';
 import { UserRole } from './types';
 
 export default function App() {
@@ -151,6 +152,9 @@ export default function App() {
               )}
               {activePage === 'rekap' && (userRole === 'teacher' || userRole === 'mentor') && (
                 <TeacherRekap />
+              )}
+              {activePage === 'pemetaan' && userRole === 'hubin' && (
+                <HubinPemetaan />
               )}
               {activePage === 'data-siswa' && userRole === 'hubin' && (
                 <HubinSiswa />

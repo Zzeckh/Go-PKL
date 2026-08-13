@@ -25,6 +25,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (userRole === 'hubin') {
       return [
         { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+        { id: 'pemetaan', icon: MapPin, label: 'Pemetaan' },
         { id: 'data-siswa', icon: GraduationCap, label: 'Data Siswa' },
         { id: 'data-pembimbing', icon: Users, label: 'Data Pembimbing' }
       ];

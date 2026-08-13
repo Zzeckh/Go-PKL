@@ -135,7 +135,7 @@ export const HubinSiswa: React.FC = () => {
 
       {/* DETAIL SISWA MODAL */}
       {showModal && selectedSiswa && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-[24px] rounded-[24px] animate-in fade-in duration-200">
           <div className="bg-white rounded-[24px] max-w-2xl w-full h-[85vh] max-h-[620px] shadow-2xl flex flex-col overflow-hidden border border-black/10">
             <div className="p-6 border-b border-black/5 flex items-center justify-between shrink-0 bg-white">
               <div className="flex items-center gap-4">
@@ -198,7 +198,7 @@ export const HubinSiswa: React.FC = () => {
 
       {/* DETAIL PERUSAHAAN MODAL (DAFTAR SISWA MAGANG) */}
       {showPerusahaanModal && selectedPerusahaan && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-[24px] rounded-[24px] animate-in fade-in duration-200">
           <div className="bg-white rounded-[24px] max-w-2xl w-full h-[85vh] max-h-[620px] shadow-2xl flex flex-col overflow-hidden border border-black/10">
             <div className="p-6 border-b border-black/5 flex items-center justify-between shrink-0 bg-white">
               <div className="flex items-center gap-4">
@@ -417,7 +417,7 @@ export const HubinPembimbing: React.FC = () => {
 
       {/* DETAIL PEMBIMBING MODAL (DAFTAR SISWA BIMBINGAN) */}
       {showPembimbingModal && selectedPembimbing && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-[24px] rounded-[24px] animate-in fade-in duration-200">
           <div className="bg-white rounded-[24px] max-w-2xl w-full h-[85vh] max-h-[620px] shadow-2xl flex flex-col overflow-hidden border border-black/10">
             <div className="p-6 border-b border-black/5 flex items-center justify-between shrink-0 bg-white">
               <div className="flex items-center gap-4">

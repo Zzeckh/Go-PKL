@@ -99,7 +99,7 @@ export const MentorAttendance: React.FC = () => {
       </div>
 
       {showMapModal && selectedStudent && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-[24px] rounded-[24px] animate-in fade-in duration-200">
           <div className="bg-white rounded-[24px] max-w-2xl w-full h-[85vh] max-h-[620px] shadow-2xl flex flex-col overflow-hidden border border-black/10">
             <div className="p-4 border-b border-black/5 flex items-center justify-between bg-white shrink-0">
               <div className="flex items-center gap-3">
@@ -211,7 +211,7 @@ export const MentorRoster: React.FC = () => {
       </div>
 
       {showEvalModal && selectedStudent && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-[24px] rounded-[24px] animate-in fade-in duration-200">
           <div className="bg-white rounded-[24px] max-w-2xl w-full h-[85vh] max-h-[620px] shadow-2xl flex flex-col overflow-hidden border border-black/10">
             <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar flex-1">
               <div className="flex items-start justify-between mb-6">
