@@ -1,4 +1,4 @@
-# figma-make-app
+# Go-PKL
 
 Panduan singkat untuk kontribusi dan menjalankan proyek ini secara lokal.
 
