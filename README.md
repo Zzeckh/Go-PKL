@@ -23,11 +23,38 @@ cd Go-PKL
 
 2. Salin file environment dan sesuaikan `DATABASE_URL`:
 
+File template `.env.example` sudah disertakan. Gunakan salah satu perintah berikut sesuai OS Anda untuk membuat file `.env` lokal.
+
+- Linux / macOS / WSL / Git Bash:
+
 ```bash
 cp .env.example .env
-# Contoh DATABASE_URL untuk Laragon / XAMPP (root tanpa password):
-# DATABASE_URL="mysql://root:@127.0.0.1:3306/ujikom_go_pkl"
-# Jika MySQL Anda punya password, gunakan: mysql://root:yourpassword@127.0.0.1:3306/ujikom_go_pkl
+# lalu buka .env dan sesuaikan DATABASE_URL jika perlu
+```
+
+- PowerShell (Windows / Laragon):
+
+```powershell
+Get-Content .env.example | Set-Content .env
+# atau buat manual dengan teks editor
+```
+
+- Command Prompt (cmd.exe):
+
+```cmd
+copy .env.example .env
+```
+
+Contoh `DATABASE_URL` untuk Laragon / XAMPP (root tanpa password):
+
+```text
+DATABASE_URL="mysql://root:@127.0.0.1:3306/ujikom_go_pkl"
+```
+
+Jika MySQL Anda memakai password, ganti sesuai:
+
+```text
+DATABASE_URL="mysql://root:yourpassword@127.0.0.1:3306/ujikom_go_pkl"
 ```
 
 3. Pastikan database dibuat (pakai phpMyAdmin atau CLI):
