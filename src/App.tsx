@@ -13,7 +13,6 @@ import { TeacherMonitoring, TeacherPerizinan, TeacherRekap } from './components/
 import { HubinDashboard } from './components/HubinDashboard';
 import { HubinSiswa, HubinPembimbing } from './components/HubinPages';
 import { HubinPemetaan } from './components/HubinPemetaan';
-import { UserRole } from './types';
 
 export default function App() {
   const {
@@ -21,7 +20,6 @@ export default function App() {
     authMode,
     setAuthMode,
     userRole,
-    setUserRole,
     activePage,
     setActivePage,
     userName,
@@ -40,14 +38,16 @@ export default function App() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isJournalModalOpen, setIsJournalModalOpen] = useState(false);
 
-  const handleAuthSubmit = async (payload: { name: string; email: string; password: string; role: UserRole }) => {
+  // Payload disesuaikan dengan AuthScreen.tsx yang baru (tanpa role, ada institution)
+  const handleAuthSubmit = async (payload: { name: string; email: string; password: string; institution?: string }) => {
     setAuthExiting(true);
 
     try {
       if (authMode === 'login') {
         await login(payload.email, payload.password);
       } else {
-        await register(payload.name, payload.email, payload.password, payload.role);
+        // Pastikan fungsi register di AppContext.tsx menerima institution sebagai parameter ke-4
+        await register(payload.name, payload.email, payload.password, payload.institution);
       }
     } catch (error) {
       console.error('Auth error', error);
@@ -73,16 +73,15 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-app-outer p-3 sm:p-6 lg:p-8 flex items-center justify-center font-sans antialiased transition-colors duration-500">
-      <div className="w-full max-w-7xl h-[calc(100svh-24px)] sm:h-[85vh] sm:min-h-[600px] sm:max-h-[900px] bg-gradient-to-br from-app-bg-1 via-app-bg-2 to-app-bg-3 rounded-[24px] sm:rounded-[24px] shadow-2xl border border-white/60 relative overflow-hidden flex flex-col transition-colors duration-500">
+    // PERUBAHAN LAYOUT: h-dvh untuk full screen di mobile, padding & rounded hanya di sm ke atas
+    <div className="h-dvh sm:h-screen bg-app-outer sm:p-6 lg:p-8 flex items-center justify-center font-sans antialiased transition-colors duration-500 overflow-hidden">
+      <div className="w-full sm:max-w-7xl h-full sm:h-[85vh] sm:min-h-[600px] sm:max-h-[900px] bg-gradient-to-br from-app-bg-1 via-app-bg-2 to-app-bg-3 sm:rounded-[24px] sm:shadow-2xl sm:border sm:border-white/60 relative overflow-hidden flex flex-col transition-colors duration-500">
 
         {!isAuthenticated ? (
-          <div className={`flex-1 flex flex-col p-2 sm:p-4 ${authExiting ? 'page-exit' : 'page-enter'}`}>
+          <div className={`flex-1 flex flex-col sm:p-4 ${authExiting ? 'page-exit' : 'page-enter'}`}>
             <AuthScreen
               authMode={authMode}
               setAuthMode={setAuthMode}
-              userRole={userRole}
-              setUserRole={setUserRole}
               onSubmit={handleAuthSubmit}
             />
           </div>
@@ -97,7 +96,7 @@ export default function App() {
             >
               {activePage === 'dashboard' && userRole === 'intern' && (
                 <Dashboard 
-                  userName="Budi Santoso" 
+                  userName={userName} // FIX: Menggunakan state userName, bukan "Budi Santoso"
                   recentLogs={logEntries} 
                   attendances={attendances}
                   onOpenLogbookModal={openLogbookModal}

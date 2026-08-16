@@ -86,7 +86,8 @@ interface AppContextType {
   addPerusahaan: (newComp: Omit<PerusahaanItem, 'id' | 'filled'>) => void;
   updateSiswaMapping: (id: number, patch: { perusahaan?: string; guruPembimbing?: string; mentor?: string }) => void;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
+  // PERUBAHAN: institution menggantikan role
+  register: (name: string, email: string, password: string, institution?: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -108,8 +109,6 @@ const mapBackendRoleToUserRole = (role: string): UserRole => {
   }
 };
 
-const mapUserRoleToBackendRole = (role: UserRole) => (role === 'intern' ? 'student' : role);
-
 const formatDate = (value: string) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
@@ -121,14 +120,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [userRole, setUserRole] = useState<UserRole>('intern');
   const [activePage, setActivePage] = useState<ActivePage>('dashboard');
-  const [userName, setUserName] = useState('Budi Santoso');
+  // PERUBAHAN: Hapus hardcode "Budi Santoso", gunakan string kosong
+  const [userName, setUserName] = useState(''); 
   const [userId, setUserId] = useState<number | null>(null);
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('pkl_token'));
 
   const schoolName = 'SMK Negeri 1 Jakarta';
 
   const [siswaList, setSiswaList] = useState<SiswaItem[]>([]);
-
   const [perusahaanList, setPerusahaanList] = useState<PerusahaanItem[]>([]);
 
   const [guruList] = useState<GuruItem[]>([
@@ -172,7 +171,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   ]);
 
   const [perizinanList, setPerizinanList] = useState<PerizinanItem[]>([]);
-
   const [mapLocations, setMapLocations] = useState<PKLMapLocation[]>([]);
 
   useEffect(() => {
@@ -259,7 +257,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const data = await response.json();
     if (!response.ok) {
-      throw new Error(data.error || 'Request failed');
+      throw new Error(data.error || data.message || 'Request failed');
     }
 
     return data;
@@ -308,7 +306,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsAuthenticated(false);
     setActivePage('dashboard');
     setUserRole('intern');
-    setUserName('Budi Santoso');
+    // PERUBAHAN: Reset nama jadi kosong
+    setUserName(''); 
   };
 
   const loadAttendances = async () => {
@@ -353,10 +352,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await Promise.all([loadLogEntries(), loadAttendances()]);
   };
 
-  const register = async (name: string, email: string, password: string, role: UserRole) => {
+  // PERUBAHAN: Mengganti parameter role menjadi institution
+  const register = async (name: string, email: string, password: string, institution?: string) => {
     const data = await fetchJson('/api/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ name, email, password, role: mapUserRoleToBackendRole(role) }),
+      body: JSON.stringify({ name, email, password, institution }),
     });
     saveSession(data.token, data.user);
     await Promise.all([loadLogEntries(), loadAttendances()]);
