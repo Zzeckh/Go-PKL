@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { ActivePage, AuthMode, UserRole, LogEntry, PKLMapLocation, AttendanceRecord } from '../types';
+import { api, setLogoutCallback } from '../utils/api';
 
 export interface SiswaItem {
   id: number;
@@ -24,6 +25,9 @@ export interface PerusahaanItem {
   quota: number;
   filled: number;
   mentor: string;
+  latitude?: number;
+  longitude?: number;
+  radiusMeters?: number;
 }
 
 export interface GuruItem {
@@ -54,19 +58,17 @@ export interface PerizinanItem {
 }
 
 interface AppContextType {
-  // Auth & Nav State
   isAuthenticated: boolean;
-  setIsAuthenticated: (val: boolean) => void;
   authMode: AuthMode;
   setAuthMode: (mode: AuthMode) => void;
   userRole: UserRole;
-  setUserRole: (role: UserRole) => void;
   activePage: ActivePage;
   setActivePage: (page: ActivePage) => void;
   userName: string;
   schoolName: string;
-
-  // Dynamic Lists
+  userId: number | null;
+  isLoading: boolean;
+  loadingResources: Set<string>;
   siswaList: SiswaItem[];
   perusahaanList: PerusahaanItem[];
   guruList: GuruItem[];
@@ -75,37 +77,30 @@ interface AppContextType {
   attendances: AttendanceRecord[];
   perizinanList: PerizinanItem[];
   mapLocations: PKLMapLocation[];
-
-  // Dynamic Mutators
-  addLogEntry: (entry: Omit<LogEntry, 'id' | 'date' | 'status'>) => void;
-  updateLogStatus: (id: string, status: 'approved' | 'revision', feedback?: string) => void;
-  checkInAttendance: (imageUrl?: string) => void;
-  updatePerizinanStatus: (id: number, status: 'approved' | 'rejected') => void;
-  submitEvaluation: (siswaId: number, nilaiDUDI: string, nilaiGuru: string, berkasPct: number) => void;
-  addSiswa: (newSiswa: Omit<SiswaItem, 'id' | 'kehadiran' | 'logs' | 'nilaiDUDI' | 'nilaiGuru' | 'finalNilai' | 'berkasPct'>) => void;
-  addPerusahaan: (newComp: Omit<PerusahaanItem, 'id' | 'filled'>) => void;
-  updateSiswaMapping: (id: number, patch: { perusahaan?: string; guruPembimbing?: string; mentor?: string }) => void;
+  addLogEntry: (entry: Omit<LogEntry, 'id' | 'date' | 'status'>) => Promise<void>;
+  updateLogStatus: (id: string, status: 'approved' | 'rejected', feedback?: string) => Promise<void>;
+  checkInAttendance: (imageUrl?: string, latitude?: number, longitude?: number) => Promise<void>;
+  updatePerizinanStatus: (id: number, status: 'approved' | 'rejected', rejectReason?: string) => Promise<void>;
+  submitEvaluation: (siswaId: number, nilaiDUDI: number, nilaiGuru: number) => Promise<void>;
+  addSiswa: (newSiswa: Omit<SiswaItem, 'id' | 'kehadiran' | 'logs' | 'nilaiDUDI' | 'nilaiGuru' | 'finalNilai' | 'berkasPct'>) => Promise<void>;
+  addPerusahaan: (newComp: Omit<PerusahaanItem, 'id' | 'filled'>) => Promise<void>;
+  updateSiswaMapping: (id: number, patch: { perusahaan?: string; guruPembimbing?: string; mentor?: string }) => Promise<void>;
+  updateCompanyLocation: (id: number, latitude: number, longitude: number, radiusMeters: number) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
-  // PERUBAHAN: institution menggantikan role
   register: (name: string, email: string, password: string, institution?: string) => Promise<void>;
   logout: () => void;
+  refreshData: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000';
 
 const mapBackendRoleToUserRole = (role: string): UserRole => {
   switch (role) {
-    case 'student':
-      return 'intern';
-    case 'teacher':
-      return 'teacher';
-    case 'mentor':
-      return 'mentor';
-    case 'hubin':
-      return 'hubin';
-    default:
-      return 'intern';
+    case 'student': return 'intern';
+    case 'teacher': return 'teacher';
+    case 'mentor': return 'mentor';
+    case 'hubin': return 'hubin';
+    default: return 'intern';
   }
 };
 
@@ -120,184 +115,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [userRole, setUserRole] = useState<UserRole>('intern');
   const [activePage, setActivePage] = useState<ActivePage>('dashboard');
-  // PERUBAHAN: Hapus hardcode "Budi Santoso", gunakan string kosong
-  const [userName, setUserName] = useState(''); 
+  const [userName, setUserName] = useState('');
   const [userId, setUserId] = useState<number | null>(null);
+  const [schoolName, setSchoolName] = useState('');
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('pkl_token'));
 
-  const schoolName = 'SMK Negeri 1 Jakarta';
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingResources, setLoadingResources] = useState<Set<string>>(new Set());
 
   const [siswaList, setSiswaList] = useState<SiswaItem[]>([]);
   const [perusahaanList, setPerusahaanList] = useState<PerusahaanItem[]>([]);
-
-  const [guruList] = useState<GuruItem[]>([
-    { id: 1, name: 'Ahmad Fauzi, M.Kom', subject: 'Produktif RPL', totalSiswa: 15, totalDUDI: 5 },
-    { id: 2, name: 'Linda Kusuma, S.T.', subject: 'Produktif TKJ', totalSiswa: 12, totalDUDI: 3 },
-    { id: 3, name: 'Bambang Irawan, S.Kom', subject: 'Produktif MM', totalSiswa: 18, totalDUDI: 6 },
-    { id: 4, name: 'Dra. Endang Sri', subject: 'Bahasa Inggris Industri', totalSiswa: 20, totalDUDI: 8 },
-  ]);
-
-  const [mentorList] = useState<MentorItem[]>([
-    { id: 1, name: 'Siti Rahma, S.T.', perusahaan: 'PT Tokopedia', role: 'Sr. Frontend Developer', totalSiswa: 8 },
-    { id: 2, name: 'Ahmad Yasin, M.Kom.', perusahaan: 'Gojek Indonesia', role: 'Backend Tech Lead', totalSiswa: 4 },
-    { id: 3, name: 'Budi Hartono, S.Kom.', perusahaan: 'Traveloka', role: 'UI/UX Product Designer', totalSiswa: 3 },
-    { id: 4, name: 'Rina Kusuma, S.T.', perusahaan: 'Shopee Indonesia', role: 'Mobile Engineer', totalSiswa: 6 },
-  ]);
-
-  const [logEntries, setLogEntries] = useState<LogEntry[]>([
-    {
-      id: 'LOG-001',
-      date: '14 Sep 2024',
-      title: 'Slicing UI Dashboard Crextio dengan Tailwind v4',
-      description: 'Mengimplementasikan komponen UI responsive, sidebar navigation, dan visual glassmorphism sesuai mockup.',
-      hours: 8,
-      category: 'Frontend Development',
-      status: 'approved',
-    },
-    {
-      id: 'LOG-002',
-      date: '13 Sep 2024',
-      title: 'Integrasi Authentication & Form Validation',
-      description: 'Membuat halaman Login & Register interaktif lengkap dengan penanganan role siswa PKL dan pembimbing.',
-      hours: 7.5,
-      category: 'Frontend Development',
-      status: 'approved',
-    },
-  ]);
-
-  const [attendances, setAttendances] = useState<AttendanceRecord[]>([
-    { id: 'ATT-001', date: '14 Sep 2024', checkInTime: '07:45', status: 'Hadir' },
-    { id: 'ATT-002', date: '13 Sep 2024', checkInTime: '07:50', status: 'Hadir' },
-  ]);
-
+  const [guruList, setGuruList] = useState<GuruItem[]>([]);
+  const [mentorList, setMentorList] = useState<MentorItem[]>([]);
+  const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
+  const [attendances, setAttendances] = useState<AttendanceRecord[]>([]);
   const [perizinanList, setPerizinanList] = useState<PerizinanItem[]>([]);
   const [mapLocations, setMapLocations] = useState<PKLMapLocation[]>([]);
 
-  useEffect(() => {
-    const loadStaticData = async () => {
-      try {
-        const [companies, perizinan, locations, users] = await Promise.all([
-          fetchJson('/api/static/companies'),
-          fetchJson('/api/static/perizinan'),
-          fetchJson('/api/static/locations'),
-          fetchJson('/api/users'),
-        ]);
+  const startLoading = (resource: string) => {
+    setLoadingResources(prev => new Set(prev).add(resource));
+  };
 
-        setPerusahaanList(companies.map((c: any) => ({
-          id: c.id,
-          name: c.name,
-          address: c.address,
-          quota: c.quota,
-          filled: c.filled,
-          mentor: c.mentor || '',
-        })));
-
-        setPerizinanList(perizinan.map((p: any) => ({
-          id: p.id,
-          name: p.name,
-          company: p.company,
-          date: formatDate(p.date),
-          type: p.type === 'Sakit' ? 'Sakit' : 'Izin',
-          reason: p.reason,
-          attachment: p.attachment || '',
-          status: p.status || 'pending',
-        })));
-
-        setMapLocations(locations.map((l: any) => ({
-          id: `LOC-${l.id}`,
-          companyName: l.companyName,
-          address: l.address,
-          category: l.category,
-          internsCount: l.internsCount,
-          mentorName: l.mentorName,
-          coordinates: { x: l.coordX, y: l.coordY },
-          distance: l.distance,
-          status: l.status,
-        })));
-
-        setSiswaList(users
-          .filter((u: any) => u.role === 'student')
-          .map((u: any) => ({
-            id: u.id,
-            name: u.name,
-            kelas: '-',
-            perusahaan: '-',
-            guruPembimbing: '-',
-            mentor: '-',
-            kehadiran: 0,
-            logs: 0,
-            nilaiDUDI: '0',
-            nilaiGuru: '0',
-            finalNilai: '0',
-            berkasPct: 0,
-            img: '',
-          })));
-
-      } catch (error) {
-        console.warn('Gagal memuat data statis', error);
-      }
-    };
-
-    loadStaticData();
-  }, []);
-
-  const fetchJson = async (path: string, options: RequestInit = {}) => {
-    const authHeaders: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    if (token) {
-      authHeaders.Authorization = `Bearer ${token}`;
-    }
-
-    const response = await fetch(`${API_BASE_URL}${path}`, {
-      headers: authHeaders,
-      ...options,
+  const stopLoading = (resource: string) => {
+    setLoadingResources(prev => {
+      const next = new Set(prev);
+      next.delete(resource);
+      return next;
     });
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || data.message || 'Request failed');
-    }
-
-    return data;
   };
 
-  const loadSession = async () => {
-    if (!token) return;
-
-    try {
-      const user = await fetchJson('/api/auth/me');
-      const mappedRole = mapBackendRoleToUserRole(user.role);
-      setUserName(user.name);
-      setUserRole(mappedRole);
-      setUserId(user.id);
-      setIsAuthenticated(true);
-      await Promise.all([loadLogEntries(), loadAttendances()]);
-    } catch (error) {
-      console.error('Session load error', error);
-      logout();
-    }
-  };
-
-  useEffect(() => {
-    if (token) {
-      loadSession();
-    }
-  }, [token]);
-
-  const saveSession = (tokenValue: string, user: { id: number; name: string; email: string; role: string }) => {
-    localStorage.setItem('pkl_token', tokenValue);
-    localStorage.setItem('pkl_role', mapBackendRoleToUserRole(user.role));
-    localStorage.setItem('pkl_user_name', user.name);
-    setToken(tokenValue);
-    setUserId(user.id);
-    setUserName(user.name);
-    setUserRole(mapBackendRoleToUserRole(user.role));
-    setIsAuthenticated(true);
-  };
-
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem('pkl_token');
     localStorage.removeItem('pkl_role');
     localStorage.removeItem('pkl_user_name');
@@ -306,184 +153,374 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsAuthenticated(false);
     setActivePage('dashboard');
     setUserRole('intern');
-    // PERUBAHAN: Reset nama jadi kosong
-    setUserName(''); 
-  };
+    setUserName('');
+    setSchoolName('');
+    setSiswaList([]);
+    setPerusahaanList([]);
+    setGuruList([]);
+    setMentorList([]);
+    setLogEntries([]);
+    setAttendances([]);
+    setPerizinanList([]);
+    setMapLocations([]);
+  }, []);
 
-  const loadAttendances = async () => {
-    try {
-      const absensi = await fetchJson('/api/absensi');
-      const mapped = absensi.map((item: any) => ({
-        id: `ATT-${item.id}`,
-        date: formatDate(item.date),
-        checkInTime: new Date(item.date).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-        status: item.status === 'hadir' ? 'Hadir' : item.status === 'izin' ? 'Izin' : 'Sakit',
-      }));
-      setAttendances(mapped);
-    } catch (error) {
-      console.warn('Gagal mengambil absensi', error);
-    }
-  };
+  useEffect(() => {
+    setLogoutCallback(logout);
+  }, [logout]);
 
   const loadLogEntries = async () => {
     try {
-      const logbook = await fetchJson('/api/logbook');
-      const mapped = logbook.map((item: any) => ({
+      startLoading('logbook');
+      const response = await api.get('/api/logbook') as { data: any[] };
+      const mapped = response.data.map((item: any): LogEntry => ({
         id: `LOG-${item.id}`,
         date: formatDate(item.date),
         title: item.activityTitle,
         description: item.description,
-        hours: 8,
-        category: 'PKL Activity',
+        hours: item.hours || 8,
+        category: item.category || 'PKL Activity',
         status: item.status === 'approved' ? 'approved' : item.status === 'rejected' ? 'revision' : 'pending',
+        feedback: item.feedback,
       }));
-      setLogEntries(mapped.reverse());
+      setLogEntries(mapped);
     } catch (error) {
       console.warn('Gagal mengambil logbook', error);
+    } finally {
+      stopLoading('logbook');
     }
   };
 
-  const login = async (email: string, password: string) => {
-    const data = await fetchJson('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
-    saveSession(data.token, data.user);
-    await Promise.all([loadLogEntries(), loadAttendances()]);
+  const loadAttendances = async () => {
+    try {
+      startLoading('absensi');
+      const absensi = await api.get('/api/absensi') as any[];
+      const mapped = absensi.map((item: any): AttendanceRecord => ({
+        id: `ATT-${item.id}`,
+        date: formatDate(item.date),
+        checkInTime: item.checkInTime 
+          ? new Date(item.checkInTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+          : '',
+        status:
+          item.status === 'hadir' ? 'Hadir'
+          : item.status === 'izin' ? 'Izin'
+          : item.status === 'alpha' ? 'Alpha'
+          : 'Sakit',
+      }));
+      setAttendances(mapped);
+    } catch (error) {
+      console.warn('Gagal mengambil absensi', error);
+    } finally {
+      stopLoading('absensi');
+    }
   };
 
-  // PERUBAHAN: Mengganti parameter role menjadi institution
+  const loadPerusahaan = async () => {
+    try {
+      startLoading('perusahaan');
+      const response = await api.get('/api/companies') as { data: any[] };
+      const mapped = response.data.map((c: any): PerusahaanItem => ({
+        id: c.id,
+        name: c.name,
+        address: c.address,
+        quota: c.quota,
+        filled: c.filled,
+        mentor: c.mentor?.name || '',
+        latitude: c.latitude,
+        longitude: c.longitude,
+        radiusMeters: c.radiusMeters,
+      }));
+      setPerusahaanList(mapped);
+      setMapLocations(mapped.map((c: any): PKLMapLocation => ({
+        id: `LOC-${c.id}`,
+        companyName: c.name,
+        address: c.address,
+        category: 'Perusahaan',
+        internsCount: c.filled,
+        mentorName: c.mentor,
+        coordinates: { x: c.longitude || 0, y: c.latitude || 0 },
+        distance: '-',
+        status: 'active' as const,
+      })));
+    } catch (error) {
+      console.warn('Gagal mengambil perusahaan', error);
+    } finally {
+      stopLoading('perusahaan');
+    }
+  };
+
+  const loadSiswa = async () => {
+    try {
+      startLoading('siswa');
+      const response = await api.get('/api/users?role=student') as { data: any[] };
+      const mapped = response.data.map((u: any): SiswaItem => ({
+        id: u.id,
+        name: u.name,
+        kelas: '-',
+        perusahaan: u.company?.name || '-',
+        guruPembimbing: u.teacher?.name || '-',
+        mentor: '-',
+        kehadiran: u._count?.absensis || 0,
+        logs: u._count?.logbooks || 0,
+        nilaiDUDI: '0',
+        nilaiGuru: '0',
+        finalNilai: '0',
+        berkasPct: 0,
+        img: '',
+      }));
+      setSiswaList(mapped);
+    } catch (error) {
+      console.warn('Gagal mengambil siswa', error);
+    } finally {
+      stopLoading('siswa');
+    }
+  };
+
+  const loadPerizinan = async () => {
+    try {
+      startLoading('perizinan');
+      const response = await api.get('/api/permissions') as { data: any[] };
+      const mapped = response.data.map((p: any): PerizinanItem => ({
+        id: p.id,
+        name: p.user?.name || 'Unknown',
+        company: p.user?.company?.name || '-',
+        date: formatDate(p.date),
+        type: p.type === 'sakit' ? 'Sakit' : 'Izin',
+        reason: p.reason,
+        attachment: p.attachmentUrl || '',
+        status: p.status,
+      }));
+      setPerizinanList(mapped);
+    } catch (error) {
+      console.warn('Gagal mengambil perizinan', error);
+    } finally {
+      stopLoading('perizinan');
+    }
+  };
+
+  const refreshData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      await Promise.all([
+        loadLogEntries(),
+        loadAttendances(),
+        loadPerusahaan(),
+        loadSiswa(),
+        loadPerizinan(),
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadSession = async () => {
+    if (!token) return;
+
+    try {
+      startLoading('session');
+      const user = await api.get('/api/auth/me') as any;
+      const mappedRole = mapBackendRoleToUserRole(user.role);
+      
+      setUserName(user.name);
+      setUserRole(mappedRole);
+      setUserId(user.id);
+      setSchoolName(user.schoolName || '');
+      setIsAuthenticated(true);
+      
+      await refreshData();
+    } catch (error) {
+      console.error('Session load error', error);
+      logout();
+    } finally {
+      stopLoading('session');
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      loadSession();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  const login = async (email: string, password: string) => {
+    try {
+      const data = await api.post('/api/auth/login', { email, password }) as { token: string; user: any };
+      localStorage.setItem('pkl_token', data.token);
+      localStorage.setItem('pkl_role', mapBackendRoleToUserRole(data.user.role));
+      localStorage.setItem('pkl_user_name', data.user.name);
+      setToken(data.token);
+    } catch (error: any) {
+      throw new Error(error.message || 'Login gagal');
+    }
+  };
+
   const register = async (name: string, email: string, password: string, institution?: string) => {
-    const data = await fetchJson('/api/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({ name, email, password, institution }),
-    });
-    saveSession(data.token, data.user);
-    await Promise.all([loadLogEntries(), loadAttendances()]);
+    try {
+      const data = await api.post('/api/auth/register', {
+        name,
+        email,
+        password,
+        institution,
+      }) as { token: string; user: any };
+      localStorage.setItem('pkl_token', data.token);
+      localStorage.setItem('pkl_role', mapBackendRoleToUserRole(data.user.role));
+      localStorage.setItem('pkl_user_name', data.user.name);
+      setToken(data.token);
+    } catch (error: any) {
+      throw new Error(error.message || 'Registrasi gagal');
+    }
   };
 
   const addLogEntry = async (newLog: Omit<LogEntry, 'id' | 'date' | 'status'>) => {
-    if (!userId) return;
     try {
-      const created = await fetchJson('/api/logbook', {
-        method: 'POST',
-        body: JSON.stringify({
-          userId,
-          date: new Date().toISOString(),
-          activity_title: newLog.title,
-          description: newLog.description,
-          status: 'pending',
-        }),
-      });
+      const created = await api.post('/api/logbook', {
+        activity_title: newLog.title,
+        description: newLog.description,
+        hours: newLog.hours,
+        category: newLog.category,
+      }) as any;
 
       const entry: LogEntry = {
         id: `LOG-${created.id}`,
         date: formatDate(created.date),
         title: created.activityTitle,
         description: created.description,
-        hours: newLog.hours,
-        category: newLog.category,
+        hours: created.hours,
+        category: created.category,
         status: 'pending',
       };
 
       setLogEntries(prev => [entry, ...prev]);
-    } catch (error) {
-      console.warn('Gagal membuat logbook', error);
+      await loadLogEntries();
+    } catch (error: any) {
+      throw new Error(error.message || 'Gagal membuat logbook');
     }
   };
 
-  const checkInAttendance = async (imageUrl?: string) => {
-    if (!userId) return;
+  const updateLogStatus = async (id: string, status: 'approved' | 'rejected', feedback?: string) => {
     try {
-      const created = await fetchJson('/api/absensi', {
-        method: 'POST',
-        body: JSON.stringify({
-          userId,
-          status: 'hadir',
-          location: 'PT Tokopedia Tower',
-          image_url: imageUrl || '',
-        }),
+      const logId = parseInt(id.replace('LOG-', ''));
+      await api.put(`/api/logbook/${logId}`, {
+        status,
+        feedback,
       });
-
-      const newRecord: AttendanceRecord = {
-        id: `ATT-${created.id}`,
-        date: formatDate(created.date),
-        checkInTime: new Date(created.date).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-        status: 'Hadir',
-      };
-
-      setAttendances(prev => [newRecord, ...prev]);
-      setSiswaList(prev => prev.map(s => s.name === userName ? { ...s, kehadiran: Math.min(100, s.kehadiran + 1) } : s));
-    } catch (error) {
-      console.warn('Gagal melakukan absensi', error);
+      await loadLogEntries();
+    } catch (error: any) {
+      throw new Error(error.message || 'Gagal update status logbook');
     }
   };
 
-  const updateLogStatus = (id: string, status: 'approved' | 'revision', feedback?: string) => {
-    setLogEntries(prev => prev.map(l => l.id === id ? { ...l, status, feedback } : l));
+  const checkInAttendance = async (imageUrl?: string, latitude?: number, longitude?: number) => {
+    try {
+      await api.post('/api/absensi', {
+        status: 'hadir',
+        location: 'Current Location',
+        image_url: imageUrl || '',
+        latitude,
+        longitude,
+      });
+      await loadAttendances();
+    } catch (error: any) {
+      throw new Error(error.message || 'Gagal melakukan absensi');
+    }
   };
 
-  const updatePerizinanStatus = (id: number, status: 'approved' | 'rejected') => {
-    setPerizinanList(prev => prev.map(p => p.id === id ? { ...p, status } : p));
+  const updatePerizinanStatus = async (id: number, status: 'approved' | 'rejected', rejectReason?: string) => {
+    try {
+      await api.put(`/api/permissions/${id}`, {
+        status,
+        rejectReason,
+      });
+      await loadPerizinan();
+      await loadAttendances();
+    } catch (error: any) {
+      throw new Error(error.message || 'Gagal update status perizinan');
+    }
   };
 
-  const submitEvaluation = (siswaId: number, nilaiDUDI: string, nilaiGuru: string, berkasPct: number) => {
-    const numDUDI = parseFloat(nilaiDUDI) || 0;
-    const numGuru = parseFloat(nilaiGuru) || 0;
-    const finalCalc = ((numDUDI + numGuru) / 2).toFixed(1);
-
-    setSiswaList(prev => prev.map(s => s.id === siswaId ? {
-      ...s,
-      nilaiDUDI,
-      nilaiGuru,
-      finalNilai: finalCalc,
-      berkasPct
-    } : s));
+  const submitEvaluation = async (siswaId: number, nilaiDUDI: number, nilaiGuru: number) => {
+    try {
+      await Promise.all([
+        api.post('/api/evaluations', {
+          studentId: siswaId,
+          score: nilaiDUDI,
+          type: 'dudi',
+        }),
+        api.post('/api/evaluations', {
+          studentId: siswaId,
+          score: nilaiGuru,
+          type: 'guru',
+        }),
+      ]);
+      await loadSiswa();
+    } catch (error: any) {
+      throw new Error(error.message || 'Gagal submit evaluasi');
+    }
   };
 
-  const addSiswa = (newSiswa: Omit<SiswaItem, 'id' | 'kehadiran' | 'logs' | 'nilaiDUDI' | 'nilaiGuru' | 'finalNilai' | 'berkasPct'>) => {
-    const item: SiswaItem = {
-      ...newSiswa,
-      id: siswaList.length + 1,
-      kehadiran: 100,
-      logs: 0,
-      nilaiDUDI: '0',
-      nilaiGuru: '0',
-      finalNilai: '0',
-      berkasPct: 0
-    };
-    setSiswaList([item, ...siswaList]);
-
-    setPerusahaanList(prev => prev.map(c => c.name.toLowerCase() === newSiswa.perusahaan.toLowerCase() ? { ...c, filled: c.filled + 1 } : c));
+  const addSiswa = async (newSiswa: Omit<SiswaItem, 'id' | 'kehadiran' | 'logs' | 'nilaiDUDI' | 'nilaiGuru' | 'finalNilai' | 'berkasPct'>) => {
+    try {
+      await api.post('/api/auth/register', {
+        name: newSiswa.name,
+        email: `${newSiswa.name.toLowerCase().replace(/\s+/g, '.')}@gopkl.id`,
+        password: 'gopkl123',
+        institution: schoolName,
+      });
+      await loadSiswa();
+    } catch (error: any) {
+      throw new Error(error.message || 'Gagal menambah siswa');
+    }
   };
 
-  const addPerusahaan = (newComp: Omit<PerusahaanItem, 'id' | 'filled'>) => {
-    const item: PerusahaanItem = {
-      ...newComp,
-      id: perusahaanList.length + 1,
-      filled: 0
-    };
-    setPerusahaanList([...perusahaanList, item]);
+  const addPerusahaan = async (newComp: Omit<PerusahaanItem, 'id' | 'filled'>) => {
+    try {
+      await api.post('/api/companies', {
+        name: newComp.name,
+        address: newComp.address,
+        quota: newComp.quota,
+        mentor: newComp.mentor,
+      });
+      await loadPerusahaan();
+    } catch (error: any) {
+      throw new Error(error.message || 'Gagal menambah perusahaan');
+    }
   };
 
-  const updateSiswaMapping = (id: number, patch: { perusahaan?: string; guruPembimbing?: string; mentor?: string }) => {
-    setSiswaList(prev => prev.map(s => s.id === id ? { ...s, ...patch } : s));
+  const updateSiswaMapping = async (
+    _id: number,
+    _patch: { perusahaan?: string; guruPembimbing?: string; mentor?: string }
+  ) => {
+    console.warn('updateSiswaMapping not implemented yet');
+  };
+
+  const updateCompanyLocation = async (id: number, latitude: number, longitude: number, radiusMeters: number) => {
+    try {
+      await api.patch(`/api/companies/${id}`, {
+        latitude,
+        longitude,
+        radiusMeters,
+      });
+      await loadPerusahaan();
+    } catch (error: any) {
+      throw new Error(error.message || 'Gagal update lokasi perusahaan');
+    }
   };
 
   return (
     <AppContext.Provider
       value={{
         isAuthenticated,
-        setIsAuthenticated,
         authMode,
         setAuthMode,
         userRole,
-        setUserRole,
         activePage,
         setActivePage,
         userName,
         schoolName,
-
+        userId,
+        isLoading,
+        loadingResources,
         siswaList,
         perusahaanList,
         guruList,
@@ -492,7 +529,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         attendances,
         perizinanList,
         mapLocations,
-
         addLogEntry,
         updateLogStatus,
         checkInAttendance,
@@ -501,9 +537,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addSiswa,
         addPerusahaan,
         updateSiswaMapping,
+        updateCompanyLocation,
         login,
         register,
         logout,
+        refreshData,
       }}
     >
       {children}

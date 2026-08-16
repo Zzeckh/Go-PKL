@@ -39,20 +39,19 @@ export default function App() {
   const [isJournalModalOpen, setIsJournalModalOpen] = useState(false);
 
   const handleAuthSubmit = async (payload: { name: string; email: string; password: string; institution?: string }) => {
-    setAuthExiting(true);
-
     try {
       if (authMode === 'login') {
         await login(payload.email, payload.password);
       } else {
         await register(payload.name, payload.email, payload.password, payload.institution);
       }
+
+      // ✅ Login BERHASIL — jalankan animasi exit, tunggu, lalu biarkan React render dashboard
+      setAuthExiting(true);
+      await new Promise((resolve) => setTimeout(resolve, 430));
     } catch (error) {
-      console.error('Auth error', error);
-    } finally {
-      setTimeout(() => {
-        setAuthExiting(false);
-      }, 430);
+      // ❌ Login GAGAL — rethrow supaya AuthScreen bisa tangkap dan tampilkan banner
+      throw error;
     }
   };
 
