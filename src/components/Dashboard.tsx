@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Edit2, Check, Play, Pause, Square, Bell } from 'lucide-react';
+import { 
+  Edit2, Check, Play, Pause, Square, Bell, MapPin, Clock, 
+  BookOpen, UserCheck, Zap, CheckCircle2, ArrowRight, 
+  Target, Calendar, ChevronRight
+} from 'lucide-react';
 import { LogEntry, AttendanceRecord } from '../types';
 
 interface DashboardProps {
@@ -11,12 +15,18 @@ interface DashboardProps {
   onGoToProfile: () => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ userName, attendances, onGoToProfile }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ 
+  userName, 
+  recentLogs,
+  attendances, 
+  onOpenLogbookModal,
+  onCheckIn,
+  onGoToProfile 
+}) => {
   const totalHadir = attendances.filter(a => a.status === 'Hadir').length;
   const totalDays = 90;
-  const pct = Math.round((totalHadir / totalDays) * 100);
+  const pct = Math.min(100, Math.round((totalHadir / totalDays) * 100));
 
-  /* clock */
   const [time, setTime] = useState(new Date());
   const [mode, setMode] = useState<'clock' | 'sw'>('clock');
   const [sw, setSw] = useState(0);
@@ -35,10 +45,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ userName, attendances, onG
 
   const fmtSw = (s: number) => {
     const m = Math.floor(s / 60), sec = s % 60;
-    return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
   };
 
-  /* todos — editable text */
   const [todos, setTodos] = useState([
     { id: 1, text: 'Interview Session', done: true },
     { id: 2, text: 'Team Meeting', done: true },
@@ -48,11 +57,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ userName, attendances, onG
   const [editing, setEditing] = useState(false);
   const done = todos.filter(t => t.done).length;
 
-  /* notes */
   const [notes, setNotes] = useState('- ID Card Digital\n- Laptop Pribadi\n- Jurnal Cetak\n- Alat Tulis\n\nPastikan selalu kemeja rapi!');
   const [editNotes, setEditNotes] = useState(false);
 
-  /* notifications */
   const notifications = [
     { id: 1, title: 'Logbook Disetujui', time: '10 menit yang lalu', unread: true },
     { id: 2, title: 'Jadwal Meeting Pembimbing', time: '1 jam yang lalu', unread: true },
@@ -60,135 +67,232 @@ export const Dashboard: React.FC<DashboardProps> = ({ userName, attendances, onG
     { id: 4, title: 'Tugas Baru: UI Design', time: 'Kemarin', unread: false },
   ];
 
-  return (
-    <div className="h-full w-full flex flex-col gap-4">
+  const getInitials = (name: string) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
 
-      {/* ── Header ── */}
-      <div className="shrink-0 flex items-center justify-between c0">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-black/60">Selamat Pagi</p>
-          <h1 className="text-3xl font-bold text-black leading-tight">{userName}</h1>
+  const getGreeting = () => {
+    const hour = time.getHours();
+    if (hour < 11) return 'Selamat Pagi';
+    if (hour < 15) return 'Selamat Siang';
+    if (hour < 18) return 'Selamat Sore';
+    return 'Selamat Malam';
+  };
+
+  const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  const checkedInToday = attendances.some(a => a.date === today);
+
+  const todayIdx = (new Date().getDay() + 6) % 7;
+  const weekData = Array.from({ length: 7 }, (_, i) => {
+    const target = new Date();
+    target.setDate(target.getDate() - (todayIdx - i));
+    const key = target.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    return attendances.some(a => a.date === key && a.status === 'Hadir') ? 1 : 0;
+  });
+
+  const statusStyle = (s: string) =>
+    s === 'approved' ? 'bg-steel/15 text-steel'
+    : s === 'revision' ? 'bg-navy text-white'
+    : 'bg-mist text-navy/70';
+  const statusLabel = (s: string) =>
+    s === 'approved' ? 'Disetujui' : s === 'revision' ? 'Revisi' : 'Menunggu';
+
+  return (
+    <div className="h-full flex flex-col gap-3 md:gap-4 overflow-y-auto custom-scrollbar">
+      
+      {/* ── HEADER ── */}
+      <div className="flex items-center justify-between shrink-0 c0">
+        <div className="flex items-center gap-3 min-w-0">
+          <button 
+            onClick={onGoToProfile}
+            className="w-12 h-12 rounded-2xl bg-navy text-white flex items-center justify-center font-bold text-lg shadow-md shadow-steel/40 shrink-0 hover:scale-105 transition-transform"
+          >
+            {getInitials(userName)}
+          </button>
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-widest text-steel">{getGreeting()}</p>
+            <h1 className="text-xl md:text-2xl font-bold text-navy leading-tight truncate">{userName || 'User'}</h1>
+          </div>
         </div>
-        <div className="flex items-center gap-2 bg-white/70 backdrop-blur-sm border border-white rounded-2xl px-4 py-2 shadow-sm">
-          <div className="w-2.5 h-2.5 rounded-full bg-black"></div>
-          <span className="text-sm font-bold text-black/80">
-            {time.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}
+        <div className="flex items-center gap-2 bg-white/70 backdrop-blur-sm border border-white rounded-full px-4 py-2 shadow-sm shrink-0">
+          <Calendar className="w-3.5 h-3.5 text-steel" />
+          <span className="text-xs md:text-sm font-bold text-navy/80 tabular-nums">
+            {time.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })}
           </span>
         </div>
       </div>
 
-      {/* ── Top Row: 4 Cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 shrink-0 h-[240px]">
+      {/* ── ROW 1 ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-4 shrink-0">
+        
+        {/* ⭐ HERO CTA — navy → steel */}
+        <div className="lg:col-span-2 c1 bg-navy text-white rounded-[24px] p-6 relative overflow-hidden h-[210px] flex flex-col justify-between shadow-xl shadow-steel/30 border border-white/10">
+          <div className="absolute -top-16 -right-16 w-48 h-48 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-2">
+              <div className={`w-2 h-2 rounded-full ${checkedInToday ? 'bg-steel' : 'bg-mist animate-pulse'}`} />
+              <span className="text-xs font-bold uppercase tracking-widest text-white/60">
+                {checkedInToday ? 'Sudah Absen Hari Ini' : 'Siap Untuk Absen'}
+              </span>
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold leading-tight">
+              {checkedInToday ? 'Kerja Bagus! 👋' : 'Saatnya Absen!'}
+            </h2>
+            <p className="text-sm text-white/70 mt-1 flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5" />
+              PT Tokopedia Tower • GPS Valid
+            </p>
+          </div>
 
-        {/* Profile */}
-        <button
-          onClick={onGoToProfile}
-          className="c1 bg-white/70 backdrop-blur-xl rounded-[24px] border border-white shadow-sm hover:shadow-md transition-all duration-300 group flex flex-col items-center justify-center gap-3 p-5 relative overflow-hidden hover:bg-white/90"
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-black/5 to-transparent pointer-events-none" />
-          <div className="relative w-[80px] h-[80px] rounded-[24px] overflow-hidden ring-2 ring-white ring-offset-1 shadow-md">
-            <img
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80"
-              alt="Avatar"
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-            />
-            <div className="absolute bottom-1 right-1 w-3.5 h-3.5 bg-black rounded-full border-2 border-white" />
-          </div>
-          <div className="text-center">
-            <p className="text-base font-bold text-black leading-tight">Budi Santoso</p>
-            <p className="text-xs font-semibold text-black/60 mt-0.5">Siswa PKL · IT</p>
-          </div>
-          <div className="w-full bg-black rounded-xl py-2 px-3 flex justify-between items-center mt-auto">
-            <span className="text-xs font-semibold text-white/70">Tempat</span>
-            <span className="text-xs font-bold text-white">PT Tokopedia</span>
-          </div>
-        </button>
-
-        {/* Kehadiran — solid white */}
-        <div className="c2 bg-white rounded-[24px] border border-black/5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col p-5">
-          <div className="flex items-start justify-between mb-auto">
-            <div>
-              <span className="inline-block bg-black/5 text-black/70 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Progress PKL</span>
-              <p className="text-sm font-bold text-black mt-2">Kehadiran</p>
-            </div>
-          </div>
-          <div className="mt-auto">
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-6xl font-light text-black tabular-nums tracking-tight">{totalHadir}</span>
-              <span className="text-sm font-semibold text-black/50">/ {totalDays}</span>
-            </div>
-            <div className="mt-3 w-full h-2 bg-black/5 rounded-full overflow-hidden">
-              <div className="h-full bg-black rounded-full transition-all duration-1000" style={{ width: `${pct}%` }} />
-            </div>
-            <p className="text-xs font-bold text-black/60 mt-2">{pct}% dari target</p>
+          <div className="relative z-10 flex items-center gap-3">
+            <button
+              onClick={onCheckIn}
+              disabled={checkedInToday}
+              className="flex-1 bg-white text-navy font-bold py-3.5 px-5 rounded-2xl flex items-center justify-center gap-2 hover:bg-shell transition-all shadow-lg shadow-navy/30 disabled:opacity-60 disabled:cursor-not-allowed group"
+            >
+              <Zap className="w-4 h-4 fill-current" />
+              <span>{checkedInToday ? 'Sudah Absen' : 'Absen Sekarang'}</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+            <button 
+              onClick={onOpenLogbookModal}
+              className="w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-2xl flex items-center justify-center transition-all border border-white/20 shrink-0"
+              title="Buka Logbook"
+            >
+              <BookOpen className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
-        {/* Clock / Stopwatch */}
-        <div className="c3 bg-white/70 backdrop-blur-xl rounded-[24px] border border-white shadow-sm hover:shadow-md transition-all duration-300 flex flex-col p-4">
-          <div className="flex gap-1 bg-black/5 p-1 rounded-full mb-3">
-            <button onClick={() => setMode('clock')} className={`flex-1 text-xs font-bold py-1.5 rounded-full transition-all ${mode === 'clock' ? 'bg-black text-white shadow' : 'text-black/60'}`}>Jam</button>
-            <button onClick={() => setMode('sw')} className={`flex-1 text-xs font-bold py-1.5 rounded-full transition-all ${mode === 'sw' ? 'bg-black text-white shadow' : 'text-black/60'}`}>Stopwatch</button>
+        {/* 📊 Attendance */}
+        <div className="c2 bg-white rounded-[24px] border border-mist/60 shadow-sm p-5 h-[210px] flex flex-col">
+          <div className="flex items-center justify-between shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-mist/70 flex items-center justify-center">
+              <UserCheck className="w-5 h-5 text-steel" />
+            </div>
+            <span className="text-xs font-bold text-navy/40 uppercase tracking-wider">Kehadiran</span>
+          </div>
+
+          <div className="flex items-baseline gap-1 mt-2">
+            <span className="text-3xl font-light text-navy tabular-nums tracking-tight">{totalHadir}</span>
+            <span className="text-sm font-semibold text-navy/50">/ {totalDays}</span>
+            <span className="ml-auto text-xs font-bold text-steel">{pct}%</span>
+          </div>
+          <div className="w-full h-1.5 bg-mist/60 rounded-full overflow-hidden mt-2">
+            <div 
+              className="h-full bg-steel rounded-full transition-all duration-1000 ease-out" 
+              style={{ width: `${pct}%` }} 
+            />
+          </div>
+
+          <div className="mt-auto pt-3">
+            <div className="flex items-end gap-1 h-8">
+              {weekData.map((v, i) => (
+                <div 
+                  key={i} 
+                  className={`flex-1 rounded-full transition-all duration-500 ${v ? 'bg-steel' : 'bg-mist/60'} ${i === todayIdx ? 'ring-2 ring-mist' : ''}`}
+                  style={{ height: v ? '100%' : '30%' }}
+                />
+              ))}
+            </div>
+            <div className="flex gap-1 mt-1">
+              {['S', 'S', 'R', 'K', 'J', 'S', 'M'].map((d, i) => (
+                <span key={i} className={`flex-1 text-center text-[8px] font-bold ${i === todayIdx ? 'text-steel' : 'text-navy/30'}`}>
+                  {d}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* 🕐 Clock */}
+        <div className="c3 bg-white/70 backdrop-blur-xl rounded-[24px] border border-white shadow-sm p-4 h-[210px] flex flex-col">
+          <div className="flex gap-1 bg-mist/60 p-1 rounded-full mb-2">
+            <button 
+              onClick={() => setMode('clock')} 
+              className={`flex-1 text-[10px] md:text-xs font-bold py-1.5 rounded-full transition-all ${mode === 'clock' ? 'bg-steel text-white shadow' : 'text-navy/60'}`}
+            >
+              Jam
+            </button>
+            <button 
+              onClick={() => setMode('sw')} 
+              className={`flex-1 text-[10px] md:text-xs font-bold py-1.5 rounded-full transition-all ${mode === 'sw' ? 'bg-steel text-white shadow' : 'text-navy/60'}`}
+            >
+              Stopwatch
+            </button>
           </div>
 
           {mode === 'clock' ? (
             <div className="flex-1 flex flex-col items-center justify-center">
-              <span className="text-5xl font-light text-black font-mono tabular-nums leading-none">
+              <span className="text-4xl md:text-5xl font-light text-navy font-mono tabular-nums leading-none">
                 {time.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
               </span>
-              <span className="text-sm font-bold text-black/50 mt-2 tabular-nums">
-                :{String(time.getSeconds()).padStart(2,'0')}
+              <span className="text-sm font-bold text-steel mt-2 tabular-nums">
+                :{String(time.getSeconds()).padStart(2, '0')}
               </span>
-              <span className="text-xs font-semibold text-black/50 mt-1.5">
-                {time.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })}
-              </span>
+              <div className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-navy/50">
+                <Clock className="w-3 h-3" />
+                <span>{time.toLocaleDateString('id-ID', { weekday: 'long' })}</span>
+              </div>
             </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center gap-4">
-              <span className="text-5xl font-light text-black font-mono tabular-nums">{fmtSw(sw)}</span>
-              <div className="flex gap-3">
+            <div className="flex-1 flex flex-col items-center justify-center gap-3">
+              <span className="text-4xl md:text-5xl font-light text-navy font-mono tabular-nums">{fmtSw(sw)}</span>
+              <div className="flex gap-2">
                 <button
                   onClick={() => setSwRun(!swRun)}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-all hover:scale-105 border ${swRun ? 'bg-white border-black/10 text-black' : 'bg-black border-black text-white'}`}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-all hover:scale-105 border ${swRun ? 'bg-white border-mist text-navy' : 'bg-steel border-steel text-white'}`}
                 >
                   {swRun ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current" />}
                 </button>
                 <button
                   onClick={() => { setSwRun(false); setSw(0); }}
-                  className="w-10 h-10 rounded-full bg-white border border-black/10 flex items-center justify-center text-black/70 hover:bg-black/5 transition-all hover:scale-105 shadow-sm"
+                  className="w-10 h-10 rounded-full bg-white border border-mist flex items-center justify-center text-navy/70 hover:bg-mist/50 transition-all hover:scale-105 shadow-sm"
                 >
-                  <Square className="w-3.5 h-3.5 fill-current" />
+                  <Square className="w-4 h-4 fill-current" />
                 </button>
               </div>
             </div>
           )}
         </div>
+      </div>
 
-        {/* Onboarding Todo List */}
-        <div className="c4 bg-black rounded-[24px] border border-black/80 shadow-lg flex flex-col p-5 text-white">
+      {/* ── ROW 2 ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-4 flex-1 min-h-[260px]">
+        
+        {/* ✓ Tasks */}
+        <div className="c4 bg-white rounded-[24px] border border-mist/60 shadow-sm p-5 flex flex-col min-h-0">
           <div className="flex items-center justify-between mb-4 shrink-0">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-white/60">Onboarding</p>
-              <p className="text-sm font-bold text-white">Task List</p>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
+                <Target className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-navy/60 leading-none">Onboarding</p>
+                <p className="text-sm font-bold text-navy leading-tight mt-0.5">Tasks</p>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               {!editing && (
-                <span className="text-xs font-bold bg-white/20 px-2.5 py-1 rounded-full text-white/90">
+                <span className="text-xs font-bold bg-mist/70 px-2 py-1 rounded-full text-navy/70">
                   {done}/{todos.length}
                 </span>
               )}
               <button
                 onClick={() => setEditing(!editing)}
-                className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${editing ? 'bg-white text-black' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white'}`}
+                className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${editing ? 'bg-steel text-white' : 'bg-mist/60 text-navy/60 hover:bg-mist'}`}
               >
-                {editing ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
+                {editing ? <Check className="w-3.5 h-3.5" /> : <Edit2 className="w-3.5 h-3.5" />}
               </button>
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col justify-between gap-2 overflow-hidden">
+          <div className="flex-1 flex flex-col gap-2 overflow-y-auto custom-scrollbar min-h-0">
             {todos.map((todo, i) => (
-              <div key={todo.id} className="flex items-center gap-3 min-h-0">
+              <div key={todo.id} className="flex items-center gap-2 min-h-0">
                 {editing ? (
                   <input
                     value={todo.text}
@@ -197,17 +301,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ userName, attendances, onG
                       next[i] = { ...next[i], text: e.target.value };
                       setTodos(next);
                     }}
-                    className="flex-1 bg-white/10 border border-white/30 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-white transition-all min-w-0"
+                    className="flex-1 bg-transparent border-b border-steel/30 focus:border-steel text-sm text-navy outline-none transition-all min-w-0 py-1"
                   />
                 ) : (
                   <button
                     onClick={() => setTodos(todos.map((t, idx) => idx === i ? { ...t, done: !t.done } : t))}
-                    className="flex items-center gap-3 w-full text-left group min-w-0"
+                    className="flex items-center gap-2 w-full text-left group min-w-0"
                   >
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 border transition-all ${todo.done ? 'bg-white border-white' : 'border-white/30 group-hover:border-white/60'}`}>
-                      {todo.done && <Check className="w-3.5 h-3.5 text-black" />}
+                    <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 border transition-all ${todo.done ? 'bg-steel border-steel' : 'border-navy/20 group-hover:border-steel/60'}`}>
+                      {todo.done && <Check className="w-2.5 h-2.5 text-white" />}
                     </div>
-                    <span className={`text-sm font-semibold leading-tight transition-all truncate ${todo.done ? 'line-through text-white/40' : 'text-white'}`}>
+                    <span className={`text-xs font-semibold leading-tight transition-all truncate ${todo.done ? 'line-through text-navy/40' : 'text-navy'}`}>
                       {todo.text}
                     </span>
                   </button>
@@ -216,88 +320,150 @@ export const Dashboard: React.FC<DashboardProps> = ({ userName, attendances, onG
             ))}
           </div>
 
-          {/* Progress strip */}
-          <div className="mt-4 pt-4 border-t border-white/10 shrink-0">
-            <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-              <div className="h-full bg-white rounded-full transition-all duration-700" style={{ width: `${(done / todos.length) * 100}%` }} />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Bottom Row: Notes + Notifications ── */}
-      <div className="flex gap-4 flex-1 min-h-0">
-
-        {/* Personal Notes */}
-        <div className="c5 hidden lg:flex flex-col w-[300px] shrink-0 bg-white/70 backdrop-blur-xl rounded-[24px] border border-white shadow-sm h-full hover:shadow-md transition-all duration-300">
-          <div className="flex items-center justify-between p-5 pb-3 shrink-0">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-black/60">Catatan</p>
-              <p className="text-sm font-bold text-black">Personal Notes</p>
-            </div>
-            <button
-              onClick={() => setEditNotes(!editNotes)}
-              className={`w-8 h-8 rounded-xl flex items-center justify-center border transition-all shadow-sm ${editNotes ? 'bg-black text-white border-black' : 'bg-white text-black/60 border-black/10 hover:border-black/30'}`}
-            >
-              {editNotes ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
-            </button>
-          </div>
-          <div className="flex-1 mx-4 mb-4 bg-white/80 rounded-[24px] border border-black/5 overflow-hidden shadow-inner">
-            {editNotes ? (
-              <textarea
-                value={notes}
-                onChange={e => setNotes(e.target.value)}
-                className="w-full h-full p-4 text-sm font-medium text-black bg-transparent outline-none resize-none leading-relaxed"
-                placeholder="Ketik catatanmu..."
+          <div className="mt-3 pt-3 border-t border-mist/60 shrink-0">
+            <div className="w-full h-1.5 bg-mist/60 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-steel rounded-full transition-all duration-700" 
+                style={{ width: `${(done / todos.length) * 100}%` }} 
               />
-            ) : (
-              <div className="w-full h-full overflow-y-auto custom-scrollbar p-4 text-sm font-medium text-black/80 whitespace-pre-line leading-relaxed">
-                {notes || <span className="text-black/40 italic text-xs">Belum ada catatan.</span>}
-              </div>
-            )}
+            </div>
+            <p className="text-[10px] font-bold text-steel mt-1.5">{Math.round((done / todos.length) * 100)}% selesai</p>
           </div>
         </div>
 
-        {/* Notifications */}
-        <div className="c5 flex-1 bg-white/70 backdrop-blur-xl rounded-[24px] border border-white shadow-sm h-full flex flex-col hover:shadow-md transition-all duration-300">
+        {/* 🔔 Notifications */}
+        <div className="lg:col-span-2 c5 bg-white/70 backdrop-blur-xl rounded-[24px] border border-white shadow-sm flex flex-col min-h-0">
           <div className="flex items-center justify-between p-5 pb-3 shrink-0">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-black/60">Pembaruan</p>
-              <p className="text-sm font-bold text-black">Notifikasi Terkini</p>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center relative">
+                <Bell className="w-4 h-4 text-white" />
+                {notifications.filter(n => n.unread).length > 0 && (
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-steel rounded-full flex items-center justify-center text-[9px] font-bold text-white border-2 border-white/70">
+                    {notifications.filter(n => n.unread).length}
+                  </div>
+                )}
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-navy/60 leading-none">Pembaruan</p>
+                <p className="text-sm font-bold text-navy leading-tight mt-0.5">Notifikasi</p>
+              </div>
             </div>
-            <button className="bg-black text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-black/80 transition-colors">
+            <button className="text-xs font-bold text-steel hover:text-steel/70 transition-colors">
               Tandai Dibaca
             </button>
           </div>
 
-          <div className="flex-1 mx-4 mb-4 bg-white/80 rounded-[24px] border border-black/5 shadow-inner flex flex-col overflow-hidden p-3 min-h-0">
-            <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 flex flex-col gap-2">
+          <div className="flex-1 px-3 pb-3 min-h-0 overflow-hidden flex flex-col">
+            <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-1 p-1">
               {notifications.map((notif) => (
-                <div key={notif.id} className="flex gap-4 p-3 rounded-[16px] hover:bg-white transition-colors cursor-pointer group border border-transparent hover:border-black/5 hover:shadow-sm">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${notif.unread ? 'bg-black text-white' : 'bg-black/5 text-black/40'}`}>
-                    <Bell className="w-4 h-4" />
+                <div 
+                  key={notif.id} 
+                  className="flex gap-3 p-3 rounded-2xl hover:bg-white/60 transition-colors cursor-pointer group"
+                >
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${notif.unread ? 'bg-steel text-white' : 'bg-mist/60 text-navy/40'}`}>
+                    {notif.unread ? <Bell className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
                   </div>
                   <div className="flex-1 min-w-0 flex flex-col justify-center">
                     <div className="flex items-center justify-between gap-2">
-                      <p className={`text-sm font-bold truncate ${notif.unread ? 'text-black' : 'text-black/70'}`}>
+                      <p className={`text-sm font-bold truncate ${notif.unread ? 'text-navy' : 'text-navy/70'}`}>
                         {notif.title}
                       </p>
                       {notif.unread && (
-                        <div className="w-2 h-2 rounded-full bg-black shrink-0" />
+                        <div className="w-2 h-2 rounded-full bg-steel shrink-0" />
                       )}
                     </div>
-                    <p className="text-xs font-semibold text-black/50 mt-0.5">
+                    <p className="text-xs font-semibold text-navy/50 mt-0.5">
                       {notif.time}
                     </p>
                   </div>
                 </div>
               ))}
-              <div className="mt-2 text-center py-4">
-                <p className="text-xs font-bold text-black/40">Tidak ada notifikasi lainnya</p>
-              </div>
+              {notifications.length === 0 && (
+                <div className="flex-1 flex items-center justify-center py-8">
+                  <p className="text-sm font-medium text-navy/40">Tidak ada notifikasi</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
+
+        {/* 📝 Notes */}
+        <div className="c5 bg-white/70 backdrop-blur-xl rounded-[24px] border border-white shadow-sm flex flex-col min-h-0">
+          <div className="flex items-center justify-between p-5 pb-3 shrink-0">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-mist/70 flex items-center justify-center">
+                <BookOpen className="w-4 h-4 text-navy" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-navy/60 leading-none">Catatan</p>
+                <p className="text-sm font-bold text-navy leading-tight mt-0.5">Notes</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setEditNotes(!editNotes)}
+              className={`w-8 h-8 rounded-xl flex items-center justify-center border transition-all ${editNotes ? 'bg-navy text-white border-navy' : 'bg-white text-navy/60 border-mist hover:border-steel hover:text-steel'}`}
+            >
+              {editNotes ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
+            </button>
+          </div>
+          
+          <div className="flex-1 px-5 pb-5 min-h-0">
+            {editNotes ? (
+              <textarea
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                className="w-full h-full min-h-[120px] text-sm font-medium text-navy bg-transparent outline-none resize-none leading-relaxed placeholder:text-navy/40"
+                placeholder="Ketik catatanmu..."
+              />
+            ) : (
+              <div className="w-full h-full min-h-[120px] overflow-y-auto custom-scrollbar text-sm font-medium text-navy/80 whitespace-pre-line leading-relaxed">
+                {notes || <span className="text-navy/40 italic text-xs">Belum ada catatan.</span>}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── ROW 3 ── */}
+      <div className="c5 shrink-0 bg-white/70 backdrop-blur-xl rounded-[24px] border border-white shadow-sm">
+        <div className="flex items-center justify-between p-5 pb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-steel/15 flex items-center justify-center">
+              <BookOpen className="w-4 h-4 text-steel" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-navy/60 leading-none">Logbook</p>
+              <p className="text-sm font-bold text-navy leading-tight mt-0.5">Aktivitas Terbaru</p>
+            </div>
+          </div>
+          <button 
+            onClick={onOpenLogbookModal} 
+            className="flex items-center gap-1 text-xs font-bold text-steel hover:text-steel/70 transition-colors"
+          >
+            Lihat Semua <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {recentLogs.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-mist/60 px-5 pb-5">
+            {recentLogs.slice(0, 3).map(log => (
+              <div key={log.id} className="py-3 md:py-2 md:px-5 md:first:pl-0 md:last:pr-0 flex flex-col gap-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-navy/40">{log.date}</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusStyle(log.status)}`}>
+                    {statusLabel(log.status)}
+                  </span>
+                </div>
+                <p className="text-sm font-bold text-navy leading-snug line-clamp-2">{log.title}</p>
+                <p className="text-xs font-semibold text-navy/50">{log.hours} jam • {log.category}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="px-5 pb-6 pt-2 text-center">
+            <p className="text-sm font-medium text-navy/40">Belum ada aktivitas. Tulis logbook pertamamu! ✍️</p>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -41,7 +41,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col md:flex-row gap-2 md:gap-3 h-full overflow-hidden p-2 md:p-3">
+    <div className="flex-1 flex flex-col md:flex-row gap-2 md:gap-3 h-full overflow-hidden p-2 md:p-4 lg:p-6">
       <Sidebar
         activePage={activePage}
         setActivePage={setActivePage}
