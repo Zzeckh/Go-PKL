@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Edit2, Check, Play, Pause, Square, Bell, MapPin, Clock, 
   BookOpen, UserCheck, Zap, CheckCircle2, ArrowRight, 
-  Target, Calendar, ChevronRight
+  Target, Calendar, ChevronRight, Plus, X
 } from 'lucide-react';
 import { LogEntry, AttendanceRecord } from '../types';
 
@@ -14,6 +14,14 @@ interface DashboardProps {
   onCheckIn: () => void;
   onGoToProfile: () => void;
 }
+
+/* ── Indikator "Mode Edit" dengan dot pulse ── */
+const EditModeBadge = () => (
+  <span className="flex items-center gap-1.5 text-[11px] font-bold text-steel bg-steel/10 px-2.5 py-1 rounded-full">
+    <span className="w-1.5 h-1.5 rounded-full bg-steel animate-pulse" />
+    Mode Edit
+  </span>
+);
 
 export const Dashboard: React.FC<DashboardProps> = ({ 
   userName, 
@@ -48,6 +56,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
   };
 
+  /* ── Tasks ── */
   const [todos, setTodos] = useState([
     { id: 1, text: 'Interview Session', done: true },
     { id: 2, text: 'Team Meeting', done: true },
@@ -55,8 +64,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
     { id: 4, text: 'Discuss Q3 Goals', done: false },
   ]);
   const [editing, setEditing] = useState(false);
+  const [newTodo, setNewTodo] = useState('');
   const done = todos.filter(t => t.done).length;
 
+  const addTodo = () => {
+    if (!newTodo.trim()) return;
+    setTodos(prev => [...prev, { id: Date.now(), text: newTodo.trim(), done: false }]);
+    setNewTodo('');
+  };
+
+  const deleteTodo = (id: number) => {
+    setTodos(prev => prev.filter(t => t.id !== id));
+  };
+
+  /* ── Notes ── */
   const [notes, setNotes] = useState('- ID Card Digital\n- Laptop Pribadi\n- Jurnal Cetak\n- Alat Tulis\n\nPastikan selalu kemeja rapi!');
   const [editNotes, setEditNotes] = useState(false);
 
@@ -101,7 +122,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div className="h-full flex flex-col gap-3 md:gap-4 overflow-y-auto custom-scrollbar">
       
-      {/* ── HEADER ── */}
+      {/* ── HEADER ─ */}
       <div className="flex items-center justify-between shrink-0 c0">
         <div className="flex items-center gap-3 min-w-0">
           <button 
@@ -111,12 +132,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
             {getInitials(userName)}
           </button>
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-widest text-steel">{getGreeting()}</p>
+            <p className="text-[13px] font-bold uppercase tracking-widest text-steel">{getGreeting()}</p>
             <h1 className="text-xl md:text-2xl font-bold text-navy leading-tight truncate">{userName || 'User'}</h1>
           </div>
         </div>
         <div className="flex items-center gap-2 bg-white/70 backdrop-blur-sm border border-white rounded-full px-4 py-2 shadow-sm shrink-0">
-          <Calendar className="w-3.5 h-3.5 text-steel" />
+          <Calendar className="w-4 h-4 text-steel" />
           <span className="text-xs md:text-sm font-bold text-navy/80 tabular-nums">
             {time.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })}
           </span>
@@ -126,7 +147,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* ── ROW 1 ── */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-4 shrink-0">
         
-        {/* ⭐ HERO CTA — navy → steel */}
+        {/* ⭐ HERO CTA */}
         <div className="lg:col-span-2 c1 bg-navy text-white rounded-[24px] p-6 relative overflow-hidden h-[210px] flex flex-col justify-between shadow-xl shadow-steel/30 border border-white/10">
           <div className="absolute -top-16 -right-16 w-48 h-48 bg-white/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-white/5 rounded-full blur-3xl pointer-events-none" />
@@ -142,7 +163,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {checkedInToday ? 'Kerja Bagus! 👋' : 'Saatnya Absen!'}
             </h2>
             <p className="text-sm text-white/70 mt-1 flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5" />
+              <MapPin className="w-4 h-4" />
               PT Tokopedia Tower • GPS Valid
             </p>
           </div>
@@ -179,7 +200,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex items-baseline gap-1 mt-2">
             <span className="text-3xl font-light text-navy tabular-nums tracking-tight">{totalHadir}</span>
             <span className="text-sm font-semibold text-navy/50">/ {totalDays}</span>
-            <span className="ml-auto text-xs font-bold text-steel">{pct}%</span>
+            <span className="ml-auto text-sm font-bold text-steel">{pct}%</span>
           </div>
           <div className="w-full h-1.5 bg-mist/60 rounded-full overflow-hidden mt-2">
             <div 
@@ -200,7 +221,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
             <div className="flex gap-1 mt-1">
               {['S', 'S', 'R', 'K', 'J', 'S', 'M'].map((d, i) => (
-                <span key={i} className={`flex-1 text-center text-[8px] font-bold ${i === todayIdx ? 'text-steel' : 'text-navy/30'}`}>
+                <span key={i} className={`flex-1 text-center text-[10px] font-bold ${i === todayIdx ? 'text-steel' : 'text-navy/30'}`}>
                   {d}
                 </span>
               ))}
@@ -213,13 +234,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex gap-1 bg-mist/60 p-1 rounded-full mb-2">
             <button 
               onClick={() => setMode('clock')} 
-              className={`flex-1 text-[10px] md:text-xs font-bold py-1.5 rounded-full transition-all ${mode === 'clock' ? 'bg-steel text-white shadow' : 'text-navy/60'}`}
+              className={`flex-1 text-xs font-bold py-1.5 rounded-full transition-all ${mode === 'clock' ? 'bg-steel text-white shadow' : 'text-navy/60'}`}
             >
               Jam
             </button>
             <button 
               onClick={() => setMode('sw')} 
-              className={`flex-1 text-[10px] md:text-xs font-bold py-1.5 rounded-full transition-all ${mode === 'sw' ? 'bg-steel text-white shadow' : 'text-navy/60'}`}
+              className={`flex-1 text-xs font-bold py-1.5 rounded-full transition-all ${mode === 'sw' ? 'bg-steel text-white shadow' : 'text-navy/60'}`}
             >
               Stopwatch
             </button>
@@ -233,8 +254,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <span className="text-sm font-bold text-steel mt-2 tabular-nums">
                 :{String(time.getSeconds()).padStart(2, '0')}
               </span>
-              <div className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-navy/50">
-                <Clock className="w-3 h-3" />
+              <div className="mt-3 flex items-center gap-1.5 text-[13px] font-semibold text-navy/50">
+                <Clock className="w-3.5 h-3.5" />
                 <span>{time.toLocaleDateString('id-ID', { weekday: 'long' })}</span>
               </div>
             </div>
@@ -263,71 +284,106 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* ── ROW 2 ── */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-4 flex-1 min-h-[260px]">
         
-        {/* ✓ Tasks */}
-        <div className="c4 bg-white rounded-[24px] border border-mist/60 shadow-sm p-5 flex flex-col min-h-0">
+        {/* ✓ Tasks — dengan Mode Edit + Indikator */}
+        <div className={`c4 bg-white rounded-[24px] border shadow-sm p-5 flex flex-col min-h-0 transition-all ${editing ? 'border-steel/40 ring-2 ring-steel/20' : 'border-mist/60'}`}>
           <div className="flex items-center justify-between mb-4 shrink-0">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
                 <Target className="w-4 h-4 text-white" />
               </div>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-navy/60 leading-none">Onboarding</p>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-navy/60 leading-none">Onboarding</p>
                 <p className="text-sm font-bold text-navy leading-tight mt-0.5">Tasks</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {!editing && (
-                <span className="text-xs font-bold bg-mist/70 px-2 py-1 rounded-full text-navy/70">
+              {editing ? (
+                <EditModeBadge />
+              ) : (
+                <span className="text-xs font-bold bg-mist/70 px-2.5 py-1 rounded-full text-navy/70">
                   {done}/{todos.length}
                 </span>
               )}
               <button
                 onClick={() => setEditing(!editing)}
-                className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${editing ? 'bg-steel text-white' : 'bg-mist/60 text-navy/60 hover:bg-mist'}`}
+                title={editing ? 'Selesai edit' : 'Edit tasks'}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${editing ? 'bg-steel text-white shadow-md shadow-steel/30' : 'bg-mist/60 text-navy/60 hover:bg-mist'}`}
               >
-                {editing ? <Check className="w-3.5 h-3.5" /> : <Edit2 className="w-3.5 h-3.5" />}
+                {editing ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
               </button>
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col gap-2 overflow-y-auto custom-scrollbar min-h-0">
+          <div className="flex-1 flex flex-col gap-2.5 overflow-y-auto custom-scrollbar min-h-0">
             {todos.map((todo, i) => (
-              <div key={todo.id} className="flex items-center gap-2 min-h-0">
+              <div key={todo.id} className="flex items-center gap-2 min-h-0 group/item">
                 {editing ? (
-                  <input
-                    value={todo.text}
-                    onChange={e => {
-                      const next = [...todos];
-                      next[i] = { ...next[i], text: e.target.value };
-                      setTodos(next);
-                    }}
-                    className="flex-1 bg-transparent border-b border-steel/30 focus:border-steel text-sm text-navy outline-none transition-all min-w-0 py-1"
-                  />
+                  <>
+                    <input
+                      value={todo.text}
+                      onChange={e => {
+                        const next = [...todos];
+                        next[i] = { ...next[i], text: e.target.value };
+                        setTodos(next);
+                      }}
+                      className="flex-1 bg-mist/30 border border-mist focus:border-steel rounded-lg px-3 py-1.5 text-sm text-navy outline-none transition-all min-w-0"
+                    />
+                    <button
+                      onClick={() => deleteTodo(todo.id)}
+                      title="Hapus task"
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-navy/40 hover:bg-rose-50 hover:text-rose-600 transition-colors shrink-0"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </>
                 ) : (
                   <button
                     onClick={() => setTodos(todos.map((t, idx) => idx === i ? { ...t, done: !t.done } : t))}
-                    className="flex items-center gap-2 w-full text-left group min-w-0"
+                    className="flex items-center gap-2.5 w-full text-left group min-w-0"
                   >
-                    <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 border transition-all ${todo.done ? 'bg-steel border-steel' : 'border-navy/20 group-hover:border-steel/60'}`}>
-                      {todo.done && <Check className="w-2.5 h-2.5 text-white" />}
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 border-2 transition-all ${todo.done ? 'bg-steel border-steel' : 'border-navy/20 group-hover:border-steel/60'}`}>
+                      {todo.done && <Check className="w-3 h-3 text-white" />}
                     </div>
-                    <span className={`text-xs font-semibold leading-tight transition-all truncate ${todo.done ? 'line-through text-navy/40' : 'text-navy'}`}>
+                    <span className={`text-sm font-semibold leading-tight transition-all truncate ${todo.done ? 'line-through text-navy/40' : 'text-navy'}`}>
                       {todo.text}
                     </span>
                   </button>
                 )}
               </div>
             ))}
+
+            {/* Input tambah task (hanya saat edit) */}
+            {editing && (
+              <div className="flex items-center gap-2 pt-1 shrink-0">
+                <input
+                  value={newTodo}
+                  onChange={e => setNewTodo(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && addTodo()}
+                  placeholder="Task baru..."
+                  className="flex-1 bg-transparent border-b border-dashed border-steel/40 focus:border-steel text-sm text-navy outline-none transition-all min-w-0 py-1.5 placeholder:text-navy/30"
+                />
+                <button
+                  onClick={addTodo}
+                  disabled={!newTodo.trim()}
+                  title="Tambah task"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center bg-steel/10 text-steel hover:bg-steel hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="mt-3 pt-3 border-t border-mist/60 shrink-0">
             <div className="w-full h-1.5 bg-mist/60 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-steel rounded-full transition-all duration-700" 
-                style={{ width: `${(done / todos.length) * 100}%` }} 
+                style={{ width: `${todos.length ? (done / todos.length) * 100 : 0}%` }} 
               />
             </div>
-            <p className="text-[10px] font-bold text-steel mt-1.5">{Math.round((done / todos.length) * 100)}% selesai</p>
+            <p className="text-xs font-bold text-steel mt-1.5">
+              {todos.length ? Math.round((done / todos.length) * 100) : 0}% selesai
+            </p>
           </div>
         </div>
 
@@ -338,13 +394,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center relative">
                 <Bell className="w-4 h-4 text-white" />
                 {notifications.filter(n => n.unread).length > 0 && (
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-steel rounded-full flex items-center justify-center text-[9px] font-bold text-white border-2 border-white/70">
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-steel rounded-full flex items-center justify-center text-[10px] font-bold text-white border-2 border-white/70">
                     {notifications.filter(n => n.unread).length}
                   </div>
                 )}
               </div>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-navy/60 leading-none">Pembaruan</p>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-navy/60 leading-none">Pembaruan</p>
                 <p className="text-sm font-bold text-navy leading-tight mt-0.5">Notifikasi</p>
               </div>
             </div>
@@ -372,7 +428,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <div className="w-2 h-2 rounded-full bg-steel shrink-0" />
                       )}
                     </div>
-                    <p className="text-xs font-semibold text-navy/50 mt-0.5">
+                    <p className="text-[13px] font-semibold text-navy/50 mt-0.5">
                       {notif.time}
                     </p>
                   </div>
@@ -387,37 +443,53 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
 
-        {/* 📝 Notes */}
-        <div className="c5 bg-white/70 backdrop-blur-xl rounded-[24px] border border-white shadow-sm flex flex-col min-h-0">
+        {/* 📝 Notes — dengan Mode Edit + Indikator */}
+        <div className={`c5 bg-white/70 backdrop-blur-xl rounded-[24px] border shadow-sm flex flex-col min-h-0 transition-all ${editNotes ? 'border-steel/40 ring-2 ring-steel/20' : 'border-white'}`}>
           <div className="flex items-center justify-between p-5 pb-3 shrink-0">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-mist/70 flex items-center justify-center">
                 <BookOpen className="w-4 h-4 text-navy" />
               </div>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-navy/60 leading-none">Catatan</p>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-navy/60 leading-none">Catatan</p>
                 <p className="text-sm font-bold text-navy leading-tight mt-0.5">Notes</p>
               </div>
             </div>
-            <button
-              onClick={() => setEditNotes(!editNotes)}
-              className={`w-8 h-8 rounded-xl flex items-center justify-center border transition-all ${editNotes ? 'bg-navy text-white border-navy' : 'bg-white text-navy/60 border-mist hover:border-steel hover:text-steel'}`}
-            >
-              {editNotes ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
-            </button>
+            <div className="flex items-center gap-2">
+              {editNotes && <EditModeBadge />}
+              <button
+                onClick={() => setEditNotes(!editNotes)}
+                title={editNotes ? 'Simpan catatan' : 'Edit catatan'}
+                className={`w-8 h-8 rounded-xl flex items-center justify-center border transition-all ${editNotes ? 'bg-navy text-white border-navy shadow-md shadow-navy/30' : 'bg-white text-navy/60 border-mist hover:border-steel hover:text-steel'}`}
+              >
+                {editNotes ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
           
-          <div className="flex-1 px-5 pb-5 min-h-0">
+          <div className="flex-1 px-5 pb-4 min-h-0 flex flex-col">
             {editNotes ? (
               <textarea
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
-                className="w-full h-full min-h-[120px] text-sm font-medium text-navy bg-transparent outline-none resize-none leading-relaxed placeholder:text-navy/40"
+                autoFocus
+                className="w-full flex-1 min-h-[120px] text-sm font-medium text-navy bg-white/60 border border-mist focus:border-steel rounded-xl p-3 outline-none resize-none leading-relaxed placeholder:text-navy/40 transition-all"
                 placeholder="Ketik catatanmu..."
               />
             ) : (
-              <div className="w-full h-full min-h-[120px] overflow-y-auto custom-scrollbar text-sm font-medium text-navy/80 whitespace-pre-line leading-relaxed">
+              <div className="w-full flex-1 min-h-[120px] overflow-y-auto custom-scrollbar text-sm font-medium text-navy/80 whitespace-pre-line leading-relaxed">
                 {notes || <span className="text-navy/40 italic text-xs">Belum ada catatan.</span>}
+              </div>
+            )}
+            {/* Footer indikator karakter saat edit */}
+            {editNotes && (
+              <div className="flex items-center justify-between pt-2 shrink-0">
+                <span className="text-[11px] font-semibold text-navy/40">
+                  Tekan ✓ untuk menyimpan
+                </span>
+                <span className="text-[11px] font-bold text-steel tabular-nums">
+                  {notes.length} karakter
+                </span>
               </div>
             )}
           </div>
@@ -432,7 +504,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <BookOpen className="w-4 h-4 text-steel" />
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-navy/60 leading-none">Logbook</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-navy/60 leading-none">Logbook</p>
               <p className="text-sm font-bold text-navy leading-tight mt-0.5">Aktivitas Terbaru</p>
             </div>
           </div>
@@ -440,7 +512,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             onClick={onOpenLogbookModal} 
             className="flex items-center gap-1 text-xs font-bold text-steel hover:text-steel/70 transition-colors"
           >
-            Lihat Semua <ChevronRight className="w-3.5 h-3.5" />
+            Lihat Semua <ChevronRight className="w-4 h-4" />
           </button>
         </div>
 
@@ -449,13 +521,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
             {recentLogs.slice(0, 3).map(log => (
               <div key={log.id} className="py-3 md:py-2 md:px-5 md:first:pl-0 md:last:pr-0 flex flex-col gap-1.5">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-navy/40">{log.date}</span>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusStyle(log.status)}`}>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-navy/40">{log.date}</span>
+                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${statusStyle(log.status)}`}>
                     {statusLabel(log.status)}
                   </span>
                 </div>
                 <p className="text-sm font-bold text-navy leading-snug line-clamp-2">{log.title}</p>
-                <p className="text-xs font-semibold text-navy/50">{log.hours} jam • {log.category}</p>
+                <p className="text-[13px] font-semibold text-navy/50">{log.hours} jam • {log.category}</p>
               </div>
             ))}
           </div>

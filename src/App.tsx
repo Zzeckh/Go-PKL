@@ -24,6 +24,10 @@ export default function App() {
     setActivePage,
     userName,
     schoolName,
+    // ── NEW: Destructure company info ──
+    userCompanyName,
+    userCompanyAddress,
+    userCompanyLocation,
     logEntries,
     attendances,
     mapLocations,
@@ -146,6 +150,9 @@ export default function App() {
           )}
           {activePage === 'absensi' && userRole === 'intern' && (
             <Absensi 
+              companyName={userCompanyName}
+              companyAddress={userCompanyAddress}
+              companyLocation={userCompanyLocation}
               onCheckIn={checkInAttendance}
               hasCheckedIn={attendances.some(a => a.date === new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }))} 
             />

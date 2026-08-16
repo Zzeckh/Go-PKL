@@ -67,6 +67,10 @@ interface AppContextType {
   userName: string;
   schoolName: string;
   userId: number | null;
+  // ── NEW: Company info untuk Absensi ──
+  userCompanyName: string;
+  userCompanyAddress: string;
+  userCompanyLocation: { lat: number; lng: number; radius: number } | null;
   isLoading: boolean;
   loadingResources: Set<string>;
   siswaList: SiswaItem[];
@@ -118,6 +122,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [userName, setUserName] = useState('');
   const [userId, setUserId] = useState<number | null>(null);
   const [schoolName, setSchoolName] = useState('');
+  // ── NEW: Company info state ──
+  const [userCompanyName, setUserCompanyName] = useState('');
+  const [userCompanyAddress, setUserCompanyAddress] = useState('');
+  const [userCompanyLocation, setUserCompanyLocation] = useState<{ lat: number; lng: number; radius: number } | null>(null);
+
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('pkl_token'));
 
   const [isLoading, setIsLoading] = useState(false);
@@ -155,6 +164,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUserRole('intern');
     setUserName('');
     setSchoolName('');
+    // ── NEW: Reset company info ──
+    setUserCompanyName('');
+    setUserCompanyAddress('');
+    setUserCompanyLocation(null);
     setSiswaList([]);
     setPerusahaanList([]);
     setGuruList([]);
@@ -325,6 +338,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setUserRole(mappedRole);
       setUserId(user.id);
       setSchoolName(user.schoolName || '');
+      // ── NEW: Set company info dari response /api/auth/me ──
+      setUserCompanyName(user.companyName || '');
+      setUserCompanyAddress(user.companyAddress || '');
+      setUserCompanyLocation(user.companyLocation || null);
       setIsAuthenticated(true);
       
       await refreshData();
@@ -519,6 +536,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         userName,
         schoolName,
         userId,
+        // ── NEW: Expose company info ──
+        userCompanyName,
+        userCompanyAddress,
+        userCompanyLocation,
         isLoading,
         loadingResources,
         siswaList,

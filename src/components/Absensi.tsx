@@ -1,15 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Camera, CheckCircle2, MapPin, Loader2, Image as ImageIcon, RefreshCw, AlertTriangle, Clock, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { Camera, CheckCircle2, MapPin, Loader2, Image as ImageIcon, RefreshCw, AlertTriangle, Clock, ShieldCheck, ShieldAlert, Building2 } from 'lucide-react';
 
-interface AbsensiProps {
-  onCheckIn: () => void;
-  hasCheckedIn: boolean;
+interface CompanyLocation {
+  lat: number;
+  lng: number;
+  radius: number;
 }
 
-// KOORDINAT TARGET & RADIUS
-const TARGET_LAT = -6.2223;
-const TARGET_LNG = 106.8228;
-const MAX_RADIUS_METERS = 500;
+interface AbsensiProps {
+  companyName: string;
+  companyAddress: string;
+  companyLocation: CompanyLocation | null;
+  onCheckIn: (imageUrl?: string, latitude?: number, longitude?: number) => Promise<void>;
+  hasCheckedIn: boolean;
+}
 
 const getDistanceInMeters = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const R = 6371e3;
@@ -25,9 +29,16 @@ const getDistanceInMeters = (lat1: number, lon1: number, lat2: number, lon2: num
   return Math.round(R * c);
 };
 
-export const Absensi: React.FC<AbsensiProps> = ({ onCheckIn, hasCheckedIn }) => {
+export const Absensi: React.FC<AbsensiProps> = ({ 
+  companyName,
+  companyAddress,
+  companyLocation,
+  onCheckIn, 
+  hasCheckedIn 
+}) => {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [time, setTime] = useState(new Date());
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -39,6 +50,9 @@ export const Absensi: React.FC<AbsensiProps> = ({ onCheckIn, hasCheckedIn }) => 
   const [distance, setDistance] = useState<number | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
+
+  // Ambil konfigurasi radius dari DB (default 500m kalau belum ada)
+  const MAX_RADIUS = companyLocation?.radius ?? 500;
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -59,8 +73,17 @@ export const Absensi: React.FC<AbsensiProps> = ({ onCheckIn, hasCheckedIn }) => 
       (position) => {
         const { latitude, longitude } = position.coords;
         setUserCoords({ lat: latitude, lng: longitude });
-        const dist = getDistanceInMeters(latitude, longitude, TARGET_LAT, TARGET_LNG);
-        setDistance(dist);
+        
+        // Hitung jarak hanya jika ada koordinat perusahaan dari DB
+        if (companyLocation) {
+          const dist = getDistanceInMeters(
+            latitude, 
+            longitude, 
+            companyLocation.lat, 
+            companyLocation.lng
+          );
+          setDistance(dist);
+        }
         setIsLoadingLocation(false);
       },
       (err) => {
@@ -108,6 +131,7 @@ export const Absensi: React.FC<AbsensiProps> = ({ onCheckIn, hasCheckedIn }) => 
     return () => {
       stopCamera();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasCheckedIn]);
 
   const capturePhoto = () => {
@@ -122,7 +146,7 @@ export const Absensi: React.FC<AbsensiProps> = ({ onCheckIn, hasCheckedIn }) => 
         ctx.translate(canvas.width, 0);
         ctx.scale(-1, 1);
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL('image/jpeg');
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
         setImageSrc(dataUrl);
         stopCamera();
       }
@@ -134,15 +158,26 @@ export const Absensi: React.FC<AbsensiProps> = ({ onCheckIn, hasCheckedIn }) => 
     startCamera();
   };
 
-  const isWithinRadius = distance !== null && distance <= MAX_RADIUS_METERS;
+  // Validasi: dalam radius kalau ada koordinat DB, kalau tidak ada = anggap valid (backend yang validasi)
+  const isWithinRadius = !companyLocation 
+    ? true 
+    : (distance !== null && distance <= MAX_RADIUS);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!imageSrc || !isWithinRadius) return;
     setIsSubmitting(true);
-    setTimeout(() => {
+    setSubmitError(null);
+
+    try {
+      await onCheckIn(
+        imageSrc,
+        userCoords?.lat,
+        userCoords?.lng
+      );
+    } catch (error: any) {
+      setSubmitError(error?.message || 'Gagal mengirim absensi. Silakan coba lagi.');
       setIsSubmitting(false);
-      onCheckIn();
-    }, 1200);
+    }
   };
 
   /* ────────────────────────────────────────────
@@ -164,7 +199,7 @@ export const Absensi: React.FC<AbsensiProps> = ({ onCheckIn, hasCheckedIn }) => 
           </p>
           <div className="w-full bg-mist/50 rounded-2xl p-4 flex items-center justify-center gap-3 border border-mist">
             <MapPin className="w-4 h-4 text-steel" />
-            <span className="text-xs font-bold text-navy">PT Tokopedia Tower • Geofence Valid</span>
+            <span className="text-xs font-bold text-navy">{companyName} • Geofence Valid</span>
           </div>
         </div>
       </div>
@@ -172,7 +207,7 @@ export const Absensi: React.FC<AbsensiProps> = ({ onCheckIn, hasCheckedIn }) => 
   }
 
   /* ────────────────────────────────────────────
-     MAIN ABSSENSI UI
+     MAIN ABSENSI UI
   ──────────────────────────────────────────── */
   return (
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 animate-in fade-in duration-500 overflow-hidden">
@@ -186,7 +221,7 @@ export const Absensi: React.FC<AbsensiProps> = ({ onCheckIn, hasCheckedIn }) => 
           </div>
           <div className="min-w-0">
             <h2 className="font-bold text-lg md:text-xl text-navy leading-tight">Absensi Harian</h2>
-            <p className="text-xs text-navy/60 font-semibold mt-0.5 truncate">
+            <p className="text-[13px] text-navy/60 font-semibold mt-0.5 truncate">
               Ambil foto selfie untuk verifikasi kehadiran
             </p>
           </div>
@@ -195,7 +230,7 @@ export const Absensi: React.FC<AbsensiProps> = ({ onCheckIn, hasCheckedIn }) => 
           <p className="text-xl md:text-2xl font-light text-navy tabular-nums tracking-tight leading-none">
             {time.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
           </p>
-          <p className="text-[10px] font-bold text-steel uppercase tracking-widest mt-1">
+          <p className="text-[11px] font-bold text-steel uppercase tracking-widest mt-1">
             {time.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })}
           </p>
         </div>
@@ -211,12 +246,12 @@ export const Absensi: React.FC<AbsensiProps> = ({ onCheckIn, hasCheckedIn }) => 
               <div className="w-7 h-7 rounded-lg bg-steel/15 flex items-center justify-center">
                 <Camera className="w-3.5 h-3.5 text-steel" />
               </div>
-              <p className="text-xs font-bold uppercase tracking-widest text-navy/70">Preview Kamera</p>
+              <p className="text-[13px] font-bold uppercase tracking-widest text-navy/70">Preview Kamera</p>
             </div>
             {imageSrc && (
               <button 
                 onClick={handleRetake} 
-                className="text-[10px] font-bold bg-mist hover:bg-mist/80 text-navy px-3 py-1.5 rounded-full transition-colors flex items-center gap-1"
+                className="text-[11px] font-bold bg-mist hover:bg-mist/80 text-navy px-3 py-1.5 rounded-full transition-colors flex items-center gap-1"
               >
                 <RefreshCw className="w-3 h-3" /> Ulangi
               </button>
@@ -264,14 +299,14 @@ export const Absensi: React.FC<AbsensiProps> = ({ onCheckIn, hasCheckedIn }) => 
 
             {/* Live indicator */}
             {isCameraActive && !imageSrc && (
-              <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-black/40 backdrop-blur-sm px-2 py-1 rounded-full">
+              <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-full">
                 <div className="w-1.5 h-1.5 rounded-full bg-steel animate-pulse" />
-                <span className="text-[9px] font-bold text-white uppercase tracking-wider">Live</span>
+                <span className="text-[10px] font-bold text-white uppercase tracking-wider">Live</span>
               </div>
             )}
           </div>
 
-          {/* Capture button — prominent di bawah kamera */}
+          {/* Capture button */}
           <button
             type="button"
             onClick={capturePhoto}
@@ -298,27 +333,27 @@ export const Absensi: React.FC<AbsensiProps> = ({ onCheckIn, hasCheckedIn }) => 
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center">
-                    <MapPin className="w-4 h-4 text-white" />
+                    <Building2 className="w-4 h-4 text-white" />
                   </div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/60">Lokasi Saat Ini</p>
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-white/60">Lokasi PKL</p>
                 </div>
                 <button 
                   onClick={getCurrentLocation} 
                   disabled={isLoadingLocation}
-                  className="text-[10px] font-bold text-white/70 hover:text-white transition-colors flex items-center gap-1 disabled:opacity-50"
+                  className="text-[11px] font-bold text-white/70 hover:text-white transition-colors flex items-center gap-1 disabled:opacity-50"
                 >
                   <RefreshCw className={`w-3 h-3 ${isLoadingLocation ? 'animate-spin' : ''}`} /> Refresh
                 </button>
               </div>
 
-              <h4 className="font-bold text-base text-white leading-tight">PT Tokopedia Tower</h4>
-              <p className="text-xs font-medium text-white/60 mt-1 leading-relaxed">
-                Jl. Prof. DR. Satrio No.11, Setiabudi, Jakarta Selatan
+              <h4 className="font-bold text-base text-white leading-tight">{companyName || 'Belum ada perusahaan'}</h4>
+              <p className="text-[13px] font-medium text-white/60 mt-1 leading-relaxed">
+                {companyAddress || 'Alamat perusahaan belum diatur'}
               </p>
 
               <div className="mt-4 pt-4 border-t border-white/10">
                 {isLoadingLocation ? (
-                  <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-xl text-xs font-bold text-white">
+                  <div className="flex items-center gap-2 bg-white/10 px-3 py-2.5 rounded-xl text-xs font-bold text-white">
                     <Loader2 className="w-3.5 h-3.5 animate-spin" /> 
                     <span>Mengambil Lokasi GPS...</span>
                   </div>
@@ -327,9 +362,16 @@ export const Absensi: React.FC<AbsensiProps> = ({ onCheckIn, hasCheckedIn }) => 
                     <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                     <div className="flex-1">
                       <p className="font-semibold leading-relaxed">{locationError}</p>
-                      <button onClick={getCurrentLocation} className="underline text-[10px] font-bold mt-1">
+                      <button onClick={getCurrentLocation} className="underline text-[11px] font-bold mt-1">
                         Coba Lagi
                       </button>
+                    </div>
+                  </div>
+                ) : !companyLocation ? (
+                  <div className="flex items-start gap-2 bg-white/10 border border-white/15 p-3 rounded-xl text-xs text-white">
+                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="font-semibold leading-relaxed">Koordinat geofence belum diatur. Hubungi admin untuk setup.</p>
                     </div>
                   </div>
                 ) : (
@@ -345,11 +387,11 @@ export const Absensi: React.FC<AbsensiProps> = ({ onCheckIn, hasCheckedIn }) => 
                         <ShieldAlert className="w-4 h-4 text-white shrink-0" />
                       )}
                       <div className="min-w-0">
-                        <p className="text-[11px] font-bold text-white leading-tight">
+                        <p className="text-[12px] font-bold text-white leading-tight">
                           {isWithinRadius ? 'Dalam Radius Aman' : 'Di Luar Radius Aman'}
                         </p>
-                        <p className="text-[10px] text-white/60 font-semibold">
-                          Jarak: <span className="text-white font-bold tabular-nums">{distance}m</span> / {MAX_RADIUS_METERS}m
+                        <p className="text-[11px] text-white/60 font-semibold">
+                          Jarak: <span className="text-white font-bold tabular-nums">{distance}m</span> / {MAX_RADIUS}m
                         </p>
                       </div>
                     </div>
@@ -366,13 +408,13 @@ export const Absensi: React.FC<AbsensiProps> = ({ onCheckIn, hasCheckedIn }) => 
               <div className="w-7 h-7 rounded-lg bg-mist flex items-center justify-center">
                 <Clock className="w-3.5 h-3.5 text-navy" />
               </div>
-              <p className="text-xs font-bold uppercase tracking-widest text-navy/70">Kirim Absensi</p>
+              <p className="text-[13px] font-bold uppercase tracking-widest text-navy/70">Kirim Absensi</p>
             </div>
             
             <div className="flex-1 flex flex-col justify-center gap-3 min-h-0">
               {/* Checklist visual */}
-              <div className="space-y-2">
-                <div className={`flex items-center gap-2 text-xs font-semibold ${imageSrc ? 'text-navy' : 'text-navy/40'}`}>
+              <div className="space-y-2.5">
+                <div className={`flex items-center gap-2 text-[13px] font-semibold ${imageSrc ? 'text-navy' : 'text-navy/40'}`}>
                   <div className={`w-5 h-5 rounded-full flex items-center justify-center border shrink-0 ${
                     imageSrc ? 'bg-steel border-steel' : 'border-navy/20'
                   }`}>
@@ -380,23 +422,31 @@ export const Absensi: React.FC<AbsensiProps> = ({ onCheckIn, hasCheckedIn }) => 
                   </div>
                   <span>Foto selfie terambil</span>
                 </div>
-                <div className={`flex items-center gap-2 text-xs font-semibold ${isWithinRadius && !isLoadingLocation ? 'text-navy' : 'text-navy/40'}`}>
+                <div className={`flex items-center gap-2 text-[13px] font-semibold ${isWithinRadius && !isLoadingLocation && companyLocation ? 'text-navy' : 'text-navy/40'}`}>
                   <div className={`w-5 h-5 rounded-full flex items-center justify-center border shrink-0 ${
-                    isWithinRadius && !isLoadingLocation ? 'bg-steel border-steel' : 'border-navy/20'
+                    isWithinRadius && !isLoadingLocation && companyLocation ? 'bg-steel border-steel' : 'border-navy/20'
                   }`}>
-                    {isWithinRadius && !isLoadingLocation && <CheckCircle2 className="w-3 h-3 text-white" />}
+                    {isWithinRadius && !isLoadingLocation && companyLocation && <CheckCircle2 className="w-3 h-3 text-white" />}
                   </div>
-                  <span>Lokasi GPS valid (radius ≤ {MAX_RADIUS_METERS}m)</span>
+                  <span>Lokasi GPS valid (radius ≤ {MAX_RADIUS}m)</span>
                 </div>
               </div>
 
               {/* Warning jika di luar radius */}
-              {!isLoadingLocation && !isWithinRadius && !locationError && (
-                <div className="mt-1 p-3 bg-navy/5 border border-navy/10 rounded-xl flex items-start gap-2 text-navy text-xs font-medium">
+              {!isLoadingLocation && companyLocation && !isWithinRadius && !locationError && (
+                <div className="mt-1 p-3 bg-navy/5 border border-navy/10 rounded-xl flex items-start gap-2 text-navy text-[13px] font-medium">
                   <AlertTriangle className="w-4 h-4 shrink-0 text-navy/60 mt-0.5" />
                   <span className="leading-relaxed">
-                    Anda berada <span className="font-bold">{distance}m</span> dari lokasi absensi (batas {MAX_RADIUS_METERS}m). Pindahkan posisi Anda ke area kantor.
+                    Anda berada <span className="font-bold">{distance}m</span> dari lokasi absensi (batas {MAX_RADIUS}m). Pindahkan posisi Anda ke area kantor.
                   </span>
+                </div>
+              )}
+
+              {/* Error dari backend */}
+              {submitError && (
+                <div className="mt-1 p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-2 text-rose-700 text-[13px] font-medium">
+                  <AlertTriangle className="w-4 h-4 shrink-0 text-rose-500 mt-0.5" />
+                  <span className="leading-relaxed">{submitError}</span>
                 </div>
               )}
             </div>
@@ -404,9 +454,9 @@ export const Absensi: React.FC<AbsensiProps> = ({ onCheckIn, hasCheckedIn }) => 
             {/* Submit CTA */}
             <button
               onClick={handleSubmit}
-              disabled={!imageSrc || isSubmitting || !isWithinRadius || !!locationError}
+              disabled={!imageSrc || isSubmitting || !isWithinRadius || !!locationError || !companyLocation}
               className={`w-full mt-4 py-4 rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-2 shrink-0 ${
-                !imageSrc || !isWithinRadius || !!locationError
+                !imageSrc || !isWithinRadius || !!locationError || !companyLocation
                   ? 'bg-mist text-navy/40 cursor-not-allowed' 
                   : 'bg-navy text-white hover:bg-navy/90 hover:-translate-y-0.5 active:translate-y-0 shadow-lg shadow-navy/20'
               }`}
