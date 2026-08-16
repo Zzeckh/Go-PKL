@@ -1,6 +1,6 @@
 import React from 'react';
 import { Eye, EyeOff, ArrowRight, Sparkles, MapPin, CheckCircle2, Users, LineChart, Loader2 } from 'lucide-react';
-import { AuthMode } from '../types'; // UserRole dihapus dari import
+import { AuthMode } from '../types';
 
 interface AuthScreenProps {
   authMode: AuthMode;
@@ -125,7 +125,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           </div>
         </div>
 
-        {/* SLIDING BLUE CARD */}
+        {/* SLIDING CARD — solid steel */}
         <div
           className="absolute top-0 left-0 w-1/2 h-full z-30"
           style={{
@@ -135,7 +135,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           }}
         >
           <div className="w-full h-full p-4">
-            <div className="w-full h-full bg-gradient-to-br from-[#8CCDE9]/95 to-[#EBFBFA]/95 backdrop-blur-md rounded-[24px] overflow-hidden border border-white/80 shadow-2xl shadow-[#8CCDE9]/20 relative">
+            <div className="w-full h-full bg-steel/95 backdrop-blur-md rounded-[24px] overflow-hidden border border-white/20 shadow-2xl shadow-steel/30 relative">
               <div
                 className="absolute inset-0 p-10 flex flex-col justify-between"
                 style={{
@@ -180,13 +180,13 @@ const AuthForm = ({ mode, showPassword, setShowPassword, name, setName, email, s
   return (
     <div className="space-y-5">
       <div>
-        <div className="w-12 h-12 bg-gradient-to-br from-slate-800 to-slate-950 text-white rounded-2xl flex items-center justify-center font-bold text-xl mb-6 shadow-xl border border-slate-700">
+        <div className="w-12 h-12 bg-navy text-white rounded-2xl flex items-center justify-center font-bold text-xl mb-6 shadow-lg border border-steel/20">
           Go
         </div>
-        <h2 className="text-3xl font-extrabold text-black tracking-tight">
+        <h2 className="text-3xl font-extrabold text-navy tracking-tight">
           {isLogin ? 'Welcome back' : 'Create an account'}
         </h2>
-        <p className="text-sm text-black/60 mt-2 font-medium">
+        <p className="text-sm text-navy/60 mt-2 font-medium">
           {isLogin ? 'Enter your credentials to access your dashboard' : 'Register using your official school/company email'}
         </p>
       </div>
@@ -195,35 +195,35 @@ const AuthForm = ({ mode, showPassword, setShowPassword, name, setName, email, s
         {!isLogin && (
           <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-bottom-2">
             <div>
-              <label className="block text-xs uppercase tracking-wider font-bold text-black/60 mb-1.5">Full Name</label>
-              <input value={name} onChange={e => setName(e.target.value)} type="text" placeholder="John Doe" className="w-full bg-white/90 border border-black/10 shadow-sm rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-black/20 focus:border-black/20 outline-none transition-all placeholder:text-black/40" required />
+              <label className="block text-xs uppercase tracking-wider font-bold text-navy/60 mb-1.5">Full Name</label>
+              <input value={name} onChange={e => setName(e.target.value)} type="text" placeholder="John Doe" className="w-full bg-white/90 border border-mist shadow-sm rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-steel/30 focus:border-steel outline-none transition-all placeholder:text-navy/40 text-navy" required />
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-wider font-bold text-black/60 mb-1.5">Institution</label>
-              <input value={institution} onChange={e => setInstitution(e.target.value)} type="text" placeholder="School / Company" className="w-full bg-white/90 border border-black/10 shadow-sm rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-black/20 focus:border-black/20 outline-none transition-all placeholder:text-black/40" required />
+              <label className="block text-xs uppercase tracking-wider font-bold text-navy/60 mb-1.5">Institution</label>
+              <input value={institution} onChange={e => setInstitution(e.target.value)} type="text" placeholder="School / Company" className="w-full bg-white/90 border border-mist shadow-sm rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-steel/30 focus:border-steel outline-none transition-all placeholder:text-navy/40 text-navy" required />
             </div>
           </div>
         )}
 
         <div>
-          <label className="block text-xs uppercase tracking-wider font-bold text-black/60 mb-1.5">Email address</label>
-          <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="you@example.com" className="w-full bg-white/90 border border-black/10 shadow-sm rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-black/20 focus:border-black/20 outline-none transition-all placeholder:text-black/40" required />
+          <label className="block text-xs uppercase tracking-wider font-bold text-navy/60 mb-1.5">Email address</label>
+          <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="you@example.com" className="w-full bg-white/90 border border-mist shadow-sm rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-steel/30 focus:border-steel outline-none transition-all placeholder:text-navy/40 text-navy" required />
         </div>
 
         <div>
           <div className="flex justify-between items-center mb-1.5">
-            <label className="block text-xs uppercase tracking-wider font-bold text-black/60">Password</label>
-            {isLogin && <a href="#" className="text-xs font-bold text-black/80 hover:text-black underline transition-colors">Forgot password?</a>}
+            <label className="block text-xs uppercase tracking-wider font-bold text-navy/60">Password</label>
+            {isLogin && <a href="#" className="text-xs font-bold text-steel hover:text-steel/70 underline transition-colors">Forgot password?</a>}
           </div>
           <div className="relative">
-            <input value={password} onChange={e => setPassword(e.target.value)} type={showPassword ? 'text' : 'password'} className="w-full bg-white/90 border border-black/10 shadow-sm rounded-xl px-4 py-2.5 text-sm pr-10 focus:ring-2 focus:ring-black/20 focus:border-black/20 outline-none transition-all placeholder:text-black/40" placeholder="••••••••" required />
-            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-2.5 text-black/40 hover:text-black/70 transition-colors">
+            <input value={password} onChange={e => setPassword(e.target.value)} type={showPassword ? 'text' : 'password'} className="w-full bg-white/90 border border-mist shadow-sm rounded-xl px-4 py-2.5 text-sm pr-10 focus:ring-2 focus:ring-steel/30 focus:border-steel outline-none transition-all placeholder:text-navy/40 text-navy" placeholder="••••••••" required />
+            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-2.5 text-navy/40 hover:text-navy/70 transition-colors">
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
           </div>
         </div>
 
-        <button type="submit" disabled={isLoading} className="w-full bg-black text-white py-3 rounded-xl font-bold text-sm shadow-xl shadow-black/20 hover:shadow-black/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0">
+        <button type="submit" disabled={isLoading} className="w-full bg-navy text-white py-3 rounded-xl font-bold text-sm shadow-xl shadow-navy/20 hover:shadow-navy/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0">
           {isLoading ? (
             <Loader2 className="w-5 h-5 animate-spin" />
           ) : (
@@ -234,9 +234,9 @@ const AuthForm = ({ mode, showPassword, setShowPassword, name, setName, email, s
           )}
         </button>
 
-        <p className="text-center text-xs text-black/60 pt-4 font-medium">
+        <p className="text-center text-xs text-navy/60 pt-4 font-medium">
           {isLogin ? "Don't have an account? " : "Already have an account? "}
-          <button type="button" onClick={onSwitch} className="font-extrabold text-black hover:text-black/70 underline transition-colors">
+          <button type="button" onClick={onSwitch} className="font-extrabold text-steel hover:text-steel/70 underline transition-colors">
             {isLogin ? 'Sign up' : 'Sign in'}
           </button>
         </p>
@@ -253,14 +253,14 @@ const MobileForm = ({ mode, showPassword, setShowPassword, name, setName, email,
   return (
     <div className="space-y-5 w-full">
       <div className="flex items-center gap-3 mb-2 pt-4">
-        <div className="w-10 h-10 bg-gradient-to-br from-slate-800 to-slate-950 text-white rounded-2xl flex items-center justify-center font-bold text-lg shadow-lg border border-slate-700 shrink-0">
+        <div className="w-10 h-10 bg-navy text-white rounded-2xl flex items-center justify-center font-bold text-lg shadow-lg border border-steel/20 shrink-0">
           Go
         </div>
         <div>
-          <div className="font-extrabold text-black text-xl tracking-tight leading-tight">
+          <div className="font-extrabold text-navy text-xl tracking-tight leading-tight">
             {isLogin ? 'Welcome back' : 'Create account'}
           </div>
-          <div className="text-xs text-black/60 font-medium">
+          <div className="text-xs text-navy/60 font-medium">
             {isLogin ? 'Sign in to your Go-PKL portal' : 'Register with your institution email'}
           </div>
         </div>
@@ -270,24 +270,24 @@ const MobileForm = ({ mode, showPassword, setShowPassword, name, setName, email,
         {!isLogin && (
           <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2">
             <div>
-              <label className="block text-xs uppercase tracking-wider font-bold text-black/50 mb-1.5">Full Name</label>
+              <label className="block text-xs uppercase tracking-wider font-bold text-navy/50 mb-1.5">Full Name</label>
               <input
                 value={name}
                 onChange={e => setName(e.target.value)}
                 type="text"
                 placeholder="John Doe"
-                className="w-full bg-white/90 border border-black/10 shadow-sm rounded-2xl px-4 py-3.5 text-sm focus:ring-2 focus:ring-black/20 outline-none transition-all placeholder:text-black/30"
+                className="w-full bg-white/90 border border-mist shadow-sm rounded-2xl px-4 py-3.5 text-sm focus:ring-2 focus:ring-steel/30 outline-none transition-all placeholder:text-navy/30 text-navy"
                 required
               />
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-wider font-bold text-black/50 mb-1.5">Institution</label>
+              <label className="block text-xs uppercase tracking-wider font-bold text-navy/50 mb-1.5">Institution</label>
               <input
                 value={institution}
                 onChange={e => setInstitution(e.target.value)}
                 type="text"
                 placeholder="School / Company Name"
-                className="w-full bg-white/90 border border-black/10 shadow-sm rounded-2xl px-4 py-3.5 text-sm focus:ring-2 focus:ring-black/20 outline-none transition-all placeholder:text-black/30"
+                className="w-full bg-white/90 border border-mist shadow-sm rounded-2xl px-4 py-3.5 text-sm focus:ring-2 focus:ring-steel/30 outline-none transition-all placeholder:text-navy/30 text-navy"
                 required
               />
             </div>
@@ -295,22 +295,22 @@ const MobileForm = ({ mode, showPassword, setShowPassword, name, setName, email,
         )}
 
         <div>
-          <label className="block text-xs uppercase tracking-wider font-bold text-black/50 mb-1.5">Email</label>
+          <label className="block text-xs uppercase tracking-wider font-bold text-navy/50 mb-1.5">Email</label>
           <input
             value={email}
             onChange={e => setEmail(e.target.value)}
             type="email"
             placeholder="you@example.com"
-            className="w-full bg-white/90 border border-black/10 shadow-sm rounded-2xl px-4 py-3.5 text-sm focus:ring-2 focus:ring-black/20 outline-none transition-all placeholder:text-black/30"
+            className="w-full bg-white/90 border border-mist shadow-sm rounded-2xl px-4 py-3.5 text-sm focus:ring-2 focus:ring-steel/30 outline-none transition-all placeholder:text-navy/30 text-navy"
             required
           />
         </div>
 
         <div>
           <div className="flex justify-between items-center mb-1.5">
-            <label className="block text-xs uppercase tracking-wider font-bold text-black/50">Password</label>
+            <label className="block text-xs uppercase tracking-wider font-bold text-navy/50">Password</label>
             {isLogin && (
-              <a href="#" className="text-xs font-bold text-black/80 underline transition-colors">
+              <a href="#" className="text-xs font-bold text-steel underline transition-colors">
                 Forgot?
               </a>
             )}
@@ -321,10 +321,10 @@ const MobileForm = ({ mode, showPassword, setShowPassword, name, setName, email,
               onChange={e => setPassword(e.target.value)}
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
-              className="w-full bg-white/90 border border-black/10 shadow-sm rounded-2xl px-4 py-3.5 text-sm pr-12 focus:ring-2 focus:ring-black/20 outline-none transition-all"
+              className="w-full bg-white/90 border border-mist shadow-sm rounded-2xl px-4 py-3.5 text-sm pr-12 focus:ring-2 focus:ring-steel/30 outline-none transition-all text-navy"
               required
             />
-            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-black/40 active:text-black/60">
+            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-navy/40 active:text-navy/60">
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
           </div>
@@ -333,7 +333,7 @@ const MobileForm = ({ mode, showPassword, setShowPassword, name, setName, email,
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-black text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-black/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-70 disabled:cursor-not-allowed"
+          className="w-full bg-navy text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-navy/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <Loader2 className="w-5 h-5 animate-spin" />
@@ -345,9 +345,9 @@ const MobileForm = ({ mode, showPassword, setShowPassword, name, setName, email,
           )}
         </button>
 
-        <p className="text-center text-sm text-black/60 pt-2 font-medium pb-8">
+        <p className="text-center text-sm text-navy/60 pt-2 font-medium pb-8">
           {isLogin ? "Don't have an account? " : 'Already have an account? '}
-          <button type="button" onClick={onSwitch} className="font-extrabold text-black underline">
+          <button type="button" onClick={onSwitch} className="font-extrabold text-steel underline">
             {isLogin ? 'Sign up' : 'Sign in'}
           </button>
         </p>
@@ -359,11 +359,11 @@ const MobileForm = ({ mode, showPassword, setShowPassword, name, setName, email,
 const DecorativeGraphic = ({ mode }: { mode: 'login' | 'register' }) => (
   <>
     <div className="relative z-10 space-y-4">
-      <div className="inline-flex items-center gap-2 bg-white/60 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-black/80 border border-white shadow-sm">
-        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+      <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-white border border-white/20 shadow-sm">
+        <Sparkles className="w-3.5 h-3.5 text-white" />
         {mode === 'login' ? 'Integrated PKL Portal' : 'Secure Registration'}
       </div>
-      <h3 className="text-4xl font-extrabold text-black/80 tracking-tight leading-tight max-w-sm">
+      <h3 className="text-4xl font-extrabold text-white tracking-tight leading-tight max-w-sm">
         {mode === 'login' 
           ? 'Manage your internship activities in one place.' 
           : 'Start your professional journey with Go-PKL.'}
@@ -373,62 +373,62 @@ const DecorativeGraphic = ({ mode }: { mode: 'login' | 'register' }) => (
     <div className="relative z-10 w-full max-w-sm self-end space-y-3">
        {mode === 'login' ? (
          <>
-           <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-white shadow-xl">
-             <div className="flex items-center gap-3 border-b border-slate-100 pb-3 mb-3">
-               <div className="w-10 h-10 bg-black/10 rounded-full flex items-center justify-center"><MapPin className="w-5 h-5 text-black" /></div>
+           <div className="bg-white/15 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-xl">
+             <div className="flex items-center gap-3 border-b border-white/20 pb-3 mb-3">
+               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"><MapPin className="w-5 h-5 text-white" /></div>
                <div>
-                 <div className="text-sm font-bold text-black/80">Geofence Check-in</div>
-                 <div className="text-xs text-black/50">Tokopedia Tower</div>
+                 <div className="text-sm font-bold text-white">Geofence Check-in</div>
+                 <div className="text-xs text-white/70">Tokopedia Tower</div>
                </div>
              </div>
-             <div className="flex items-center gap-2 text-xs font-bold text-black/80">
-               <CheckCircle2 className="w-4 h-4 text-black" /> Validated location
+             <div className="flex items-center gap-2 text-xs font-bold text-white">
+               <CheckCircle2 className="w-4 h-4" /> Validated location
              </div>
            </div>
-           <div className="bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-white shadow-xl">
+           <div className="bg-white/15 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-xl">
              <div className="flex justify-between items-center mb-3">
-                <div className="text-sm font-bold text-black/80">Daily Logbook</div>
-                <span className="text-[10px] bg-black text-white px-2.5 py-1 rounded-full font-bold">Approved</span>
+                <div className="text-sm font-bold text-white">Daily Logbook</div>
+                <span className="text-[10px] bg-white/20 text-white px-2.5 py-1 rounded-full font-bold">Approved</span>
              </div>
-             <div className="h-2 bg-slate-100 rounded-full w-3/4 mb-2"></div>
-             <div className="h-2 bg-slate-100 rounded-full w-1/2"></div>
+             <div className="h-2 bg-white/10 rounded-full w-3/4 mb-2"></div>
+             <div className="h-2 bg-white/10 rounded-full w-1/2"></div>
            </div>
          </>
        ) : (
          <>
-           <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-white shadow-xl">
-             <div className="flex items-center gap-3 border-b border-slate-100 pb-3 mb-3">
-               <div className="w-10 h-10 bg-black/10 rounded-full flex items-center justify-center"><Users className="w-5 h-5 text-black" /></div>
+           <div className="bg-white/15 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-xl">
+             <div className="flex items-center gap-3 border-b border-white/20 pb-3 mb-3">
+               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"><Users className="w-5 h-5 text-white" /></div>
                <div>
-                 <div className="text-sm font-bold text-black/80">Mentorship Pairing</div>
-                 <div className="text-xs text-black/50">Connect with industry experts</div>
+                 <div className="text-sm font-bold text-white">Mentorship Pairing</div>
+                 <div className="text-xs text-white/70">Connect with industry experts</div>
                </div>
              </div>
              <div className="flex items-center -space-x-2">
                {[1, 2, 3].map(i => (
-                 <img key={i} src={`https://i.pravatar.cc/100?img=${i+10}`} className="w-6 h-6 rounded-full border-2 border-white" alt="Avatar" />
+                 <img key={i} src={`https://i.pravatar.cc/100?img=${i+10}`} className="w-6 h-6 rounded-full border-2 border-white/40" alt="Avatar" />
                ))}
-               <div className="w-6 h-6 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center text-[8px] font-bold">+12</div>
+               <div className="w-6 h-6 rounded-full border-2 border-white/40 bg-white/20 flex items-center justify-center text-[8px] font-bold text-white">+12</div>
              </div>
            </div>
-           <div className="bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-white shadow-xl">
+           <div className="bg-white/15 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-xl">
              <div className="flex justify-between items-center mb-3">
                 <div className="flex items-center gap-2">
-                  <LineChart className="w-4 h-4 text-black/60" />
-                  <div className="text-sm font-bold text-black/80">Skill Progress</div>
+                  <LineChart className="w-4 h-4 text-white/80" />
+                  <div className="text-sm font-bold text-white">Skill Progress</div>
                 </div>
-                <span className="text-[10px] bg-black/10 text-black px-2.5 py-1 rounded-full font-bold">Level Up</span>
+                <span className="text-[10px] bg-white/20 text-white px-2.5 py-1 rounded-full font-bold">Level Up</span>
              </div>
-             <div className="w-full bg-slate-100 rounded-full h-1.5 mb-1">
-               <div className="bg-black h-1.5 rounded-full" style={{ width: '75%' }}></div>
+             <div className="w-full bg-white/10 rounded-full h-1.5 mb-1">
+               <div className="bg-white h-1.5 rounded-full" style={{ width: '75%' }}></div>
              </div>
-             <div className="text-[9px] text-black/50 text-right">75% to Next Milestone</div>
+             <div className="text-[9px] text-white/70 text-right">75% to Next Milestone</div>
            </div>
          </>
        )}
     </div>
     
-    <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-white/30 rounded-full blur-3xl pointer-events-none"></div>
-    <div className="absolute bottom-[-10%] left-[-10%] w-72 h-72 bg-black/5 rounded-full blur-3xl pointer-events-none"></div>
+    <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div className="absolute bottom-[-10%] left-[-10%] w-72 h-72 bg-navy/10 rounded-full blur-3xl pointer-events-none"></div>
   </>
 );
