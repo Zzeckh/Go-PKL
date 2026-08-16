@@ -1,3 +1,4 @@
+cat > prisma/schema.prisma << 'EOF'
 generator client {
   provider = "prisma-client-js"
 }
@@ -51,7 +52,8 @@ model School {
   phone     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  users     User[]
+
+  users User[]
 }
 
 model Company {
@@ -67,11 +69,13 @@ model Company {
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-  mentorId     Int?
-  mentor       User?    @relation("CompanyMentor", fields: [mentorId], references: [id])
-  students     User[]
-  absensis     Absensi[]
-  evaluations  Evaluation[]
+
+  mentorId  Int?
+  mentor    User?    @relation("CompanyMentor", fields: [mentorId], references: [id])
+
+  students      User[]
+  absensis      Absensi[]
+  evaluations   Evaluation[]
 }
 
 model User {
@@ -85,19 +89,25 @@ model User {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   schoolId  Int?
   school    School?  @relation(fields: [schoolId], references: [id])
+
   teacherId Int?
   teacher   User?    @relation("StudentTeacher", fields: [teacherId], references: [id])
   students  User[]   @relation("StudentTeacher")
+
   companyId Int?
   company   Company? @relation(fields: [companyId], references: [id])
+
   mentoredCompanies Company[] @relation("CompanyMentor")
+
   absensis         Absensi[]
   logbooks         Logbook[]
   permissions      Permission[]
   evaluations      Evaluation[] @relation("EvaluationStudent")
   evaluationsGiven Evaluation[] @relation("EvaluationEvaluator")
+
   @@index([role])
   @@index([companyId])
   @@index([teacherId])
@@ -109,17 +119,22 @@ model Absensi {
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   companyId    Int?
   company      Company?      @relation(fields: [companyId], references: [id])
+
   date         DateTime      @db.Date
   checkInTime  DateTime?
   checkOutTime DateTime?
+
   latitude     Float?
   longitude    Float?
   address      String?
+
   status       AbsensiStatus @default(hadir)
   imageUrl     String?
   notes        String?
+
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+
   @@unique([userId, date])
   @@index([userId, date])
   @@index([companyId])
@@ -129,18 +144,22 @@ model Logbook {
   id            Int           @id @default(autoincrement())
   userId        Int
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   date          DateTime      @db.Date
   activityTitle String
   description   String        @db.Text
   hours         Float         @default(0)
   category      String?
   attachmentUrl String?
+
   status        LogbookStatus @default(pending)
   feedback      String?       @db.Text
   reviewedById  Int?
   reviewedAt    DateTime?
+
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+
   @@index([userId, date])
   @@index([status])
 }
@@ -149,16 +168,20 @@ model Permission {
   id            Int              @id @default(autoincrement())
   userId        Int
   user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   date          DateTime         @db.Date
   type          PermissionType
   reason        String           @db.Text
   attachmentUrl String?
+
   status        PermissionStatus @default(pending)
   reviewedById  Int?
   reviewedAt    DateTime?
   rejectReason  String?          @db.Text
+
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
+
   @@index([userId])
   @@index([status])
 }
@@ -167,16 +190,22 @@ model Evaluation {
   id          Int            @id @default(autoincrement())
   studentId   Int
   student     User           @relation("EvaluationStudent", fields: [studentId], references: [id], onDelete: Cascade)
+
   evaluatorId Int
   evaluator   User           @relation("EvaluationEvaluator", fields: [evaluatorId], references: [id])
+
   companyId   Int?
   company     Company?       @relation(fields: [companyId], references: [id])
+
   type        EvaluationType
   score       Float
   comment     String?        @db.Text
   period      String
+
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
+
   @@unique([studentId, evaluatorId, type, period])
   @@index([studentId])
 }
+EOF
