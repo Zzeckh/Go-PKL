@@ -1,21 +1,24 @@
-import jwt from "jsonwebtoken";
-
-const JWT_SECRET = process.env.JWT_SECRET || "supersecret_jwt_key";
+import jwt from 'jsonwebtoken';
+import { JWT_SECRET } from '../config/jwt.js';
 
 export const authMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Token tidak ditemukan" });
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Token tidak ditemukan' });
   }
-
-  const token = authHeader.split(" ")[1];
-
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
+    req.user = jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
     next();
-  } catch (error) {
-    return res.status(401).json({ error: "Token tidak valid" });
+  } catch {
+    return res.status(401).json({ error: 'Token tidak valid atau kedaluwarsa' });
   }
+};
+
+// Role guard: authorize('mentor', 'teacher') → hanya role tsb yang boleh lewat
+export const authorize = (...allowedRoles) => (req, res, next) => {
+  if (!req.user) return res.status(401).json({ error: 'Token tidak ditemukan' });
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: `Akses ditolak untuk role: ${req.user.role}` });
+  }
+  next();
 };

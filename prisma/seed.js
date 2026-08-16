@@ -50,10 +50,6 @@ async function main() {
   });
 
   await prisma.user.create({
-    data: { name: 'Administrator', email: 'admin@gopkl.id', password: hash, role: 'admin', schoolId: school.id },
-  });
-
-  await prisma.user.create({
     data: {
       name: 'Siswa PKL',
       email: 'siswa@gopkl.id',
@@ -70,7 +66,6 @@ async function main() {
   console.log('   guru@gopkl.id   → teacher');
   console.log('   mentor@gopkl.id → mentor');
   console.log('   hubin@gopkl.id  → hubin');
-  console.log('   admin@gopkl.id  → admin');
 }
 
 main()

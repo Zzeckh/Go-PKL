@@ -1,110 +1,138 @@
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import prisma from "../config/db.js";
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import prisma from '../config/db.js';
+import { JWT_SECRET } from '../config/jwt.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || "supersecret_jwt_key";
+/* ── Token payload: id (bukan userId) — sinkron dengan middleware & controller lain ── */
+const generateToken = (user) =>
+  jwt.sign(
+    {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      schoolId: user.schoolId ?? null,
+      companyId: user.companyId ?? null,
+    },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
 
+/* ── Relasi yang dibutuhkan frontend ── */
+const userInclude = {
+  school: { select: { name: true } },
+  company: {
+    select: { name: true, address: true, latitude: true, longitude: true, radiusMeters: true },
+  },
+  teacher: { select: { name: true } },
+};
+
+const toFrontendUser = (user) => ({
+  id: user.id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  schoolName: user.school?.name ?? null,
+  companyName: user.company?.name ?? null,
+  companyAddress: user.company?.address ?? null,
+  companyLocation:
+    user.company?.latitude != null
+      ? {
+          lat: user.company.latitude,
+          lng: user.company.longitude,
+          radius: user.company.radiusMeters,
+        }
+      : null,
+  teacherName: user.teacher?.name ?? null,
+});
+
+/**
+ * POST /api/auth/login
+ */
+export const login = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email dan password harus diisi' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email }, include: userInclude });
+    if (!user) return res.status(401).json({ error: 'Email atau password salah' });
+
+    if (!user.isActive) {
+      return res.status(403).json({ error: 'Akun dinonaktifkan. Hubungi admin sekolah.' });
+    }
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) return res.status(401).json({ error: 'Email atau password salah' });
+
+    res.json({ token: generateToken(user), user: toFrontendUser(user) });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/auth/register
+ * ⚠️ TIDAK menerima role dari client — semua pendaftar jadi "student".
+ * Role lain (guru/mentor/hubin/admin) diatur oleh admin/hubin lewat sistem.
+ */
 export const register = async (req, res, next) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, institution } = req.body;
 
-    if (!name || !email || !password || !role) {
-      return res.status(400).json({ error: "Semua field harus diisi" });
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Nama, email, dan password wajib diisi' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password minimal 6 karakter' });
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
-      return res.status(400).json({ error: "Email sudah terdaftar" });
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) return res.status(409).json({ error: 'Email sudah terdaftar. Silakan login.' });
+
+    // Cari / buat sekolah dari field institution (opsional)
+    let school = null;
+    if (institution) {
+      school = await prisma.school.findFirst({ where: { name: institution } });
+      if (!school) school = await prisma.school.create({ data: { name: institution } });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
       data: {
         name,
         email,
-        password: hashedPassword,
-        role,
+        password: await bcrypt.hash(password, 10),
+        role: 'student', // ← dipaksa backend, bukan dari client
+        schoolId: school?.id ?? null,
       },
+      include: userInclude,
     });
 
-    const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, {
-      expiresIn: "7d",
-    });
-
-    res.status(201).json({
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        createdAt: user.createdAt,
-      },
-    });
+    res.status(201).json({ token: generateToken(user), user: toFrontendUser(user) });
   } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(409).json({ error: 'Email sudah terdaftar' });
+    }
     next(error);
   }
 };
 
-export const login = async (req, res, next) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ error: "Email dan password diperlukan" });
-    }
-
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      return res.status(401).json({ error: "Email atau password salah" });
-    }
-
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) {
-      return res.status(401).json({ error: "Email atau password salah" });
-    }
-
-    const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, {
-      expiresIn: "7d",
-    });
-
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        createdAt: user.createdAt,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
+/**
+ * GET /api/auth/me  (dipasang authMiddleware di route)
+ */
 export const getMe = async (req, res, next) => {
   try {
-    const userId = req.user?.userId;
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: req.user.id },
+      include: userInclude,
     });
 
-    if (!user) {
-      return res.status(404).json({ error: "User tidak ditemukan" });
+    if (!user || !user.isActive) {
+      return res.status(404).json({ error: 'User tidak ditemukan' });
     }
 
-    res.json({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      createdAt: user.createdAt,
-    });
+    res.json(toFrontendUser(user));
   } catch (error) {
     next(error);
   }
