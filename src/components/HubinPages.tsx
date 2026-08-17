@@ -2,9 +2,11 @@ import React, { useState, useMemo } from 'react';
 import {
   Users, Building2, Briefcase, GraduationCap, Search, X, Plus,
   MapPin, Clock, ShieldCheck,
-  UserPlus, Building as BuildingIcon, UserCog, Package
+  UserPlus, Building as BuildingIcon, UserCog, Package,
+  MapPinned
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { LocationPickerModal } from './LocationPickerModal';
 
 type TabKey = 'siswa' | 'guru' | 'perusahaan' | 'mentor';
 
@@ -29,6 +31,9 @@ export const HubinData: React.FC = () => {
   const [detailPerusahaan, setDetailPerusahaan] = useState<any>(null);
   const [detailGuru, setDetailGuru] = useState<any>(null);
   const [detailMentor, setDetailMentor] = useState<any>(null);
+  
+  // ── Location picker modal state
+  const [pickerCompany, setPickerCompany] = useState<any>(null);
 
   /* ── Tahun akademik aktif ── */
   const activeYear = siswaList.find(s => s.academicYear && s.academicYear !== '-')?.academicYear || '2025/2026';
@@ -308,7 +313,7 @@ export const HubinData: React.FC = () => {
             </div>
           )}
 
-          {/* ── TAB: PERUSAHAAN ── */}
+          {/* ── TAB: PERUSAHAAN (with location badge) ── */}
           {activeTab === 'perusahaan' && (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {filteredPerusahaan.length === 0 ? (
@@ -316,11 +321,12 @@ export const HubinData: React.FC = () => {
               ) : (
                 filteredPerusahaan.map(c => {
                   const count = siswaList.filter(s => s.perusahaan === c.name).length;
+                  const hasCoords = c.latitude != null && c.longitude != null;
                   return (
                     <button
                       key={c.id}
                       onClick={() => setDetailPerusahaan(c)}
-                      className="p-4 rounded-2xl border border-mist/60 bg-white hover:border-steel/30 hover:shadow-sm transition-all text-left"
+                      className="p-4 rounded-2xl border border-mist/60 bg-white hover:border-steel/30 hover:shadow-sm transition-all text-left group"
                     >
                       <div className="flex items-center gap-3 mb-3">
                         <div className="w-11 h-11 rounded-xl bg-steel/10 flex items-center justify-center shrink-0">
@@ -343,6 +349,30 @@ export const HubinData: React.FC = () => {
                           <span className="text-[11px] font-bold text-navy truncate ml-2">
                             {c.mentor || '-'}
                           </span>
+                        </div>
+                        {/* Koordinat status + tombol */}
+                        <div className={`flex justify-between items-center rounded-lg px-2.5 py-1.5 border ${
+                          hasCoords 
+                            ? 'bg-steel/10 border-steel/30' 
+                            : 'bg-[#FBF3E2] border-[#F0E1C0]'
+                        }`}>
+                          <div className="flex items-center gap-1.5">
+                            <MapPinned className={`w-3.5 h-3.5 ${hasCoords ? 'text-steel' : 'text-[#9A6B15]'}`} />
+                            <span className={`text-[11px] font-bold ${hasCoords ? 'text-steel' : 'text-[#9A6B15]'}`}>
+                              {hasCoords ? 'Koordinat Aktif' : 'Belum Diatur'}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setPickerCompany(c); }}
+                            className={`text-[10px] font-bold px-2 py-1 rounded-md transition-colors ${
+                              hasCoords 
+                                ? 'bg-white text-navy hover:bg-mist' 
+                                : 'bg-steel text-white hover:bg-steel/90'
+                            }`}
+                          >
+                            {hasCoords ? 'Edit' : 'Atur Lokasi'}
+                          </button>
                         </div>
                       </div>
                     </button>
@@ -472,6 +502,22 @@ export const HubinData: React.FC = () => {
             </div>
           )}
 
+          {/* Tombol Atur/Edit Lokasi Geofence */}
+          <button
+            type="button"
+            onClick={() => setPickerCompany(detailPerusahaan)}
+            className={`w-full mb-5 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all ${
+              detailPerusahaan.latitude && detailPerusahaan.longitude
+                ? 'bg-mist text-navy hover:bg-mist/80'
+                : 'bg-steel text-white hover:bg-steel/90 shadow-md shadow-steel/25'
+            }`}
+          >
+            <MapPinned className="w-4 h-4" />
+            {detailPerusahaan.latitude && detailPerusahaan.longitude
+              ? 'Edit Lokasi Geofence'
+              : 'Atur Lokasi Geofence'}
+          </button>
+
           <h4 className="text-[11px] font-bold text-navy/50 uppercase tracking-wide mb-2">Siswa yang Magang</h4>
           <SiswaPreviewList list={getSiswaByPerusahaan(detailPerusahaan.name)} />
         </DetailModal>
@@ -526,6 +572,18 @@ export const HubinData: React.FC = () => {
           activeTab={activeTab}
           addSiswa={addSiswa}
           addPerusahaan={addPerusahaan}
+        />
+      )}
+
+      {/* Location Picker Modal */}
+      {pickerCompany && (
+        <LocationPickerModal
+          companyId={pickerCompany.id}
+          companyName={pickerCompany.name}
+          initialLat={pickerCompany.latitude}
+          initialLng={pickerCompany.longitude}
+          initialRadius={pickerCompany.radiusMeters || 500}
+          onClose={() => setPickerCompany(null)}
         />
       )}
     </div>
