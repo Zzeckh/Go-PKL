@@ -3,7 +3,8 @@ import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
-const PASSWORD = 'gopkl123'; // ← password semua akun
+const PASSWORD = 'gopkl123';
+const ACADEMIC_YEAR = '2025/2026';
 
 async function main() {
   console.log('🧹 Membersihkan isi tabel...');
@@ -12,6 +13,7 @@ async function main() {
   await prisma.logbook.deleteMany();
   await prisma.absensi.deleteMany();
   await prisma.user.deleteMany();
+  await prisma.class.deleteMany();
   await prisma.company.deleteMany();
   await prisma.school.deleteMany();
 
@@ -22,7 +24,6 @@ async function main() {
     data: { name: 'SMK Negeri 1 Nusantara', address: 'Jl. Pendidikan Raya No. 1' },
   });
 
-  // ⚠️ EDIT KOORDINAT DI SINI sesuai lokasi PKL utama kamu
   const company = await prisma.company.create({
     data: {
       name: 'PT Teknologi Nusantara',
@@ -35,18 +36,46 @@ async function main() {
     },
   });
 
+  console.log('📚 Membuat kelas...');
+  const classRPL = await prisma.class.create({
+    data: { name: 'XII RPL 1', major: 'Rekayasa Perangkat Lunak', schoolId: school.id },
+  });
+  const classTKJ = await prisma.class.create({
+    data: { name: 'XII TKJ 1', major: 'Teknik Komputer Jaringan', schoolId: school.id },
+  });
+
   console.log('👤 Membuat akun per role...');
   const teacher = await prisma.user.create({
-    data: { name: 'Guru Pembimbing', email: 'guru@gopkl.id', password: hash, role: 'teacher', schoolId: school.id },
+    data: {
+      name: 'Guru Pembimbing',
+      email: 'guru@gopkl.id',
+      password: hash,
+      role: 'teacher',
+      schoolId: school.id,
+      academicYear: ACADEMIC_YEAR,
+    },
   });
 
   const mentor = await prisma.user.create({
-    data: { name: 'Mentor Industri', email: 'mentor@gopkl.id', password: hash, role: 'mentor' },
+    data: {
+      name: 'Mentor Industri',
+      email: 'mentor@gopkl.id',
+      password: hash,
+      role: 'mentor',
+      academicYear: ACADEMIC_YEAR,
+    },
   });
   await prisma.company.update({ where: { id: company.id }, data: { mentorId: mentor.id } });
 
   await prisma.user.create({
-    data: { name: 'Tim Hubin', email: 'hubin@gopkl.id', password: hash, role: 'hubin', schoolId: school.id },
+    data: {
+      name: 'Tim Hubin',
+      email: 'hubin@gopkl.id',
+      password: hash,
+      role: 'hubin',
+      schoolId: school.id,
+      academicYear: ACADEMIC_YEAR,
+    },
   });
 
   await prisma.user.create({
@@ -58,11 +87,13 @@ async function main() {
       schoolId: school.id,
       companyId: company.id,
       teacherId: teacher.id,
+      classId: classRPL.id,
+      academicYear: ACADEMIC_YEAR,
     },
   });
 
-  console.log('\n✅ SELESAI! Akun login (password: gopkl123):');
-  console.log('   siswa@gopkl.id  → student (intern)');
+  console.log('\n SELESAI! Akun login (password: gopkl123):');
+  console.log('   siswa@gopkl.id  → student (intern) · Kelas: XII RPL 1');
   console.log('   guru@gopkl.id   → teacher');
   console.log('   mentor@gopkl.id → mentor');
   console.log('   hubin@gopkl.id  → hubin');

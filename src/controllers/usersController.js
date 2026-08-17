@@ -15,14 +15,14 @@ export const getAllUsers = async (req, res, next) => {
     if (roleFilter) where.role = roleFilter;
 
     if (role === 'student') {
-      where.id = id; // siswa hanya lihat diri sendiri
+      where.id = id;
     } else if (role === 'mentor') {
       const company = await prisma.company.findFirst({ where: { mentorId: id }, select: { id: true } });
       where.companyId = company?.id ?? -1;
     } else if (role === 'teacher' && (!roleFilter || roleFilter === 'student')) {
-      where.teacherId = id; // guru lihat siswa bimbingannya
+      where.teacherId = id;
     } else if (schoolId) {
-      where.schoolId = schoolId; // hubin/admin: satu sekolah
+      where.schoolId = schoolId;
     }
 
     const [data, total] = await Promise.all([
@@ -38,6 +38,8 @@ export const getAllUsers = async (req, res, next) => {
           role: true,
           isActive: true,
           createdAt: true,
+          academicYear: true,
+          class: { select: { id: true, name: true, major: true } },
           school: { select: { id: true, name: true } },
           company: { select: { id: true, name: true } },
           teacher: { select: { id: true, name: true } },

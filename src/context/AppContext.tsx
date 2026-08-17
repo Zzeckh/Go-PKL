@@ -6,6 +6,7 @@ export interface SiswaItem {
   id: number;
   name: string;
   kelas: string;
+  academicYear: string;
   perusahaan: string;
   guruPembimbing: string;
   mentor: string;
@@ -67,7 +68,6 @@ interface AppContextType {
   userName: string;
   schoolName: string;
   userId: number | null;
-  // ── NEW: Company info untuk Absensi ──
   userCompanyName: string;
   userCompanyAddress: string;
   userCompanyLocation: { lat: number; lng: number; radius: number } | null;
@@ -122,7 +122,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [userName, setUserName] = useState('');
   const [userId, setUserId] = useState<number | null>(null);
   const [schoolName, setSchoolName] = useState('');
-  // ── NEW: Company info state ──
   const [userCompanyName, setUserCompanyName] = useState('');
   const [userCompanyAddress, setUserCompanyAddress] = useState('');
   const [userCompanyLocation, setUserCompanyLocation] = useState<{ lat: number; lng: number; radius: number } | null>(null);
@@ -164,7 +163,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUserRole('intern');
     setUserName('');
     setSchoolName('');
-    // ── NEW: Reset company info ──
     setUserCompanyName('');
     setUserCompanyAddress('');
     setUserCompanyLocation(null);
@@ -269,7 +267,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const mapped = response.data.map((u: any): SiswaItem => ({
         id: u.id,
         name: u.name,
-        kelas: '-',
+        kelas: u.class?.name || '-',
+        academicYear: u.academicYear || '-',
         perusahaan: u.company?.name || '-',
         guruPembimbing: u.teacher?.name || '-',
         mentor: '-',
@@ -338,7 +337,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setUserRole(mappedRole);
       setUserId(user.id);
       setSchoolName(user.schoolName || '');
-      // ── NEW: Set company info dari response /api/auth/me ──
       setUserCompanyName(user.companyName || '');
       setUserCompanyAddress(user.companyAddress || '');
       setUserCompanyLocation(user.companyLocation || null);
@@ -536,7 +534,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         userName,
         schoolName,
         userId,
-        // ── NEW: Expose company info ──
         userCompanyName,
         userCompanyAddress,
         userCompanyLocation,

@@ -3,7 +3,6 @@ import jwt from 'jsonwebtoken';
 import prisma from '../config/db.js';
 import { JWT_SECRET } from '../config/jwt.js';
 
-/* ── Token payload: id (bukan userId) — sinkron dengan middleware & controller lain ── */
 const generateToken = (user) =>
   jwt.sign(
     {
@@ -18,13 +17,13 @@ const generateToken = (user) =>
     { expiresIn: '7d' }
   );
 
-/* ── Relasi yang dibutuhkan frontend ── */
 const userInclude = {
   school: { select: { name: true } },
   company: {
     select: { name: true, address: true, latitude: true, longitude: true, radiusMeters: true },
   },
   teacher: { select: { name: true } },
+  class: { select: { name: true, major: true } },
 };
 
 const toFrontendUser = (user) => ({
@@ -44,11 +43,11 @@ const toFrontendUser = (user) => ({
         }
       : null,
   teacherName: user.teacher?.name ?? null,
+  className: user.class?.name ?? null,
+  major: user.class?.major ?? null,
+  academicYear: user.academicYear ?? null,
 });
 
-/**
- * POST /api/auth/login
- */
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -72,11 +71,6 @@ export const login = async (req, res, next) => {
   }
 };
 
-/**
- * POST /api/auth/register
- * ⚠️ TIDAK menerima role dari client — semua pendaftar jadi "student".
- * Role lain (guru/mentor/hubin/admin) diatur oleh admin/hubin lewat sistem.
- */
 export const register = async (req, res, next) => {
   try {
     const { name, email, password, institution } = req.body;
@@ -91,7 +85,6 @@ export const register = async (req, res, next) => {
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return res.status(409).json({ error: 'Email sudah terdaftar. Silakan login.' });
 
-    // Cari / buat sekolah dari field institution (opsional)
     let school = null;
     if (institution) {
       school = await prisma.school.findFirst({ where: { name: institution } });
@@ -103,7 +96,7 @@ export const register = async (req, res, next) => {
         name,
         email,
         password: await bcrypt.hash(password, 10),
-        role: 'student', // ← dipaksa backend, bukan dari client
+        role: 'student',
         schoolId: school?.id ?? null,
       },
       include: userInclude,
@@ -118,9 +111,6 @@ export const register = async (req, res, next) => {
   }
 };
 
-/**
- * GET /api/auth/me  (dipasang authMiddleware di route)
- */
 export const getMe = async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({

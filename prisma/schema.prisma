@@ -51,6 +51,7 @@ model School {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   users     User[]
+  classes   Class[]
 }
 
 model Company {
@@ -73,6 +74,20 @@ model Company {
   evaluations  Evaluation[]
 }
 
+model Class {
+  id        Int      @id @default(autoincrement())
+  name      String
+  major     String
+  schoolId  Int
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  students  User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, schoolId])
+  @@index([schoolId])
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   name      String
@@ -84,22 +99,32 @@ model User {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
   schoolId  Int?
   school    School?  @relation(fields: [schoolId], references: [id])
+
+  classId      Int?
+  class        Class?   @relation(fields: [classId], references: [id], onDelete: SetNull)
+  academicYear String?
+
   teacherId Int?
   teacher   User?    @relation("StudentTeacher", fields: [teacherId], references: [id])
   students  User[]   @relation("StudentTeacher")
+  
   companyId Int?
   company   Company? @relation(fields: [companyId], references: [id])
+  
   mentoredCompanies Company[] @relation("CompanyMentor")
   absensis         Absensi[]
   logbooks         Logbook[]
   permissions      Permission[]
   evaluations      Evaluation[] @relation("EvaluationStudent")
   evaluationsGiven Evaluation[] @relation("EvaluationEvaluator")
+  
   @@index([role])
   @@index([companyId])
   @@index([teacherId])
+  @@index([classId])
 }
 
 model Absensi {
