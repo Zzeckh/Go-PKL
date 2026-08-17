@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from './context/AppContext';
 import { AuthScreen } from './components/AuthScreen';
 import { MainLayout } from './layouts/MainLayout';
@@ -40,6 +40,14 @@ export default function App() {
   const [authExiting, setAuthExiting] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isJournalModalOpen, setIsJournalModalOpen] = useState(false);
+
+  // ✅ FIX BUG LOGOUT: reset authExiting setiap kali kembali ke login page
+  // Tanpa ini, setelah logout halaman login tetap "invisible" karena class page-exit tidak di-reset
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setAuthExiting(false);
+    }
+  }, [isAuthenticated]);
 
   const handleAuthSubmit = async (payload: { name: string; email: string; password: string; institution?: string }) => {
     try {
