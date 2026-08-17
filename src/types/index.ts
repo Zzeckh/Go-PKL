@@ -1,4 +1,19 @@
-export type ActivePage = 'dashboard' | 'logbook' | 'maps' | 'profile' | 'absensi' | 'attendance' | 'roster' | 'monitoring' | 'perizinan' | 'rekap' | 'data-siswa' | 'data-pembimbing' | 'pemetaan';
+export type ActivePage = 
+  | 'dashboard' 
+  | 'logbook' 
+  | 'maps' 
+  | 'profile' 
+  | 'absensi' 
+  | 'attendance' 
+  | 'roster' 
+  | 'monitoring' 
+  | 'perizinan' 
+  | 'rekap' 
+  | 'data-siswa' 
+  | 'data-pembimbing' 
+  | 'pemetaan' 
+  | 'data';
+
 export type AuthMode = 'login' | 'register';
 export type UserRole = 'intern' | 'mentor' | 'teacher' | 'hubin';
 

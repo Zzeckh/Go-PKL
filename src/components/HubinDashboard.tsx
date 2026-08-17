@@ -13,7 +13,7 @@ interface HubinDashboardProps {
   onNavigate?: (page: ActivePage) => void;
 }
 
-export const HubinDashboard: React.FC<HubinDashboardProps> = ({ userName, schoolName, onNavigate }) => {
+export const HubinDashboard: React.FC<HubinDashboardProps> = ({ schoolName, onNavigate }) => {
   const { siswaList, perusahaanList, guruList, mentorList } = useApp();
 
   /* ── Tahun akademik aktif ── */

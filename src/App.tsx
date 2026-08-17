@@ -11,7 +11,7 @@ import { Absensi } from './components/Absensi';
 import { TeacherDashboard } from './components/TeacherDashboard';
 import { TeacherMonitoring, TeacherPerizinan, TeacherRekap } from './components/TeacherPages';
 import { HubinDashboard } from './components/HubinDashboard';
-import { HubinSiswa, HubinPembimbing } from './components/HubinPages';
+import { HubinData } from './components/HubinPages';
 import { HubinPemetaan } from './components/HubinPemetaan';
 
 export default function App() {
@@ -24,7 +24,6 @@ export default function App() {
     setActivePage,
     userName,
     schoolName,
-    // ── NEW: Destructure company info ──
     userCompanyName,
     userCompanyAddress,
     userCompanyLocation,
@@ -143,7 +142,11 @@ export default function App() {
             />
           )}
           {activePage === 'maps' && (
-            <Maps locations={mapLocations} attendances={attendances} onCheckIn={checkInAttendance} />
+            <Maps 
+              locations={mapLocations} 
+              attendances={attendances} 
+              onCheckIn={checkInAttendance} 
+            />
           )}
           {activePage === 'profile' && (
             <Profile userRole={userRole} />
@@ -169,11 +172,15 @@ export default function App() {
           {activePage === 'pemetaan' && userRole === 'hubin' && (
             <HubinPemetaan />
           )}
+          {activePage === 'data' && userRole === 'hubin' && (
+            <HubinData />
+          )}
+          {/* Legacy fallback — tetap jalan kalau ada link lama */}
           {activePage === 'data-siswa' && userRole === 'hubin' && (
-            <HubinSiswa />
+            <HubinData />
           )}
           {activePage === 'data-pembimbing' && userRole === 'hubin' && (
-            <HubinPembimbing />
+            <HubinData />
           )}
         </MainLayout>
       </div>

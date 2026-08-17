@@ -1,5 +1,8 @@
 import React from 'react';
-import { LayoutDashboard, BookOpen, MapPin, LogOut, PanelLeftClose, PanelLeftOpen, Camera, Users, Activity, FileCheck, DownloadCloud, GraduationCap } from 'lucide-react';
+import { 
+  LayoutDashboard, BookOpen, MapPin, LogOut, PanelLeftClose, PanelLeftOpen, 
+  Camera, Activity, FileCheck, DownloadCloud, Package 
+} from 'lucide-react';
 import { ActivePage, UserRole } from '../types';
 
 interface SidebarProps {
@@ -25,24 +28,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (userRole === 'hubin') {
       return [
         { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        { id: 'pemetaan', icon: MapPin, label: 'Pemetaan' },
-        { id: 'data-siswa', icon: GraduationCap, label: 'Siswa' },
-        { id: 'data-pembimbing', icon: Users, label: 'Pembimbing' }
+        { id: 'data',        icon: Package,        label: 'Kelola Data' },
+        { id: 'pemetaan',    icon: MapPin,         label: 'Pemetaan' },
       ];
     }
     if (userRole === 'teacher' || userRole === 'mentor') {
       return [
-        { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        { id: 'monitoring', icon: Activity, label: 'Monitoring' },
-        { id: 'perizinan', icon: FileCheck, label: 'Perizinan' },
-        { id: 'rekap', icon: DownloadCloud, label: 'Rekap' }
+        { id: 'dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
+        { id: 'monitoring', icon: Activity,        label: 'Monitoring' },
+        { id: 'perizinan',  icon: FileCheck,       label: 'Perizinan' },
+        { id: 'rekap',      icon: DownloadCloud,   label: 'Rekap' }
       ];
     }
     return [
       { id: 'dashboard', icon: LayoutDashboard, label: 'Home' },
-      { id: 'absensi', icon: Camera, label: 'Absensi' },
-      { id: 'logbook', icon: BookOpen, label: 'Logbook' },
-      { id: 'maps', icon: MapPin, label: 'Maps' }
+      { id: 'absensi',   icon: Camera,          label: 'Absensi' },
+      { id: 'logbook',   icon: BookOpen,        label: 'Logbook' },
+      { id: 'maps',      icon: MapPin,          label: 'Maps' }
     ];
   };
 

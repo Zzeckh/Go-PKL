@@ -21,7 +21,7 @@ interface AuthError {
   icon: React.ElementType;
 }
 
-function classifyAuthError(error: any, isRegister: boolean): AuthError {
+function classifyAuthError(error: any, isLogin: boolean): AuthError {
   const msg = error?.message?.toLowerCase() || '';
   const status = error?.status;
 
@@ -127,6 +127,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState<AuthError | null>(null);
 
+  // ✅ Hanya isLogin yang dipakai — isRegister dihapus (tidak digunakan)
   const isLogin = authMode === 'login';
 
   const handleSubmit = async (e: React.FormEvent) => {

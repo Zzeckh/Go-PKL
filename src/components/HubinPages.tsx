@@ -1,522 +1,822 @@
-import React, { useState } from 'react';
-import { 
-  Users, Building, CheckCircle2, 
-  X, Search, FileText, Briefcase, GraduationCap
+import React, { useState, useMemo } from 'react';
+import {
+  Users, Building2, Briefcase, GraduationCap, Search, X, Plus,
+  MapPin, Clock, ShieldCheck,
+  UserPlus, Building as BuildingIcon, UserCog, Package
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
-// --- HUBIN DATA SISWA PAGE ---
-export const HubinSiswa: React.FC = () => {
-  const { siswaList, perusahaanList } = useApp();
-  const [tab, setTab] = useState<'siswa' | 'perusahaan'>('siswa');
+type TabKey = 'siswa' | 'guru' | 'perusahaan' | 'mentor';
+
+const getInitials = (name: string) =>
+  (name || '?').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+
+/* ══════════════════════════════════════════════════════
+   MAIN COMPONENT
+   ══════════════════════════════════════════════════════ */
+export const HubinData: React.FC = () => {
+  const {
+    siswaList, perusahaanList, guruList, mentorList,
+    addSiswa, addPerusahaan, logEntries
+  } = useApp();
+
+  const [activeTab, setActiveTab] = useState<TabKey>('siswa');
   const [search, setSearch] = useState('');
-  const [selectedSiswa, setSelectedSiswa] = useState<any>(null);
-  const [showModal, setShowModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
 
-  const [selectedPerusahaan, setSelectedPerusahaan] = useState<any>(null);
-  const [showPerusahaanModal, setShowPerusahaanModal] = useState(false);
+  // Detail modal state
+  const [detailSiswa, setDetailSiswa] = useState<any>(null);
+  const [detailPerusahaan, setDetailPerusahaan] = useState<any>(null);
+  const [detailGuru, setDetailGuru] = useState<any>(null);
+  const [detailMentor, setDetailMentor] = useState<any>(null);
 
-  const filteredSiswa = siswaList.filter(s => 
-    s.name.toLowerCase().includes(search.toLowerCase()) || 
-    s.perusahaan.toLowerCase().includes(search.toLowerCase()) ||
-    s.kelas.toLowerCase().includes(search.toLowerCase())
-  );
+  /* ── Tahun akademik aktif ── */
+  const activeYear = siswaList.find(s => s.academicYear && s.academicYear !== '-')?.academicYear || '2025/2026';
 
-  const filteredPerusahaan = perusahaanList.filter(c => 
+  /* ── Tab config ── */
+  const tabConfig: { key: TabKey; label: string; icon: React.ElementType; count: number; group: 'dalam' | 'luar' }[] = [
+    { key: 'siswa', label: 'Siswa', icon: GraduationCap, count: siswaList.length, group: 'dalam' },
+    { key: 'guru', label: 'Guru', icon: Users, count: guruList.length, group: 'dalam' },
+    { key: 'perusahaan', label: 'Perusahaan', icon: Building2, count: perusahaanList.length, group: 'luar' },
+    { key: 'mentor', label: 'Mentor', icon: Briefcase, count: mentorList.length, group: 'luar' },
+  ];
+
+  /* ── Filtered data per tab ── */
+  const filteredSiswa = useMemo(() => siswaList.filter(s =>
+    s.name.toLowerCase().includes(search.toLowerCase()) ||
+    s.kelas.toLowerCase().includes(search.toLowerCase()) ||
+    s.perusahaan.toLowerCase().includes(search.toLowerCase())
+  ), [siswaList, search]);
+
+  const filteredGuru = useMemo(() => guruList.filter(g =>
+    g.name.toLowerCase().includes(search.toLowerCase()) ||
+    (g.subject || '').toLowerCase().includes(search.toLowerCase())
+  ), [guruList, search]);
+
+  const filteredPerusahaan = useMemo(() => perusahaanList.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     c.address.toLowerCase().includes(search.toLowerCase())
-  );
+  ), [perusahaanList, search]);
+
+  const filteredMentor = useMemo(() => mentorList.filter(m =>
+    m.name.toLowerCase().includes(search.toLowerCase()) ||
+    m.perusahaan.toLowerCase().includes(search.toLowerCase()) ||
+    (m.role || '').toLowerCase().includes(search.toLowerCase())
+  ), [mentorList, search]);
+
+  const changeTab = (k: TabKey) => {
+    setActiveTab(k);
+    setSearch('');
+  };
+
+  /* ── Stats cards ── */
+  const stats = [
+    { icon: GraduationCap, label: 'Total Siswa', value: siswaList.length },
+    { icon: Users, label: 'Total Guru', value: guruList.length },
+    { icon: Building2, label: 'Perusahaan Mitra', value: perusahaanList.length },
+    { icon: Briefcase, label: 'Mentor DUDI', value: mentorList.length },
+  ];
+
+  /* ── Logbook siswa terpilih (untuk modal detail) ── */
+  const getSiswaLogs = (siswaName: string) =>
+    logEntries.filter(l => {
+      // crude match by log title/description — bisa diperbaiki kalau backend support userId
+      return l.title.toLowerCase().includes(siswaName.split(' ')[0].toLowerCase());
+    }).slice(0, 3);
+
+  /* ── Siswa yang dibimbing guru / perusahaan ── */
+  const getSiswaByGuru = (guruName: string) =>
+    siswaList.filter(s => s.guruPembimbing === guruName);
+
+  const getSiswaByPerusahaan = (companyName: string) =>
+    siswaList.filter(s => s.perusahaan === companyName);
+
+  const getSiswaByMentor = (mentorName: string, companyName: string) =>
+    siswaList.filter(s =>
+      s.mentor === mentorName || s.perusahaan.toLowerCase() === companyName.toLowerCase()
+    );
 
   return (
-    <div className="h-full w-full flex flex-col gap-4 animate-in fade-in duration-300">
-      <div className="flex-1 bg-white/70 backdrop-blur-xl border border-white rounded-[24px] shadow-sm flex flex-col overflow-hidden transition-all">
-        
-        {/* Header Bar */}
-        <div className="p-5 border-b border-black/5 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/40">
-          <div>
-            <h3 className="font-bold text-black text-lg">Kelola Data Siswa & Perusahaan</h3>
-            <p className="text-xs font-semibold text-black/50 mt-0.5">Direktori seluruh siswa magang (PKL) dan perusahaan mitra DUDI</p>
+    <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
+
+      {/* ── HEADER ── */}
+      <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
+        <div className="flex items-center gap-3 md:gap-4 min-w-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-2xl flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
+            <Package className="w-5 h-5 md:w-6 md:h-6" />
           </div>
-
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            {/* Sub Tabs */}
-            <div className="flex gap-1 bg-black/5 p-1 rounded-xl border border-black/10">
-              <button 
-                onClick={() => { setTab('siswa'); setSearch(''); }}
-                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${tab === 'siswa' ? 'bg-black text-white shadow-sm' : 'text-black/60'}`}
-              >
-                Data Siswa
-              </button>
-              <button 
-                onClick={() => { setTab('perusahaan'); setSearch(''); }}
-                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${tab === 'perusahaan' ? 'bg-black text-white shadow-sm' : 'text-black/60'}`}
-              >
-                Data Perusahaan
-              </button>
-            </div>
-
-            {/* Search Input */}
-            <div className="bg-white border border-black/10 rounded-xl px-3 py-1.5 flex items-center gap-2 shadow-sm focus-within:border-black/30 transition-colors">
-              <Search className="w-4 h-4 text-black/40" />
-              <input 
-                type="text" 
-                placeholder={`Cari ${tab === 'siswa' ? 'siswa, kelas...' : 'perusahaan...'}...`}
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="bg-transparent outline-none text-xs w-full sm:w-48 font-semibold text-black placeholder:text-black/30" 
-              />
-            </div>
+          <div className="min-w-0">
+            <h2 className="font-bold text-lg md:text-xl text-navy leading-tight truncate">
+              Kelola Data
+            </h2>
+            <p className="text-[13px] text-navy/60 font-semibold mt-0.5 truncate">
+              Direktori siswa, guru, perusahaan mitra & mentor DUDI
+            </p>
           </div>
         </div>
-
-        {/* Content Body */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-5 bg-white/30">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            
-            {tab === 'siswa' && filteredSiswa.map(siswa => (
-              <div 
-                key={siswa.id} 
-                onClick={() => { setSelectedSiswa(siswa); setShowModal(true); }} 
-                className="bg-white rounded-[24px] p-5 border border-black/5 shadow-sm transition-all cursor-pointer flex flex-col gap-4"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-black/5 border border-black/10 flex items-center justify-center shrink-0">
-                    <GraduationCap className="w-6 h-6 text-black/50" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-black">{siswa.name}</h4>
-                    <p className="text-[10px] font-bold text-black/50 mt-0.5">{siswa.kelas} • {siswa.perusahaan}</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3 mt-auto">
-                  <div className="bg-black/5 p-2.5 rounded-xl text-center border border-black/5">
-                    <p className="text-sm font-bold text-black">{siswa.kehadiran}%</p>
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-black/50 mt-0.5">Kehadiran</p>
-                  </div>
-                  <div className="bg-black/5 p-2.5 rounded-xl text-center border border-black/5">
-                    <p className="text-sm font-bold text-black">{siswa.logs}</p>
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-black/50 mt-0.5">Logbook</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            {tab === 'perusahaan' && filteredPerusahaan.map(c => (
-              <div 
-                key={c.id} 
-                onClick={() => { setSelectedPerusahaan(c); setShowPerusahaanModal(true); }}
-                className="bg-white rounded-[24px] p-5 border border-black/5 shadow-sm transition-all cursor-pointer flex flex-col"
-              >
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-black/5 rounded-2xl flex items-center justify-center shrink-0 border border-black/10">
-                    <Building className="w-6 h-6 text-black/40" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-black">{c.name}</h4>
-                    <p className="text-[10px] font-semibold text-black/50 line-clamp-1 mt-0.5">{c.address}</p>
-                  </div>
-                </div>
-                <div className="space-y-2 mt-auto">
-                  <div className="flex justify-between items-center text-xs bg-black/5 p-2 rounded-xl border border-black/5">
-                    <span className="font-bold text-black/50 px-2">Kuota Tersisa</span>
-                    <span className="font-bold text-black bg-white px-3 py-1 rounded-lg shadow-sm border border-black/5">{c.quota - c.filled} dari {c.quota}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-xs p-2">
-                    <span className="font-bold text-black/50">Mentor DUDI</span>
-                    <span className="font-bold text-black">{c.mentor}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-
-          </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="hidden sm:flex items-center gap-1.5 text-[11px] font-bold text-navy/60 bg-[#F1F4F8] border border-[#E2E8F0] px-3 py-2 rounded-full">
+            <Clock className="w-3.5 h-3.5" /> TA {activeYear}
+          </span>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-1.5 bg-steel text-white text-xs font-bold px-4 py-2 rounded-xl shadow-md shadow-steel/25 hover:bg-steel/90 hover:-translate-y-0.5 transition-all"
+          >
+            <Plus className="w-4 h-4" /> Tambah Data
+          </button>
         </div>
       </div>
 
-      {/* DETAIL SISWA MODAL */}
-      {showModal && selectedSiswa && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-[24px] rounded-[24px] animate-in fade-in duration-200">
-          <div className="bg-white rounded-[24px] max-w-2xl w-full h-[85vh] max-h-[620px] shadow-2xl flex flex-col overflow-hidden border border-black/10">
-            <div className="p-6 border-b border-black/5 flex items-center justify-between shrink-0 bg-white">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-black/5 flex items-center justify-center border border-black/10">
-                  <GraduationCap className="w-6 h-6 text-black/50" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-black">{selectedSiswa.name}</h3>
-                  <p className="text-xs font-semibold text-black/50 mt-0.5">{selectedSiswa.kelas} • {selectedSiswa.perusahaan}</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setShowModal(false)} 
-                className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center text-black/50 hover:bg-black/10 hover:text-black transition-colors shrink-0"
-              >
-                <X className="w-4 h-4" />
-              </button>
+      {/* ── STATS CARDS ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
+        {stats.map((s) => (
+          <div
+            key={s.label}
+            className="bg-white border border-mist/60 rounded-[24px] p-4 md:p-5 min-h-[100px] flex flex-col justify-between"
+          >
+            <div className="w-10 h-10 rounded-xl bg-[#F1F4F8] flex items-center justify-center">
+              <s.icon className="w-5 h-5 text-navy/60" />
             </div>
-            <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-black/[0.02]">
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-white p-4 rounded-[24px] border border-black/5 shadow-sm hover:shadow-md transition-all">
-                  <h4 className="text-[10px] font-bold text-black/40 uppercase tracking-widest mb-1">Total Kehadiran</h4>
-                  <p className="text-2xl font-bold text-black">{selectedSiswa.kehadiran}%</p>
-                </div>
-                <div className="bg-white p-4 rounded-[24px] border border-black/5 shadow-sm hover:shadow-md transition-all">
-                  <h4 className="text-[10px] font-bold text-black/40 uppercase tracking-widest mb-1">Jurnal Disetujui</h4>
-                  <p className="text-2xl font-bold text-black">{selectedSiswa.logs}</p>
-                </div>
-              </div>
-              
-              <h4 className="font-bold text-sm text-black mb-3">Riwayat Logbook Terakhir</h4>
-              <div className="space-y-3">
-                {[1, 2].map((log) => (
-                  <div key={log} className="bg-white p-5 rounded-[24px] border border-black/5 shadow-sm flex items-start gap-4 hover:border-black/20 transition-all cursor-pointer">
-                    <div className="w-10 h-10 rounded-xl bg-black/5 flex items-center justify-center shrink-0">
-                      <FileText className="w-5 h-5 text-black/40" />
-                    </div>
-                    <div>
-                      <h5 className="font-bold text-xs text-black">Aktivitas Pengembangan Modul Web</h5>
-                      <p className="text-[10px] font-semibold text-black/50 mt-1 mb-2">14 Sep 2024 • Pekerjaan Reguler</p>
-                      <span className="text-[10px] font-bold bg-black text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5 w-max">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Approved by Mentor
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="p-5 border-t border-black/5 bg-white shrink-0 flex justify-end">
-              <button 
-                onClick={() => setShowModal(false)} 
-                className="px-6 py-3 bg-black text-white text-xs font-bold rounded-xl shadow-md"
-              >
-                Tutup Jendela
-              </button>
+            <div>
+              <p className="text-3xl font-bold text-navy tabular-nums leading-none">{s.value}</p>
+              <p className="text-[11px] font-bold text-navy/60 uppercase tracking-wide mt-2">{s.label}</p>
             </div>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
 
-      {/* DETAIL PERUSAHAAN MODAL (DAFTAR SISWA MAGANG) */}
-      {showPerusahaanModal && selectedPerusahaan && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-[24px] rounded-[24px] animate-in fade-in duration-200">
-          <div className="bg-white rounded-[24px] max-w-2xl w-full h-[85vh] max-h-[620px] shadow-2xl flex flex-col overflow-hidden border border-black/10">
-            <div className="p-6 border-b border-black/5 flex items-center justify-between shrink-0 bg-white">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-black/5 flex items-center justify-center border border-black/10">
-                  <Building className="w-6 h-6 text-black/50" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-black">{selectedPerusahaan.name}</h3>
-                  <p className="text-xs font-semibold text-black/50 mt-0.5">{selectedPerusahaan.address}</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setShowPerusahaanModal(false)} 
-                className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center text-black/50 transition-colors shrink-0"
+      {/* ── MAIN CARD (tabs + content) ── */}
+      <div className="flex-1 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col overflow-hidden min-h-0">
+        
+        {/* Toolbar: segmented tabs + search */}
+        <div className="px-4 md:px-5 pt-4 pb-3 shrink-0 space-y-3 border-b border-mist/60">
+          {/* Segmented tabs grouped by Dalam/Luar */}
+          <div className="bg-[#F1F4F8] p-1 rounded-xl flex items-center gap-1 overflow-x-auto">
+            <span className="text-[10px] font-bold text-navy/40 uppercase tracking-widest px-2 shrink-0">
+              Dalam
+            </span>
+            {tabConfig.filter(t => t.group === 'dalam').map(t => {
+              const Icon = t.icon;
+              const active = activeTab === t.key;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => changeTab(t.key)}
+                  className={`flex-1 min-w-[100px] px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
+                    active ? 'bg-white text-navy shadow-sm' : 'text-navy/60 hover:text-navy'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {t.label}
+                  <span className={`text-[10px] tabular-nums ${active ? 'text-steel' : 'text-navy/40'}`}>
+                    {t.count}
+                  </span>
+                </button>
+              );
+            })}
+            <div className="w-px h-5 bg-mist mx-1 shrink-0" />
+            <span className="text-[10px] font-bold text-navy/40 uppercase tracking-widest px-2 shrink-0">
+              Luar
+            </span>
+            {tabConfig.filter(t => t.group === 'luar').map(t => {
+              const Icon = t.icon;
+              const active = activeTab === t.key;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => changeTab(t.key)}
+                  className={`flex-1 min-w-[100px] px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
+                    active ? 'bg-white text-navy shadow-sm' : 'text-navy/60 hover:text-navy'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {t.label}
+                  <span className={`text-[10px] tabular-nums ${active ? 'text-steel' : 'text-navy/40'}`}>
+                    {t.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-navy/40" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder={`Cari ${activeTab === 'siswa' ? 'siswa, kelas, perusahaan...' : activeTab === 'guru' ? 'nama guru, mata pelajaran...' : activeTab === 'perusahaan' ? 'nama perusahaan, alamat...' : 'nama mentor, perusahaan, role...'}...`}
+              className="w-full bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-navy/10 hover:bg-navy/20 flex items-center justify-center transition-colors"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3 h-3 text-navy/60" />
               </button>
-            </div>
+            )}
+          </div>
+        </div>
 
-            <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-black/[0.02]">
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-white p-4 rounded-[24px] border border-black/5 shadow-sm">
-                  <h4 className="text-[10px] font-bold text-black/40 uppercase tracking-widest mb-1">Mentor DUDI</h4>
-                  <p className="text-lg font-bold text-black">{selectedPerusahaan.mentor}</p>
-                </div>
-                <div className="bg-white p-4 rounded-[24px] border border-black/5 shadow-sm">
-                  <h4 className="text-[10px] font-bold text-black/40 uppercase tracking-widest mb-1">Terisi / Kuota Total</h4>
-                  <p className="text-lg font-bold text-black">{selectedPerusahaan.filled} dari {selectedPerusahaan.quota} Siswa</p>
-                </div>
-              </div>
-
-              <h4 className="font-bold text-sm text-black mb-3">Daftar Siswa Magang di {selectedPerusahaan.name}</h4>
-              
-              {siswaList.filter(s => s.perusahaan.toLowerCase() === selectedPerusahaan.name.toLowerCase()).length > 0 ? (
-                <div className="space-y-3">
-                  {siswaList.filter(s => s.perusahaan.toLowerCase() === selectedPerusahaan.name.toLowerCase()).map(siswa => (
-                    <div key={siswa.id} className="bg-white p-4 rounded-[24px] border border-black/5 shadow-sm flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-black/5 border border-black/10 flex items-center justify-center shrink-0">
-                          <GraduationCap className="w-5 h-5 text-black/50" />
-                        </div>
-                        <div>
-                          <h5 className="font-bold text-sm text-black">{siswa.name}</h5>
-                          <p className="text-[10px] font-bold text-black/50 mt-0.5">{siswa.kelas}</p>
-                        </div>
+        {/* Content grid */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5">
+          
+          {/* ── TAB: SISWA ── */}
+          {activeTab === 'siswa' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {filteredSiswa.length === 0 ? (
+                <EmptyState label="siswa" search={search} />
+              ) : (
+                filteredSiswa.map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => setDetailSiswa(s)}
+                    className="p-4 rounded-2xl border border-mist/60 bg-white hover:border-steel/30 hover:shadow-sm transition-all text-left group"
+                  >
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-11 h-11 rounded-full bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
+                        {getInitials(s.name)}
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="bg-black/5 px-3 py-1.5 rounded-xl border border-black/5 text-center">
-                          <p className="text-xs font-bold text-black">{siswa.kehadiran}%</p>
-                          <p className="text-[8px] font-bold text-black/40 uppercase">Kehadiran</p>
-                        </div>
-                        <div className="bg-black/5 px-3 py-1.5 rounded-xl border border-black/5 text-center">
-                          <p className="text-xs font-bold text-black">{siswa.logs}</p>
-                          <p className="text-[8px] font-bold text-black/40 uppercase">Logbook</p>
-                        </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-navy truncate">{s.name}</p>
+                        <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
+                          {s.kelas !== '-' ? s.kelas : 'Belum ada kelas'} · {s.perusahaan !== '-' ? s.perusahaan : 'Belum dipetakan'}
+                        </p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="bg-white p-6 rounded-[24px] border border-black/5 text-center">
-                  <p className="text-xs font-bold text-black/50">Belum ada data siswa yang terdaftar di perusahaan ini.</p>
-                </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-center">
+                        <p className="text-sm font-bold text-navy tabular-nums leading-none">{s.kehadiran}%</p>
+                        <p className="text-[9px] font-bold text-navy/50 uppercase tracking-wide mt-1">Hadir</p>
+                      </div>
+                      <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-center">
+                        <p className="text-sm font-bold text-navy tabular-nums leading-none">{s.logs}</p>
+                        <p className="text-[9px] font-bold text-navy/50 uppercase tracking-wide mt-1">Log</p>
+                      </div>
+                      <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-center">
+                        <p className="text-sm font-bold text-navy tabular-nums leading-none">{s.berkasPct}%</p>
+                        <p className="text-[9px] font-bold text-navy/50 uppercase tracking-wide mt-1">Berkas</p>
+                      </div>
+                    </div>
+                  </button>
+                ))
               )}
             </div>
+          )}
 
-            <div className="p-5 border-t border-black/5 bg-white shrink-0 flex justify-end">
-              <button 
-                onClick={() => setShowPerusahaanModal(false)} 
-                className="px-6 py-3 bg-black text-white text-xs font-bold rounded-xl shadow-md"
-              >
-                Tutup Jendela
-              </button>
+          {/* ── TAB: GURU ── */}
+          {activeTab === 'guru' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {filteredGuru.length === 0 ? (
+                <EmptyState label="guru" search={search} />
+              ) : (
+                filteredGuru.map(g => (
+                  <button
+                    key={g.id}
+                    onClick={() => setDetailGuru(g)}
+                    className="p-4 rounded-2xl border border-mist/60 bg-white hover:border-steel/30 hover:shadow-sm transition-all text-left"
+                  >
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-11 h-11 rounded-full bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
+                        {getInitials(g.name)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-navy truncate">{g.name}</p>
+                        <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
+                          {g.subject || 'Guru Pembimbing'}
+                        </p>
+                      </div>
+                      <span className="text-[10px] font-bold bg-navy text-white px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+                        <GraduationCap className="w-3 h-3" /> GURU
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg px-2 py-2 text-center">
+                        <p className="text-base font-bold text-navy tabular-nums leading-none">{g.totalSiswa}</p>
+                        <p className="text-[9px] font-bold text-navy/50 uppercase tracking-wide mt-1">Siswa</p>
+                      </div>
+                      <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg px-2 py-2 text-center">
+                        <p className="text-base font-bold text-navy tabular-nums leading-none">{g.totalDUDI}</p>
+                        <p className="text-[9px] font-bold text-navy/50 uppercase tracking-wide mt-1">DUDI</p>
+                      </div>
+                    </div>
+                  </button>
+                ))
+              )}
             </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+          )}
 
-// --- HUBIN DATA PEMBIMBING PAGE ---
-export const HubinPembimbing: React.FC = () => {
-  const { siswaList, guruList, mentorList } = useApp();
-  const [tab, setTab] = useState<'guru' | 'mentor'>('guru');
-  const [search, setSearch] = useState('');
-
-  const [selectedPembimbing, setSelectedPembimbing] = useState<any>(null);
-  const [pembimbingType, setPembimbingType] = useState<'guru' | 'mentor'>('guru');
-  const [showPembimbingModal, setShowPembimbingModal] = useState(false);
-
-  const filteredGuru = guruList.filter(g => 
-    g.name.toLowerCase().includes(search.toLowerCase()) || 
-    g.subject.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const filteredMentor = mentorList.filter(m => 
-    m.name.toLowerCase().includes(search.toLowerCase()) || 
-    m.perusahaan.toLowerCase().includes(search.toLowerCase()) ||
-    m.role.toLowerCase().includes(search.toLowerCase())
-  );
-
-  return (
-    <div className="h-full w-full flex flex-col gap-4 animate-in fade-in duration-300">
-      <div className="flex-1 bg-white/70 backdrop-blur-xl border border-white rounded-[24px] shadow-sm flex flex-col overflow-hidden transition-all">
-        
-        {/* Header Bar */}
-        <div className="p-5 border-b border-black/5 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/40">
-          <div>
-            <h3 className="font-bold text-black text-lg">Kelola Data Pembimbing</h3>
-            <p className="text-xs font-semibold text-black/50 mt-0.5">Direktori Guru Pembimbing Sekolah dan Mentor Industri DUDI</p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            {/* Sub Tabs */}
-            <div className="flex gap-1 bg-black/5 p-1 rounded-xl border border-black/10">
-              <button 
-                onClick={() => { setTab('guru'); setSearch(''); }}
-                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${tab === 'guru' ? 'bg-black text-white shadow-sm' : 'text-black/60'}`}
-              >
-                Guru Pembimbing
-              </button>
-              <button 
-                onClick={() => { setTab('mentor'); setSearch(''); }}
-                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${tab === 'mentor' ? 'bg-black text-white shadow-sm' : 'text-black/60'}`}
-              >
-                Mentor DUDI
-              </button>
+          {/* ── TAB: PERUSAHAAN ── */}
+          {activeTab === 'perusahaan' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {filteredPerusahaan.length === 0 ? (
+                <EmptyState label="perusahaan" search={search} />
+              ) : (
+                filteredPerusahaan.map(c => {
+                  const count = siswaList.filter(s => s.perusahaan === c.name).length;
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => setDetailPerusahaan(c)}
+                      className="p-4 rounded-2xl border border-mist/60 bg-white hover:border-steel/30 hover:shadow-sm transition-all text-left"
+                    >
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-11 h-11 rounded-xl bg-steel/10 flex items-center justify-center shrink-0">
+                          <BuildingIcon className="w-5 h-5 text-steel" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-navy truncate">{c.name}</p>
+                          <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">{c.address}</p>
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between items-center bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg px-2.5 py-1.5">
+                          <span className="text-[11px] font-bold text-navy/60">Kuota</span>
+                          <span className="text-[11px] font-bold text-navy tabular-nums">
+                            {count} / {c.quota}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg px-2.5 py-1.5">
+                          <span className="text-[11px] font-bold text-navy/60">Mentor</span>
+                          <span className="text-[11px] font-bold text-navy truncate ml-2">
+                            {c.mentor || '-'}
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
             </div>
+          )}
 
-            {/* Search Input */}
-            <div className="bg-white border border-black/10 rounded-xl px-3 py-1.5 flex items-center gap-2 shadow-sm focus-within:border-black/30 transition-colors">
-              <Search className="w-4 h-4 text-black/40" />
-              <input 
-                type="text" 
-                placeholder={`Cari ${tab === 'guru' ? 'guru...' : 'mentor, DUDI...'}...`}
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="bg-transparent outline-none text-xs w-full sm:w-48 font-semibold text-black placeholder:text-black/30" 
-              />
+          {/* ── TAB: MENTOR ── */}
+          {activeTab === 'mentor' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {filteredMentor.length === 0 ? (
+                <EmptyState label="mentor" search={search} />
+              ) : (
+                filteredMentor.map(m => (
+                  <button
+                    key={m.id}
+                    onClick={() => setDetailMentor(m)}
+                    className="p-4 rounded-2xl border border-mist/60 bg-white hover:border-steel/30 hover:shadow-sm transition-all text-left"
+                  >
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-11 h-11 rounded-full bg-steel text-white flex items-center justify-center font-bold text-sm shrink-0">
+                        {getInitials(m.name)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-navy truncate">{m.name}</p>
+                        <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">{m.role || 'Mentor'}</p>
+                      </div>
+                      <span className="text-[10px] font-bold bg-steel text-white px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+                        <Briefcase className="w-3 h-3" /> MENTOR
+                      </span>
+                    </div>
+                    <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg p-2.5 space-y-1.5">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="font-bold text-navy/60 flex items-center gap-1.5">
+                          <BuildingIcon className="w-3.5 h-3.5" /> DUDI
+                        </span>
+                        <span className="font-bold text-navy truncate ml-2">{m.perusahaan}</span>
+                      </div>
+                      <div className="h-px bg-mist" />
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="font-bold text-navy/60 flex items-center gap-1.5">
+                          <GraduationCap className="w-3.5 h-3.5" /> Bimbingan
+                        </span>
+                        <span className="font-bold text-navy">{m.totalSiswa} siswa</span>
+                      </div>
+                    </div>
+                  </button>
+                ))
+              )}
             </div>
-          </div>
-        </div>
-
-        {/* Content Body */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-5 bg-white/30">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            
-            {tab === 'guru' && filteredGuru.map(g => (
-              <div 
-                key={g.id} 
-                onClick={() => {
-                  setSelectedPembimbing(g);
-                  setPembimbingType('guru');
-                  setShowPembimbingModal(true);
-                }}
-                className="bg-white rounded-[24px] p-5 border border-black/5 shadow-sm transition-all cursor-pointer flex flex-col"
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-black/5 rounded-full flex items-center justify-center border border-black/10">
-                    <Users className="w-5 h-5 text-black/50" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-black">{g.name}</h4>
-                    <p className="text-[10px] font-bold text-black/50 mt-0.5 uppercase tracking-wide">{g.subject}</p>
-                  </div>
-                </div>
-                <div className="flex gap-3 mt-auto">
-                  <div className="flex-1 bg-black/5 p-3 rounded-2xl border border-black/5 text-center">
-                    <p className="text-lg font-bold text-black">{g.totalSiswa}</p>
-                    <p className="text-[9px] font-bold text-black/50 uppercase tracking-widest mt-1">Siswa</p>
-                  </div>
-                  <div className="flex-1 bg-black/5 p-3 rounded-2xl border border-black/5 text-center">
-                    <p className="text-lg font-bold text-black">{g.totalDUDI}</p>
-                    <p className="text-[9px] font-bold text-black/50 uppercase tracking-widest mt-1">DUDI</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            {tab === 'mentor' && filteredMentor.map(m => (
-              <div 
-                key={m.id} 
-                onClick={() => {
-                  setSelectedPembimbing(m);
-                  setPembimbingType('mentor');
-                  setShowPembimbingModal(true);
-                }}
-                className="bg-white rounded-[24px] p-5 border border-black/5 shadow-sm transition-all cursor-pointer flex flex-col"
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-black/5 rounded-full flex items-center justify-center border border-black/10">
-                    <Briefcase className="w-5 h-5 text-black/50" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-black">{m.name}</h4>
-                    <p className="text-[10px] font-bold text-black/50 mt-0.5">{m.role}</p>
-                  </div>
-                </div>
-                <div className="space-y-2 mt-auto bg-black/5 p-3 rounded-2xl border border-black/5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-black/50 flex items-center gap-1.5"><Building className="w-3.5 h-3.5"/> DUDI</span>
-                    <span className="font-bold text-black">{m.perusahaan}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs pt-2 border-t border-black/5">
-                    <span className="font-bold text-black/50 flex items-center gap-1.5"><GraduationCap className="w-3.5 h-3.5"/> Bimbingan</span>
-                    <span className="font-bold text-black">{m.totalSiswa} Siswa</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-
-          </div>
+          )}
         </div>
       </div>
 
-      {/* DETAIL PEMBIMBING MODAL (DAFTAR SISWA BIMBINGAN) */}
-      {showPembimbingModal && selectedPembimbing && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-[24px] rounded-[24px] animate-in fade-in duration-200">
-          <div className="bg-white rounded-[24px] max-w-2xl w-full h-[85vh] max-h-[620px] shadow-2xl flex flex-col overflow-hidden border border-black/10">
-            <div className="p-6 border-b border-black/5 flex items-center justify-between shrink-0 bg-white">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-black/5 flex items-center justify-center border border-black/10">
-                  {pembimbingType === 'guru' ? (
-                    <Users className="w-6 h-6 text-black/50" />
-                  ) : (
-                    <Briefcase className="w-6 h-6 text-black/50" />
-                  )}
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-black">{selectedPembimbing.name}</h3>
-                  <p className="text-xs font-semibold text-black/50 mt-0.5">
-                    {pembimbingType === 'guru' 
-                      ? `Guru Pembimbing • ${selectedPembimbing.subject}` 
-                      : `Mentor DUDI • ${selectedPembimbing.role} di ${selectedPembimbing.perusahaan}`}
-                  </p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setShowPembimbingModal(false)} 
-                className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center text-black/50 transition-colors shrink-0"
-              >
-                <X className="w-4 h-4" />
-              </button>
+      {/* ══════════════════════════════════════
+          MODALS
+          ══════════════════════════════════════ */}
+
+      {/* Modal Detail Siswa */}
+      {detailSiswa && (
+        <DetailModal
+          onClose={() => setDetailSiswa(null)}
+          avatarBg="bg-navy"
+          avatarContent={getInitials(detailSiswa.name)}
+          title={detailSiswa.name}
+          subtitle={`${detailSiswa.kelas} · ${detailSiswa.perusahaan}`}
+          icon={GraduationCap}
+        >
+          <div className="grid grid-cols-3 gap-2 mb-5">
+            <MiniStat label="Kehadiran" value={`${detailSiswa.kehadiran}%`} />
+            <MiniStat label="Logbook" value={detailSiswa.logs} />
+            <MiniStat label="Berkas" value={`${detailSiswa.berkasPct}%`} />
+          </div>
+
+          <h4 className="text-[11px] font-bold text-navy/50 uppercase tracking-wide mb-2">Info Pembimbing</h4>
+          <div className="grid grid-cols-2 gap-2 mb-5">
+            <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl p-3">
+              <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">Guru Pembimbing</p>
+              <p className="text-sm font-bold text-navy mt-0.5 truncate">{detailSiswa.guruPembimbing || '-'}</p>
             </div>
-
-            <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-black/[0.02]">
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-white p-4 rounded-[24px] border border-black/5 shadow-sm">
-                  <h4 className="text-[10px] font-bold text-black/40 uppercase tracking-widest mb-1">
-                    {pembimbingType === 'guru' ? 'Mata Pelajaran / Bidang' : 'Instansi DUDI'}
-                  </h4>
-                  <p className="text-sm font-bold text-black">
-                    {pembimbingType === 'guru' ? selectedPembimbing.subject : selectedPembimbing.perusahaan}
-                  </p>
-                </div>
-                <div className="bg-white p-4 rounded-[24px] border border-black/5 shadow-sm">
-                  <h4 className="text-[10px] font-bold text-black/40 uppercase tracking-widest mb-1">Anak Bimbingan</h4>
-                  <p className="text-sm font-bold text-black">{selectedPembimbing.totalSiswa} Siswa PKL</p>
-                </div>
-              </div>
-
-              <h4 className="font-bold text-sm text-black mb-3">
-                Daftar Murid dalam Bimbingan {selectedPembimbing.name}
-              </h4>
-              
-              {(() => {
-                const bimbinganList = siswaList.filter((s: any) => 
-                  pembimbingType === 'guru' 
-                    ? s.guruPembimbing?.toLowerCase().includes(selectedPembimbing.name.split(',')[0].toLowerCase())
-                    : (s.mentor?.toLowerCase().includes(selectedPembimbing.name.split(',')[0].toLowerCase()) || s.perusahaan.toLowerCase() === selectedPembimbing.perusahaan?.toLowerCase())
-                );
-
-                return bimbinganList.length > 0 ? (
-                  <div className="space-y-3">
-                    {bimbinganList.map((siswa: any) => (
-                      <div key={siswa.id} className="bg-white p-4 rounded-[24px] border border-black/5 shadow-sm flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-black/5 border border-black/10 flex items-center justify-center shrink-0">
-                            <GraduationCap className="w-5 h-5 text-black/50" />
-                          </div>
-                          <div>
-                            <h5 className="font-bold text-sm text-black">{siswa.name}</h5>
-                            <p className="text-[10px] font-bold text-black/50 mt-0.5">{siswa.kelas} • {siswa.perusahaan}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="bg-black/5 px-3 py-1.5 rounded-xl border border-black/5 text-center">
-                            <p className="text-xs font-bold text-black">{siswa.kehadiran}%</p>
-                            <p className="text-[8px] font-bold text-black/40 uppercase">Kehadiran</p>
-                          </div>
-                          <div className="bg-black/5 px-3 py-1.5 rounded-xl border border-black/5 text-center">
-                            <p className="text-xs font-bold text-black">{siswa.logs}</p>
-                            <p className="text-[8px] font-bold text-black/40 uppercase">Logbook</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="bg-white p-6 rounded-[24px] border border-black/5 text-center">
-                    <p className="text-xs font-bold text-black/50">Belum ada siswa yang tercatat di bawah bimbingan pembimbing ini.</p>
-                  </div>
-                );
-              })()}
-            </div>
-
-            <div className="p-5 border-t border-black/5 bg-white shrink-0 flex justify-end">
-              <button 
-                onClick={() => setShowPembimbingModal(false)} 
-                className="px-6 py-3 bg-black text-white text-xs font-bold rounded-xl shadow-md"
-              >
-                Tutup Jendela
-              </button>
+            <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl p-3">
+              <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">Mentor</p>
+              <p className="text-sm font-bold text-navy mt-0.5 truncate">{detailSiswa.mentor || '-'}</p>
             </div>
           </div>
-        </div>
+
+          <h4 className="text-[11px] font-bold text-navy/50 uppercase tracking-wide mb-2">Logbook Terbaru</h4>
+          <LogPreviewList logs={getSiswaLogs(detailSiswa.name)} />
+        </DetailModal>
+      )}
+
+      {/* Modal Detail Perusahaan */}
+      {detailPerusahaan && (
+        <DetailModal
+          onClose={() => setDetailPerusahaan(null)}
+          avatarBg="bg-steel"
+          avatarContent={<BuildingIcon className="w-5 h-5" />}
+          title={detailPerusahaan.name}
+          subtitle={detailPerusahaan.address}
+          icon={Building2}
+        >
+          <div className="grid grid-cols-3 gap-2 mb-5">
+            <MiniStat label="Kuota" value={detailPerusahaan.quota} />
+            <MiniStat label="Terisi" value={detailPerusahaan.filled} />
+            <MiniStat label="Sisa" value={detailPerusahaan.quota - detailPerusahaan.filled} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 mb-5">
+            <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl p-3">
+              <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">Mentor DUDI</p>
+              <p className="text-sm font-bold text-navy mt-0.5 truncate">{detailPerusahaan.mentor || '-'}</p>
+            </div>
+            <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl p-3">
+              <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">Radius</p>
+              <p className="text-sm font-bold text-navy mt-0.5 tabular-nums">{detailPerusahaan.radiusMeters || 500}m</p>
+            </div>
+          </div>
+
+          {detailPerusahaan.latitude && detailPerusahaan.longitude && (
+            <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl p-3 mb-5 flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-steel shrink-0" />
+              <p className="text-[11px] font-bold text-navy/70 tabular-nums">
+                {detailPerusahaan.latitude.toFixed(4)}, {detailPerusahaan.longitude.toFixed(4)}
+              </p>
+            </div>
+          )}
+
+          <h4 className="text-[11px] font-bold text-navy/50 uppercase tracking-wide mb-2">Siswa yang Magang</h4>
+          <SiswaPreviewList list={getSiswaByPerusahaan(detailPerusahaan.name)} />
+        </DetailModal>
+      )}
+
+      {/* Modal Detail Guru */}
+      {detailGuru && (
+        <DetailModal
+          onClose={() => setDetailGuru(null)}
+          avatarBg="bg-navy"
+          avatarContent={getInitials(detailGuru.name)}
+          title={detailGuru.name}
+          subtitle={detailGuru.subject || 'Guru Pembimbing'}
+          icon={Users}
+          badge={{ label: 'GURU', icon: GraduationCap, bg: 'bg-navy', text: 'text-white' }}
+        >
+          <div className="grid grid-cols-2 gap-2 mb-5">
+            <MiniStat label="Siswa Bimbingan" value={detailGuru.totalSiswa} />
+            <MiniStat label="Perusahaan" value={detailGuru.totalDUDI} />
+          </div>
+
+          <h4 className="text-[11px] font-bold text-navy/50 uppercase tracking-wide mb-2">Daftar Siswa Bimbingan</h4>
+          <SiswaPreviewList list={getSiswaByGuru(detailGuru.name)} />
+        </DetailModal>
+      )}
+
+      {/* Modal Detail Mentor */}
+      {detailMentor && (
+        <DetailModal
+          onClose={() => setDetailMentor(null)}
+          avatarBg="bg-steel"
+          avatarContent={getInitials(detailMentor.name)}
+          title={detailMentor.name}
+          subtitle={`${detailMentor.role || 'Mentor'} · ${detailMentor.perusahaan}`}
+          icon={Briefcase}
+          badge={{ label: 'MENTOR', icon: Briefcase, bg: 'bg-steel', text: 'text-white' }}
+        >
+          <div className="grid grid-cols-2 gap-2 mb-5">
+            <MiniStat label="Siswa Bimbingan" value={detailMentor.totalSiswa} />
+            <MiniStat label="DUDI" value={detailMentor.perusahaan ? 1 : 0} />
+          </div>
+
+          <h4 className="text-[11px] font-bold text-navy/50 uppercase tracking-wide mb-2">Daftar Siswa Bimbingan</h4>
+          <SiswaPreviewList list={getSiswaByMentor(detailMentor.name, detailMentor.perusahaan)} />
+        </DetailModal>
+      )}
+
+      {/* Modal Tambah Data */}
+      {showAddModal && (
+        <AddDataModal
+          onClose={() => setShowAddModal(false)}
+          activeTab={activeTab}
+          addSiswa={addSiswa}
+          addPerusahaan={addPerusahaan}
+        />
       )}
     </div>
   );
 };
+
+/* ══════════════════════════════════════════════════════
+   SUB-COMPONENTS
+   ══════════════════════════════════════════════════════ */
+
+const EmptyState: React.FC<{ label: string; search: string }> = ({ label, search }) => (
+  <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
+    <div className="w-14 h-14 rounded-2xl bg-[#F1F4F8] flex items-center justify-center mb-3">
+      <Search className="w-6 h-6 text-navy/30" />
+    </div>
+    <p className="text-sm font-bold text-navy mb-1">Data {label} tidak ditemukan</p>
+    <p className="text-xs text-navy/50 max-w-xs">
+      {search ? `Tidak ada ${label} yang cocok dengan "${search}"` : `Belum ada data ${label}. Klik "Tambah Data" untuk menambah.`}
+    </p>
+  </div>
+);
+
+const MiniStat: React.FC<{ label: string; value: string | number }> = ({ label, value }) => (
+  <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl p-3 text-center">
+    <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">{label}</p>
+    <p className="text-xl font-bold text-navy tabular-nums mt-1">{value}</p>
+  </div>
+);
+
+interface DetailModalProps {
+  onClose: () => void;
+  avatarBg: string;
+  avatarContent: React.ReactNode;
+  title: string;
+  subtitle: string;
+  icon: React.ElementType;
+  badge?: { label: string; icon: React.ElementType; bg: string; text: string };
+  children: React.ReactNode;
+}
+
+const DetailModal: React.FC<DetailModalProps> = ({
+  onClose, avatarBg, avatarContent, title, subtitle, badge, children
+}) => (
+  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy/50 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="bg-white rounded-[24px] max-w-2xl w-full max-h-[85vh] shadow-2xl flex flex-col overflow-hidden border border-mist/60">
+      <div className="bg-navy p-5 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className={`w-12 h-12 rounded-2xl ${avatarBg === 'bg-navy' ? 'bg-white/15' : 'bg-white'} flex items-center justify-center shrink-0 ${avatarBg === 'bg-navy' ? 'text-white' : 'text-steel'}`}>
+            {typeof avatarContent === 'string' ? (
+              <span className="font-bold text-base">{avatarContent}</span>
+            ) : avatarContent}
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-lg font-bold text-white truncate">{title}</h3>
+              {badge && (
+                <span className={`text-[10px] font-bold ${badge.bg} ${badge.text} px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0`}>
+                  <badge.icon className="w-3 h-3" /> {badge.label}
+                </span>
+              )}
+            </div>
+            <p className="text-[12px] font-semibold text-white/60 truncate mt-0.5">{subtitle}</p>
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors shrink-0"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-5">
+        {children}
+      </div>
+    </div>
+  </div>
+);
+
+const SiswaPreviewList: React.FC<{ list: any[] }> = ({ list }) => {
+  if (list.length === 0) {
+    return (
+      <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl p-5 text-center">
+        <p className="text-xs font-semibold text-navy/50">Belum ada siswa yang terdaftar.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      {list.map(s => (
+        <div key={s.id} className="p-2.5 rounded-xl border border-mist/60 bg-white flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-navy text-white flex items-center justify-center font-bold text-xs shrink-0">
+            {getInitials(s.name)}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-bold text-navy truncate">{s.name}</p>
+            <p className="text-[11px] font-semibold text-navy/50 truncate">{s.kelas} · {s.perusahaan}</p>
+          </div>
+          <span className="text-[10px] font-bold bg-steel/10 text-steel px-2 py-1 rounded-full tabular-nums shrink-0">
+            {s.kehadiran}%
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const LogPreviewList: React.FC<{ logs: any[] }> = ({ logs }) => {
+  if (logs.length === 0) {
+    return (
+      <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl p-5 text-center">
+        <p className="text-xs font-semibold text-navy/50">Belum ada logbook tercatat.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      {logs.map(l => (
+        <div key={l.id} className="p-3 rounded-xl border border-mist/60 bg-white">
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <span className="text-[10px] font-bold text-navy/40 uppercase tracking-wide">{l.date}</span>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              l.status === 'approved' ? 'bg-steel/15 text-steel'
+              : l.status === 'revision' ? 'bg-[#FDECEF] text-[#BE123C]'
+              : 'bg-[#FBF3E2] text-[#9A6B15]'
+            }`}>
+              {l.status === 'approved' ? 'Disetujui' : l.status === 'revision' ? 'Revisi' : 'Menunggu'}
+            </span>
+          </div>
+          <p className="text-sm font-bold text-navy line-clamp-2">{l.title}</p>
+          <p className="text-[11px] font-semibold text-navy/50 mt-0.5">{l.hours} jam · {l.category}</p>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+/* ── Add Data Modal ── */
+interface AddDataModalProps {
+  onClose: () => void;
+  activeTab: TabKey;
+  addSiswa: any;
+  addPerusahaan: any;
+}
+
+const AddDataModal: React.FC<AddDataModalProps> = ({ onClose, activeTab, addSiswa, addPerusahaan }) => {
+  const { guruList, mentorList } = useApp();
+  const [formTab, setFormTab] = useState<TabKey>(activeTab);
+  const [form, setForm] = useState<any>({
+    name: '', kelas: '', guruPembimbing: '', perusahaan: '', mentor: '',
+    address: '', quota: 5, category: '', role: ''
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (formTab === 'siswa') {
+        await addSiswa({ name: form.name, kelas: form.kelas || '-', perusahaan: form.perusahaan || '-', guruPembimbing: form.guruPembimbing || '-', mentor: form.mentor || '-', academicYear: '2025/2026' });
+      } else if (formTab === 'perusahaan') {
+        await addPerusahaan({ name: form.name, address: form.address, quota: Number(form.quota), mentor: form.mentor });
+      } else {
+        console.warn('Tambah guru/mentor belum diimplementasi di backend');
+      }
+      onClose();
+    } catch (err) {
+      alert('Gagal menambah data. Pastikan backend support endpoint ini.');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy/50 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="bg-white rounded-[24px] max-w-2xl w-full max-h-[85vh] shadow-2xl flex flex-col overflow-hidden border border-mist/60">
+        <div className="p-5 border-b border-mist/60 shrink-0">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-navy flex items-center justify-center">
+                <UserPlus className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-navy">Tambah Data Baru</h3>
+                <p className="text-[12px] font-semibold text-navy/60 mt-0.5">Pilih tipe data yang akan ditambah</p>
+              </div>
+            </div>
+            <button onClick={onClose} className="w-9 h-9 rounded-xl bg-mist/60 hover:bg-mist flex items-center justify-center text-navy/60 transition-colors shrink-0">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="bg-[#F1F4F8] p-1 rounded-xl flex gap-1">
+            {([
+              { key: 'siswa', label: 'Siswa', icon: UserPlus },
+              { key: 'guru', label: 'Guru', icon: UserCog },
+              { key: 'perusahaan', label: 'Perusahaan', icon: BuildingIcon },
+              { key: 'mentor', label: 'Mentor', icon: Briefcase },
+            ] as const).map(t => {
+              const Icon = t.icon;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => setFormTab(t.key)}
+                  className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    formTab === t.key ? 'bg-white text-navy shadow-sm' : 'text-navy/60 hover:text-navy'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" /> {t.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-3">
+          <FormInput label="Nama Lengkap" value={form.name} onChange={v => setForm({ ...form, name: v })} required placeholder={formTab === 'perusahaan' ? 'Nama perusahaan' : 'Nama lengkap'} />
+
+          {formTab === 'siswa' && (
+            <>
+              <FormInput label="Kelas" value={form.kelas} onChange={v => setForm({ ...form, kelas: v })} placeholder="Contoh: XII RPL 1" />
+              <FormSelect label="Guru Pembimbing" value={form.guruPembimbing} onChange={v => setForm({ ...form, guruPembimbing: v })} options={guruList.map(g => g.name)} />
+              <FormInput label="Tempat PKL" value={form.perusahaan} onChange={v => setForm({ ...form, perusahaan: v })} placeholder="Nama perusahaan" />
+            </>
+          )}
+
+          {formTab === 'guru' && (
+            <FormInput label="Mata Pelajaran" value={form.kelas} onChange={v => setForm({ ...form, kelas: v })} placeholder="Contoh: Produktif RPL" />
+          )}
+
+          {formTab === 'perusahaan' && (
+            <>
+              <FormInput label="Alamat" value={form.address} onChange={v => setForm({ ...form, address: v })} required placeholder="Alamat lengkap" />
+              <FormInput label="Kuota Siswa" value={form.quota} onChange={v => setForm({ ...form, quota: v })} type="number" />
+              <FormSelect label="Mentor DUDI" value={form.mentor} onChange={v => setForm({ ...form, mentor: v })} options={mentorList.map(m => m.name)} />
+            </>
+          )}
+
+          {formTab === 'mentor' && (
+            <>
+              <FormInput label="Role / Jabatan" value={form.role} onChange={v => setForm({ ...form, role: v })} placeholder="Contoh: Senior Developer" />
+              <FormInput label="Perusahaan" value={form.perusahaan} onChange={v => setForm({ ...form, perusahaan: v })} placeholder="Nama perusahaan" />
+            </>
+          )}
+
+          {(formTab === 'guru' || formTab === 'mentor') && (
+            <div className="bg-[#FBF3E2] border border-[#F0E1C0] rounded-xl p-3 flex items-start gap-2 mt-2">
+              <ShieldCheck className="w-4 h-4 text-[#9A6B15] shrink-0 mt-0.5" />
+              <p className="text-[11px] font-medium text-[#9A6B15] leading-relaxed">
+                Endpoint untuk menambah guru/mentor belum diimplementasi di backend. Form akan gagal submit — data hanya bisa ditambah lewat seed atau database langsung.
+              </p>
+            </div>
+          )}
+        </form>
+
+        <div className="p-5 pt-3 border-t border-mist/60 flex gap-2 shrink-0">
+          <button onClick={onClose} type="button" className="flex-1 bg-mist/60 text-navy/70 font-bold text-sm py-3 rounded-xl hover:bg-mist transition-colors">
+            Batal
+          </button>
+          <button type="submit" onClick={handleSubmit} className="flex-1 bg-steel text-white font-bold text-sm py-3 rounded-xl hover:bg-steel/90 shadow-lg shadow-steel/25 transition-all flex items-center justify-center gap-1.5">
+            <Plus className="w-4 h-4" /> Simpan Data
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const FormInput: React.FC<{
+  label: string; value: string | number; onChange: (v: string) => void;
+  type?: string; required?: boolean; placeholder?: string;
+}> = ({ label, value, onChange, type = 'text', required, placeholder }) => (
+  <div>
+    <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">{label}</label>
+    <input
+      type={type}
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      required={required}
+      placeholder={placeholder}
+      className="w-full bg-[#F1F4F8] border border-mist rounded-xl px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
+    />
+  </div>
+);
+
+const FormSelect: React.FC<{
+  label: string; value: string; onChange: (v: string) => void; options: string[];
+}> = ({ label, value, onChange, options }) => (
+  <div>
+    <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">{label}</label>
+    <select
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      className="w-full bg-[#F1F4F8] border border-mist rounded-xl px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
+    >
+      <option value="">— Pilih —</option>
+      {options.map(o => <option key={o} value={o}>{o}</option>)}
+    </select>
+  </div>
+);

@@ -24,19 +24,21 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
   const getPageTitle = () => {
     switch (activePage) {
-      case 'dashboard': return 'Dashboard';
-      case 'logbook':   return 'Logbook PKL';
-      case 'absensi':   return 'Absensi Harian';
-      case 'maps':      return 'Lokasi & Maps';
-      case 'profile':   return 'Profile';
-      case 'monitoring':return 'Monitoring PKL';
-      case 'perizinan': return 'Verifikasi Perizinan';
-      case 'rekap':     return 'Rekapitulasi Nilai';
-      // Tambahan title untuk role Hubin
-      case 'pemetaan':  return 'Pemetaan Industri'; 
-      case 'data-siswa':return 'Data Siswa';
-      case 'data-pembimbing':return 'Data Pembimbing';
-      default:          return '';
+      case 'dashboard':        return 'Dashboard';
+      case 'logbook':          return 'Logbook PKL';
+      case 'absensi':          return 'Absensi Harian';
+      case 'maps':             return 'Lokasi & Maps';
+      case 'profile':          return 'Profile';
+      case 'monitoring':       return 'Monitoring PKL';
+      case 'perizinan':        return 'Verifikasi Perizinan';
+      case 'rekap':            return 'Rekapitulasi Nilai';
+      // ── Role Hubin ──
+      case 'pemetaan':         return 'Pemetaan Industri';
+      case 'data':             return 'Kelola Data';
+      // Legacy (backward compat)
+      case 'data-siswa':       return 'Data Siswa';
+      case 'data-pembimbing':  return 'Data Pembimbing';
+      default:                 return '';
     }
   };
 
@@ -52,7 +54,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         userRole={userRole}
       />
       
-      {/* pb-20 md:pb-0 berfungsi memberi ruang di bawah agar tidak tertutup Bottom Nav di HP */}
+      {/* pb-20 md:pb-0 memberi ruang di bawah agar tidak tertutup Bottom Nav di HP */}
       <main className="flex-1 flex flex-col gap-2 md:gap-3 overflow-hidden pb-20 md:pb-0">
         <Header 
           title={getPageTitle()} 
