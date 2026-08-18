@@ -1,159 +1,181 @@
-# Go-PKL
+# Go-PKL - Panduan Instalasi dan Migrasi
 
-Repository: https://github.com/Zzeckh/Go-PKL
+Dokumen ini memandu pengguna Windows yang menjalankan database melalui Laragon (bundel MySQL/MariaDB) untuk menginstal dependensi, menyiapkan database, menjalankan migrasi Prisma, mengisi data awal, serta menjalankan aplikasi Go-PKL secara lokal.
 
-Panduan singkat untuk menjalankan proyek ini secara lokal (untuk pengguna Laragon / XAMPP).
+Asumsi lingkungan:
+- Sistem operasi Windows 10 atau Windows 11.
+- Laragon Full sudah terpasang (membawa Apache, MySQL/MariaDB, PHP, dan terminal).
+- Node.js versi 18 atau lebih baru sudah terpasang dan dapat dipanggil dari command line.
+- Git sudah terpasang (opsional, untuk mengambil kode sumber).
 
-## Prasyarat
 
-- Node.js 18+ (pengembang menggunakan Node 26)
-- npm (atau pnpm jika Anda prefer)
-- MySQL lokal (dijalankan via Laragon, XAMPP, atau layanan MySQL lain di mesin lokal)
+## 1. Persiapan Laragon dan Database MySQL
 
-> Catatan: pengguna Windows biasanya memakai Laragon atau XAMPP — instruksi di bawah menyesuaikan pengaturan MySQL lokal, bukan Docker.
+Langkah ini memastikan layanan MySQL berjalan dan database proyek tersedia.
 
-## Langkah cepat untuk menjalankan (baru clone)
+1. Jalankan Laragon dengan klik kanan pada ikon Laragon, lalu pilih Run, atau buka aplikasi Laragon dan tekan Start All. Pastikan indikator MySQL berwarna hijau (berjalan).
+2. Buka terminal. Anda dapat menggunakan terminal bawaan Laragon (klik kanan di area Laragon, pilih Terminal, lalu Terminal) atau Command Prompt maupun PowerShell biasa.
+3. Masuk ke klien MySQL melalui Laragon. Cara tercepat: di menu Laragon pilih MySQL, lalu mysql.exe -u root. Alternatifnya jalankan perintah berikut di terminal:
 
-1. Clone repo:
+   mysql -u root
 
-```bash
-git clone https://github.com/Zzeckh/Go-PKL.git
-cd Go-PKL
-```
+4. Buat database khusus untuk proyek. Jalankan perintah SQL berikut di dalam klien MySQL:
 
-2. Salin file environment dan sesuaikan `DATABASE_URL`:
+   CREATE DATABASE ujikom_go_pkl CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-File template `.env.example` sudah disertakan. Gunakan salah satu perintah berikut sesuai OS Anda untuk membuat file `.env` lokal.
+5. (Opsional namun disarankan) Buat pengguna khusus bernama sail agar sesuai dengan konfigurasi default proyek, lalu berikan hak akses penuh ke database tersebut:
 
-- Linux / macOS / WSL / Git Bash:
+   CREATE USER 'sail'@'localhost' IDENTIFIED BY 'sail';
+   GRANT ALL PRIVILEGES ON ujikom_go_pkl.* TO 'sail'@'localhost';
+   FLUSH PRIVILEGES;
 
-```bash
-cp .env.example .env
-# lalu buka .env dan sesuaikan DATABASE_URL jika perlu
-```
+   Catatan: jika Anda tidak ingin membuat pengguna sail dan memilih tetap memakai root tanpa password, sesuaikan nilai DATABASE_URL pada langkah berikutnya menjadi menggunakan root.
 
-- PowerShell (Windows / Laragon):
+6. Keluar dari klien MySQL dengan mengetik exit lalu Enter.
 
-```powershell
-Get-Content .env.example | Set-Content .env
-# atau buat manual dengan teks editor
-```
 
-- Command Prompt (cmd.exe):
+## 2. Konfigurasi Environment Variable
 
-```cmd
-copy .env.example .env
-```
+1. Buka folder proyek Go-PKL di terminal, misalnya:
 
-Contoh `DATABASE_URL` untuk Laragon / XAMPP (root tanpa password):
+   cd C:\laragon\www\gopkl
 
-```text
-DATABASE_URL="mysql://root:@127.0.0.1:3306/ujikom_go_pkl"
-```
+   Sesuaikan jalur dengan lokasi penyimpanan proyek Anda.
 
-Jika MySQL Anda memakai password, ganti sesuai:
+2. Jika belum ada file .env di akar proyek, buatlah dengan menyalin dari contoh. Bila file .env.example tersedia:
 
-```text
-DATABASE_URL="mysql://root:yourpassword@127.0.0.1:3306/ujikom_go_pkl"
-```
+   copy .env.example .env
 
-3. Pastikan database dibuat (pakai phpMyAdmin atau CLI):
+   Bila tidak ada contoh, buat file .env secara manual.
 
-```bash
-# Jika MySQL tanpa password (typical Laragon/XAMPP):
-mysql -u root -e "CREATE DATABASE IF NOT EXISTS ujikom_go_pkl;"
+3. Isi file .env dengan minimal variabel berikut. Pilih salah satu dari dua opsi DATABASE_URL sesuai langkah 1 nomor 5.
 
-# Jika MySQL memakai password:
-mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS ujikom_go_pkl;"
-```
+   Opsi A (menggunakan pengguna sail):
+   DATABASE_URL="mysql://sail:sail@localhost:3306/ujikom_go_pkl"
 
-4. Install dependensi:
+   Opsi B (menggunakan root tanpa password):
+   DATABASE_URL="mysql://root@localhost:3306/ujikom_go_pkl"
 
-```bash
+   Variabel lain yang diperlukan:
+   JWT_SECRET=ganti_dengan_string_acak_panjang_minimal_32_karakter
+   PORT=5000
+   NODE_ENV=development
+
+   Penting: pastikan tidak ada spasi di sekitar tanda sama dengan, dan nilai DATABASE_URL diapit tanda kutip ganda.
+
+
+## 3. Instalasi Dependensi
+
+Jalankan perintah berikut di akar proyek untuk memasang seluruh paket Node.js yang dibutuhkan, termasuk Prisma, Express, bcryptjs, jsonwebtoken, serta library peta Leaflet di sisi frontend:
+
 npm install
-```
 
-5. Terapkan schema Prisma ke database dan generate client:
 
-```bash
-npx prisma db push --accept-data-loss
+## 4. Generate Prisma Client
+
+Sebelum menjalankan migrasi, generate Prisma Client agar TypeScript mengenali model database:
+
 npx prisma generate
-```
 
-6. Seed database (sample data):
 
-```bash
-npm run seed           # menjalankan prisma/seed.js (users, absensi, logbook)
-node prisma/seed_static.js   # data perusahaan, perizinan, lokasi peta
-```
+## 5. Migrasi Schema ke Database
 
-7. Jalankan development (backend + frontend secara bersamaan):
+Proyek menggunakan Prisma dengan pendekatan db push karena schema dikelola langsung dari file prisma/schema.prisma. Perintah ini akan membuat seluruh tabel (School, Class, User, Company, Absensi, Logbook, Permission, Evaluation) beserta enum dan relasinya di database ujikom_go_pkl.
 
-```bash
+Untuk pengembangan awal atau saat database masih kosong:
+
+npx prisma db push
+
+Jika Anda ingin mereset database sepenuhnya (menghapus semua data lalu membangun ulang schema dari nol), gunakan:
+
+npx prisma db push --force-reset
+
+Peringatan: perintah force-reset akan menghapus seluruh data yang ada di database ujikom_go_pkl. Hanya gunakan pada lingkungan pengembangan.
+
+Verifikasi hasil migrasi:
+- Buka phpMyAdmin melalui menu Laragon (MySQL, phpMyAdmin), masuk dengan kredensial yang sesuai, lalu pilih database ujikom_go_pkl. Seluruh tabel seharusnya sudah muncul.
+- Atau jalankan Prisma Studio untuk melihat data secara visual:
+
+  npx prisma studio
+
+  Prisma Studio akan terbuka di peramban pada alamat http://localhost:5555.
+
+
+## 6. Pengisian Data Awal (Seeding)
+
+Seed akan membuat data minimal agar aplikasi dapat langsung digunakan: satu sekolah, satu perusahaan mitra lengkap dengan koordinat dan radius geofence, dua kelas, serta empat akun pengguna (siswa, guru, mentor, dan hubin) dengan password yang sama.
+
+Jalankan:
+
+npm run seed
+
+Setelah selesai, akun yang dapat digunakan untuk login adalah sebagai berikut. Password untuk keempat akun sama, yaitu gopkl123.
+
+- siswa@gopkl.id   (role student, ditampilkan sebagai intern di frontend)
+- guru@gopkl.id    (role teacher)
+- mentor@gopkl.id  (role mentor)
+- hubin@gopkl.id   (role hubin, berperan sebagai admin sekolah)
+
+
+## 7. Menjalankan Aplikasi
+
+Proyek menjalankan backend (Express pada port 5000) dan frontend (Vite pada port 5173) secara bersamaan melalui satu perintah:
+
 npm run dev
-# Backend: http://localhost:5000
-# Frontend: http://localhost:8443
-```
 
-## Perintah penting lain
+Tunggu hingga terminal menampilkan pesan bahwa API berjalan di http://localhost:5000 dan Vite siap di http://localhost:5173. Buka http://localhost:5173 di peramban, lalu login menggunakan salah satu akun pada langkah 6.
 
-- Menjalankan hanya backend:
+Untuk menghentikan aplikasi, tekan Ctrl + C di terminal.
 
-```bash
-npm start
-```
 
-- Menjalankan hanya frontend (Vite):
+## 8. Catatan Khusus Pengguna Laragon
 
-```bash
-npm run dev:frontend
-```
+- Layanan MySQL harus dalam keadaan berjalan setiap kali Anda menjalankan aplikasi. Jika MySQL belum menyala, aplikasi akan gagal koneksi dengan pesan Can't reach database server at localhost:3306. Pastikan Laragon dalam状态 Start All sebelum menjalankan npm run dev.
+- Port 3306 adalah port default MySQL di Laragon. Jika Anda pernah mengubah port MySQL di Laragon, sesuaikan angka 3306 pada DATABASE_URL dengan port yang berlaku.
+- Jika terjadi konflik port 5000 (backend) atau 5173 (frontend) dengan aplikasi lain, ubah nilai PORT di file .env untuk backend, dan ubah konfigurasi port Vite untuk frontend.
+- Prisma Studio (npx prisma studio) sangat berguna untuk memeriksa dan mengedit data secara manual selama pengembangan, misalnya menambahkan koordinat perusahaan atau memverifikasi hasil absensi.
 
-- Cek TypeScript tanpa build:
 
-```bash
-npx tsc --noEmit
-```
+## 9. Pemecahan Masalah Umum
 
-- Build produksi & preview frontend:
+Masalah: Can't reach database server at localhost:3306.
+Penyebab: layanan MySQL Laragon belum berjalan.
+Solusi: buka Laragon dan tekan Start All, pastikan indikator MySQL hijau, lalu jalankan ulang npm run dev.
 
-```bash
-npm run build
-npm run preview
-```
+Masalah: Access denied for user.
+Penyebab: kredensial pada DATABASE_URL tidak cocok dengan pengguna MySQL yang ada.
+Solusi: pastikan nama pengguna dan password di DATABASE_URL sama persis dengan yang dibuat pada langkah 1. Untuk pengguna root tanpa password di Laragon, gunakan bentuk mysql://root@localhost:3306/ujikom_go_pkl tanpa bagian password.
 
-## Struktur singkat (file penting)
+Masalah: Unknown database ujikom_go_pkl.
+Penyebab: database belum dibuat.
+Solusi: jalankan perintah CREATE DATABASE pada langkah 1 nomor 4.
 
-- `server.js` — entry point Express backend
-- `prisma/schema.prisma` — definisi model database
-- `prisma/seed.js` dan `prisma/seed_static.js` — script seed sample data
-- `src/context/AppContext.tsx` — frontend: data fetched dari `http://localhost:5000/api/*`
+Masalah: Error P2002 Unique constraint failed saat seeding.
+Penyebab: data seed sudah pernah dimasukkan sebelumnya.
+Solusi: jalankan npx prisma db push --force-reset untuk mengosongkan database, lalu ulangi npm run seed.
 
-Lihat juga: [prisma/schema.prisma](prisma/schema.prisma#L1) dan [server.js](server.js#L1).
+Masalah: Module not found atau error dependensi setelah menarik kode terbaru.
+Penyebab: dependensi belum terpasang atau tidak sinkron.
+Solusi: jalankan ulang npm install, kemudian npx prisma generate.
 
-## Troubleshooting singkat
+Masalah: Perubahan schema tidak tercermin di database.
+Penyebab: perintah migrasi belum dijalankan setelah mengubah prisma/schema.prisma.
+Solusi: jalankan npx prisma db push setelah setiap perubahan schema.
 
-- Jika `EADDRINUSE` (port in use): hentikan proses yang memakai port 5000 atau 8443, lalu ulangi `npm run dev`:
 
-```bash
-ss -ltnp | grep ':5000\|:8443'
-kill <PID>
-```
+## 10. Ringkasan Urutan Perintah
 
-- Jika Prisma tidak menemukan DB: periksa `DATABASE_URL` di `.env` dan pastikan MySQL berjalan (Laragon/XAMPP control panel atau phpMyAdmin).
+Berikut urutan lengkap perintah dari awal hingga aplikasi berjalan, untuk referensi cepat:
 
-- Jika seed gagal karena model baru, jalankan ulang `npx prisma db push` lalu `node prisma/seed_static.js`.
+1. Start All di Laragon (pastikan MySQL berjalan).
+2. Buat database dan pengguna melalui mysql -u root (langkah 1).
+3. cd ke folder proyek.
+4. Buat dan isi file .env (langkah 2).
+5. npm install
+6. npx prisma generate
+7. npx prisma db push
+8. npm run seed
+9. npm run dev
+10. Buka http://localhost:5173 dan login dengan akun pada langkah 6.
 
-## Check sebelum push ke GitHub
-
-1. Pastikan `.env` tidak ikut ter-commit (file ini seharusnya ada di `.gitignore`).
-2. Jalankan test build lokal dan pastikan `npm run dev` berjalan.
-3. Commit & push:
-
-```bash
-git add .
-git commit -m "chore: add README and run instructions"
-git push origin main
-```
-
-If you want, I can also add a `docker-compose.yml` or a `scripts/start-mysql.sh` for convenience, but this README assumes Laragon/XAMPP users will manage MySQL locally.
+Dengan mengikuti urutan di atas, lingkungan pengembangan Go-PKL berbasis MySQL Laragon di Windows akan siap digunakan.
