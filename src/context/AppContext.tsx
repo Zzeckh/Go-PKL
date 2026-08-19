@@ -26,6 +26,7 @@ export interface PerusahaanItem {
   quota: number;
   filled: number;
   mentor: string;
+  category?: string;
   latitude?: number;
   longitude?: number;
   radiusMeters?: number;
@@ -237,6 +238,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         quota: c.quota,
         filled: c.filled,
         mentor: c.mentor?.name || '',
+        category: c.category || '',
         latitude: c.latitude,
         longitude: c.longitude,
         radiusMeters: c.radiusMeters,
