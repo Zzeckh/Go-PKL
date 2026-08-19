@@ -46,6 +46,19 @@ export interface PerizinanItem {
   status: 'pending' | 'approved' | 'rejected';
 }
 
+export interface PerusahaanItem {
+  id: number;
+  name: string;
+  address: string;
+  category?: string;
+  quota: number;
+  filled: number;
+  mentor?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  radiusMeters?: number;
+}
+
 export interface ClassItem {
   id: number;
   name: string;
@@ -71,6 +84,7 @@ interface AppContextType {
   siswaList: SiswaItem[];
   guruList: GuruItem[];
   mentorList: MentorItem[];
+  perusahaanList: PerusahaanItem[];
   logEntries: LogEntry[];
   attendances: AttendanceRecord[];
   perizinanList: PerizinanItem[];
@@ -79,11 +93,14 @@ interface AppContextType {
   superClasses: ClassItem[];
   superUsers: any[];
   addLogEntry: (entry: Omit<LogEntry, 'id' | 'date' | 'status'>) => Promise<void>;
-  updateLogStatus: (id: string, status: 'approved' | 'rejected', feedback?: string) => Promise<void>;
+  updateLogStatus: (id: string, status: 'approved' | 'rejected' | 'revision', feedback?: string) => Promise<void>;
   checkInAttendance: (imageUrl?: string, latitude?: number, longitude?: number) => Promise<void>;
   updatePerizinanStatus: (id: number, status: 'approved' | 'rejected', rejectReason?: string) => Promise<void>;
   submitEvaluation: (siswaId: number, nilaiDUDI: number, nilaiGuru: number) => Promise<void>;
   addSiswa: (newSiswa: Omit<SiswaItem, 'id' | 'kehadiran' | 'logs' | 'nilaiDUDI' | 'nilaiGuru' | 'finalNilai' | 'berkasPct'>) => Promise<void>;
+  addPerusahaan: (data: { name: string; address: string; quota: number; mentor: string }) => Promise<void>;
+  updateSiswaMapping: (siswaId: number, data: { perusahaan: string; guruPembimbing: string; mentor: string }) => Promise<void>;
+  updateCompanyLocation: (companyId: number, lat: number, lng: number, radius: number) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string, institution?: string) => Promise<void>;
   logout: () => void;
@@ -135,6 +152,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [siswaList, setSiswaList] = useState<SiswaItem[]>([]);
   const [guruList, setGuruList] = useState<GuruItem[]>([]);
   const [mentorList, setMentorList] = useState<MentorItem[]>([]);
+  const [perusahaanList, setPerusahaanList] = useState<PerusahaanItem[]>([]);
   const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
   const [attendances, setAttendances] = useState<AttendanceRecord[]>([]);
   const [perizinanList, setPerizinanList] = useState<PerizinanItem[]>([]);
@@ -173,6 +191,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSiswaList([]);
     setGuruList([]);
     setMentorList([]);
+    setPerusahaanList([]);
     setLogEntries([]);
     setAttendances([]);
     setPerizinanList([]);
@@ -282,6 +301,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const loadPerusahaan = async () => {
+    try {
+      startLoading('perusahaan');
+      const response = await api.get('/api/companies') as { data: any[] };
+      const mapped = response.data.map((c: any): PerusahaanItem => ({
+        id: c.id,
+        name: c.name,
+        address: c.address || '-',
+        category: c.category || undefined,
+        quota: c.quota || 0,
+        filled: c.filled || 0,
+        mentor: c.mentor?.name || undefined,
+        latitude: c.latitude ?? null,
+        longitude: c.longitude ?? null,
+        radiusMeters: c.radiusMeters || 500,
+      }));
+      setPerusahaanList(mapped);
+    } catch (error: any) {
+      console.warn('Gagal mengambil perusahaan:', error?.message);
+    } finally {
+      stopLoading('perusahaan');
+    }
+  };
+
   const loadSuperStats = useCallback(async (): Promise<boolean> => {
     if (!localStorage.getItem('pkl_token')) return false;
     try {
@@ -348,6 +391,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         loadAttendances(),
         loadSiswa(),
         loadPerizinan(),
+        loadPerusahaan(),
       ]);
     } finally {
       setIsLoading(false);
@@ -449,7 +493,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const updateLogStatus = async (id: string, status: 'approved' | 'rejected', feedback?: string) => {
+  const updateLogStatus = async (id: string, status: 'approved' | 'rejected' | 'revision', feedback?: string) => {
     try {
       const logId = parseInt(id.replace('LOG-', ''));
       await api.put(`/api/logbook/${logId}`, { status, feedback });
@@ -509,16 +553,53 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const addPerusahaan = async (data: { name: string; address: string; quota: number; mentor: string }) => {
+    try {
+      await api.post('/api/companies', {
+        name: data.name,
+        address: data.address,
+        quota: data.quota,
+      });
+      await loadPerusahaan();
+    } catch (error: any) {
+      throw new Error(error.message || 'Gagal menambah perusahaan');
+    }
+  };
+
+  const updateSiswaMapping = async (siswaId: number, data: { perusahaan: string; guruPembimbing: string; mentor: string }) => {
+    try {
+      await api.patch(`/api/users/${siswaId}`, {
+        companyName: data.perusahaan,
+      });
+      await loadSiswa();
+    } catch (error: any) {
+      throw new Error(error.message || 'Gagal update pemetaan siswa');
+    }
+  };
+
+  const updateCompanyLocation = async (companyId: number, lat: number, lng: number, radius: number) => {
+    try {
+      await api.patch(`/api/companies/${companyId}`, {
+        latitude: lat,
+        longitude: lng,
+        radiusMeters: radius,
+      });
+      await loadPerusahaan();
+    } catch (error: any) {
+      throw new Error(error.message || 'Gagal update lokasi perusahaan');
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
         isAuthenticated, authMode, setAuthMode, userRole, activePage, setActivePage,
         userName, schoolName, userId, userCompanyName, userCompanyAddress, userCompanyLocation,
-        isLoading, loadingResources, siswaList, guruList, mentorList,
+        isLoading, loadingResources,        siswaList, guruList, mentorList, perusahaanList,
         logEntries, attendances, perizinanList, mapLocations,
         superStats, superClasses, superUsers,
         addLogEntry, updateLogStatus, checkInAttendance, updatePerizinanStatus,
-        submitEvaluation, addSiswa,
+        submitEvaluation, addSiswa, addPerusahaan, updateSiswaMapping, updateCompanyLocation,
         login, register, logout, refreshData,
         loadSuperStats, loadSuperClasses, createClass, deleteClass,
         loadSuperUsers, toggleUser,

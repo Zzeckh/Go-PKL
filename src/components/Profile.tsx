@@ -13,7 +13,7 @@ interface ProfileProps {
 export const Profile: React.FC<ProfileProps> = ({ userRole = 'intern' }) => {
   const {
     userName, userCompanyName, userCompanyAddress,
-    userCompanyLocation, schoolName,
+    schoolName,
   } = useApp();
 
   const [editing, setEditing] = useState(false);

@@ -21,7 +21,7 @@ interface AuthError {
   icon: React.ElementType;
 }
 
-function classifyAuthError(error: any, isLogin: boolean): AuthError {
+function classifyAuthError(error: any, _isLogin: boolean): AuthError {
   const msg = error?.message?.toLowerCase() || '';
   const status = error?.status;
 

@@ -158,7 +158,7 @@ export const MentorRoster: React.FC = () => {
 
   const handleSaveEval = () => {
     if (selectedStudent) {
-      submitEvaluation(selectedStudent.id, gradeDUDI, selectedStudent.nilaiGuru || '85', 100);
+      submitEvaluation(selectedStudent.id, Number(gradeDUDI), Number(selectedStudent.nilaiGuru || '85'));
       setShowEvalModal(false);
     }
   };

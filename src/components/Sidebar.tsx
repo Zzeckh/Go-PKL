@@ -2,7 +2,7 @@ import React from 'react';
 import { 
   LayoutDashboard, BookOpen, MapPin, LogOut, PanelLeftClose, PanelLeftOpen, 
   Camera, Activity, FileCheck, DownloadCloud, Package,
-  School, Users, Briefcase, ShieldCheck
+  School, Users, ShieldCheck
 } from 'lucide-react';
 import { ActivePage, UserRole } from '../types';
 
