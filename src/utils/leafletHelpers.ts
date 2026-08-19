@@ -3,14 +3,12 @@ import L from 'leaflet';
 /* ══════════════════════════════════════════════════════
    KONFIGURASI MAP GO-PKL
    - Tile: OpenStreetMap Standard (gratis, tanpa API key)
-     → paling mirip Google Maps: ada icon POI (sekolah,
-       restoran, bank, dll) mulai zoom ±15
+     → paling mirip Google Maps: ada icon POI mulai zoom ±15
    - Alternatif clean: CartoDB Voyager (lihat comment bawah)
    - Marker: custom divIcon warna brand (navy/steel)
    ══════════════════════════════════════════════════════ */
 
 export const STREET_TILE = {
-  // OSM Standard — full detail + icon POI ala Google Maps
   url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
   attribution:
     '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -19,7 +17,6 @@ export const STREET_TILE = {
 
 // ── ALTERNATIF: kalau OSM terasa ramai, ganti url di atas dengan Voyager:
 //    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-//    (lebih clean, tetap ada label tempat & warna area)
 
 /* ── Warna brand (sinkron dengan design system) ── */
 const NAVY = '#152A42';
@@ -104,6 +101,12 @@ export const createPickerIcon = () =>
 
 /* ══════════════════════════════════════════════════════
    NOMINATIM — geocoder gratis dari OpenStreetMap
+   - countrycodes=id  : batasi ke Indonesia (relevansi naik)
+   - near (opsional)  : bias hasil ke area map yang sedang
+     dilihat (viewbox), supaya nama lokal lebih dulu muncul
+   CATATAN: Nominatim hanya menemukan tempat yang BENAR-BENAR
+   ada di OpenStreetMap. Lokasi fiktif/ belum terpetakan di OSM
+   tidak akan muncul — gunakan klik peta / tempel koordinat.
    ══════════════════════════════════════════════════════ */
 
 export interface GeoResult {
@@ -112,10 +115,20 @@ export interface GeoResult {
   lng: number;
 }
 
-export const searchAddress = async (query: string, limit = 5): Promise<GeoResult[]> => {
-  const url =
+export const searchAddress = async (
+  query: string,
+  limit = 5,
+  near?: { lat: number; lng: number }
+): Promise<GeoResult[]> => {
+  let url =
     `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=${limit}` +
+    `&countrycodes=id` +
     `&q=${encodeURIComponent(query)}`;
+
+  if (near) {
+    const d = 0.25; // viewbox ±~50km di sekitar pusat map
+    url += `&viewbox=${near.lng - d},${near.lat + d},${near.lng + d},${near.lat - d}&bounded=0`;
+  }
 
   const res = await fetch(url, {
     headers: { 'Accept-Language': 'id' },

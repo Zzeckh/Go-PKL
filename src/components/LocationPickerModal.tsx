@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Map as MapIcon, Search, X, MapPin, Navigation, Loader2, AlertCircle, Check } from 'lucide-react';
+import { Map as MapIcon, Search, X, MapPin, Navigation, Loader2, AlertCircle, Check, SearchX } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useApp } from '../context/AppContext';
@@ -54,25 +54,35 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
   const [searchResults, setSearchResults] = useState<GeoResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [noResults, setNoResults] = useState(false);
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  /* ── Debounced search ── */
+  /* ── Debounced search (dengan bias Indonesia + area map) ── */
   useEffect(() => {
     if (!searchQuery || searchQuery.trim().length < 3) {
       setSearchResults([]);
+      setNoResults(false);
+      setShowDropdown(false);
       return;
     }
     const timeout = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const results = await searchAddress(searchQuery);
+        // Bias pencarian ke area map yang sedang dilihat
+        const center = mapRef.current?.getCenter();
+        const near = center ? { lat: center.lat, lng: center.lng } : undefined;
+
+        const results = await searchAddress(searchQuery, 5, near);
         setSearchResults(results);
+        setNoResults(results.length === 0);
         setShowDropdown(true);
       } catch (err) {
         setSearchResults([]);
+        setNoResults(true);
+        setShowDropdown(true);
       } finally {
         setIsSearching(false);
       }
@@ -172,6 +182,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
     setLngInput(result.lng.toFixed(6));
     setSearchQuery('');
     setShowDropdown(false);
+    setNoResults(false);
     const map = mapRef.current;
     if (map) map.flyTo([result.lat, result.lng], 16, { duration: 0.8 });
     syncMarkerToCoords(result.lat, result.lng);
@@ -230,7 +241,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-6 bg-navy/60 backdrop-blur-md animate-in fade-in duration-200">
       
-      {/* ══ CARD MODAL — rounded-[28px] ══ */}
+      {/* ══ CARD MODAL ══ */}
       <div className="bg-white rounded-[28px] max-w-3xl w-full max-h-[92vh] shadow-2xl flex flex-col overflow-hidden border border-white/40">
         
         {/* Header navy */}
@@ -260,7 +271,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
         {/* Body */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5 space-y-4">
 
-          {/* Search bar — rounded-2xl */}
+          {/* Search bar */}
           <div className="relative">
             <div className="flex gap-2">
               <div className="flex-1 relative">
@@ -269,8 +280,8 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
-                  placeholder="Cari alamat (contoh: Sudirman Jakarta)..."
+                  onFocus={() => (searchResults.length > 0 || noResults) && setShowDropdown(true)}
+                  placeholder="Cari alamat / sekolah / tempat (contoh: SMK ... , Sudirman Jakarta)..."
                   className="w-full bg-[#F1F4F8] border border-[#E2E8F0] rounded-2xl pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
                 />
                 {isSearching && (
@@ -278,7 +289,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
                 )}
                 {!isSearching && searchQuery && (
                   <button
-                    onClick={() => { setSearchQuery(''); setSearchResults([]); setShowDropdown(false); }}
+                    onClick={() => { setSearchQuery(''); setSearchResults([]); setShowDropdown(false); setNoResults(false); }}
                     className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-navy/10 hover:bg-navy/20 flex items-center justify-center"
                   >
                     <X className="w-3 h-3 text-navy/60" />
@@ -295,29 +306,42 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
               </button>
             </div>
 
-            {/* Dropdown hasil — rounded-2xl + z-[2000] */}
-            {showDropdown && searchResults.length > 0 && (
+            {/* Dropdown hasil / pesan tidak ditemukan */}
+            {showDropdown && (searchResults.length > 0 || noResults) && (
               <div className="absolute left-0 right-0 mt-2 bg-white border border-mist rounded-2xl overflow-hidden z-[2000] animate-in fade-in slide-in-from-top-1 duration-150 shadow-[0_10px_40px_rgba(21,42,66,0.25)] border-t-2 border-t-steel">
-                <div className="max-h-60 overflow-y-auto custom-scrollbar">
-                  {searchResults.map((r, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => handleSelectResult(r)}
-                      className="w-full text-left px-3.5 py-2.5 hover:bg-[#F1F4F8] transition-colors border-b border-mist/50 last:border-b-0"
-                    >
-                      <p className="text-sm font-semibold text-navy line-clamp-2 leading-snug">{r.label}</p>
-                      <p className="text-[10px] font-bold text-navy/40 tabular-nums mt-1">
-                        {r.lat.toFixed(4)}, {r.lng.toFixed(4)}
-                      </p>
-                    </button>
-                  ))}
-                </div>
+                {searchResults.length > 0 ? (
+                  <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                    {searchResults.map((r, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => handleSelectResult(r)}
+                        className="w-full text-left px-3.5 py-2.5 hover:bg-[#F1F4F8] transition-colors border-b border-mist/50 last:border-b-0"
+                      >
+                        <p className="text-sm font-semibold text-navy line-clamp-2 leading-snug">{r.label}</p>
+                        <p className="text-[10px] font-bold text-navy/40 tabular-nums mt-1">
+                          {r.lat.toFixed(4)}, {r.lng.toFixed(4)}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-4 text-center">
+                    <SearchX className="w-6 h-6 text-navy/30 mx-auto mb-2" />
+                    <p className="text-sm font-bold text-navy">Lokasi tidak ditemukan</p>
+                    <p className="text-[11px] font-medium text-navy/50 mt-1 leading-relaxed">
+                      Pencarian memakai data OpenStreetMap — tempat yang belum terpetakan di OSM
+                      (misal nama sekolah fiktif) tidak akan muncul. Coba nama yang lebih umum
+                      (desa / jalan / landmark sekitar), atau klik langsung di peta,
+                      atau tempel koordinat di kolom Latitude/Longitude.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
-          {/* Map — rounded-3xl */}
+          {/* Map */}
           <div className="relative rounded-3xl overflow-hidden border border-mist/60 shadow-sm">
             <div ref={mapContainerRef} className="w-full h-[360px] md:h-[420px]" />
             {!hasValidCoord && (
@@ -332,7 +356,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
             )}
           </div>
 
-          {/* Lat/Lng inputs — rounded-2xl */}
+          {/* Lat/Lng inputs */}
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="text-[10px] font-bold text-navy/50 uppercase tracking-wide block mb-1.5">
@@ -364,7 +388,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
             </div>
           </div>
 
-          {/* Radius card — rounded-2xl */}
+          {/* Radius card */}
           <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-2xl p-3.5">
             <div className="flex items-center justify-between mb-2">
               <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide">
@@ -390,7 +414,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
             </div>
           </div>
 
-          {/* Pesan error/sukses — rounded-2xl */}
+          {/* Pesan error/sukses */}
           {saveError && (
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2 animate-in fade-in">
               <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
@@ -405,7 +429,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
           )}
         </div>
 
-        {/* Footer — rounded-2xl buttons */}
+        {/* Footer */}
         <div className="p-4 md:p-5 pt-3 border-t border-mist/60 flex gap-2 shrink-0">
           <button
             type="button"
