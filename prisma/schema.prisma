@@ -12,6 +12,7 @@ enum Role {
   teacher
   mentor
   hubin
+  super_admin
 }
 
 enum AbsensiStatus {

@@ -11,16 +11,11 @@ class ApiError extends Error {
   }
 }
 
-let logoutCallback: (() => void) | null = null;
-
-export const setLogoutCallback = (cb: () => void) => {
-  logoutCallback = cb;
-};
-
+// ❌ HAPUS logoutCallback — logout sekarang hanya dari AppContext
 export const api = {
   async fetch<T>(path: string, options: RequestInit = {}): Promise<T> {
     const token = localStorage.getItem('pkl_token');
-    
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...((options.headers as Record<string, string>) || {}),
@@ -43,12 +38,9 @@ export const api = {
         data = { error: 'Invalid JSON response' };
       }
 
-      // Auto-logout saat token invalid
-      if (response.status === 401 && logoutCallback) {
-        logoutCallback();
-        throw new ApiError(401, 'Session expired');
-      }
-
+      // ❌ HAPUS auto-logout di sini
+      // Logout sekarang HANYA dari AppContext.loadSession()
+      // karena hanya /api/auth/me yang authoritative
       if (!response.ok) {
         throw new ApiError(response.status, data.error || 'Request failed', data);
       }
@@ -89,3 +81,6 @@ export const api = {
     return this.fetch<T>(path, { method: 'DELETE' });
   },
 };
+
+// Hapus setLogoutCallback — tidak dipakai lagi
+export const setLogoutCallback = (_cb: () => void) => {};

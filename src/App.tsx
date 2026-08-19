@@ -13,6 +13,7 @@ import { TeacherMonitoring, TeacherPerizinan, TeacherRekap } from './components/
 import { HubinDashboard } from './components/HubinDashboard';
 import { HubinData } from './components/HubinPages';
 import { HubinPemetaan } from './components/HubinPemetaan';
+import { SuperAdminDashboard, SuperSchools, SuperUsers, SuperCompanies } from './components/SuperAdminPages';
 
 export default function App() {
   const {
@@ -42,7 +43,6 @@ export default function App() {
   const [isJournalModalOpen, setIsJournalModalOpen] = useState(false);
 
   // ✅ FIX BUG LOGOUT: reset authExiting setiap kali kembali ke login page
-  // Tanpa ini, setelah logout halaman login tetap "invisible" karena class page-exit tidak di-reset
   useEffect(() => {
     if (!isAuthenticated) {
       setAuthExiting(false);
@@ -57,11 +57,9 @@ export default function App() {
         await register(payload.name, payload.email, payload.password, payload.institution);
       }
 
-      // ✅ Login BERHASIL — jalankan animasi exit, tunggu, lalu biarkan React render dashboard
       setAuthExiting(true);
       await new Promise((resolve) => setTimeout(resolve, 430));
     } catch (error) {
-      // ❌ Login GAGAL — rethrow supaya AuthScreen bisa tangkap dan tampilkan banner
       throw error;
     }
   };
@@ -81,7 +79,7 @@ export default function App() {
   };
 
   /* ────────────────────────────────────────────
-     AUTH SCREEN — Floating card besar (premium look)
+     AUTH SCREEN
   ──────────────────────────────────────────── */
   if (!isAuthenticated) {
     return (
@@ -100,7 +98,7 @@ export default function App() {
   }
 
   /* ────────────────────────────────────────────
-     MAIN APP — Full-screen, tanpa card (web pada umumnya)
+     MAIN APP
   ──────────────────────────────────────────── */
   return (
     <div className="h-dvh w-full bg-app-bg-2 font-sans antialiased transition-colors duration-500 overflow-hidden flex flex-col">
@@ -112,6 +110,18 @@ export default function App() {
           userName={userName}
           userRole={userRole}
         >
+          {/* ── SUPER ADMIN ── */}
+          {activePage === 'dashboard' && userRole === 'super_admin' && (
+            <SuperAdminDashboard 
+              userName={userName}
+              onNavigate={(page) => setActivePage(page as any)}
+            />
+          )}
+          {activePage === 'super-schools' && userRole === 'super_admin' && <SuperSchools />}
+          {activePage === 'super-users' && userRole === 'super_admin' && <SuperUsers />}
+          {activePage === 'super-companies' && userRole === 'super_admin' && <SuperCompanies />}
+
+          {/* ── STUDENT (INTERN) ── */}
           {activePage === 'dashboard' && userRole === 'intern' && (
             <Dashboard 
               userName={userName}
@@ -122,18 +132,24 @@ export default function App() {
               onGoToProfile={() => setActivePage('profile')}
             />
           )}
+
+          {/* ── MENTOR ── */}
           {activePage === 'dashboard' && userRole === 'mentor' && (
             <MentorDashboard 
               userName={userName}
               companyName="PT Tokopedia"
             />
           )}
+
+          {/* ── TEACHER ── */}
           {activePage === 'dashboard' && userRole === 'teacher' && (
             <TeacherDashboard 
               userName={userName}
               schoolName={schoolName}
             />
           )}
+
+          {/* ── HUBIN ── */}
           {activePage === 'dashboard' && userRole === 'hubin' && (
             <HubinDashboard 
               userName={userName}
@@ -141,6 +157,8 @@ export default function App() {
               onNavigate={(page) => setActivePage(page)}
             />
           )}
+
+          {/* ── SHARED PAGES ── */}
           {activePage === 'logbook' && (
             <Logbook 
               logs={logEntries} 
@@ -183,13 +201,9 @@ export default function App() {
           {activePage === 'data' && userRole === 'hubin' && (
             <HubinData />
           )}
-          {/* Legacy fallback — tetap jalan kalau ada link lama */}
-          {activePage === 'data-siswa' && userRole === 'hubin' && (
-            <HubinData />
-          )}
-          {activePage === 'data-pembimbing' && userRole === 'hubin' && (
-            <HubinData />
-          )}
+          {/* Legacy fallback */}
+          {activePage === 'data-siswa' && userRole === 'hubin' && <HubinData />}
+          {activePage === 'data-pembimbing' && userRole === 'hubin' && <HubinData />}
         </MainLayout>
       </div>
     </div>

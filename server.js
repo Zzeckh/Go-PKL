@@ -15,6 +15,7 @@ import staticRoutes from './src/routes/staticRoutes.js';
 import permissionRoutes from './src/routes/permissionRoutes.js';
 import evaluationRoutes from './src/routes/evaluationRoutes.js';
 import companyRoutes from './src/routes/companyRoutes.js';
+import superAdminRoutes from './src/routes/superAdminRoutes.js'; // ← BARU
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use('/api/static', staticRoutes);
 app.use('/api/permissions', permissionRoutes);
 app.use('/api/evaluations', evaluationRoutes);
 app.use('/api/companies', companyRoutes);
+app.use('/api/super-admin', superAdminRoutes); // ← BARU
 
 /* ── 4. 404 handler ── */
 app.use((req, res) => {

@@ -12,10 +12,13 @@ export type ActivePage =
   | 'data-siswa' 
   | 'data-pembimbing' 
   | 'pemetaan' 
-  | 'data';
+  | 'data'
+  | 'super-schools'     // ← BARU
+  | 'super-users'       // ← BARU
+  | 'super-companies';  // ← BARU
 
 export type AuthMode = 'login' | 'register';
-export type UserRole = 'intern' | 'mentor' | 'teacher' | 'hubin';
+export type UserRole = 'intern' | 'mentor' | 'teacher' | 'hubin' | 'super_admin'; // ← TAMBAH super_admin
 
 export interface LogEntry {
   id: string;

@@ -35,6 +35,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       // ── Role Hubin ──
       case 'pemetaan':         return 'Pemetaan Industri';
       case 'data':             return 'Kelola Data';
+      // ── Super Admin ──
+      case 'super-schools':    return 'Kelola Sekolah';
+      case 'super-users':      return 'Kelola Pengguna';
+      case 'super-companies':  return 'Kelola Perusahaan';
       // Legacy (backward compat)
       case 'data-siswa':       return 'Data Siswa';
       case 'data-pembimbing':  return 'Data Pembimbing';
@@ -54,7 +58,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         userRole={userRole}
       />
       
-      {/* pb-20 md:pb-0 memberi ruang di bawah agar tidak tertutup Bottom Nav di HP */}
       <main className="flex-1 flex flex-col gap-2 md:gap-3 overflow-hidden pb-20 md:pb-0">
         <Header 
           title={getPageTitle()} 

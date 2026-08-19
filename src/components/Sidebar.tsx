@@ -1,7 +1,8 @@
 import React from 'react';
 import { 
   LayoutDashboard, BookOpen, MapPin, LogOut, PanelLeftClose, PanelLeftOpen, 
-  Camera, Activity, FileCheck, DownloadCloud, Package 
+  Camera, Activity, FileCheck, DownloadCloud, Package,
+  School, Users, Briefcase, ShieldCheck
 } from 'lucide-react';
 import { ActivePage, UserRole } from '../types';
 
@@ -25,11 +26,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
   userRole = 'intern'
 }) => {
   const getMenuItems = () => {
+    // ── SUPER ADMIN MENU ──
+    if (userRole === 'super_admin') {
+      return [
+        { id: 'dashboard',        icon: LayoutDashboard, label: 'Dashboard' },
+        { id: 'super-schools',    icon: School,          label: 'Kelola Sekolah' },
+        { id: 'super-users',      icon: Users,           label: 'Kelola Pengguna' },
+        { id: 'super-companies',  icon: Briefcase,       label: 'Kelola Perusahaan' },
+      ];
+    }
     if (userRole === 'hubin') {
       return [
         { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        { id: 'data',        icon: Package,        label: 'Kelola Data' },
-        { id: 'pemetaan',    icon: MapPin,         label: 'Pemetaan' },
+        { id: 'data',      icon: Package,         label: 'Kelola Data' },
+        { id: 'pemetaan',  icon: MapPin,          label: 'Pemetaan' },
       ];
     }
     if (userRole === 'teacher' || userRole === 'mentor') {
@@ -46,6 +56,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
       { id: 'logbook',   icon: BookOpen,        label: 'Logbook' },
       { id: 'maps',      icon: MapPin,          label: 'Maps' }
     ];
+  };
+
+  const getRoleLabel = (): string => {
+    switch (userRole) {
+      case 'super_admin': return 'Super Admin';
+      case 'hubin':       return 'Tim Hubin';
+      case 'teacher':     return 'Guru';
+      case 'mentor':      return 'Pembimbing';
+      default:            return 'Siswa PKL';
+    }
   };
 
   const menuItems = getMenuItems();
@@ -85,8 +105,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Logo */}
           <div className="flex items-center">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-[14px] bg-navy flex items-center justify-center text-white font-bold text-lg shadow-md shadow-steel/40 shrink-0 border border-white/20">
-                Go
+              <div className={`w-10 h-10 rounded-[14px] flex items-center justify-center text-white font-bold text-lg shadow-md shrink-0 border border-white/20 ${
+                userRole === 'super_admin' ? 'bg-steel shadow-steel/40' : 'bg-navy shadow-steel/40'
+              }`}>
+                {userRole === 'super_admin' ? <ShieldCheck className="w-5 h-5" /> : 'Go'}
               </div>
               <div className={`overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] whitespace-nowrap ${collapsed ? 'max-w-0 opacity-0' : 'max-w-[160px] opacity-100'}`}>
                 <div className="font-bold text-navy text-base leading-tight">Go-PKL</div>
@@ -132,7 +154,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className={`overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] whitespace-nowrap ${collapsed ? 'max-w-0 opacity-0 ml-0' : 'max-w-[120px] opacity-100 ml-3'}`}>
               <div className="text-sm font-bold text-navy truncate">{userName || 'User'}</div>
               <div className="text-xs text-steel capitalize font-medium">
-                {userRole === 'mentor' ? 'Pembimbing' : userRole === 'teacher' ? 'Guru' : userRole === 'hubin' ? 'Tim Hubin' : 'Siswa PKL'}
+                {getRoleLabel()}
               </div>
             </div>
 

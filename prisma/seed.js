@@ -19,6 +19,18 @@ async function main() {
 
   const hash = await bcrypt.hash(PASSWORD, 10);
 
+  /* ── SUPER ADMIN (lintas sekolah, pengelola semua role) ── */
+  console.log('👑 Membuat Super Admin...');
+  await prisma.user.create({
+    data: {
+      name: 'Super Admin',
+      email: 'superadmin@gopkl.id',
+      password: hash,
+      role: 'super_admin',
+      isActive: true,
+    },
+  });
+
   console.log('🏫 Membuat master data minimal...');
   const school = await prisma.school.create({
     data: { name: 'SMK Negeri 1 Nusantara', address: 'Jl. Pendidikan Raya No. 1' },
@@ -40,7 +52,7 @@ async function main() {
   const classRPL = await prisma.class.create({
     data: { name: 'XII RPL 1', major: 'Rekayasa Perangkat Lunak', schoolId: school.id },
   });
-  const classTKJ = await prisma.class.create({
+  await prisma.class.create({
     data: { name: 'XII TKJ 1', major: 'Teknik Komputer Jaringan', schoolId: school.id },
   });
 
@@ -92,11 +104,12 @@ async function main() {
     },
   });
 
-  console.log('\n SELESAI! Akun login (password: gopkl123):');
-  console.log('   siswa@gopkl.id  → student (intern) · Kelas: XII RPL 1');
-  console.log('   guru@gopkl.id   → teacher');
-  console.log('   mentor@gopkl.id → mentor');
-  console.log('   hubin@gopkl.id  → hubin');
+  console.log('\n✅ SELESAI! Akun login (password: gopkl123):');
+  console.log('   superadmin@gopkl.id → super_admin (KEPALA SEMUA)');
+  console.log('   siswa@gopkl.id      → student (intern) · Kelas: XII RPL 1');
+  console.log('   guru@gopkl.id       → teacher');
+  console.log('   mentor@gopkl.id     → mentor');
+  console.log('   hubin@gopkl.id      → hubin');
 }
 
 main()

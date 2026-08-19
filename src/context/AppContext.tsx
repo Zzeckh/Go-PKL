@@ -82,6 +82,10 @@ interface AppContextType {
   attendances: AttendanceRecord[];
   perizinanList: PerizinanItem[];
   mapLocations: PKLMapLocation[];
+  superStats: any;
+  superSchools: any[];
+  superUsers: any[];
+  superCompanies: any[];
   addLogEntry: (entry: Omit<LogEntry, 'id' | 'date' | 'status'>) => Promise<void>;
   updateLogStatus: (id: string, status: 'approved' | 'rejected', feedback?: string) => Promise<void>;
   checkInAttendance: (imageUrl?: string, latitude?: number, longitude?: number) => Promise<void>;
@@ -95,6 +99,13 @@ interface AppContextType {
   register: (name: string, email: string, password: string, institution?: string) => Promise<void>;
   logout: () => void;
   refreshData: () => Promise<void>;
+  loadSuperStats: () => Promise<void>;
+  loadSuperSchools: () => Promise<void>;
+  createSchool: (data: { name: string; address?: string; phone?: string }) => Promise<any>;
+  deleteSchool: (id: number) => Promise<void>;
+  loadSuperUsers: (filters?: { role?: string; search?: string }) => Promise<void>;
+  toggleUser: (id: number) => Promise<any>;
+  loadSuperCompanies: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -105,6 +116,7 @@ const mapBackendRoleToUserRole = (role: string): UserRole => {
     case 'teacher': return 'teacher';
     case 'mentor': return 'mentor';
     case 'hubin': return 'hubin';
+    case 'super_admin': return 'super_admin';
     default: return 'intern';
   }
 };
@@ -141,6 +153,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [perizinanList, setPerizinanList] = useState<PerizinanItem[]>([]);
   const [mapLocations, setMapLocations] = useState<PKLMapLocation[]>([]);
 
+  const [superStats, setSuperStats] = useState<any>(null);
+  const [superSchools, setSuperSchools] = useState<any[]>([]);
+  const [superUsers, setSuperUsers] = useState<any[]>([]);
+  const [superCompanies, setSuperCompanies] = useState<any[]>([]);
+
   const startLoading = (resource: string) => {
     setLoadingResources(prev => new Set(prev).add(resource));
   };
@@ -175,6 +192,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAttendances([]);
     setPerizinanList([]);
     setMapLocations([]);
+    setSuperStats(null);
+    setSuperSchools([]);
+    setSuperUsers([]);
+    setSuperCompanies([]);
   }, []);
 
   useEffect(() => {
@@ -196,8 +217,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         feedback: item.feedback,
       }));
       setLogEntries(mapped);
-    } catch (error) {
-      console.warn('Gagal mengambil logbook', error);
+    } catch (error: any) {
+      console.warn('Gagal mengambil logbook:', error?.message);
     } finally {
       stopLoading('logbook');
     }
@@ -220,8 +241,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           : 'Sakit',
       }));
       setAttendances(mapped);
-    } catch (error) {
-      console.warn('Gagal mengambil absensi', error);
+    } catch (error: any) {
+      console.warn('Gagal mengambil absensi:', error?.message);
     } finally {
       stopLoading('absensi');
     }
@@ -255,8 +276,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         distance: '-',
         status: 'active' as const,
       })));
-    } catch (error) {
-      console.warn('Gagal mengambil perusahaan', error);
+    } catch (error: any) {
+      console.warn('Gagal mengambil perusahaan:', error?.message);
     } finally {
       stopLoading('perusahaan');
     }
@@ -283,8 +304,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         img: '',
       }));
       setSiswaList(mapped);
-    } catch (error) {
-      console.warn('Gagal mengambil siswa', error);
+    } catch (error: any) {
+      console.warn('Gagal mengambil siswa:', error?.message);
     } finally {
       stopLoading('siswa');
     }
@@ -305,12 +326,74 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         status: p.status,
       }));
       setPerizinanList(mapped);
-    } catch (error) {
-      console.warn('Gagal mengambil perizinan', error);
+    } catch (error: any) {
+      console.warn('Gagal mengambil perizinan:', error?.message);
     } finally {
       stopLoading('perizinan');
     }
   };
+
+  const loadSuperStats = useCallback(async () => {
+    if (!localStorage.getItem('pkl_token')) return;
+    try {
+      const res = await api.get('/api/super-admin/stats') as any;
+      setSuperStats(res);
+    } catch (error: any) {
+      console.warn('Gagal mengambil super stats:', error?.message);
+    }
+  }, []);
+
+  const loadSuperSchools = useCallback(async () => {
+    if (!localStorage.getItem('pkl_token')) return;
+    try {
+      const res = await api.get('/api/super-admin/schools') as any[];
+      setSuperSchools(res);
+    } catch (error: any) {
+      console.warn('Gagal mengambil daftar sekolah:', error?.message);
+    }
+  }, []);
+
+  const createSchool = async (data: { name: string; address?: string; phone?: string }) => {
+    const res = await api.post('/api/super-admin/schools', data);
+    await loadSuperSchools();
+    await loadSuperStats();
+    return res;
+  };
+
+  const deleteSchool = async (id: number) => {
+    await api.delete(`/api/super-admin/schools/${id}`);
+    await loadSuperSchools();
+    await loadSuperStats();
+  };
+
+  const loadSuperUsers = useCallback(async (filters?: { role?: string; search?: string }) => {
+    if (!localStorage.getItem('pkl_token')) return;
+    try {
+      const params = new URLSearchParams();
+      if (filters?.role && filters.role !== 'all') params.set('role', filters.role);
+      if (filters?.search) params.set('search', filters.search);
+      const res = await api.get(`/api/super-admin/users?${params.toString()}`) as any[];
+      setSuperUsers(res);
+    } catch (error: any) {
+      console.warn('Gagal mengambil daftar user:', error?.message);
+    }
+  }, []);
+
+  const toggleUser = async (id: number) => {
+    const res = await api.patch(`/api/super-admin/users/${id}/toggle`);
+    await loadSuperUsers();
+    return res;
+  };
+
+  const loadSuperCompanies = useCallback(async () => {
+    if (!localStorage.getItem('pkl_token')) return;
+    try {
+      const res = await api.get('/api/super-admin/companies') as any[];
+      setSuperCompanies(res);
+    } catch (error: any) {
+      console.warn('Gagal mengambil daftar perusahaan global:', error?.message);
+    }
+  }, []);
 
   const refreshData = useCallback(async () => {
     setIsLoading(true);
@@ -327,8 +410,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const loadSession = async () => {
-    if (!token) return;
+  // ✅ PERUBAHAN UTAMA: loadSession sekarang authoritative — hanya di sini yang trigger logout
+  const loadSession = async (overrideToken?: string) => {
+    const tokenToUse = overrideToken || token;
+    if (!tokenToUse) return;
 
     try {
       startLoading('session');
@@ -344,9 +429,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setUserCompanyLocation(user.companyLocation || null);
       setIsAuthenticated(true);
       
-      await refreshData();
-    } catch (error) {
-      console.error('Session load error', error);
+      if (mappedRole !== 'super_admin') {
+        await refreshData();
+      }
+    } catch (error: any) {
+      console.error('Session load error:', error?.message);
+      // ✅ HANYA logout kalau session check gagal (token invalid)
+      // Request lain yang gagal 401 tidak trigger logout
       logout();
     } finally {
       stopLoading('session');
@@ -360,12 +449,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
+  // ✅ PERUBAHAN: login panggil loadSession langsung (bukan tunggu useEffect)
   const login = async (email: string, password: string) => {
     try {
       const data = await api.post('/api/auth/login', { email, password }) as { token: string; user: any };
+      
+      // Simpan ke localStorage
       localStorage.setItem('pkl_token', data.token);
       localStorage.setItem('pkl_role', mapBackendRoleToUserRole(data.user.role));
       localStorage.setItem('pkl_user_name', data.user.name);
+      
+      // Tunggu 1 tick
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      // Set state token (akan trigger useEffect loadSession)
       setToken(data.token);
     } catch (error: any) {
       throw new Error(error.message || 'Login gagal');
@@ -380,9 +477,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         password,
         institution,
       }) as { token: string; user: any };
+      
       localStorage.setItem('pkl_token', data.token);
       localStorage.setItem('pkl_role', mapBackendRoleToUserRole(data.user.role));
       localStorage.setItem('pkl_user_name', data.user.name);
+      
+      await new Promise(resolve => setTimeout(resolve, 50));
       setToken(data.token);
     } catch (error: any) {
       throw new Error(error.message || 'Registrasi gagal');
@@ -549,6 +649,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         attendances,
         perizinanList,
         mapLocations,
+        superStats,
+        superSchools,
+        superUsers,
+        superCompanies,
         addLogEntry,
         updateLogStatus,
         checkInAttendance,
@@ -562,6 +666,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         register,
         logout,
         refreshData,
+        loadSuperStats,
+        loadSuperSchools,
+        createSchool,
+        deleteSchool,
+        loadSuperUsers,
+        toggleUser,
+        loadSuperCompanies,
       }}
     >
       {children}
