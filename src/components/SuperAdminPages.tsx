@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  LayoutDashboard, Building2, Users, Briefcase, GraduationCap,
-  BookOpen, CheckCircle2, FileCheck, ShieldCheck, Search, Plus,
-  Trash2, ToggleLeft, ToggleRight, X, MapPin, Phone, School, Loader2
+  Building2, Users, Briefcase, GraduationCap, BookOpen, CheckCircle2,
+  FileCheck, ShieldCheck, Search, Plus, Trash2, ToggleLeft, ToggleRight,
+  X, MapPin, School, Loader2, Clock, ChevronRight, AlertCircle
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -10,38 +10,79 @@ const getInitials = (name: string) =>
   (name || '?').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
 /* ══════════════════════════════════════════════════════
-   SUPER ADMIN DASHBOARD
+   SUPER ADMIN DASHBOARD (redesign — pola dashboard role lain)
    ══════════════════════════════════════════════════════ */
 export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page: any) => void }> = ({ userName, onNavigate }) => {
-  const { superStats, loadSuperStats, isAuthenticated } = useApp();
+  const {
+    superStats, loadSuperStats,
+    superSchools, loadSuperSchools,
+    superCompanies, loadSuperCompanies,
+    isAuthenticated,
+  } = useApp();
 
-  // ✅ FIX: Tunggu isAuthenticated dulu, baru fetch stats
+  const [statsState, setStatsState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const t = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
   useEffect(() => {
     if (!isAuthenticated) return;
-    
-    // Small delay to ensure token fully propagated
-    const timer = setTimeout(() => {
-      loadSuperStats();
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, [isAuthenticated, loadSuperStats]);
+    let cancelled = false;
 
-  const cards = [
-    { label: 'Total Sekolah', value: superStats?.totalSchools ?? 0, icon: School, bg: 'bg-navy', page: 'super-schools' },
-    { label: 'Total Siswa', value: superStats?.totalStudents ?? 0, icon: GraduationCap, bg: 'bg-steel', page: 'super-users' },
-    { label: 'Total Guru', value: superStats?.totalTeachers ?? 0, icon: Users, bg: 'bg-navy', page: 'super-users' },
-    { label: 'Total Mentor', value: superStats?.totalMentors ?? 0, icon: Briefcase, bg: 'bg-steel', page: 'super-users' },
-    { label: 'Perusahaan Mitra', value: superStats?.totalCompanies ?? 0, icon: Building2, bg: 'bg-navy', page: 'super-companies' },
-    { label: 'Total Absensi', value: superStats?.totalAbsensi ?? 0, icon: CheckCircle2, bg: 'bg-steel', page: null },
-    { label: 'Total Logbook', value: superStats?.totalLogbooks ?? 0, icon: BookOpen, bg: 'bg-navy', page: null },
-    { label: 'Total Perizinan', value: superStats?.totalPermissions ?? 0, icon: FileCheck, bg: 'bg-steel', page: null },
+    const run = async (attempt = 0) => {
+      setStatsState('loading');
+      const ok = await loadSuperStats();
+      if (cancelled) return;
+      if (ok) setStatsState('ready');
+      else if (attempt < 2) setTimeout(() => run(attempt + 1), 700);
+      else setStatsState('error');
+    };
+
+    run();
+    loadSuperSchools();
+    loadSuperCompanies();
+    return () => { cancelled = true; };
+  }, [isAuthenticated, loadSuperStats, loadSuperSchools, loadSuperCompanies]);
+
+  /* ── Data turunan ── */
+  const roleRows = [
+    { icon: GraduationCap, label: 'Siswa', value: superStats?.totalStudents ?? 0 },
+    { icon: Users, label: 'Guru', value: superStats?.totalTeachers ?? 0 },
+    { icon: Briefcase, label: 'Mentor', value: superStats?.totalMentors ?? 0 },
+    { icon: ShieldCheck, label: 'Hubin', value: superStats?.totalHubins ?? 0 },
+  ];
+  const totalUsers = roleRows.reduce((s, r) => s + r.value, 0);
+
+  const stats = [
+    { icon: School, label: 'Total Sekolah', value: superStats?.totalSchools ?? 0, page: 'super-schools' },
+    { icon: GraduationCap, label: 'Total Siswa', value: superStats?.totalStudents ?? 0, page: 'super-users' },
+    { icon: Building2, label: 'Perusahaan Mitra', value: superStats?.totalCompanies ?? 0, page: 'super-companies' },
+    { icon: Users, label: 'Total Pembimbing', value: (superStats?.totalTeachers ?? 0) + (superStats?.totalMentors ?? 0), page: 'super-users' },
   ];
 
-  const isStatsLoading = !superStats && isAuthenticated;
+  const quickStats = [
+    { icon: CheckCircle2, label: 'Absensi', value: superStats?.totalAbsensi ?? 0 },
+    { icon: BookOpen, label: 'Logbook', value: superStats?.totalLogbooks ?? 0 },
+    { icon: FileCheck, label: 'Perizinan', value: superStats?.totalPermissions ?? 0 },
+    { icon: Building2, label: 'Perusahaan', value: superStats?.totalCompanies ?? 0 },
+  ];
+
+  const attention = [
+    ...superCompanies
+      .filter(c => c.latitude == null || c.longitude == null)
+      .map(c => ({ key: `comp-${c.id}`, icon: MapPin, tint: 'amber', title: c.name, desc: 'Koordinat geofence belum diatur', page: 'super-companies' })),
+    ...superSchools
+      .filter(s => (s.totalUsers ?? 0) === 0)
+      .map(s => ({ key: `sch-${s.id}`, icon: School, tint: 'mist', title: s.name, desc: 'Belum ada pengguna terdaftar', page: 'super-schools' })),
+  ].slice(0, 5);
 
   return (
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
+
+      {/* ── HEADER ── */}
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
           <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-2xl flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
@@ -52,13 +93,44 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
               Super Admin Control
             </h2>
             <p className="text-[13px] text-navy/60 font-semibold mt-0.5 truncate">
-              Selamat datang kembali, {userName}
+              Kelola sekolah, pengguna & perusahaan mitra dalam satu panel
             </p>
           </div>
         </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="hidden md:flex items-center gap-1.5 text-[11px] font-bold text-navy/60 bg-[#F1F4F8] border border-[#E2E8F0] px-3 py-2 rounded-full">
+            <Clock className="w-3.5 h-3.5" />
+            {time.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
+          </span>
+          <span className="flex items-center gap-1.5 text-[11px] font-bold text-steel bg-steel/10 border border-steel/20 px-3 py-2 rounded-full">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-steel opacity-40" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-steel" />
+            </span>
+            System Online
+          </span>
+        </div>
       </div>
 
-      {isStatsLoading ? (
+      {/* ── ERROR BANNER ── */}
+      {statsState === 'error' && (
+        <div className="shrink-0 bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+            <p className="text-[12px] font-semibold text-rose-700 leading-snug">
+              Gagal memuat statistik. Periksa terminal backend, lalu coba lagi.
+            </p>
+          </div>
+          <button
+            onClick={() => setStatsState('loading')}
+            className="shrink-0 text-[11px] font-bold bg-rose-500 text-white px-3 py-1.5 rounded-lg hover:bg-rose-600 transition-colors"
+          >
+            Coba Lagi
+          </button>
+        </div>
+      )}
+
+      {statsState === 'loading' ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="flex items-center gap-2 text-navy/60">
             <Loader2 className="w-5 h-5 animate-spin text-steel" />
@@ -66,29 +138,214 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
           </div>
         </div>
       ) : (
-        <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 overflow-y-auto custom-scrollbar pb-4">
-          {cards.map((c) => {
-            const Icon = c.icon;
-            return (
+        <>
+          {/* ── STATS CARDS (putih tinggi, clickable) ── */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
+            {stats.map((s) => (
               <button
-                key={c.label}
-                onClick={() => c.page && onNavigate(c.page)}
-                disabled={!c.page}
-                className={`bg-white border border-mist/60 rounded-[24px] p-4 md:p-5 min-h-[140px] flex flex-col justify-between transition-all ${
-                  c.page ? 'hover:border-steel/40 hover:shadow-md hover:-translate-y-0.5' : ''
-                }`}
+                key={s.label}
+                onClick={() => onNavigate(s.page)}
+                className="bg-white border border-mist/60 rounded-[24px] p-4 md:p-5 min-h-[130px] text-left transition-all hover:border-steel/40 hover:-translate-y-0.5 hover:shadow-md group flex flex-col justify-between"
               >
-                <div className={`w-11 h-11 rounded-2xl ${c.bg} flex items-center justify-center shrink-0`}>
-                  <Icon className="w-5 h-5 text-white" />
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-xl bg-[#F1F4F8] flex items-center justify-center group-hover:bg-steel/10 transition-colors">
+                    <s.icon className="w-5 h-5 text-navy/60 group-hover:text-steel transition-colors" />
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-navy/20 group-hover:text-steel group-hover:translate-x-0.5 transition-all" />
                 </div>
-                <div className="text-left mt-3">
-                  <p className="text-3xl font-bold text-navy tabular-nums leading-none">{c.value}</p>
-                  <p className="text-[11px] font-bold text-navy/60 uppercase tracking-wide mt-2">{c.label}</p>
+                <div>
+                  <p className="text-3xl font-bold text-navy tabular-nums leading-none">{s.value}</p>
+                  <p className="text-[11px] font-bold text-navy/60 uppercase tracking-wide mt-2">{s.label}</p>
                 </div>
               </button>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+
+          {/* ── MAIN GRID (3 + 2) ── */}
+          <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-4 min-h-0">
+
+            {/* ══ LEFT: List Sekolah ══ */}
+            <div className="lg:col-span-3 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col overflow-hidden min-h-[380px] lg:min-h-0">
+              <div className="flex items-center justify-between px-4 md:px-5 pt-4 pb-3 shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-steel/15 flex items-center justify-center">
+                    <School className="w-3.5 h-3.5 text-steel" />
+                  </div>
+                  <p className="text-[13px] font-bold uppercase tracking-widest text-navy/70">
+                    Sekolah Terdaftar
+                  </p>
+                </div>
+                <button
+                  onClick={() => onNavigate('super-schools')}
+                  className="text-[11px] font-bold bg-steel text-white px-3 py-1.5 rounded-lg hover:bg-steel/90 transition-colors flex items-center gap-1"
+                >
+                  Kelola Sekolah <ChevronRight className="w-3 h-3" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 min-h-0">
+                {superSchools.length === 0 ? (
+                  <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
+                    <div className="w-14 h-14 rounded-2xl bg-[#F1F4F8] flex items-center justify-center mb-3">
+                      <School className="w-6 h-6 text-navy/30" />
+                    </div>
+                    <p className="text-sm font-bold text-navy mb-1">Belum ada sekolah</p>
+                    <p className="text-xs text-navy/50 max-w-xs">
+                      Tambahkan sekolah mitra melalui menu Kelola Sekolah.
+                    </p>
+                  </div>
+                ) : (
+                  superSchools.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => onNavigate('super-schools')}
+                      className="p-3 rounded-xl border border-mist/60 bg-white hover:border-steel/30 hover:bg-[#F1F4F8]/50 transition-all shrink-0 text-left group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
+                          {getInitials(s.name)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-navy truncate">{s.name}</p>
+                          <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
+                            {s.address || 'Alamat belum diisi'}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] font-bold bg-[#F1F4F8] border border-[#E2E8F0] text-navy/70 px-2 py-1 rounded-full tabular-nums">
+                            {s.totalUsers} user
+                          </span>
+                          <span className="text-[10px] font-bold bg-[#F1F4F8] border border-[#E2E8F0] text-navy/70 px-2 py-1 rounded-full tabular-nums">
+                            {s.totalClasses} kelas
+                          </span>
+                          <ChevronRight className="w-4 h-4 text-navy/20 group-hover:text-steel group-hover:translate-x-0.5 transition-all" />
+                        </div>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* ══ RIGHT: STACKED CARDS ══ */}
+            <div className="lg:col-span-2 flex flex-col gap-3 md:gap-4 min-h-0">
+
+              {/* ── Card navy: Distribusi Pengguna ── */}
+              <div className="bg-navy rounded-[24px] p-5 shrink-0 relative overflow-hidden shadow-lg shadow-navy/20">
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center">
+                        <Users className="w-4 h-4 text-white" />
+                      </div>
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-white/60">
+                        Distribusi Pengguna
+                      </p>
+                    </div>
+                    <span className="text-[11px] font-bold bg-white/15 text-white px-3 py-1.5 rounded-full tabular-nums">
+                      {totalUsers} total
+                    </span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {roleRows.map((r) => (
+                      <div key={r.label}>
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            <r.icon className="w-3.5 h-3.5 text-steel" />
+                            <span className="text-[12px] font-bold text-white/80">{r.label}</span>
+                          </div>
+                          <span className="text-[12px] font-bold text-white tabular-nums">{r.value}</span>
+                        </div>
+                        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-steel rounded-full transition-all duration-700"
+                            style={{ width: `${totalUsers ? Math.round((r.value / totalUsers) * 100) : 0}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-white/10 flex items-center gap-2">
+                    <span className="relative flex h-2 w-2 shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-steel opacity-40" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-steel" />
+                    </span>
+                    <p className="text-[11px] font-semibold text-white/60">
+                      Database terhubung · {userName}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Card putih: Quick stats 2x2 ── */}
+              <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 shrink-0">
+                <div className="grid grid-cols-2 gap-2">
+                  {quickStats.map((q) => (
+                    <div key={q.label} className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                      <q.icon className="w-4 h-4 text-navy/50 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-lg font-bold text-navy tabular-nums leading-none">{q.value}</p>
+                        <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide mt-1 truncate">{q.label}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ── Card putih: Perlu Perhatian (flex-1) ── */}
+              <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 flex-1 flex flex-col min-h-[180px]">
+                <div className="flex items-center justify-between mb-3 shrink-0">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-mist flex items-center justify-center">
+                      <AlertCircle className="w-3.5 h-3.5 text-navy" />
+                    </div>
+                    <p className="text-[13px] font-bold text-navy">Perlu Perhatian</p>
+                  </div>
+                  <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full tabular-nums ${
+                    attention.length > 0 ? 'bg-[#FBF3E2] text-[#9A6B15]' : 'bg-[#F1F4F8] text-navy/40'
+                  }`}>
+                    {attention.length} item
+                  </span>
+                </div>
+
+                <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2 min-h-0 pr-1">
+                  {attention.length === 0 ? (
+                    <div className="flex-1 flex flex-col items-center justify-center py-6 text-center">
+                      <div className="w-12 h-12 rounded-2xl bg-[#E4F0F1] flex items-center justify-center mb-3">
+                        <CheckCircle2 className="w-5 h-5 text-steel" />
+                      </div>
+                      <p className="text-xs font-bold text-navy">Semua data lengkap</p>
+                      <p className="text-[11px] text-navy/50 mt-0.5">Tidak ada item yang perlu ditindaklanjuti</p>
+                    </div>
+                  ) : (
+                    attention.map((a) => (
+                      <button
+                        key={a.key}
+                        onClick={() => onNavigate(a.page)}
+                        className="p-2.5 rounded-xl border border-mist/60 bg-white hover:border-steel/30 transition-all shrink-0 text-left group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                            a.tint === 'amber' ? 'bg-[#FBF3E2] text-[#9A6B15]' : 'bg-[#F1F4F8] text-navy/50'
+                          }`}>
+                            <a.icon className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-bold text-navy truncate">{a.title}</p>
+                            <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">{a.desc}</p>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-navy/20 group-hover:text-steel group-hover:translate-x-0.5 transition-all shrink-0" />
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
@@ -103,7 +360,6 @@ export const SuperSchools: React.FC = () => {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // ✅ Guard isAuthenticated
   useEffect(() => {
     if (!isAuthenticated) return;
     setLoading(true);
@@ -311,7 +567,6 @@ export const SuperUsers: React.FC = () => {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // ✅ Guard isAuthenticated
   useEffect(() => {
     if (!isAuthenticated) return;
     setLoading(true);
@@ -391,12 +646,7 @@ export const SuperUsers: React.FC = () => {
                 superUsers.map(u => (
                   <div key={u.id} className="p-3 rounded-2xl border border-mist/60 bg-white flex items-center gap-3">
                     <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
-                      u.role === 'student' ? 'bg-navy text-white' :
-                      u.role === 'teacher' ? 'bg-navy text-white' :
-                      u.role === 'mentor' ? 'bg-steel text-white' :
-                      u.role === 'hubin' ? 'bg-steel text-white' :
-                      u.role === 'super_admin' ? 'bg-navy text-white' :
-                      'bg-navy text-white'
+                      u.role === 'mentor' || u.role === 'hubin' ? 'bg-steel text-white' : 'bg-navy text-white'
                     }`}>
                       {getInitials(u.name)}
                     </div>
@@ -444,7 +694,6 @@ export const SuperCompanies: React.FC = () => {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // ✅ Guard isAuthenticated
   useEffect(() => {
     if (!isAuthenticated) return;
     setLoading(true);

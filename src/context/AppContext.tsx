@@ -99,13 +99,14 @@ interface AppContextType {
   register: (name: string, email: string, password: string, institution?: string) => Promise<void>;
   logout: () => void;
   refreshData: () => Promise<void>;
-  loadSuperStats: () => Promise<void>;
-  loadSuperSchools: () => Promise<void>;
+  // ✅ PERUBAHAN: return boolean untuk dashboard state management
+  loadSuperStats: () => Promise<boolean>;
+  loadSuperSchools: () => Promise<boolean>;
   createSchool: (data: { name: string; address?: string; phone?: string }) => Promise<any>;
   deleteSchool: (id: number) => Promise<void>;
-  loadSuperUsers: (filters?: { role?: string; search?: string }) => Promise<void>;
+  loadSuperUsers: (filters?: { role?: string; search?: string }) => Promise<boolean>;
   toggleUser: (id: number) => Promise<any>;
-  loadSuperCompanies: () => Promise<void>;
+  loadSuperCompanies: () => Promise<boolean>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -333,23 +334,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const loadSuperStats = useCallback(async () => {
-    if (!localStorage.getItem('pkl_token')) return;
+  // ✅ FIX UTAMA: return boolean agar dashboard tahu sukses/gagal
+  const loadSuperStats = useCallback(async (): Promise<boolean> => {
+    if (!localStorage.getItem('pkl_token')) return false;
     try {
       const res = await api.get('/api/super-admin/stats') as any;
       setSuperStats(res);
+      return true;
     } catch (error: any) {
       console.warn('Gagal mengambil super stats:', error?.message);
+      return false;
     }
   }, []);
 
-  const loadSuperSchools = useCallback(async () => {
-    if (!localStorage.getItem('pkl_token')) return;
+  // ✅ FIX: return boolean untuk konsistensi
+  const loadSuperSchools = useCallback(async (): Promise<boolean> => {
+    if (!localStorage.getItem('pkl_token')) return false;
     try {
       const res = await api.get('/api/super-admin/schools') as any[];
       setSuperSchools(res);
+      return true;
     } catch (error: any) {
       console.warn('Gagal mengambil daftar sekolah:', error?.message);
+      return false;
     }
   }, []);
 
@@ -366,16 +373,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await loadSuperStats();
   };
 
-  const loadSuperUsers = useCallback(async (filters?: { role?: string; search?: string }) => {
-    if (!localStorage.getItem('pkl_token')) return;
+  // ✅ FIX: return boolean untuk konsistensi
+  const loadSuperUsers = useCallback(async (filters?: { role?: string; search?: string }): Promise<boolean> => {
+    if (!localStorage.getItem('pkl_token')) return false;
     try {
       const params = new URLSearchParams();
       if (filters?.role && filters.role !== 'all') params.set('role', filters.role);
       if (filters?.search) params.set('search', filters.search);
       const res = await api.get(`/api/super-admin/users?${params.toString()}`) as any[];
       setSuperUsers(res);
+      return true;
     } catch (error: any) {
       console.warn('Gagal mengambil daftar user:', error?.message);
+      return false;
     }
   }, []);
 
@@ -385,13 +395,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return res;
   };
 
-  const loadSuperCompanies = useCallback(async () => {
-    if (!localStorage.getItem('pkl_token')) return;
+  // ✅ FIX: return boolean untuk konsistensi
+  const loadSuperCompanies = useCallback(async (): Promise<boolean> => {
+    if (!localStorage.getItem('pkl_token')) return false;
     try {
       const res = await api.get('/api/super-admin/companies') as any[];
       setSuperCompanies(res);
+      return true;
     } catch (error: any) {
       console.warn('Gagal mengambil daftar perusahaan global:', error?.message);
+      return false;
     }
   }, []);
 
@@ -410,7 +423,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ✅ PERUBAHAN UTAMA: loadSession sekarang authoritative — hanya di sini yang trigger logout
   const loadSession = async (overrideToken?: string) => {
     const tokenToUse = overrideToken || token;
     if (!tokenToUse) return;
@@ -434,8 +446,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     } catch (error: any) {
       console.error('Session load error:', error?.message);
-      // ✅ HANYA logout kalau session check gagal (token invalid)
-      // Request lain yang gagal 401 tidak trigger logout
       logout();
     } finally {
       stopLoading('session');
@@ -449,20 +459,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  // ✅ PERUBAHAN: login panggil loadSession langsung (bukan tunggu useEffect)
   const login = async (email: string, password: string) => {
     try {
       const data = await api.post('/api/auth/login', { email, password }) as { token: string; user: any };
       
-      // Simpan ke localStorage
       localStorage.setItem('pkl_token', data.token);
       localStorage.setItem('pkl_role', mapBackendRoleToUserRole(data.user.role));
       localStorage.setItem('pkl_user_name', data.user.name);
       
-      // Tunggu 1 tick
       await new Promise(resolve => setTimeout(resolve, 50));
       
-      // Set state token (akan trigger useEffect loadSession)
       setToken(data.token);
     } catch (error: any) {
       throw new Error(error.message || 'Login gagal');
