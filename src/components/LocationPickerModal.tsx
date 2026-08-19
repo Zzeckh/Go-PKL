@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Map as MapIcon, Search, X, MapPin, Navigation, Loader2, AlertCircle, Check, SearchX } from 'lucide-react';
+import {
+  Map as MapIcon, Search, X, MapPin, Navigation, Loader2, AlertCircle, Check,
+  SearchX, MousePointer2, Keyboard, Lightbulb,
+} from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useApp } from '../context/AppContext';
@@ -42,6 +45,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
   const mapRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
   const circleRef = useRef<L.Circle | null>(null);
+  const latInputRef = useRef<HTMLInputElement>(null);
 
   const [lat, setLat] = useState<number | null>(initialLat ?? null);
   const [lng, setLng] = useState<number | null>(initialLng ?? null);
@@ -56,11 +60,14 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
   const [showDropdown, setShowDropdown] = useState(false);
   const [noResults, setNoResults] = useState(false);
 
+  // ── Mode manual: aktif saat pencarian gagal, memandu input koordinat ──
+  const [manualMode, setManualMode] = useState(false);
+
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  /* ── Debounced search (dengan bias Indonesia + area map) ── */
+  /* ── Debounced search (bias Indonesia + area map) ── */
   useEffect(() => {
     if (!searchQuery || searchQuery.trim().length < 3) {
       setSearchResults([]);
@@ -71,7 +78,6 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
     const timeout = setTimeout(async () => {
       setIsSearching(true);
       try {
-        // Bias pencarian ke area map yang sedang dilihat
         const center = mapRef.current?.getCenter();
         const near = center ? { lat: center.lat, lng: center.lng } : undefined;
 
@@ -89,6 +95,16 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
     }, 500);
     return () => clearTimeout(timeout);
   }, [searchQuery]);
+
+  /* ── Masuk mode manual + fokus ke input latitude ── */
+  const enterManualMode = (focusInput: boolean) => {
+    setShowDropdown(false);
+    setNoResults(false);
+    setManualMode(true);
+    if (focusInput) {
+      setTimeout(() => latInputRef.current?.focus(), 150);
+    }
+  };
 
   /* ── Sync marker + circle ── */
   const syncMarkerToCoords = (la: number, ln: number) => {
@@ -183,6 +199,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
     setSearchQuery('');
     setShowDropdown(false);
     setNoResults(false);
+    setManualMode(false);
     const map = mapRef.current;
     if (map) map.flyTo([result.lat, result.lng], 16, { duration: 0.8 });
     syncMarkerToCoords(result.lat, result.lng);
@@ -281,7 +298,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => (searchResults.length > 0 || noResults) && setShowDropdown(true)}
-                  placeholder="Cari alamat / sekolah / tempat (contoh: SMK ... , Sudirman Jakarta)..."
+                  placeholder="Cari alamat / sekolah / tempat..."
                   className="w-full bg-[#F1F4F8] border border-[#E2E8F0] rounded-2xl pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
                 />
                 {isSearching && (
@@ -306,7 +323,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
               </button>
             </div>
 
-            {/* Dropdown hasil / pesan tidak ditemukan */}
+            {/* Dropdown hasil / tidak ditemukan */}
             {showDropdown && (searchResults.length > 0 || noResults) && (
               <div className="absolute left-0 right-0 mt-2 bg-white border border-mist rounded-2xl overflow-hidden z-[2000] animate-in fade-in slide-in-from-top-1 duration-150 shadow-[0_10px_40px_rgba(21,42,66,0.25)] border-t-2 border-t-steel">
                 {searchResults.length > 0 ? (
@@ -326,20 +343,79 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
                     ))}
                   </div>
                 ) : (
-                  <div className="p-4 text-center">
-                    <SearchX className="w-6 h-6 text-navy/30 mx-auto mb-2" />
-                    <p className="text-sm font-bold text-navy">Lokasi tidak ditemukan</p>
-                    <p className="text-[11px] font-medium text-navy/50 mt-1 leading-relaxed">
-                      Pencarian memakai data OpenStreetMap — tempat yang belum terpetakan di OSM
-                      (misal nama sekolah fiktif) tidak akan muncul. Coba nama yang lebih umum
-                      (desa / jalan / landmark sekitar), atau klik langsung di peta,
-                      atau tempel koordinat di kolom Latitude/Longitude.
+                  /* ── PEMBERITAHUAN: tempat tidak ada di OSM → alur manual ── */
+                  <div className="p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <SearchX className="w-5 h-5 text-[#9A6B15]" />
+                      <p className="text-sm font-bold text-navy">Lokasi tidak ditemukan di pencarian</p>
+                    </div>
+                    <p className="text-[11px] font-medium text-navy/60 leading-relaxed mb-3">
+                      Pencarian memakai data OpenStreetMap, sehingga tempat yang belum terpetakan
+                      (atau penulisannya berbeda, contoh "SMKN 11" vs "SMK Negeri 11") bisa tidak muncul.
+                      Coba variasi nama, atau gunakan <span className="font-bold text-navy">input manual lewat titik koordinat</span> di bawah ini.
                     </p>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <button
+                        type="button"
+                        onClick={() => enterManualMode(true)}
+                        className="flex-1 flex items-center justify-center gap-1.5 bg-steel text-white text-xs font-bold py-2.5 rounded-xl hover:bg-steel/90 transition-colors"
+                      >
+                        <Keyboard className="w-3.5 h-3.5" /> Input Manual via Koordinat
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => enterManualMode(false)}
+                        className="flex-1 flex items-center justify-center gap-1.5 bg-[#F1F4F8] border border-[#E2E8F0] text-navy text-xs font-bold py-2.5 rounded-xl hover:bg-mist transition-colors"
+                      >
+                        <MousePointer2 className="w-3.5 h-3.5" /> Klik Langsung di Peta
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
             )}
           </div>
+
+          {/* ── BANNER MODE MANUAL: panduan ambil koordinat ── */}
+          {manualMode && (
+            <div className="bg-steel/10 border border-steel/30 rounded-2xl p-3.5 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="flex items-start gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-steel text-white flex items-center justify-center shrink-0">
+                  <Lightbulb className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12px] font-bold text-navy mb-1">
+                    Mode Manual Aktif — cari titik koordinat sendiri
+                  </p>
+                  <ol className="text-[11px] font-medium text-navy/70 leading-relaxed list-decimal pl-4 space-y-0.5">
+                    <li>
+                      Buka <span className="font-bold">Google Maps</span> di tab lain, cari tempatnya
+                      (misal "SMKN 11 Bandung"), lalu <span className="font-bold">klik kanan</span> pada
+                      titik lokasi dan pilih/salin angka koordinat yang muncul
+                      (contoh: <span className="font-mono font-bold">-6.914744, 107.609628</span>).
+                    </li>
+                    <li>
+                      Tempel angka pertama ke kolom <span className="font-bold">Latitude</span> dan
+                      angka kedua ke <span className="font-bold">Longitude</span> di bawah, tekan Enter —
+                      peta langsung terbang ke titik itu.
+                    </li>
+                    <li>
+                      Alternatifnya, <span className="font-bold">klik langsung di peta</span> atau geser
+                      pin, atur radius, lalu Simpan Lokasi.
+                    </li>
+                  </ol>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setManualMode(false)}
+                  className="w-7 h-7 rounded-lg hover:bg-steel/20 flex items-center justify-center text-navy/50 transition-colors shrink-0"
+                  title="Tutup panduan"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Map */}
           <div className="relative rounded-3xl overflow-hidden border border-mist/60 shadow-sm">
@@ -363,13 +439,18 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
                 Latitude
               </label>
               <input
+                ref={latInputRef}
                 type="text"
                 value={latInput}
                 onChange={(e) => setLatInput(e.target.value)}
                 onBlur={handleManualInputCommit}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleManualInputCommit(); }}
-                placeholder="-6.2088"
-                className="w-full bg-[#F1F4F8] border border-[#E2E8F0] rounded-2xl px-3.5 py-2.5 text-sm font-mono font-bold text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/30 tabular-nums"
+                placeholder="-6.914744"
+                className={`w-full border rounded-2xl px-3.5 py-2.5 text-sm font-mono font-bold text-navy outline-none transition-all placeholder:text-navy/30 tabular-nums ${
+                  manualMode
+                    ? 'bg-white border-steel ring-2 ring-steel/20'
+                    : 'bg-[#F1F4F8] border-[#E2E8F0] focus:border-steel focus:bg-white'
+                }`}
               />
             </div>
             <div>
@@ -382,8 +463,12 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
                 onChange={(e) => setLngInput(e.target.value)}
                 onBlur={handleManualInputCommit}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleManualInputCommit(); }}
-                placeholder="106.8456"
-                className="w-full bg-[#F1F4F8] border border-[#E2E8F0] rounded-2xl px-3.5 py-2.5 text-sm font-mono font-bold text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/30 tabular-nums"
+                placeholder="107.609628"
+                className={`w-full border rounded-2xl px-3.5 py-2.5 text-sm font-mono font-bold text-navy outline-none transition-all placeholder:text-navy/30 tabular-nums ${
+                  manualMode
+                    ? 'bg-white border-steel ring-2 ring-steel/20'
+                    : 'bg-[#F1F4F8] border-[#E2E8F0] focus:border-steel focus:bg-white'
+                }`}
               />
             </div>
           </div>
