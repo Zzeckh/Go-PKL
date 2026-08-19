@@ -149,3 +149,20 @@ export const toggleUser = async (req, res, next) => {
     next(error);
   }
 };
+
+/* ── DELETE /api/super-admin/users/:id ── */
+export const deleteUser = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id);
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return res.status(404).json({ error: 'User tidak ditemukan.' });
+    if (user.role === 'super_admin') {
+      return res.status(403).json({ error: 'Tidak dapat menghapus super admin.' });
+    }
+
+    await prisma.user.delete({ where: { id } });
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+};

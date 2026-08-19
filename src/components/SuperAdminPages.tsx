@@ -531,7 +531,7 @@ const AddClassModal: React.FC<{
    KELOLA PENGGUNA
    ══════════════════════════════════════════════════════ */
 export const SuperUsers: React.FC = () => {
-  const { superUsers, loadSuperUsers, toggleUser, isAuthenticated } = useApp();
+  const { superUsers, loadSuperUsers, toggleUser, deleteUser, isAuthenticated } = useApp();
   const [roleFilter, setRoleFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -636,13 +636,26 @@ export const SuperUsers: React.FC = () => {
                       </div>
                     </div>
                     {u.role !== 'super_admin' && (
-                      <button
-                        onClick={() => toggleUser(u.id)}
-                        className="w-9 h-9 rounded-lg bg-[#F1F4F8] hover:bg-mist flex items-center justify-center text-navy/70 transition-colors shrink-0"
-                        title={u.isActive ? 'Nonaktifkan' : 'Aktifkan'}
-                      >
-                        {u.isActive ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-                      </button>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          onClick={() => {
+                            if (confirm(`Hapus pengguna "${u.name}"? Tindakan ini tidak dapat dibatalkan.`)) {
+                              deleteUser(u.id).catch((err: any) => alert(err?.data?.error || err?.message || 'Gagal menghapus user.'));
+                            }
+                          }}
+                          className="w-9 h-9 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center transition-colors"
+                          title="Hapus user"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => toggleUser(u.id)}
+                          className="w-9 h-9 rounded-lg bg-[#F1F4F8] hover:bg-mist flex items-center justify-center text-navy/70 transition-colors"
+                          title={u.isActive ? 'Nonaktifkan' : 'Aktifkan'}
+                        >
+                          {u.isActive ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                        </button>
+                      </div>
                     )}
                   </div>
                 ))

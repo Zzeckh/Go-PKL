@@ -111,6 +111,7 @@ interface AppContextType {
   deleteClass: (id: number) => Promise<void>;
   loadSuperUsers: (filters?: { role?: string; search?: string }) => Promise<boolean>;
   toggleUser: (id: number) => Promise<any>;
+  deleteUser: (id: number) => Promise<any>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -383,6 +384,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return res;
   };
 
+  const deleteUser = async (id: number) => {
+    const res = await api.delete(`/api/super-admin/users/${id}`);
+    await loadSuperUsers();
+    await loadSuperStats();
+    return res;
+  };
+
   const refreshData = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -602,7 +610,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         submitEvaluation, addSiswa, addPerusahaan, updateSiswaMapping, updateCompanyLocation,
         login, register, logout, refreshData,
         loadSuperStats, loadSuperClasses, createClass, deleteClass,
-        loadSuperUsers, toggleUser,
+        loadSuperUsers, toggleUser, deleteUser,
       }}
     >
       {children}
