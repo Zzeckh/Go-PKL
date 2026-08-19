@@ -44,164 +44,90 @@ enum EvaluationType {
   guru
 }
 
-model School {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  address   String?
-  phone     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  users     User[]
-  classes   Class[]
-}
-
-model Company {
-  id           Int      @id @default(autoincrement())
-  name         String   @unique
-  address      String
-  phone        String?
-  category     String?
-  quota        Int      @default(0)
-  latitude     Float?
-  longitude    Float?
-  radiusMeters Int      @default(500)
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  mentorId     Int?
-  mentor       User?    @relation("CompanyMentor", fields: [mentorId], references: [id])
-  students     User[]
-  absensis     Absensi[]
-  evaluations  Evaluation[]
-}
-
 model Class {
   id        Int      @id @default(autoincrement())
   name      String
-  major     String
-  schoolId  Int
-  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  students  User[]
+  major     String?
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([name, schoolId])
-  @@index([schoolId])
+  users     User[]
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  phone     String?
-  role      Role
-  avatar    String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  schoolId  Int?
-  school    School?  @relation(fields: [schoolId], references: [id])
-
-  classId      Int?
-  class        Class?   @relation(fields: [classId], references: [id], onDelete: SetNull)
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  password     String
+  role         Role     @default(student)
+  isActive     Boolean  @default(true)
   academicYear String?
+  createdAt    DateTime @default(now())
 
+  classId   Int?
+  class     Class?  @relation(fields: [classId], references: [id])
   teacherId Int?
-  teacher   User?    @relation("StudentTeacher", fields: [teacherId], references: [id])
-  students  User[]   @relation("StudentTeacher")
-  
-  companyId Int?
-  company   Company? @relation(fields: [companyId], references: [id])
-  
-  mentoredCompanies Company[] @relation("CompanyMentor")
-  absensis         Absensi[]
-  logbooks         Logbook[]
-  permissions      Permission[]
-  evaluations      Evaluation[] @relation("EvaluationStudent")
-  evaluationsGiven Evaluation[] @relation("EvaluationEvaluator")
-  
-  @@index([role])
-  @@index([companyId])
-  @@index([teacherId])
-  @@index([classId])
+  teacher   User?   @relation("StudentTeacher", fields: [teacherId], references: [id])
+  students  User[]  @relation("StudentTeacher")
+
+  absensis          Absensi[]
+  logbooks          Logbook[]
+  permissions       Permission[]
+  evalAsStudent     Evaluation[] @relation("StudentEval")
+  evalAsEvaluator   Evaluation[] @relation("EvaluatorEval")
 }
 
 model Absensi {
-  id           Int           @id @default(autoincrement())
-  userId       Int
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  companyId    Int?
-  company      Company?      @relation(fields: [companyId], references: [id])
-  date         DateTime      @db.Date
-  checkInTime  DateTime?
-  checkOutTime DateTime?
-  latitude     Float?
-  longitude    Float?
-  address      String?
-  status       AbsensiStatus @default(hadir)
-  imageUrl     String?
-  notes        String?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id          Int           @id @default(autoincrement())
+  userId      Int
+  user        User          @relation(fields: [userId], references: [id])
+  date        DateTime      @db.Date
+  status      AbsensiStatus @default(hadir)
+  checkInTime DateTime?
+  imageUrl    String?
+  latitude    Float?
+  longitude   Float?
+  createdAt   DateTime      @default(now())
+
   @@unique([userId, date])
-  @@index([userId, date])
-  @@index([companyId])
 }
 
 model Logbook {
   id            Int           @id @default(autoincrement())
   userId        Int
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id])
   date          DateTime      @db.Date
   activityTitle String
   description   String        @db.Text
-  hours         Float         @default(0)
+  hours         Int           @default(8)
   category      String?
-  attachmentUrl String?
   status        LogbookStatus @default(pending)
   feedback      String?       @db.Text
-  reviewedById  Int?
-  reviewedAt    DateTime?
   createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  @@index([userId, date])
-  @@index([status])
 }
 
 model Permission {
   id            Int              @id @default(autoincrement())
   userId        Int
-  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  date          DateTime         @db.Date
+  user          User             @relation(fields: [userId], references: [id])
   type          PermissionType
-  reason        String           @db.Text
+  reason        String
   attachmentUrl String?
+  date          DateTime         @db.Date
   status        PermissionStatus @default(pending)
-  reviewedById  Int?
-  reviewedAt    DateTime?
-  rejectReason  String?          @db.Text
+  rejectReason  String?
   createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  @@index([userId])
-  @@index([status])
 }
 
 model Evaluation {
   id          Int            @id @default(autoincrement())
   studentId   Int
-  student     User           @relation("EvaluationStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  student     User           @relation("StudentEval", fields: [studentId], references: [id])
   evaluatorId Int
-  evaluator   User           @relation("EvaluationEvaluator", fields: [evaluatorId], references: [id])
-  companyId   Int?
-  company     Company?       @relation(fields: [companyId], references: [id])
+  evaluator   User           @relation("EvaluatorEval", fields: [evaluatorId], references: [id])
   type        EvaluationType
-  score       Float
-  comment     String?        @db.Text
+  score       Int
+  notes       String?        @db.Text
   period      String
   createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+
   @@unique([studentId, evaluatorId, type, period])
-  @@index([studentId])
 }

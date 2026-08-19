@@ -1,55 +1,96 @@
 import prisma from '../config/db.js';
 
-/**
- * GET /api/users?role=student&page=1&limit=50
- * Scoped by role viewer, TIDAK pernah return password.
- */
-export const getAllUsers = async (req, res, next) => {
+export const getUsers = async (req, res, next) => {
   try {
-    const { id, role, schoolId } = req.user;
-    const limit = Math.min(100, parseInt(req.query.limit) || 50);
-    const page = Math.max(1, parseInt(req.query.page) || 1);
-    const roleFilter = req.query.role;
+    const { id, role } = req.user;
+    const { role: filterRole } = req.query;
+    let where = {};
 
-    const where = {};
-    if (roleFilter) where.role = roleFilter;
-
-    if (role === 'student') {
-      where.id = id;
-    } else if (role === 'mentor') {
-      const company = await prisma.company.findFirst({ where: { mentorId: id }, select: { id: true } });
-      where.companyId = company?.id ?? -1;
-    } else if (role === 'teacher' && (!roleFilter || roleFilter === 'student')) {
-      where.teacherId = id;
-    } else if (schoolId) {
-      where.schoolId = schoolId;
+    if (role === 'teacher') {
+      where = { teacherId: id };
+    } else if (role === 'student') {
+      where = { id };
+    } else if (role === 'hubin') {
+      where = {};
+    } else if (role === 'super_admin') {
+      where = {};
     }
 
-    const [data, total] = await Promise.all([
-      prisma.user.findMany({
-        where,
-        orderBy: { name: 'asc' },
-        skip: (page - 1) * limit,
-        take: limit,
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          isActive: true,
-          createdAt: true,
-          academicYear: true,
-          class: { select: { id: true, name: true, major: true } },
-          school: { select: { id: true, name: true } },
-          company: { select: { id: true, name: true } },
-          teacher: { select: { id: true, name: true } },
-          _count: { select: { absensis: true, logbooks: true } },
-        },
-      }),
-      prisma.user.count({ where }),
-    ]);
+    if (filterRole) {
+      where.role = filterRole;
+    }
 
-    res.json({ data, meta: { page, limit, total } });
+    const users = await prisma.user.findMany({
+      where,
+      include: {
+        class: { select: { id: true, name: true, major: true } },
+        teacher: { select: { id: true, name: true } },
+        _count: {
+          select: {
+            absensis: true,
+            logbooks: true,
+          },
+        },
+      },
+      orderBy: { id: 'desc' },
+    });
+
+    res.json(users);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getUserById = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id);
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        class: { select: { name: true, major: true } },
+        teacher: { select: { name: true } },
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User tidak ditemukan' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateUser = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { name, classId, teacherId } = req.body;
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: {
+        name,
+        classId: classId ? parseInt(classId) : null,
+        teacherId: teacherId ? parseInt(teacherId) : null,
+      },
+      include: {
+        class: { select: { name: true } },
+        teacher: { select: { name: true } },
+      },
+    });
+
+    res.json(user);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteUser = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id);
+    await prisma.user.delete({ where: { id } });
+    res.json({ success: true });
   } catch (error) {
     next(error);
   }

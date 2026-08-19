@@ -13,9 +13,8 @@ export type ActivePage =
   | 'data-pembimbing' 
   | 'pemetaan' 
   | 'data'
-  | 'super-schools'     // ← BARU
-  | 'super-users'       // ← BARU
-  | 'super-companies';  // ← BARU
+  | 'super-classes'     // ← BARU
+  | 'super-users';      // ← BARU
 
 export type AuthMode = 'login' | 'register';
 export type UserRole = 'intern' | 'mentor' | 'teacher' | 'hubin' | 'super_admin'; // ← TAMBAH super_admin

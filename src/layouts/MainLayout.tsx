@@ -36,7 +36,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       case 'pemetaan':         return 'Pemetaan Industri';
       case 'data':             return 'Kelola Data';
       // ── Super Admin ──
-      case 'super-schools':    return 'Kelola Sekolah';
+      case 'super-classes':    return 'Kelola Kelas';
       case 'super-users':      return 'Kelola Pengguna';
       case 'super-companies':  return 'Kelola Perusahaan';
       // Legacy (backward compat)

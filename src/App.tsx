@@ -13,7 +13,7 @@ import { TeacherMonitoring, TeacherPerizinan, TeacherRekap } from './components/
 import { HubinDashboard } from './components/HubinDashboard';
 import { HubinData } from './components/HubinPages';
 import { HubinPemetaan } from './components/HubinPemetaan';
-import { SuperAdminDashboard, SuperSchools, SuperUsers, SuperCompanies } from './components/SuperAdminPages';
+import { SuperAdminDashboard, SuperClasses, SuperUsers } from './components/SuperAdminPages';
 
 export default function App() {
   const {
@@ -117,9 +117,9 @@ export default function App() {
               onNavigate={(page) => setActivePage(page as any)}
             />
           )}
-          {activePage === 'super-schools' && userRole === 'super_admin' && <SuperSchools />}
+          {activePage === 'super-classes' && userRole === 'super_admin' && <SuperClasses />}
           {activePage === 'super-users' && userRole === 'super_admin' && <SuperUsers />}
-          {activePage === 'super-companies' && userRole === 'super_admin' && <SuperCompanies />}
+
 
           {/* ── STUDENT (INTERN) ── */}
           {activePage === 'dashboard' && userRole === 'intern' && (

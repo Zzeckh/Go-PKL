@@ -2,8 +2,19 @@ import prisma from "../config/db.js";
 
 export const getAllAbsensi = async (req, res, next) => {
   try {
+    const { id, role } = req.user || {};
+    let where = {};
+
+    if (role === 'student') {
+      where = { userId: id };
+    } else if (role === 'teacher') {
+      where = { user: { teacherId: id } };
+    }
+    // hubin & super_admin see all
+
     const absensi = await prisma.absensi.findMany({
-      include: { user: true },
+      where,
+      include: { user: { select: { id: true, name: true, class: { select: { name: true } } } } },
       orderBy: { createdAt: "desc" },
     });
     res.json(absensi);
@@ -14,23 +25,33 @@ export const getAllAbsensi = async (req, res, next) => {
 
 export const createAbsensi = async (req, res, next) => {
   try {
-    const { userId, status, location, image_url } = req.body;
+    const { status, image_url, latitude, longitude } = req.body;
+    const userId = req.user.id;
 
-    if (!userId || !status || !location) {
-      return res.status(400).json({ error: "userId, status, dan location diperlukan" });
+    if (!status) {
+      return res.status(400).json({ error: "status wajib diisi" });
     }
 
-    const user = await prisma.user.findUnique({ where: { id: Number(userId) } });
-    if (!user) {
-      return res.status(404).json({ error: "User tidak ditemukan" });
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const existing = await prisma.absensi.findUnique({
+      where: { userId_date: { userId, date: today } },
+    });
+
+    if (existing) {
+      return res.status(409).json({ error: "Sudah melakukan absensi hari ini" });
     }
 
     const absensi = await prisma.absensi.create({
       data: {
-        userId: Number(userId),
-        status,
-        location,
+        userId,
+        date: today,
+        status: status || 'hadir',
+        checkInTime: new Date(),
         imageUrl: image_url || null,
+        latitude: latitude ? Number(latitude) : null,
+        longitude: longitude ? Number(longitude) : null,
       },
     });
 
@@ -45,7 +66,7 @@ export const getAbsensiByUser = async (req, res, next) => {
     const userId = Number(req.params.userId);
     const absensi = await prisma.absensi.findMany({
       where: { userId },
-      include: { user: true },
+      include: { user: { select: { id: true, name: true } } },
       orderBy: { createdAt: "desc" },
     });
     res.json(absensi);

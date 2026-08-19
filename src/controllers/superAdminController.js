@@ -1,16 +1,15 @@
 import prisma from '../config/db.js';
 
-/* ── GET /api/super-admin/stats — stats global ── */
+/* ── Stats global ── */
 export const getStats = async (req, res, next) => {
   try {
-    const [totalSchools, totalStudents, totalTeachers, totalMentors, totalHubins, totalCompanies] =
+    const [totalClasses, totalStudents, totalTeachers, totalMentors, totalHubins] =
       await Promise.all([
-        prisma.school.count(),
+        prisma.class.count(),
         prisma.user.count({ where: { role: 'student' } }),
         prisma.user.count({ where: { role: 'teacher' } }),
         prisma.user.count({ where: { role: 'mentor' } }),
         prisma.user.count({ where: { role: 'hubin' } }),
-        prisma.company.count(),
       ]);
 
     const [totalAbsensi, totalLogbooks, totalPermissions] = await Promise.all([
@@ -20,12 +19,12 @@ export const getStats = async (req, res, next) => {
     ]);
 
     res.json({
-      totalSchools,
+      totalClasses,
       totalStudents,
       totalTeachers,
       totalMentors,
       totalHubins,
-      totalCompanies,
+      totalCompanies: 0,
       totalAbsensi,
       totalLogbooks,
       totalPermissions,
@@ -35,28 +34,21 @@ export const getStats = async (req, res, next) => {
   }
 };
 
-/* ── GET /api/super-admin/schools — list semua sekolah ── */
-export const getSchools = async (req, res, next) => {
+/* ── GET /api/super-admin/classes ── */
+export const getClasses = async (req, res, next) => {
   try {
-    const schools = await prisma.school.findMany({
+    const classes = await prisma.class.findMany({
       include: {
-        _count: {
-          select: {
-            users: true,
-            classes: true,
-          },
-        },
+        _count: { select: { users: true } },
       },
       orderBy: { id: 'asc' },
     });
 
-    const mapped = schools.map(s => ({
-      id: s.id,
-      name: s.name,
-      address: s.address,
-      phone: s.phone,
-      totalUsers: s._count.users,
-      totalClasses: s._count.classes,
+    const mapped = classes.map(c => ({
+      id: c.id,
+      name: c.name,
+      major: c.major || '-',
+      totalStudents: c._count.users,
     }));
 
     res.json(mapped);
@@ -65,17 +57,17 @@ export const getSchools = async (req, res, next) => {
   }
 };
 
-/* ── POST /api/super-admin/schools — tambah sekolah ── */
-export const createSchool = async (req, res, next) => {
+/* ── POST /api/super-admin/classes ── */
+export const createClass = async (req, res, next) => {
   try {
-    const { name, address, phone } = req.body;
-    if (!name) return res.status(400).json({ error: 'Nama sekolah wajib diisi.' });
+    const { name, major } = req.body;
+    if (!name) return res.status(400).json({ error: 'Nama kelas wajib diisi.' });
 
-    const existing = await prisma.school.findFirst({ where: { name } });
-    if (existing) return res.status(409).json({ error: 'Nama sekolah sudah terdaftar.' });
+    const existing = await prisma.class.findFirst({ where: { name } });
+    if (existing) return res.status(409).json({ error: 'Nama kelas sudah terdaftar.' });
 
-    const created = await prisma.school.create({
-      data: { name, address: address || '', phone: phone || '' },
+    const created = await prisma.class.create({
+      data: { name, major: major || null },
     });
     res.status(201).json(created);
   } catch (error) {
@@ -83,24 +75,24 @@ export const createSchool = async (req, res, next) => {
   }
 };
 
-/* ── DELETE /api/super-admin/schools/:id ── */
-export const deleteSchool = async (req, res, next) => {
+/* ── DELETE /api/super-admin/classes/:id ── */
+export const deleteClass = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
-    const usersCount = await prisma.user.count({ where: { schoolId: id } });
+    const usersCount = await prisma.user.count({ where: { classId: id } });
     if (usersCount > 0) {
       return res.status(400).json({
-        error: `Sekolah memiliki ${usersCount} user. Hapus/pindahkan user terlebih dahulu.`,
+        error: `Kelas memiliki ${usersCount} siswa. Pindahkan siswa terlebih dahulu.`,
       });
     }
-    await prisma.school.delete({ where: { id } });
+    await prisma.class.delete({ where: { id } });
     res.json({ success: true });
   } catch (error) {
     next(error);
   }
 };
 
-/* ── GET /api/super-admin/users — list semua user (lintas sekolah & role) ── */
+/* ── GET /api/super-admin/users ── */
 export const getUsers = async (req, res, next) => {
   try {
     const { role, search } = req.query;
@@ -116,9 +108,7 @@ export const getUsers = async (req, res, next) => {
     const users = await prisma.user.findMany({
       where,
       include: {
-        school: { select: { id: true, name: true } },
         class: { select: { id: true, name: true, major: true } },
-        company: { select: { id: true, name: true } },
       },
       orderBy: { id: 'desc' },
       take: 200,
@@ -130,9 +120,7 @@ export const getUsers = async (req, res, next) => {
       email: u.email,
       role: u.role,
       isActive: u.isActive,
-      school: u.school?.name || '-',
       class: u.class?.name || '-',
-      company: u.company?.name || '-',
       academicYear: u.academicYear || '-',
     }));
 
@@ -142,7 +130,7 @@ export const getUsers = async (req, res, next) => {
   }
 };
 
-/* ── PATCH /api/super-admin/users/:id/toggle — aktif/nonaktif user ── */
+/* ── PATCH /api/super-admin/users/:id/toggle ── */
 export const toggleUser = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
@@ -157,36 +145,6 @@ export const toggleUser = async (req, res, next) => {
       data: { isActive: !user.isActive },
     });
     res.json({ id: updated.id, isActive: updated.isActive });
-  } catch (error) {
-    next(error);
-  }
-};
-
-/* ── GET /api/super-admin/companies — semua perusahaan lintas sekolah ── */
-export const getCompanies = async (req, res, next) => {
-  try {
-    const companies = await prisma.company.findMany({
-      include: {
-        mentor: { select: { id: true, name: true } },
-        _count: { select: { users: true } },
-      },
-      orderBy: { id: 'asc' },
-    });
-
-    const mapped = companies.map(c => ({
-      id: c.id,
-      name: c.name,
-      address: c.address,
-      quota: c.quota,
-      filled: c._count.users,
-      mentor: c.mentor?.name || '-',
-      category: c.category || '',
-      latitude: c.latitude,
-      longitude: c.longitude,
-      radiusMeters: c.radiusMeters,
-    }));
-
-    res.json(mapped);
   } catch (error) {
     next(error);
   }

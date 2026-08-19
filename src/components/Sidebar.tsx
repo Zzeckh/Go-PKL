@@ -30,9 +30,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (userRole === 'super_admin') {
       return [
         { id: 'dashboard',        icon: LayoutDashboard, label: 'Dashboard' },
-        { id: 'super-schools',    icon: School,          label: 'Kelola Sekolah' },
+        { id: 'super-classes',    icon: School,          label: 'Kelola Kelas' },
         { id: 'super-users',      icon: Users,           label: 'Kelola Pengguna' },
-        { id: 'super-companies',  icon: Briefcase,       label: 'Kelola Perusahaan' },
       ];
     }
     if (userRole === 'hubin') {

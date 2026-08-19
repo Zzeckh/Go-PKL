@@ -19,19 +19,6 @@ export interface SiswaItem {
   img?: string;
 }
 
-export interface PerusahaanItem {
-  id: number;
-  name: string;
-  address: string;
-  quota: number;
-  filled: number;
-  mentor: string;
-  category?: string;
-  latitude?: number;
-  longitude?: number;
-  radiusMeters?: number;
-}
-
 export interface GuruItem {
   id: number;
   name: string;
@@ -59,6 +46,13 @@ export interface PerizinanItem {
   status: 'pending' | 'approved' | 'rejected';
 }
 
+export interface ClassItem {
+  id: number;
+  name: string;
+  major: string;
+  totalStudents: number;
+}
+
 interface AppContextType {
   isAuthenticated: boolean;
   authMode: AuthMode;
@@ -75,7 +69,6 @@ interface AppContextType {
   isLoading: boolean;
   loadingResources: Set<string>;
   siswaList: SiswaItem[];
-  perusahaanList: PerusahaanItem[];
   guruList: GuruItem[];
   mentorList: MentorItem[];
   logEntries: LogEntry[];
@@ -83,30 +76,24 @@ interface AppContextType {
   perizinanList: PerizinanItem[];
   mapLocations: PKLMapLocation[];
   superStats: any;
-  superSchools: any[];
+  superClasses: ClassItem[];
   superUsers: any[];
-  superCompanies: any[];
   addLogEntry: (entry: Omit<LogEntry, 'id' | 'date' | 'status'>) => Promise<void>;
   updateLogStatus: (id: string, status: 'approved' | 'rejected', feedback?: string) => Promise<void>;
   checkInAttendance: (imageUrl?: string, latitude?: number, longitude?: number) => Promise<void>;
   updatePerizinanStatus: (id: number, status: 'approved' | 'rejected', rejectReason?: string) => Promise<void>;
   submitEvaluation: (siswaId: number, nilaiDUDI: number, nilaiGuru: number) => Promise<void>;
   addSiswa: (newSiswa: Omit<SiswaItem, 'id' | 'kehadiran' | 'logs' | 'nilaiDUDI' | 'nilaiGuru' | 'finalNilai' | 'berkasPct'>) => Promise<void>;
-  addPerusahaan: (newComp: Omit<PerusahaanItem, 'id' | 'filled'>) => Promise<void>;
-  updateSiswaMapping: (id: number, patch: { perusahaan?: string; guruPembimbing?: string; mentor?: string }) => Promise<void>;
-  updateCompanyLocation: (id: number, latitude: number, longitude: number, radiusMeters: number) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string, institution?: string) => Promise<void>;
   logout: () => void;
   refreshData: () => Promise<void>;
-  // ✅ PERUBAHAN: return boolean untuk dashboard state management
   loadSuperStats: () => Promise<boolean>;
-  loadSuperSchools: () => Promise<boolean>;
-  createSchool: (data: { name: string; address?: string; phone?: string }) => Promise<any>;
-  deleteSchool: (id: number) => Promise<void>;
+  loadSuperClasses: () => Promise<boolean>;
+  createClass: (data: { name: string; major?: string }) => Promise<any>;
+  deleteClass: (id: number) => Promise<void>;
   loadSuperUsers: (filters?: { role?: string; search?: string }) => Promise<boolean>;
   toggleUser: (id: number) => Promise<any>;
-  loadSuperCompanies: () => Promise<boolean>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -135,7 +122,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [activePage, setActivePage] = useState<ActivePage>('dashboard');
   const [userName, setUserName] = useState('');
   const [userId, setUserId] = useState<number | null>(null);
-  const [schoolName, setSchoolName] = useState('');
+  const [schoolName, setSchoolName] = useState('SMK Negeri 1 Nusantara');
   const [userCompanyName, setUserCompanyName] = useState('');
   const [userCompanyAddress, setUserCompanyAddress] = useState('');
   const [userCompanyLocation, setUserCompanyLocation] = useState<{ lat: number; lng: number; radius: number } | null>(null);
@@ -146,7 +133,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [loadingResources, setLoadingResources] = useState<Set<string>>(new Set());
 
   const [siswaList, setSiswaList] = useState<SiswaItem[]>([]);
-  const [perusahaanList, setPerusahaanList] = useState<PerusahaanItem[]>([]);
   const [guruList, setGuruList] = useState<GuruItem[]>([]);
   const [mentorList, setMentorList] = useState<MentorItem[]>([]);
   const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
@@ -155,9 +141,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [mapLocations, setMapLocations] = useState<PKLMapLocation[]>([]);
 
   const [superStats, setSuperStats] = useState<any>(null);
-  const [superSchools, setSuperSchools] = useState<any[]>([]);
+  const [superClasses, setSuperClasses] = useState<ClassItem[]>([]);
   const [superUsers, setSuperUsers] = useState<any[]>([]);
-  const [superCompanies, setSuperCompanies] = useState<any[]>([]);
 
   const startLoading = (resource: string) => {
     setLoadingResources(prev => new Set(prev).add(resource));
@@ -181,12 +166,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setActivePage('dashboard');
     setUserRole('intern');
     setUserName('');
-    setSchoolName('');
+    setSchoolName('SMK Negeri 1 Nusantara');
     setUserCompanyName('');
     setUserCompanyAddress('');
     setUserCompanyLocation(null);
     setSiswaList([]);
-    setPerusahaanList([]);
     setGuruList([]);
     setMentorList([]);
     setLogEntries([]);
@@ -194,9 +178,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setPerizinanList([]);
     setMapLocations([]);
     setSuperStats(null);
-    setSuperSchools([]);
+    setSuperClasses([]);
     setSuperUsers([]);
-    setSuperCompanies([]);
   }, []);
 
   useEffect(() => {
@@ -249,41 +232,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const loadPerusahaan = async () => {
-    try {
-      startLoading('perusahaan');
-      const response = await api.get('/api/companies') as { data: any[] };
-      const mapped = response.data.map((c: any): PerusahaanItem => ({
-        id: c.id,
-        name: c.name,
-        address: c.address,
-        quota: c.quota,
-        filled: c.filled,
-        mentor: c.mentor?.name || '',
-        category: c.category || '',
-        latitude: c.latitude,
-        longitude: c.longitude,
-        radiusMeters: c.radiusMeters,
-      }));
-      setPerusahaanList(mapped);
-      setMapLocations(mapped.map((c: any): PKLMapLocation => ({
-        id: `LOC-${c.id}`,
-        companyName: c.name,
-        address: c.address,
-        category: 'Perusahaan',
-        internsCount: c.filled,
-        mentorName: c.mentor,
-        coordinates: { x: c.longitude || 0, y: c.latitude || 0 },
-        distance: '-',
-        status: 'active' as const,
-      })));
-    } catch (error: any) {
-      console.warn('Gagal mengambil perusahaan:', error?.message);
-    } finally {
-      stopLoading('perusahaan');
-    }
-  };
-
   const loadSiswa = async () => {
     try {
       startLoading('siswa');
@@ -293,7 +241,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         name: u.name,
         kelas: u.class?.name || '-',
         academicYear: u.academicYear || '-',
-        perusahaan: u.company?.name || '-',
+        perusahaan: '-',
         guruPembimbing: u.teacher?.name || '-',
         mentor: '-',
         kehadiran: u._count?.absensis || 0,
@@ -319,7 +267,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const mapped = response.data.map((p: any): PerizinanItem => ({
         id: p.id,
         name: p.user?.name || 'Unknown',
-        company: p.user?.company?.name || '-',
+        company: '-',
         date: formatDate(p.date),
         type: p.type === 'sakit' ? 'Sakit' : 'Izin',
         reason: p.reason,
@@ -334,7 +282,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // ✅ FIX UTAMA: return boolean agar dashboard tahu sukses/gagal
   const loadSuperStats = useCallback(async (): Promise<boolean> => {
     if (!localStorage.getItem('pkl_token')) return false;
     try {
@@ -347,33 +294,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
-  // ✅ FIX: return boolean untuk konsistensi
-  const loadSuperSchools = useCallback(async (): Promise<boolean> => {
+  const loadSuperClasses = useCallback(async (): Promise<boolean> => {
     if (!localStorage.getItem('pkl_token')) return false;
     try {
-      const res = await api.get('/api/super-admin/schools') as any[];
-      setSuperSchools(res);
+      const res = await api.get('/api/super-admin/classes') as any[];
+      setSuperClasses(res);
       return true;
     } catch (error: any) {
-      console.warn('Gagal mengambil daftar sekolah:', error?.message);
+      console.warn('Gagal mengambil daftar kelas:', error?.message);
       return false;
     }
   }, []);
 
-  const createSchool = async (data: { name: string; address?: string; phone?: string }) => {
-    const res = await api.post('/api/super-admin/schools', data);
-    await loadSuperSchools();
+  const createClass = async (data: { name: string; major?: string }) => {
+    const res = await api.post('/api/super-admin/classes', data);
+    await loadSuperClasses();
     await loadSuperStats();
     return res;
   };
 
-  const deleteSchool = async (id: number) => {
-    await api.delete(`/api/super-admin/schools/${id}`);
-    await loadSuperSchools();
+  const deleteClass = async (id: number) => {
+    await api.delete(`/api/super-admin/classes/${id}`);
+    await loadSuperClasses();
     await loadSuperStats();
   };
 
-  // ✅ FIX: return boolean untuk konsistensi
   const loadSuperUsers = useCallback(async (filters?: { role?: string; search?: string }): Promise<boolean> => {
     if (!localStorage.getItem('pkl_token')) return false;
     try {
@@ -395,33 +340,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return res;
   };
 
-  // ✅ FIX: return boolean untuk konsistensi
-  const loadSuperCompanies = useCallback(async (): Promise<boolean> => {
-    if (!localStorage.getItem('pkl_token')) return false;
-    try {
-      const res = await api.get('/api/super-admin/companies') as any[];
-      setSuperCompanies(res);
-      return true;
-    } catch (error: any) {
-      console.warn('Gagal mengambil daftar perusahaan global:', error?.message);
-      return false;
-    }
-  }, []);
-
   const refreshData = useCallback(async () => {
     setIsLoading(true);
     try {
       await Promise.all([
         loadLogEntries(),
         loadAttendances(),
-        loadPerusahaan(),
         loadSiswa(),
         loadPerizinan(),
       ]);
     } finally {
       setIsLoading(false);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadSession = async (overrideToken?: string) => {
     const tokenToUse = overrideToken || token;
@@ -435,7 +366,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setUserName(user.name);
       setUserRole(mappedRole);
       setUserId(user.id);
-      setSchoolName(user.schoolName || '');
       setUserCompanyName(user.companyName || '');
       setUserCompanyAddress(user.companyAddress || '');
       setUserCompanyLocation(user.companyLocation || null);
@@ -468,20 +398,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.setItem('pkl_user_name', data.user.name);
       
       await new Promise(resolve => setTimeout(resolve, 50));
-      
       setToken(data.token);
     } catch (error: any) {
       throw new Error(error.message || 'Login gagal');
     }
   };
 
-  const register = async (name: string, email: string, password: string, institution?: string) => {
+  const register = async (name: string, email: string, password: string, _institution?: string) => {
     try {
       const data = await api.post('/api/auth/register', {
         name,
         email,
         password,
-        institution,
       }) as { token: string; user: any };
       
       localStorage.setItem('pkl_token', data.token);
@@ -524,10 +452,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateLogStatus = async (id: string, status: 'approved' | 'rejected', feedback?: string) => {
     try {
       const logId = parseInt(id.replace('LOG-', ''));
-      await api.put(`/api/logbook/${logId}`, {
-        status,
-        feedback,
-      });
+      await api.put(`/api/logbook/${logId}`, { status, feedback });
       await loadLogEntries();
     } catch (error: any) {
       throw new Error(error.message || 'Gagal update status logbook');
@@ -551,10 +476,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updatePerizinanStatus = async (id: number, status: 'approved' | 'rejected', rejectReason?: string) => {
     try {
-      await api.put(`/api/permissions/${id}`, {
-        status,
-        rejectReason,
-      });
+      await api.put(`/api/permissions/${id}`, { status, rejectReason });
       await loadPerizinan();
       await loadAttendances();
     } catch (error: any) {
@@ -565,16 +487,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const submitEvaluation = async (siswaId: number, nilaiDUDI: number, nilaiGuru: number) => {
     try {
       await Promise.all([
-        api.post('/api/evaluations', {
-          studentId: siswaId,
-          score: nilaiDUDI,
-          type: 'dudi',
-        }),
-        api.post('/api/evaluations', {
-          studentId: siswaId,
-          score: nilaiGuru,
-          type: 'guru',
-        }),
+        api.post('/api/evaluations', { studentId: siswaId, score: nilaiDUDI, type: 'dudi' }),
+        api.post('/api/evaluations', { studentId: siswaId, score: nilaiGuru, type: 'guru' }),
       ]);
       await loadSiswa();
     } catch (error: any) {
@@ -588,7 +502,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         name: newSiswa.name,
         email: `${newSiswa.name.toLowerCase().replace(/\s+/g, '.')}@gopkl.id`,
         password: 'gopkl123',
-        institution: schoolName,
       });
       await loadSiswa();
     } catch (error: any) {
@@ -596,89 +509,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const addPerusahaan = async (newComp: Omit<PerusahaanItem, 'id' | 'filled'>) => {
-    try {
-      await api.post('/api/companies', {
-        name: newComp.name,
-        address: newComp.address,
-        quota: newComp.quota,
-        mentor: newComp.mentor,
-      });
-      await loadPerusahaan();
-    } catch (error: any) {
-      throw new Error(error.message || 'Gagal menambah perusahaan');
-    }
-  };
-
-  const updateSiswaMapping = async (
-    _id: number,
-    _patch: { perusahaan?: string; guruPembimbing?: string; mentor?: string }
-  ) => {
-    console.warn('updateSiswaMapping not implemented yet');
-  };
-
-  const updateCompanyLocation = async (id: number, latitude: number, longitude: number, radiusMeters: number) => {
-    try {
-      await api.patch(`/api/companies/${id}`, {
-        latitude,
-        longitude,
-        radiusMeters,
-      });
-      await loadPerusahaan();
-    } catch (error: any) {
-      throw new Error(error.message || 'Gagal update lokasi perusahaan');
-    }
-  };
-
   return (
     <AppContext.Provider
       value={{
-        isAuthenticated,
-        authMode,
-        setAuthMode,
-        userRole,
-        activePage,
-        setActivePage,
-        userName,
-        schoolName,
-        userId,
-        userCompanyName,
-        userCompanyAddress,
-        userCompanyLocation,
-        isLoading,
-        loadingResources,
-        siswaList,
-        perusahaanList,
-        guruList,
-        mentorList,
-        logEntries,
-        attendances,
-        perizinanList,
-        mapLocations,
-        superStats,
-        superSchools,
-        superUsers,
-        superCompanies,
-        addLogEntry,
-        updateLogStatus,
-        checkInAttendance,
-        updatePerizinanStatus,
-        submitEvaluation,
-        addSiswa,
-        addPerusahaan,
-        updateSiswaMapping,
-        updateCompanyLocation,
-        login,
-        register,
-        logout,
-        refreshData,
-        loadSuperStats,
-        loadSuperSchools,
-        createSchool,
-        deleteSchool,
-        loadSuperUsers,
-        toggleUser,
-        loadSuperCompanies,
+        isAuthenticated, authMode, setAuthMode, userRole, activePage, setActivePage,
+        userName, schoolName, userId, userCompanyName, userCompanyAddress, userCompanyLocation,
+        isLoading, loadingResources, siswaList, guruList, mentorList,
+        logEntries, attendances, perizinanList, mapLocations,
+        superStats, superClasses, superUsers,
+        addLogEntry, updateLogStatus, checkInAttendance, updatePerizinanStatus,
+        submitEvaluation, addSiswa,
+        login, register, logout, refreshData,
+        loadSuperStats, loadSuperClasses, createClass, deleteClass,
+        loadSuperUsers, toggleUser,
       }}
     >
       {children}

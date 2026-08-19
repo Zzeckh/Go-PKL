@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Building2, Users, Briefcase, GraduationCap, BookOpen, CheckCircle2,
+  Users, GraduationCap, BookOpen, CheckCircle2,
   FileCheck, ShieldCheck, Search, Plus, Trash2, ToggleLeft, ToggleRight,
-  X, MapPin, School, Loader2, Clock, ChevronRight, AlertCircle
+  X, Loader2, Clock, ChevronRight, AlertCircle, BookMarked
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -10,13 +10,12 @@ const getInitials = (name: string) =>
   (name || '?').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
 /* ══════════════════════════════════════════════════════
-   SUPER ADMIN DASHBOARD (redesign — pola dashboard role lain)
+   SUPER ADMIN DASHBOARD
    ══════════════════════════════════════════════════════ */
 export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page: any) => void }> = ({ userName, onNavigate }) => {
   const {
     superStats, loadSuperStats,
-    superSchools, loadSuperSchools,
-    superCompanies, loadSuperCompanies,
+    superClasses, loadSuperClasses,
     isAuthenticated,
   } = useApp();
 
@@ -42,24 +41,21 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
     };
 
     run();
-    loadSuperSchools();
-    loadSuperCompanies();
+    loadSuperClasses();
     return () => { cancelled = true; };
-  }, [isAuthenticated, loadSuperStats, loadSuperSchools, loadSuperCompanies]);
+  }, [isAuthenticated, loadSuperStats, loadSuperClasses]);
 
-  /* ── Data turunan ── */
   const roleRows = [
     { icon: GraduationCap, label: 'Siswa', value: superStats?.totalStudents ?? 0 },
     { icon: Users, label: 'Guru', value: superStats?.totalTeachers ?? 0 },
-    { icon: Briefcase, label: 'Mentor', value: superStats?.totalMentors ?? 0 },
+    { icon: Users, label: 'Mentor', value: superStats?.totalMentors ?? 0 },
     { icon: ShieldCheck, label: 'Hubin', value: superStats?.totalHubins ?? 0 },
   ];
   const totalUsers = roleRows.reduce((s, r) => s + r.value, 0);
 
   const stats = [
-    { icon: School, label: 'Total Sekolah', value: superStats?.totalSchools ?? 0, page: 'super-schools' },
+    { icon: BookMarked, label: 'Total Kelas', value: superStats?.totalClasses ?? 0, page: 'super-classes' },
     { icon: GraduationCap, label: 'Total Siswa', value: superStats?.totalStudents ?? 0, page: 'super-users' },
-    { icon: Building2, label: 'Perusahaan Mitra', value: superStats?.totalCompanies ?? 0, page: 'super-companies' },
     { icon: Users, label: 'Total Pembimbing', value: (superStats?.totalTeachers ?? 0) + (superStats?.totalMentors ?? 0), page: 'super-users' },
   ];
 
@@ -67,22 +63,17 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
     { icon: CheckCircle2, label: 'Absensi', value: superStats?.totalAbsensi ?? 0 },
     { icon: BookOpen, label: 'Logbook', value: superStats?.totalLogbooks ?? 0 },
     { icon: FileCheck, label: 'Perizinan', value: superStats?.totalPermissions ?? 0 },
-    { icon: Building2, label: 'Perusahaan', value: superStats?.totalCompanies ?? 0 },
   ];
 
   const attention = [
-    ...superCompanies
-      .filter(c => c.latitude == null || c.longitude == null)
-      .map(c => ({ key: `comp-${c.id}`, icon: MapPin, tint: 'amber', title: c.name, desc: 'Koordinat geofence belum diatur', page: 'super-companies' })),
-    ...superSchools
-      .filter(s => (s.totalUsers ?? 0) === 0)
-      .map(s => ({ key: `sch-${s.id}`, icon: School, tint: 'mist', title: s.name, desc: 'Belum ada pengguna terdaftar', page: 'super-schools' })),
+    ...superClasses
+      .filter(c => (c.totalStudents ?? 0) === 0)
+      .map(c => ({ key: `cls-${c.id}`, icon: BookMarked, tint: 'mist', title: c.name, desc: 'Belum ada siswa terdaftar', page: 'super-classes' })),
   ].slice(0, 5);
 
   return (
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
 
-      {/* ── HEADER ── */}
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
           <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-2xl flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
@@ -93,7 +84,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
               Super Admin Control
             </h2>
             <p className="text-[13px] text-navy/60 font-semibold mt-0.5 truncate">
-              Kelola sekolah, pengguna & perusahaan mitra dalam satu panel
+              Kelola kelas & pengguna dalam satu panel
             </p>
           </div>
         </div>
@@ -112,7 +103,6 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
         </div>
       </div>
 
-      {/* ── ERROR BANNER ── */}
       {statsState === 'error' && (
         <div className="shrink-0 bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -139,8 +129,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
         </div>
       ) : (
         <>
-          {/* ── STATS CARDS (putih tinggi, clickable) ── */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 shrink-0">
             {stats.map((s) => (
               <button
                 key={s.label}
@@ -161,62 +150,58 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
             ))}
           </div>
 
-          {/* ── MAIN GRID (3 + 2) ── */}
           <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-4 min-h-0">
 
-            {/* ══ LEFT: List Sekolah ══ */}
+            {/* ── LEFT: Daftar Kelas ── */}
             <div className="lg:col-span-3 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col overflow-hidden min-h-[380px] lg:min-h-0">
               <div className="flex items-center justify-between px-4 md:px-5 pt-4 pb-3 shrink-0">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-steel/15 flex items-center justify-center">
-                    <School className="w-3.5 h-3.5 text-steel" />
+                    <BookMarked className="w-3.5 h-3.5 text-steel" />
                   </div>
                   <p className="text-[13px] font-bold uppercase tracking-widest text-navy/70">
-                    Sekolah Terdaftar
+                    Kelas Terdaftar
                   </p>
                 </div>
                 <button
-                  onClick={() => onNavigate('super-schools')}
+                  onClick={() => onNavigate('super-classes')}
                   className="text-[11px] font-bold bg-steel text-white px-3 py-1.5 rounded-lg hover:bg-steel/90 transition-colors flex items-center gap-1"
                 >
-                  Kelola Sekolah <ChevronRight className="w-3 h-3" />
+                  Kelola Kelas <ChevronRight className="w-3 h-3" />
                 </button>
               </div>
 
               <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 min-h-0">
-                {superSchools.length === 0 ? (
+                {superClasses.length === 0 ? (
                   <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
                     <div className="w-14 h-14 rounded-2xl bg-[#F1F4F8] flex items-center justify-center mb-3">
-                      <School className="w-6 h-6 text-navy/30" />
+                      <BookMarked className="w-6 h-6 text-navy/30" />
                     </div>
-                    <p className="text-sm font-bold text-navy mb-1">Belum ada sekolah</p>
+                    <p className="text-sm font-bold text-navy mb-1">Belum ada kelas</p>
                     <p className="text-xs text-navy/50 max-w-xs">
-                      Tambahkan sekolah mitra melalui menu Kelola Sekolah.
+                      Tambahkan kelas melalui menu Kelola Kelas.
                     </p>
                   </div>
                 ) : (
-                  superSchools.map((s) => (
+                  superClasses.map((c) => (
                     <button
-                      key={s.id}
-                      onClick={() => onNavigate('super-schools')}
+                      key={c.id}
+                      onClick={() => onNavigate('super-classes')}
                       className="p-3 rounded-xl border border-mist/60 bg-white hover:border-steel/30 hover:bg-[#F1F4F8]/50 transition-all shrink-0 text-left group"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
-                          {getInitials(s.name)}
+                          {getInitials(c.name)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-navy truncate">{s.name}</p>
+                          <p className="text-sm font-bold text-navy truncate">{c.name}</p>
                           <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
-                            {s.address || 'Alamat belum diisi'}
+                            {c.major || 'Jurusan belum diisi'}
                           </p>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
                           <span className="text-[10px] font-bold bg-[#F1F4F8] border border-[#E2E8F0] text-navy/70 px-2 py-1 rounded-full tabular-nums">
-                            {s.totalUsers} user
-                          </span>
-                          <span className="text-[10px] font-bold bg-[#F1F4F8] border border-[#E2E8F0] text-navy/70 px-2 py-1 rounded-full tabular-nums">
-                            {s.totalClasses} kelas
+                            {c.totalStudents} siswa
                           </span>
                           <ChevronRight className="w-4 h-4 text-navy/20 group-hover:text-steel group-hover:translate-x-0.5 transition-all" />
                         </div>
@@ -227,10 +212,9 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
               </div>
             </div>
 
-            {/* ══ RIGHT: STACKED CARDS ══ */}
+            {/* ── RIGHT ── */}
             <div className="lg:col-span-2 flex flex-col gap-3 md:gap-4 min-h-0">
 
-              {/* ── Card navy: Distribusi Pengguna ── */}
               <div className="bg-navy rounded-[24px] p-5 shrink-0 relative overflow-hidden shadow-lg shadow-navy/20">
                 <div className="relative z-10">
                   <div className="flex items-center justify-between mb-4">
@@ -279,9 +263,8 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                 </div>
               </div>
 
-              {/* ── Card putih: Quick stats 2x2 ── */}
               <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 shrink-0">
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   {quickStats.map((q) => (
                     <div key={q.label} className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
                       <q.icon className="w-4 h-4 text-navy/50 shrink-0" />
@@ -294,7 +277,6 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                 </div>
               </div>
 
-              {/* ── Card putih: Perlu Perhatian (flex-1) ── */}
               <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 flex-1 flex flex-col min-h-[180px]">
                 <div className="flex items-center justify-between mb-3 shrink-0">
                   <div className="flex items-center gap-2">
@@ -352,10 +334,10 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
 };
 
 /* ══════════════════════════════════════════════════════
-   KELOLA SEKOLAH
+   KELOLA KELAS
    ══════════════════════════════════════════════════════ */
-export const SuperSchools: React.FC = () => {
-  const { superSchools, loadSuperSchools, createSchool, deleteSchool, isAuthenticated } = useApp();
+export const SuperClasses: React.FC = () => {
+  const { superClasses, loadSuperClasses, createClass, deleteClass, isAuthenticated } = useApp();
   const [showAdd, setShowAdd] = useState(false);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -363,12 +345,15 @@ export const SuperSchools: React.FC = () => {
   useEffect(() => {
     if (!isAuthenticated) return;
     setLoading(true);
-    loadSuperSchools().finally(() => setLoading(false));
-  }, [isAuthenticated, loadSuperSchools]);
+    loadSuperClasses().finally(() => setLoading(false));
+  }, [isAuthenticated, loadSuperClasses]);
 
   const filtered = useMemo(
-    () => superSchools.filter(s => s.name.toLowerCase().includes(search.toLowerCase())),
-    [superSchools, search]
+    () => superClasses.filter(c => 
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      (c.major || '').toLowerCase().includes(search.toLowerCase())
+    ),
+    [superClasses, search]
   );
 
   return (
@@ -376,12 +361,12 @@ export const SuperSchools: React.FC = () => {
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
           <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-2xl flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
-            <School className="w-5 h-5 md:w-6 md:h-6" />
+            <BookMarked className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div className="min-w-0">
-            <h2 className="font-bold text-lg md:text-xl text-navy leading-tight">Kelola Sekolah</h2>
+            <h2 className="font-bold text-lg md:text-xl text-navy leading-tight">Kelola Kelas</h2>
             <p className="text-[13px] text-navy/60 font-semibold mt-0.5 truncate">
-              {superSchools.length} sekolah terdaftar
+              {superClasses.length} kelas terdaftar
             </p>
           </div>
         </div>
@@ -389,7 +374,7 @@ export const SuperSchools: React.FC = () => {
           onClick={() => setShowAdd(true)}
           className="flex items-center gap-1.5 bg-steel text-white text-xs font-bold px-4 py-2 rounded-xl shadow-md shadow-steel/25 hover:bg-steel/90 hover:-translate-y-0.5 transition-all shrink-0"
         >
-          <Plus className="w-4 h-4" /> Tambah Sekolah
+          <Plus className="w-4 h-4" /> Tambah Kelas
         </button>
       </div>
 
@@ -399,7 +384,7 @@ export const SuperSchools: React.FC = () => {
           type="text"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Cari sekolah..."
+          placeholder="Cari kelas atau jurusan..."
           className="w-full bg-white border border-mist/60 rounded-xl pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel transition-all"
         />
       </div>
@@ -417,34 +402,30 @@ export const SuperSchools: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {filtered.length === 0 ? (
                 <div className="col-span-full text-center py-12">
-                  <p className="text-sm text-navy/50">Tidak ada sekolah ditemukan.</p>
+                  <p className="text-sm text-navy/50">Tidak ada kelas ditemukan.</p>
                 </div>
               ) : (
-                filtered.map(s => (
-                  <div key={s.id} className="p-4 rounded-2xl border border-mist/60 bg-white hover:border-steel/30 transition-all">
+                filtered.map(c => (
+                  <div key={c.id} className="p-4 rounded-2xl border border-mist/60 bg-white hover:border-steel/30 transition-all">
                     <div className="flex items-start justify-between mb-3">
                       <div className="w-11 h-11 rounded-xl bg-navy text-white flex items-center justify-center shrink-0">
-                        <School className="w-5 h-5" />
+                        <BookMarked className="w-5 h-5" />
                       </div>
                       <button
                         onClick={() => {
-                          if (confirm(`Hapus sekolah "${s.name}"?`)) deleteSchool(s.id);
+                          if (confirm(`Hapus kelas "${c.name}"?`)) deleteClass(c.id);
                         }}
                         className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-                    <h3 className="font-bold text-sm text-navy truncate">{s.name}</h3>
-                    <p className="text-[11px] text-navy/50 truncate mt-0.5">{s.address || 'Tidak ada alamat'}</p>
-                    <div className="grid grid-cols-2 gap-2 mt-3">
+                    <h3 className="font-bold text-sm text-navy truncate">{c.name}</h3>
+                    <p className="text-[11px] text-navy/50 truncate mt-0.5">{c.major || 'Jurusan belum diisi'}</p>
+                    <div className="grid grid-cols-1 gap-2 mt-3">
                       <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg p-2 text-center">
-                        <p className="text-base font-bold text-navy tabular-nums">{s.totalUsers}</p>
-                        <p className="text-[9px] font-bold text-navy/50 uppercase">Users</p>
-                      </div>
-                      <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg p-2 text-center">
-                        <p className="text-base font-bold text-navy tabular-nums">{s.totalClasses}</p>
-                        <p className="text-[9px] font-bold text-navy/50 uppercase">Kelas</p>
+                        <p className="text-base font-bold text-navy tabular-nums">{c.totalStudents}</p>
+                        <p className="text-[9px] font-bold text-navy/50 uppercase">Siswa</p>
                       </div>
                     </div>
                   </div>
@@ -456,20 +437,20 @@ export const SuperSchools: React.FC = () => {
       </div>
 
       {showAdd && (
-        <AddSchoolModal
+        <AddClassModal
           onClose={() => setShowAdd(false)}
-          onCreate={createSchool}
+          onCreate={createClass}
         />
       )}
     </div>
   );
 };
 
-const AddSchoolModal: React.FC<{
+const AddClassModal: React.FC<{
   onClose: () => void;
-  onCreate: (data: { name: string; address?: string; phone?: string }) => Promise<any>;
+  onCreate: (data: { name: string; major?: string }) => Promise<any>;
 }> = ({ onClose, onCreate }) => {
-  const [form, setForm] = useState({ name: '', address: '', phone: '' });
+  const [form, setForm] = useState({ name: '', major: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -481,7 +462,7 @@ const AddSchoolModal: React.FC<{
       await onCreate(form);
       onClose();
     } catch (err: any) {
-      setError(err?.data?.error || err?.message || 'Gagal menambah sekolah.');
+      setError(err?.data?.error || err?.message || 'Gagal menambah kelas.');
     } finally {
       setLoading(false);
     }
@@ -493,9 +474,9 @@ const AddSchoolModal: React.FC<{
         <div className="p-5 border-b border-mist/60 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-navy flex items-center justify-center">
-              <School className="w-4 h-4 text-white" />
+              <BookMarked className="w-4 h-4 text-white" />
             </div>
-            <h3 className="text-lg font-bold text-navy">Tambah Sekolah Baru</h3>
+            <h3 className="text-lg font-bold text-navy">Tambah Kelas Baru</h3>
           </div>
           <button onClick={onClose} className="w-9 h-9 rounded-xl bg-mist/60 hover:bg-mist flex items-center justify-center">
             <X className="w-4 h-4 text-navy/60" />
@@ -504,38 +485,26 @@ const AddSchoolModal: React.FC<{
         <form onSubmit={handleSubmit} className="p-5 space-y-3">
           <div>
             <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">
-              Nama Sekolah *
+              Nama Kelas *
             </label>
             <input
               type="text"
               required
               value={form.name}
               onChange={e => setForm({ ...form, name: e.target.value })}
-              placeholder="Contoh: SMKN 11 Bandung"
+              placeholder="Contoh: XII RPL 2"
               className="w-full bg-[#F1F4F8] border border-mist rounded-xl px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel transition-all"
             />
           </div>
           <div>
             <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">
-              Alamat
+              Jurusan / Bidang Keahlian
             </label>
             <input
               type="text"
-              value={form.address}
-              onChange={e => setForm({ ...form, address: e.target.value })}
-              placeholder="Alamat lengkap"
-              className="w-full bg-[#F1F4F8] border border-mist rounded-xl px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel transition-all"
-            />
-          </div>
-          <div>
-            <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">
-              Telepon
-            </label>
-            <input
-              type="text"
-              value={form.phone}
-              onChange={e => setForm({ ...form, phone: e.target.value })}
-              placeholder="022-xxxxxxx"
+              value={form.major}
+              onChange={e => setForm({ ...form, major: e.target.value })}
+              placeholder="Contoh: Rekayasa Perangkat Lunak"
               className="w-full bg-[#F1F4F8] border border-mist rounded-xl px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel transition-all"
             />
           </div>
@@ -577,7 +546,7 @@ export const SuperUsers: React.FC = () => {
     { key: 'all', label: 'Semua', icon: Users },
     { key: 'student', label: 'Siswa', icon: GraduationCap },
     { key: 'teacher', label: 'Guru', icon: Users },
-    { key: 'mentor', label: 'Mentor', icon: Briefcase },
+    { key: 'mentor', label: 'Mentor', icon: Users },
     { key: 'hubin', label: 'Hubin', icon: ShieldCheck },
   ];
 
@@ -653,7 +622,7 @@ export const SuperUsers: React.FC = () => {
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px] font-bold text-navy truncate">{u.name}</p>
                       <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
-                        {u.email} · {u.school}
+                        {u.email} · {u.class || '-'}
                       </p>
                       <div className="flex items-center gap-1.5 mt-1">
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
@@ -677,113 +646,6 @@ export const SuperUsers: React.FC = () => {
                     )}
                   </div>
                 ))
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/* ══════════════════════════════════════════════════════
-   KELOLA PERUSAHAAN
-   ══════════════════════════════════════════════════════ */
-export const SuperCompanies: React.FC = () => {
-  const { superCompanies, loadSuperCompanies, isAuthenticated } = useApp();
-  const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    setLoading(true);
-    loadSuperCompanies().finally(() => setLoading(false));
-  }, [isAuthenticated, loadSuperCompanies]);
-
-  const filtered = useMemo(
-    () => superCompanies.filter(c => c.name.toLowerCase().includes(search.toLowerCase())),
-    [superCompanies, search]
-  );
-
-  return (
-    <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
-      <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
-        <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-2xl flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
-            <Building2 className="w-5 h-5 md:w-6 md:h-6" />
-          </div>
-          <div className="min-w-0">
-            <h2 className="font-bold text-lg md:text-xl text-navy leading-tight">Semua Perusahaan Mitra</h2>
-            <p className="text-[13px] text-navy/60 font-semibold mt-0.5 truncate">
-              {superCompanies.length} perusahaan terdaftar
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="shrink-0 relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-navy/40" />
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Cari perusahaan..."
-          className="w-full bg-white border border-mist/60 rounded-xl pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel transition-all"
-        />
-      </div>
-
-      <div className="flex-1 bg-white rounded-[24px] border border-mist/60 shadow-sm overflow-hidden flex flex-col min-h-0">
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5">
-          {loading ? (
-            <div className="flex items-center justify-center h-40">
-              <div className="flex items-center gap-2 text-navy/60">
-                <Loader2 className="w-5 h-5 animate-spin text-steel" />
-                <span className="text-sm font-semibold">Memuat data...</span>
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-              {filtered.length === 0 ? (
-                <div className="col-span-full text-center py-12">
-                  <p className="text-sm text-navy/50">Tidak ada perusahaan ditemukan.</p>
-                </div>
-              ) : (
-                filtered.map(c => {
-                  const hasCoords = c.latitude != null && c.longitude != null;
-                  return (
-                    <div key={c.id} className="p-4 rounded-2xl border border-mist/60 bg-white hover:border-steel/30 transition-all">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="w-11 h-11 rounded-xl bg-steel/10 flex items-center justify-center shrink-0">
-                          <Building2 className="w-5 h-5 text-steel" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-navy truncate">{c.name}</p>
-                          <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">{c.address}</p>
-                        </div>
-                      </div>
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between items-center bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg px-2.5 py-1.5">
-                          <span className="text-[11px] font-bold text-navy/60">Kuota</span>
-                          <span className="text-[11px] font-bold text-navy tabular-nums">{c.filled} / {c.quota}</span>
-                        </div>
-                        <div className="flex justify-between items-center bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg px-2.5 py-1.5">
-                          <span className="text-[11px] font-bold text-navy/60">Mentor</span>
-                          <span className="text-[11px] font-bold text-navy truncate ml-2">{c.mentor || '-'}</span>
-                        </div>
-                        <div className={`flex justify-between items-center rounded-lg px-2.5 py-1.5 border ${
-                          hasCoords ? 'bg-steel/10 border-steel/30' : 'bg-[#FBF3E2] border-[#F0E1C0]'
-                        }`}>
-                          <div className="flex items-center gap-1.5">
-                            <MapPin className={`w-3.5 h-3.5 ${hasCoords ? 'text-steel' : 'text-[#9A6B15]'}`} />
-                            <span className={`text-[11px] font-bold ${hasCoords ? 'text-steel' : 'text-[#9A6B15]'}`}>
-                              {hasCoords ? 'Koordinat Aktif' : 'Belum Diatur'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
               )}
             </div>
           )}

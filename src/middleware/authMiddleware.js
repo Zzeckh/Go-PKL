@@ -2,10 +2,6 @@ import jwt from 'jsonwebtoken';
 import prisma from '../config/db.js';
 import { JWT_SECRET } from '../config/jwt.js';
 
-/**
- * Middleware autentikasi — memverifikasi token JWT
- * dan menempelkan data user ke req.user.
- */
 export const authenticate = async (req, res, next) => {
   try {
     const header = req.headers.authorization;
@@ -22,10 +18,9 @@ export const authenticate = async (req, res, next) => {
       return res.status(401).json({ error: 'Token tidak valid atau kedaluwarsa.' });
     }
 
-    // ✅ FIX: token menyimpan `id` (bukan `sub`) — lihat generateToken di authController
     const user = await prisma.user.findUnique({
       where: { id: payload.id },
-      include: { school: true, company: true },
+      include: { class: true },
     });
 
     if (!user) {
@@ -40,19 +35,16 @@ export const authenticate = async (req, res, next) => {
       role: user.role,
       email: user.email,
       name: user.name,
-      schoolId: user.schoolId,
-      companyId: user.companyId,
+      classId: user.classId,
     };
 
     next();
   } catch (error) {
+    console.error('authenticate error:', error);
     next(error);
   }
 };
 
-/**
- * Guard role — super_admin otomatis lolos semua guard.
- */
 export const requireRole = (...allowed) => (req, res, next) => {
   if (req.user?.role === 'super_admin') return next();
   if (allowed.includes(req.user?.role)) return next();
