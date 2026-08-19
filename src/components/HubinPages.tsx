@@ -85,7 +85,6 @@ export const HubinData: React.FC = () => {
   /* ── Logbook siswa terpilih (untuk modal detail) ── */
   const getSiswaLogs = (siswaName: string) =>
     logEntries.filter(l => {
-      // crude match by log title/description — bisa diperbaiki kalau backend support userId
       return l.title.toLowerCase().includes(siswaName.split(' ')[0].toLowerCase());
     }).slice(0, 3);
 
@@ -720,7 +719,7 @@ const LogPreviewList: React.FC<{ logs: any[] }> = ({ logs }) => {
   );
 };
 
-/* ── Add Data Modal ── */
+/* ── Add Data Modal (FIX: state form TERPISAH per tab) ── */
 interface AddDataModalProps {
   onClose: () => void;
   activeTab: TabKey;
@@ -729,20 +728,42 @@ interface AddDataModalProps {
 }
 
 const AddDataModal: React.FC<AddDataModalProps> = ({ onClose, activeTab, addSiswa, addPerusahaan }) => {
-  const { guruList, mentorList } = useApp();
+  const { guruList, mentorList, perusahaanList } = useApp();
   const [formTab, setFormTab] = useState<TabKey>(activeTab);
-  const [form, setForm] = useState<any>({
-    name: '', kelas: '', guruPembimbing: '', perusahaan: '', mentor: '',
-    address: '', quota: 5, category: '', role: ''
+
+  // ✅ State terpisah per tab — input tidak bocor antar formulir
+  const [formSiswa, setFormSiswa] = useState({
+    name: '', kelas: '', guruPembimbing: '', perusahaan: '',
+  });
+  const [formGuru, setFormGuru] = useState({
+    name: '', subject: '',
+  });
+  const [formPerusahaan, setFormPerusahaan] = useState({
+    name: '', address: '', quota: 5, mentor: '',
+  });
+  const [formMentor, setFormMentor] = useState({
+    name: '', role: '', perusahaan: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (formTab === 'siswa') {
-        await addSiswa({ name: form.name, kelas: form.kelas || '-', perusahaan: form.perusahaan || '-', guruPembimbing: form.guruPembimbing || '-', mentor: form.mentor || '-', academicYear: '2025/2026' });
+        await addSiswa({
+          name: formSiswa.name,
+          kelas: formSiswa.kelas || '-',
+          perusahaan: formSiswa.perusahaan || '-',
+          guruPembimbing: formSiswa.guruPembimbing || '-',
+          mentor: '-',
+          academicYear: '2025/2026',
+        });
       } else if (formTab === 'perusahaan') {
-        await addPerusahaan({ name: form.name, address: form.address, quota: Number(form.quota), mentor: form.mentor });
+        await addPerusahaan({
+          name: formPerusahaan.name,
+          address: formPerusahaan.address,
+          quota: Number(formPerusahaan.quota),
+          mentor: formPerusahaan.mentor,
+        });
       } else {
         console.warn('Tambah guru/mentor belum diimplementasi di backend');
       }
@@ -794,32 +815,111 @@ const AddDataModal: React.FC<AddDataModalProps> = ({ onClose, activeTab, addSisw
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-3">
-          <FormInput label="Nama Lengkap" value={form.name} onChange={v => setForm({ ...form, name: v })} required placeholder={formTab === 'perusahaan' ? 'Nama perusahaan' : 'Nama lengkap'} />
 
+          {/* ── FORM SISWA ── */}
           {formTab === 'siswa' && (
             <>
-              <FormInput label="Kelas" value={form.kelas} onChange={v => setForm({ ...form, kelas: v })} placeholder="Contoh: XII RPL 1" />
-              <FormSelect label="Guru Pembimbing" value={form.guruPembimbing} onChange={v => setForm({ ...form, guruPembimbing: v })} options={guruList.map(g => g.name)} />
-              <FormInput label="Tempat PKL" value={form.perusahaan} onChange={v => setForm({ ...form, perusahaan: v })} placeholder="Nama perusahaan" />
+              <FormInput
+                label="Nama Lengkap"
+                value={formSiswa.name}
+                onChange={v => setFormSiswa({ ...formSiswa, name: v })}
+                required
+                placeholder="Nama siswa"
+              />
+              <FormInput
+                label="Kelas"
+                value={formSiswa.kelas}
+                onChange={v => setFormSiswa({ ...formSiswa, kelas: v })}
+                placeholder="Contoh: XII RPL 1"
+              />
+              <FormSelect
+                label="Guru Pembimbing"
+                value={formSiswa.guruPembimbing}
+                onChange={v => setFormSiswa({ ...formSiswa, guruPembimbing: v })}
+                options={guruList.map(g => g.name)}
+              />
+              <FormSelect
+                label="Tempat PKL (Perusahaan)"
+                value={formSiswa.perusahaan}
+                onChange={v => setFormSiswa({ ...formSiswa, perusahaan: v })}
+                options={perusahaanList.map(c => c.name)}
+              />
             </>
           )}
 
+          {/* ── FORM GURU ── */}
           {formTab === 'guru' && (
-            <FormInput label="Mata Pelajaran" value={form.kelas} onChange={v => setForm({ ...form, kelas: v })} placeholder="Contoh: Produktif RPL" />
+            <>
+              <FormInput
+                label="Nama Lengkap"
+                value={formGuru.name}
+                onChange={v => setFormGuru({ ...formGuru, name: v })}
+                required
+                placeholder="Nama guru"
+              />
+              <FormInput
+                label="Mata Pelajaran / Bidang"
+                value={formGuru.subject}
+                onChange={v => setFormGuru({ ...formGuru, subject: v })}
+                placeholder="Contoh: Produktif RPL"
+              />
+            </>
           )}
 
+          {/* ── FORM PERUSAHAAN ── */}
           {formTab === 'perusahaan' && (
             <>
-              <FormInput label="Alamat" value={form.address} onChange={v => setForm({ ...form, address: v })} required placeholder="Alamat lengkap" />
-              <FormInput label="Kuota Siswa" value={form.quota} onChange={v => setForm({ ...form, quota: v })} type="number" />
-              <FormSelect label="Mentor DUDI" value={form.mentor} onChange={v => setForm({ ...form, mentor: v })} options={mentorList.map(m => m.name)} />
+              <FormInput
+                label="Nama Perusahaan"
+                value={formPerusahaan.name}
+                onChange={v => setFormPerusahaan({ ...formPerusahaan, name: v })}
+                required
+                placeholder="Contoh: UPTD Tikomdik"
+              />
+              <FormInput
+                label="Alamat"
+                value={formPerusahaan.address}
+                onChange={v => setFormPerusahaan({ ...formPerusahaan, address: v })}
+                required
+                placeholder="Alamat lengkap"
+              />
+              <FormInput
+                label="Kuota Siswa"
+                value={formPerusahaan.quota}
+                onChange={v => setFormPerusahaan({ ...formPerusahaan, quota: Number(v) || 0 })}
+                type="number"
+              />
+              <FormSelect
+                label="Mentor DUDI"
+                value={formPerusahaan.mentor}
+                onChange={v => setFormPerusahaan({ ...formPerusahaan, mentor: v })}
+                options={mentorList.map(m => m.name)}
+              />
             </>
           )}
 
+          {/* ── FORM MENTOR ── */}
           {formTab === 'mentor' && (
             <>
-              <FormInput label="Role / Jabatan" value={form.role} onChange={v => setForm({ ...form, role: v })} placeholder="Contoh: Senior Developer" />
-              <FormInput label="Perusahaan" value={form.perusahaan} onChange={v => setForm({ ...form, perusahaan: v })} placeholder="Nama perusahaan" />
+              <FormInput
+                label="Nama Lengkap"
+                value={formMentor.name}
+                onChange={v => setFormMentor({ ...formMentor, name: v })}
+                required
+                placeholder="Nama mentor"
+              />
+              <FormInput
+                label="Role / Jabatan"
+                value={formMentor.role}
+                onChange={v => setFormMentor({ ...formMentor, role: v })}
+                placeholder="Contoh: Kepala Unit"
+              />
+              <FormSelect
+                label="Perusahaan"
+                value={formMentor.perusahaan}
+                onChange={v => setFormMentor({ ...formMentor, perusahaan: v })}
+                options={perusahaanList.map(c => c.name)}
+              />
             </>
           )}
 
