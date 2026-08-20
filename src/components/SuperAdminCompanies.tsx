@@ -56,7 +56,7 @@ export const SuperCompanies: React.FC = () => {
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[24px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[10px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <Building2 className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div className="min-w-0">
@@ -96,7 +96,7 @@ export const SuperCompanies: React.FC = () => {
             </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-12">
-              <div className="w-14 h-14 rounded-[24px] bg-shell flex items-center justify-center mb-3 mx-auto">
+              <div className="w-14 h-14 rounded-[10px] bg-shell flex items-center justify-center mb-3 mx-auto">
                 <Building2 className="w-6 h-6 text-navy/30" />
               </div>
               <p className="text-sm font-bold text-navy mb-1">{search ? 'Tidak ada hasil' : 'Belum ada perusahaan'}</p>
@@ -109,7 +109,7 @@ export const SuperCompanies: React.FC = () => {
                 return (
                   <div key={c.id} className="p-4 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 transition-all">
                     <div className="flex items-start justify-between mb-3">
-                      <div className="w-11 h-11 rounded-[24px] bg-steel/10 flex items-center justify-center shrink-0">
+                      <div className="w-11 h-11 rounded-[10px] bg-steel/10 flex items-center justify-center shrink-0">
                         <Building2 className="w-5 h-5 text-steel" />
                       </div>
                       <div className="flex items-center gap-1.5">
@@ -381,7 +381,7 @@ const CompanyFormModal: React.FC<{
       <div className="bg-white rounded-[24px] max-w-3xl w-full max-h-[94vh] shadow-2xl flex flex-col overflow-hidden border border-white/40">
         <div className="p-5 border-b border-mist/60 shrink-0 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-[24px] bg-navy flex items-center justify-center">
+            <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center">
               <Building2 className="w-4 h-4 text-white" />
             </div>
             <div>
@@ -389,7 +389,7 @@ const CompanyFormModal: React.FC<{
               <p className="text-[12px] font-semibold text-navy/60 mt-0.5">Lengkapi data & geofence lokasi</p>
             </div>
           </div>
-          <button onClick={onClose} disabled={saving} className="w-9 h-9 rounded-[24px] bg-mist/60 hover:bg-mist flex items-center justify-center text-navy/60 transition-colors shrink-0 disabled:opacity-50">
+          <button onClick={onClose} disabled={saving} className="w-9 h-9 rounded-[10px] bg-mist/60 hover:bg-mist flex items-center justify-center text-navy/60 transition-colors shrink-0 disabled:opacity-50">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -468,7 +468,7 @@ const CompanyFormModal: React.FC<{
                     )}
                   </div>
                   <button type="button" onClick={handleLocateMe} title="Gunakan lokasi saya"
-                    className="w-10 h-10 rounded-[24px] bg-steel/10 hover:bg-steel/20 text-steel flex items-center justify-center transition-colors shrink-0">
+                    className="w-10 h-10 rounded-[10px] bg-steel/10 hover:bg-steel/20 text-steel flex items-center justify-center transition-colors shrink-0">
                     <Navigation className="w-4 h-4" />
                   </button>
                 </div>
@@ -514,7 +514,7 @@ const CompanyFormModal: React.FC<{
               {manualMode && (
                 <div className="bg-steel/10 border-b border-steel/30 px-3.5 py-3">
                   <div className="flex items-start gap-2.5">
-                    <div className="w-8 h-8 rounded-[24px] bg-steel text-white flex items-center justify-center shrink-0"><Lightbulb className="w-4 h-4" /></div>
+                    <div className="w-8 h-8 rounded-[10px] bg-steel text-white flex items-center justify-center shrink-0"><Lightbulb className="w-4 h-4" /></div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[12px] font-bold text-navy mb-1">Mode Manual Aktif — cari titik koordinat sendiri</p>
                       <ol className="text-[11px] font-medium text-navy/70 leading-relaxed list-decimal pl-4 space-y-0.5">

@@ -142,7 +142,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="flex items-center gap-3 min-w-0">
           <button 
             onClick={onGoToProfile}
-            className="w-12 h-12 rounded-[24px] bg-navy text-white flex items-center justify-center font-bold text-lg shadow-md shadow-steel/40 shrink-0 hover:scale-105 transition-transform"
+            className="w-12 h-12 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-lg shadow-md shadow-steel/40 shrink-0 hover:scale-105 transition-transform"
           >
             {getInitials(userName)}
           </button>
@@ -199,7 +199,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </button>
             <button 
               onClick={onOpenLogbookModal}
-              className="w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-[24px] flex items-center justify-center transition-all border border-white/20 shrink-0"
+              className="w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-[10px] flex items-center justify-center transition-all border border-white/20 shrink-0"
               title="Buka Logbook"
             >
               <BookOpen className="w-5 h-5" />
@@ -210,7 +210,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* 📊 Attendance */}
         <div className="c2 bg-white rounded-[24px] border border-mist/60 shadow-sm p-5 h-[210px] flex flex-col">
           <div className="flex items-center justify-between shrink-0">
-            <div className="w-9 h-9 rounded-[24px] bg-mist/70 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-[10px] bg-mist/70 flex items-center justify-center">
               <UserCheck className="w-5 h-5 text-steel" />
             </div>
             <span className="text-xs font-bold text-navy/40 uppercase tracking-wider">Kehadiran</span>
@@ -483,7 +483,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <button
                 onClick={() => setEditNotes(!editNotes)}
                 title={editNotes ? 'Simpan catatan' : 'Edit catatan'}
-                className={`w-8 h-8 rounded-[24px] flex items-center justify-center border transition-all ${editNotes ? 'bg-navy text-white border-navy shadow-md shadow-navy/30' : 'bg-white text-navy/60 border-mist hover:border-steel hover:text-steel'}`}
+                className={`w-8 h-8 rounded-[10px] flex items-center justify-center border transition-all ${editNotes ? 'bg-navy text-white border-navy shadow-md shadow-navy/30' : 'bg-white text-navy/60 border-mist hover:border-steel hover:text-steel'}`}
               >
                 {editNotes ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
               </button>

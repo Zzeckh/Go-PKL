@@ -281,7 +281,7 @@ export const HubinPemetaan: React.FC = () => {
       {/* ── HEADER ── */}
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[24px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[10px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <Compass className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div className="min-w-0">
@@ -308,7 +308,7 @@ export const HubinPemetaan: React.FC = () => {
             key={s.label}
             className="bg-white border border-mist/60 rounded-[24px] p-4 md:p-5 min-h-[100px] flex flex-col justify-between"
           >
-            <div className="w-10 h-10 rounded-[24px] bg-shell flex items-center justify-center">
+            <div className="w-10 h-10 rounded-[10px] bg-shell flex items-center justify-center">
               <s.icon className={`w-5 h-5 ${'color' in s ? (s as any).color : 'text-navy'}`} />
             </div>
             <div>
@@ -386,7 +386,7 @@ export const HubinPemetaan: React.FC = () => {
           <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 min-h-0">
             {filteredSiswa.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-14 h-14 rounded-[24px] bg-shell flex items-center justify-center mb-3">
+                <div className="w-14 h-14 rounded-[10px] bg-shell flex items-center justify-center mb-3">
                   <Search className="w-6 h-6 text-navy/30" />
                 </div>
                 <p className="text-sm font-bold text-navy mb-1">Siswa tidak ditemukan</p>
@@ -446,7 +446,7 @@ export const HubinPemetaan: React.FC = () => {
 
           {!selectedSiswa ? (
             <div className="flex-1 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col items-center justify-center p-8 text-center">
-              <div className="w-16 h-16 rounded-[24px] bg-steel/10 flex items-center justify-center mb-4">
+              <div className="w-16 h-16 rounded-[10px] bg-steel/10 flex items-center justify-center mb-4">
                 <Map className="w-7 h-7 text-steel" />
               </div>
               <h3 className="text-base font-bold text-navy mb-1">Pilih Siswa untuk Memetakan</h3>
@@ -490,7 +490,7 @@ export const HubinPemetaan: React.FC = () => {
                 <div className="relative z-10">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-[24px] bg-white/15 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-[10px] bg-white/15 flex items-center justify-center">
                         <GraduationCap className="w-4 h-4 text-white" />
                       </div>
                       <p className="text-[11px] font-bold uppercase tracking-widest text-white/60">Siswa Terpilih</p>
@@ -503,7 +503,7 @@ export const HubinPemetaan: React.FC = () => {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-[24px] bg-white/15 border border-white/10 flex items-center justify-center font-bold text-sm text-white shrink-0">
+                    <div className="w-12 h-12 rounded-[10px] bg-white/15 border border-white/10 flex items-center justify-center font-bold text-sm text-white shrink-0">
                       {selectedSiswa.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
                     </div>
                     <div className="min-w-0">
@@ -558,7 +558,7 @@ export const HubinPemetaan: React.FC = () => {
                     <div className="space-y-3">
                       <div className={`p-3 rounded-[24px] border ${selectedLoc ? 'border-steel/30 bg-steel/5' : 'border-mist/60 bg-shell/50'}`}>
                         <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-[24px] flex items-center justify-center shrink-0 ${
+                          <div className={`w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 ${
                             selectedLoc ? 'bg-steel text-white' : 'bg-shell text-navy/50'
                           }`}>
                             <Building2 className="w-4 h-4" />
@@ -577,7 +577,7 @@ export const HubinPemetaan: React.FC = () => {
   selectedSiswa.guruPembimbing && selectedSiswa.guruPembimbing !== '-' ? 'border-steel/30 bg-steel/5' : 'border-mist/60 bg-white'
 }`}>
   <div className="flex items-center gap-3">
-    <div className="w-10 h-10 rounded-[24px] bg-navy flex items-center justify-center shrink-0">
+    <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center shrink-0">
       <Users className="w-4 h-4 text-white" />
     </div>
                           <div className="flex-1 min-w-0">
@@ -594,7 +594,7 @@ export const HubinPemetaan: React.FC = () => {
 
                       <div className={`p-3 rounded-[24px] border ${selectedSiswa.mentor && selectedSiswa.mentor !== '-' ? 'border-steel/30 bg-steel/5' : 'border-mist/60 bg-shell/50'}`}>
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-[24px] bg-steel flex items-center justify-center shrink-0">
+                          <div className="w-10 h-10 rounded-[10px] bg-steel flex items-center justify-center shrink-0">
                             <Briefcase className="w-4 h-4 text-white" />
                           </div>
                           <div className="flex-1 min-w-0">

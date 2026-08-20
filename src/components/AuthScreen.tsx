@@ -330,7 +330,7 @@ const AuthForm = ({
   return (
     <div className="space-y-5">
       <div>
-        <div className="w-12 h-12 bg-navy text-white rounded-[24px] flex items-center justify-center font-bold text-xl mb-6 shadow-lg border border-steel/20">
+        <div className="w-12 h-12 bg-navy text-white rounded-[10px] flex items-center justify-center font-bold text-xl mb-6 shadow-lg border border-steel/20">
           Go
         </div>
         <h2 className="text-3xl font-extrabold text-navy tracking-tight">
@@ -477,7 +477,7 @@ const MobileForm = ({
   return (
     <div className="space-y-5 w-full">
       <div className="flex items-center gap-3 mb-2 pt-4">
-        <div className="w-10 h-10 bg-navy text-white rounded-[24px] flex items-center justify-center font-bold text-lg shadow-lg border border-steel/20 shrink-0">
+        <div className="w-10 h-10 bg-navy text-white rounded-[10px] flex items-center justify-center font-bold text-lg shadow-lg border border-steel/20 shrink-0">
           Go
         </div>
         <div>

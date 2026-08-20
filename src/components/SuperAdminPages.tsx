@@ -76,7 +76,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
 
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[24px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[10px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <ShieldCheck className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div className="min-w-0">
@@ -137,7 +137,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                 className="bg-white border border-mist/60 rounded-[24px] p-4 md:p-5 min-h-[130px] text-left transition-all hover:border-steel/40 hover:-translate-y-0.5 hover:shadow-md group flex flex-col justify-between"
               >
                 <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-[24px] bg-shell flex items-center justify-center group-hover:bg-steel/10 transition-colors">
+                  <div className="w-10 h-10 rounded-[10px] bg-shell flex items-center justify-center group-hover:bg-steel/10 transition-colors">
                     <s.icon className="w-5 h-5 text-navy/60 group-hover:text-steel transition-colors" />
                   </div>
                   <ChevronRight className="w-4 h-4 text-navy/20 group-hover:text-steel group-hover:translate-x-0.5 transition-all" />
@@ -174,7 +174,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
               <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 min-h-0">
                 {superClasses.length === 0 ? (
                   <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
-                    <div className="w-14 h-14 rounded-[24px] bg-shell flex items-center justify-center mb-3">
+                    <div className="w-14 h-14 rounded-[10px] bg-shell flex items-center justify-center mb-3">
                       <BookMarked className="w-6 h-6 text-navy/30" />
                     </div>
                     <p className="text-sm font-bold text-navy mb-1">Belum ada kelas</p>
@@ -190,7 +190,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                       className="p-3 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 hover:bg-shell/50 transition-all shrink-0 text-left group"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-[24px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
+                        <div className="w-10 h-10 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
                           {getInitials(c.name)}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -219,7 +219,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                 <div className="relative z-10">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-[24px] bg-white/15 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-[10px] bg-white/15 flex items-center justify-center">
                         <Users className="w-4 h-4 text-white" />
                       </div>
                       <p className="text-[11px] font-bold uppercase tracking-widest text-white/60">
@@ -295,7 +295,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                 <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2 min-h-0 pr-1">
                   {attention.length === 0 ? (
                     <div className="flex-1 flex flex-col items-center justify-center py-6 text-center">
-                      <div className="w-12 h-12 rounded-[24px] bg-steel/10 flex items-center justify-center mb-3">
+                      <div className="w-12 h-12 rounded-[10px] bg-steel/10 flex items-center justify-center mb-3">
                         <CheckCircle2 className="w-5 h-5 text-steel" />
                       </div>
                       <p className="text-xs font-bold text-navy">Semua data lengkap</p>
@@ -375,7 +375,7 @@ export const SuperClasses: React.FC = () => {
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[24px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[10px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <BookMarked className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div className="min-w-0">
@@ -425,7 +425,7 @@ export const SuperClasses: React.FC = () => {
                     <div className="flex items-start justify-between mb-3">
                       <button
                         onClick={() => openDetail(c)}
-                        className="w-11 h-11 rounded-[24px] bg-navy text-white flex items-center justify-center shrink-0 hover:bg-navy/90 transition-colors"
+                        className="w-11 h-11 rounded-[10px] bg-navy text-white flex items-center justify-center shrink-0 hover:bg-navy/90 transition-colors"
                       >
                         <BookMarked className="w-5 h-5" />
                       </button>
@@ -504,12 +504,12 @@ const AddClassModal: React.FC<{
       <div className="bg-white rounded-[24px] max-w-md w-full shadow-2xl border border-mist/60">
         <div className="p-5 border-b border-mist/60 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-[24px] bg-navy flex items-center justify-center">
+            <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center">
               <BookMarked className="w-4 h-4 text-white" />
             </div>
             <h3 className="text-lg font-bold text-navy">Tambah Kelas Baru</h3>
           </div>
-          <button onClick={onClose} className="w-9 h-9 rounded-[24px] bg-mist/60 hover:bg-mist flex items-center justify-center">
+          <button onClick={onClose} className="w-9 h-9 rounded-[10px] bg-mist/60 hover:bg-mist flex items-center justify-center">
             <X className="w-4 h-4 text-navy/60" />
           </button>
         </div>
@@ -573,7 +573,7 @@ const ClassDetailModal: React.FC<{
       <div className="bg-white rounded-[24px] max-w-2xl w-full shadow-2xl border border-mist/60 flex flex-col max-h-[90vh]">
         <div className="p-5 border-b border-mist/60 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-[24px] bg-navy flex items-center justify-center">
+            <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center">
               <BookMarked className="w-4 h-4 text-white" />
             </div>
             <div className="min-w-0">
@@ -583,7 +583,7 @@ const ClassDetailModal: React.FC<{
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="w-9 h-9 rounded-[24px] bg-mist/60 hover:bg-mist flex items-center justify-center shrink-0">
+          <button onClick={onClose} className="w-9 h-9 rounded-[10px] bg-mist/60 hover:bg-mist flex items-center justify-center shrink-0">
             <X className="w-4 h-4 text-navy/60" />
           </button>
         </div>
@@ -598,7 +598,7 @@ const ClassDetailModal: React.FC<{
             </div>
           ) : students.length === 0 ? (
             <div className="text-center py-12">
-              <div className="w-14 h-14 rounded-[24px] bg-shell flex items-center justify-center mx-auto mb-3">
+              <div className="w-14 h-14 rounded-[10px] bg-shell flex items-center justify-center mx-auto mb-3">
                 <Users className="w-6 h-6 text-navy/30" />
               </div>
               <p className="text-sm font-bold text-navy">Belum ada siswa</p>
@@ -667,7 +667,7 @@ export const SuperUsers: React.FC = () => {
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[24px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[10px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <Users className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div className="min-w-0">

@@ -259,7 +259,7 @@ export const Maps: React.FC<MapsProps> = () => {
     return (
       <div className="h-full w-full flex items-center justify-center p-4">
         <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm max-w-sm w-full flex flex-col items-center text-center p-8">
-          <div className="w-16 h-16 rounded-[24px] bg-shell flex items-center justify-center mb-4">
+          <div className="w-16 h-16 rounded-[10px] bg-shell flex items-center justify-center mb-4">
             <Compass className="w-7 h-7 text-navy/40" />
           </div>
           <h2 className="text-lg font-bold text-navy mb-1">Belum Ada Lokasi PKL</h2>
@@ -276,7 +276,7 @@ export const Maps: React.FC<MapsProps> = () => {
     return (
       <div className="h-full w-full flex items-center justify-center p-4">
         <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm max-w-sm w-full flex flex-col items-center text-center p-8">
-          <div className="w-16 h-16 rounded-[24px] bg-steel/10 flex items-center justify-center mb-4">
+          <div className="w-16 h-16 rounded-[10px] bg-steel/10 flex items-center justify-center mb-4">
             <AlertTriangle className="w-7 h-7 text-steel" />
           </div>
           <h2 className="text-lg font-bold text-navy mb-1">Kamu Belum Dipetakan</h2>
@@ -294,7 +294,7 @@ export const Maps: React.FC<MapsProps> = () => {
       {/* ── HEADER ── */}
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[24px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[10px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <Compass className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div className="min-w-0">
@@ -385,7 +385,7 @@ export const Maps: React.FC<MapsProps> = () => {
             <button
               onClick={handleLocateMe}
               title="Pusatkan ke lokasi saya"
-              className="absolute left-3 top-3 z-[500] w-9 h-9 rounded-[24px] bg-white/95 backdrop-blur-sm border border-mist shadow-lg flex items-center justify-center text-steel hover:bg-shell transition-colors"
+              className="absolute left-3 top-3 z-[500] w-9 h-9 rounded-[10px] bg-white/95 backdrop-blur-sm border border-mist shadow-lg flex items-center justify-center text-steel hover:bg-shell transition-colors"
             >
               <LocateFixed className="w-4 h-4" />
             </button>
@@ -417,7 +417,7 @@ export const Maps: React.FC<MapsProps> = () => {
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-[24px] bg-white/15 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-[10px] bg-white/15 flex items-center justify-center">
                       <Building2 className="w-4 h-4 text-white" />
                     </div>
                     <p className="text-[11px] font-bold uppercase tracking-widest text-white/60">Lokasi Aktif</p>
@@ -535,7 +535,7 @@ export const Maps: React.FC<MapsProps> = () => {
                 <div className="flex flex-col gap-2.5 mb-3 shrink-0">
                   <div className="p-3.5 rounded-[24px] border border-mist/60 bg-shell/60">
                     <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-[24px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md shadow-navy/20">
+                      <div className="w-11 h-11 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md shadow-navy/20">
                         {getInitials(teacherName)}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -552,7 +552,7 @@ export const Maps: React.FC<MapsProps> = () => {
 
                   <div className="p-3.5 rounded-[24px] border border-steel/30 bg-steel/5">
                     <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-[24px] bg-steel text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md shadow-steel/25">
+                      <div className="w-11 h-11 rounded-[10px] bg-steel text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md shadow-steel/25">
                         {getInitials(mentorName)}
                       </div>
                       <div className="flex-1 min-w-0">

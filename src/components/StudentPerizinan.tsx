@@ -25,7 +25,7 @@ export const StudentPerizinan: React.FC = () => {
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[24px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[10px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <FileCheck className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div className="min-w-0">
@@ -45,7 +45,7 @@ export const StudentPerizinan: React.FC = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 shrink-0">
         <div className="bg-white border border-mist/60 rounded-[24px] p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-[24px] bg-steel/10 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-[10px] bg-steel/10 flex items-center justify-center">
             <Hourglass className="w-5 h-5 text-steel" />
           </div>
           <div>
@@ -54,7 +54,7 @@ export const StudentPerizinan: React.FC = () => {
           </div>
         </div>
         <div className="bg-white border border-mist/60 rounded-[24px] p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-[24px] bg-steel/15 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-[10px] bg-steel/15 flex items-center justify-center">
             <CheckCircle2 className="w-5 h-5 text-steel" />
           </div>
           <div>
@@ -63,7 +63,7 @@ export const StudentPerizinan: React.FC = () => {
           </div>
         </div>
         <div className="bg-white border border-mist/60 rounded-[24px] p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-[24px] bg-navy/10 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-[10px] bg-navy/10 flex items-center justify-center">
             <AlertCircle className="w-5 h-5 text-navy" />
           </div>
           <div>
@@ -77,7 +77,7 @@ export const StudentPerizinan: React.FC = () => {
         <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5">
           {perizinanList.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-14 h-14 rounded-[24px] bg-shell flex items-center justify-center mb-3">
+              <div className="w-14 h-14 rounded-[10px] bg-shell flex items-center justify-center mb-3">
                 <FileCheck className="w-6 h-6 text-navy/30" />
               </div>
               <p className="text-sm font-bold text-navy mb-1">Belum ada perizinan</p>
@@ -184,12 +184,12 @@ const PermissionModal: React.FC<{
       <div className="bg-white rounded-[24px] max-w-md w-full shadow-2xl border border-mist/60">
         <div className="p-5 border-b border-mist/60 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-[24px] bg-navy flex items-center justify-center">
+            <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center">
               <FileCheck className="w-4 h-4 text-white" />
             </div>
             <h3 className="text-lg font-bold text-navy">Ajukan Izin</h3>
           </div>
-          <button onClick={onClose} className="w-9 h-9 rounded-[24px] bg-mist/60 hover:bg-mist flex items-center justify-center">
+          <button onClick={onClose} className="w-9 h-9 rounded-[10px] bg-mist/60 hover:bg-mist flex items-center justify-center">
             <X className="w-4 h-4 text-navy/60" />
           </button>
         </div>

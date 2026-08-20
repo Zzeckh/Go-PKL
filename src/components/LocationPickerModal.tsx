@@ -264,7 +264,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
         {/* Header navy */}
         <div className="bg-navy p-4 md:p-5 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-[24px] bg-white/15 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-[10px] bg-white/15 flex items-center justify-center shrink-0">
               <MapPin className="w-5 h-5 text-white" />
             </div>
             <div className="min-w-0">
@@ -279,7 +279,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
           <button
             onClick={onClose}
             disabled={isSaving}
-            className="w-9 h-9 rounded-[24px] bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors shrink-0 disabled:opacity-50"
+            className="w-9 h-9 rounded-[10px] bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors shrink-0 disabled:opacity-50"
           >
             <X className="w-4 h-4" />
           </button>
@@ -317,7 +317,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
                 type="button"
                 onClick={handleLocateMe}
                 title="Gunakan lokasi saya"
-                className="w-10 h-10 rounded-[24px] bg-steel/10 hover:bg-steel/20 text-steel flex items-center justify-center transition-colors shrink-0"
+                className="w-10 h-10 rounded-[10px] bg-steel/10 hover:bg-steel/20 text-steel flex items-center justify-center transition-colors shrink-0"
               >
                 <Navigation className="w-4 h-4" />
               </button>
@@ -380,7 +380,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
           {manualMode && (
             <div className="bg-steel/10 border border-steel/30 rounded-[24px] p-3.5 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="flex items-start gap-2.5">
-                <div className="w-8 h-8 rounded-[24px] bg-steel text-white flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-[10px] bg-steel text-white flex items-center justify-center shrink-0">
                   <Lightbulb className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">

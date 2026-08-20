@@ -106,7 +106,7 @@ export const HubinData: React.FC = () => {
       {/* ── HEADER ── */}
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[24px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[10px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <Package className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div className="min-w-0">
@@ -138,7 +138,7 @@ export const HubinData: React.FC = () => {
             key={s.label}
             className="bg-white border border-mist/60 rounded-[24px] p-4 md:p-5 min-h-[100px] flex flex-col justify-between"
           >
-            <div className="w-10 h-10 rounded-[24px] bg-shell flex items-center justify-center">
+            <div className="w-10 h-10 rounded-[10px] bg-shell flex items-center justify-center">
               <s.icon className="w-5 h-5 text-navy/60" />
             </div>
             <div>
@@ -328,7 +328,7 @@ export const HubinData: React.FC = () => {
                       className="p-4 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 hover:shadow-sm transition-all text-left group"
                     >
                       <div className="flex items-center gap-3 mb-3">
-                        <div className="w-11 h-11 rounded-[24px] bg-steel/10 flex items-center justify-center shrink-0">
+                        <div className="w-11 h-11 rounded-[10px] bg-steel/10 flex items-center justify-center shrink-0">
                           <BuildingIcon className="w-5 h-5 text-steel" />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -595,7 +595,7 @@ export const HubinData: React.FC = () => {
 
 const EmptyState: React.FC<{ label: string; search: string }> = ({ label, search }) => (
   <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
-    <div className="w-14 h-14 rounded-[24px] bg-shell flex items-center justify-center mb-3">
+    <div className="w-14 h-14 rounded-[10px] bg-shell flex items-center justify-center mb-3">
       <Search className="w-6 h-6 text-navy/30" />
     </div>
     <p className="text-sm font-bold text-navy mb-1">Data {label} tidak ditemukan</p>
@@ -630,7 +630,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
     <div className="bg-white rounded-[24px] max-w-2xl w-full max-h-[85vh] shadow-2xl flex flex-col overflow-hidden border border-mist/60">
       <div className="bg-navy p-5 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3 min-w-0">
-          <div className={`w-12 h-12 rounded-[24px] ${avatarBg === 'bg-navy' ? 'bg-white/15' : 'bg-white'} flex items-center justify-center shrink-0 ${avatarBg === 'bg-navy' ? 'text-white' : 'text-steel'}`}>
+          <div className={`w-12 h-12 rounded-[10px] ${avatarBg === 'bg-navy' ? 'bg-white/15' : 'bg-white'} flex items-center justify-center shrink-0 ${avatarBg === 'bg-navy' ? 'text-white' : 'text-steel'}`}>
             {typeof avatarContent === 'string' ? (
               <span className="font-bold text-base">{avatarContent}</span>
             ) : avatarContent}
@@ -649,7 +649,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
         </div>
         <button
           onClick={onClose}
-          className="w-9 h-9 rounded-[24px] bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors shrink-0"
+          className="w-9 h-9 rounded-[10px] bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors shrink-0"
         >
           <X className="w-4 h-4" />
         </button>
@@ -779,7 +779,7 @@ const AddDataModal: React.FC<AddDataModalProps> = ({ onClose, activeTab, addSisw
         <div className="p-5 border-b border-mist/60 shrink-0">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-[24px] bg-navy flex items-center justify-center">
+              <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center">
                 <UserPlus className="w-4 h-4 text-white" />
               </div>
               <div>
@@ -787,7 +787,7 @@ const AddDataModal: React.FC<AddDataModalProps> = ({ onClose, activeTab, addSisw
                 <p className="text-[12px] font-semibold text-navy/60 mt-0.5">Pilih tipe data yang akan ditambah</p>
               </div>
             </div>
-            <button onClick={onClose} className="w-9 h-9 rounded-[24px] bg-mist/60 hover:bg-mist flex items-center justify-center text-navy/60 transition-colors shrink-0">
+            <button onClick={onClose} className="w-9 h-9 rounded-[10px] bg-mist/60 hover:bg-mist flex items-center justify-center text-navy/60 transition-colors shrink-0">
               <X className="w-4 h-4" />
             </button>
           </div>

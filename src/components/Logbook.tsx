@@ -113,7 +113,7 @@ export const Logbook: React.FC<LogbookProps> = ({
       <div className="shrink-0 bg-white rounded-[24px] border border-mist/60 shadow-sm p-5">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-[24px] bg-navy flex items-center justify-center shadow-md shadow-navy/20">
+            <div className="w-11 h-11 rounded-[10px] bg-navy flex items-center justify-center shadow-md shadow-navy/20">
               <BookOpen className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -236,7 +236,7 @@ export const Logbook: React.FC<LogbookProps> = ({
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
             {search || filter !== 'all' ? (
               <>
-                <div className="w-16 h-16 rounded-[24px] bg-mist/50 flex items-center justify-center mb-4">
+                <div className="w-16 h-16 rounded-[10px] bg-mist/50 flex items-center justify-center mb-4">
                   <Search className="w-7 h-7 text-navy/30" />
                 </div>
                 <p className="text-base font-bold text-navy mb-1">Tidak ada hasil</p>
@@ -249,7 +249,7 @@ export const Logbook: React.FC<LogbookProps> = ({
               </>
             ) : (
               <>
-                <div className="w-16 h-16 rounded-[24px] bg-steel/10 flex items-center justify-center mb-4">
+                <div className="w-16 h-16 rounded-[10px] bg-steel/10 flex items-center justify-center mb-4">
                   <Sparkles className="w-7 h-7 text-steel" />
                 </div>
                 <p className="text-base font-bold text-navy mb-1">Mulai menulis jurnal pertama!</p>
@@ -301,7 +301,7 @@ export const Logbook: React.FC<LogbookProps> = ({
                   <div className="flex gap-3">
                     {/* Icon + Date */}
                     <div className="flex flex-col items-center gap-1 shrink-0">
-                      <div className="w-10 h-10 rounded-[24px] bg-navy flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center">
                         <BookOpen className="w-4 h-4 text-white" />
                       </div>
                       <span className="text-[10px] font-bold text-navy/50 uppercase tracking-wider whitespace-nowrap">
@@ -386,7 +386,7 @@ export const Logbook: React.FC<LogbookProps> = ({
             <div className="p-5 md:p-6 border-b border-mist/60 shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-[24px] bg-navy flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center">
                     <FileEdit className="w-4 h-4 text-white" />
                   </div>
                   <div>
@@ -397,7 +397,7 @@ export const Logbook: React.FC<LogbookProps> = ({
                 <button 
                   onClick={() => setIsModalOpen(false)} 
                   disabled={isSubmitting}
-                  className="w-9 h-9 rounded-[24px] bg-mist/60 hover:bg-mist flex items-center justify-center text-navy/60 hover:text-navy transition-colors shrink-0 disabled:opacity-50"
+                  className="w-9 h-9 rounded-[10px] bg-mist/60 hover:bg-mist flex items-center justify-center text-navy/60 hover:text-navy transition-colors shrink-0 disabled:opacity-50"
                 >
                   <X className="w-4 h-4" />
                 </button>
