@@ -422,7 +422,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
             <div ref={mapContainerRef} className="w-full h-[360px] md:h-[420px]" />
             {!hasValidCoord && (
               <div className="absolute inset-0 flex items-center justify-center bg-navy/5 backdrop-blur-[1px] pointer-events-none">
-                <div className="bg-white/95 backdrop-blur-sm px-4 py-3 rounded-2xl shadow-lg border border-mist text-center max-w-xs">
+                <div className="bg-white/95 backdrop-blur-sm px-4 py-3 rounded-[24px] shadow-lg border border-mist text-center max-w-xs">
                   <MapIcon className="w-6 h-6 text-steel mx-auto mb-2" />
                   <p className="text-xs font-bold text-navy leading-tight">
                     Klik peta atau cari alamat untuk mulai

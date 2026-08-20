@@ -9,7 +9,7 @@ interface LoadingScreenProps {
 
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({ progress, textIndex, messages }) => {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center h-full w-full bg-white/40 backdrop-blur-xl animate-in fade-in rounded-3xl relative overflow-hidden">
+    <div className="flex-1 flex flex-col items-center justify-center h-full w-full bg-white/40 backdrop-blur-xl animate-in fade-in rounded-[24px] relative overflow-hidden">
       
       {/* Conceptual Background Map Grid */}
       <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(var(--color-steel, #4478AE) 2px, transparent 2px)', backgroundSize: '30px 30px' }} />
@@ -28,7 +28,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ progress, textInde
           </div>
         </div>
 
-        <div className="w-full space-y-6 text-center bg-white/60 backdrop-blur-md p-6 rounded-3xl border border-white shadow-sm">
+        <div className="w-full space-y-6 text-center bg-white/60 backdrop-blur-md p-6 rounded-[24px] border border-white shadow-sm">
           <div className="space-y-1">
              <h2 className="text-2xl font-bold text-black/80 tracking-tight">Crextio System Boot</h2>
              <p className="text-[10px] font-bold text-black/50 uppercase tracking-widest">Initialization Phase</p>

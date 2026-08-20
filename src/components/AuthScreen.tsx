@@ -627,7 +627,7 @@ const DecorativeGraphic = ({ mode }: { mode: 'login' | 'register' }) => (
     <div className="relative z-10 w-full max-w-sm self-end space-y-3">
       {mode === 'login' ? (
         <>
-          <div className="bg-white/15 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-xl">
+          <div className="bg-white/15 backdrop-blur-md p-4 rounded-[24px] border border-white/20 shadow-xl">
             <div className="flex items-center gap-3 border-b border-white/20 pb-3 mb-3">
               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
                 <MapPin className="w-5 h-5 text-white" />
@@ -641,7 +641,7 @@ const DecorativeGraphic = ({ mode }: { mode: 'login' | 'register' }) => (
               <CheckCircle2 className="w-4 h-4" /> Validated location
             </div>
           </div>
-          <div className="bg-white/15 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-xl">
+          <div className="bg-white/15 backdrop-blur-md p-4 rounded-[24px] border border-white/20 shadow-xl">
             <div className="flex justify-between items-center mb-3">
               <div className="text-sm font-bold text-white">Daily Logbook</div>
               <span className="text-[10px] bg-white/20 text-white px-2.5 py-1 rounded-full font-bold">
@@ -654,7 +654,7 @@ const DecorativeGraphic = ({ mode }: { mode: 'login' | 'register' }) => (
         </>
       ) : (
         <>
-          <div className="bg-white/15 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-xl">
+          <div className="bg-white/15 backdrop-blur-md p-4 rounded-[24px] border border-white/20 shadow-xl">
             <div className="flex items-center gap-3 border-b border-white/20 pb-3 mb-3">
               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
                 <Users className="w-5 h-5 text-white" />
@@ -678,7 +678,7 @@ const DecorativeGraphic = ({ mode }: { mode: 'login' | 'register' }) => (
               </div>
             </div>
           </div>
-          <div className="bg-white/15 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-xl">
+          <div className="bg-white/15 backdrop-blur-md p-4 rounded-[24px] border border-white/20 shadow-xl">
             <div className="flex justify-between items-center mb-3">
               <div className="flex items-center gap-2">
                 <LineChart className="w-4 h-4 text-white/80" />

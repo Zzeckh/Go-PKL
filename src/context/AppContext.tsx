@@ -216,8 +216,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const loadLogEntries = async () => {
     try {
       startLoading('logbook');
-      const response = await api.get('/api/logbook') as { data: any[] };
-      const mapped = response.data.map((item: any): LogEntry => ({
+      const response = await api.get('/api/logbook') as any[];
+      const mapped = response.map((item: any): LogEntry => ({
         id: `LOG-${item.id}`,
         date: formatDate(item.date),
         title: item.activityTitle,

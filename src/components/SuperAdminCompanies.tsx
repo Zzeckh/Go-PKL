@@ -532,7 +532,7 @@ const CompanyFormModal: React.FC<{
                 <div ref={mapContainerRef} className="w-full h-[320px] md:h-[340px]" />
                 {!hasValidCoord && (
                   <div className="absolute inset-0 flex items-center justify-center bg-navy/5 backdrop-blur-[1px] pointer-events-none">
-                    <div className="bg-white/95 backdrop-blur-sm px-4 py-3 rounded-2xl shadow-lg border border-mist text-center max-w-xs">
+                    <div className="bg-white/95 backdrop-blur-sm px-4 py-3 rounded-[24px] shadow-lg border border-mist text-center max-w-xs">
                       <MapPin className="w-6 h-6 text-steel mx-auto mb-2" />
                       <p className="text-xs font-bold text-navy leading-tight">Cari alamat, input koordinat, atau klik peta</p>
                     </div>
