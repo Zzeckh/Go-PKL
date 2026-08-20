@@ -85,8 +85,7 @@ export const updateLogbook = async (req, res, next) => {
     }
 
     let allowed = false;
-    if (role === 'teacher') allowed = logbook.user.teacherId === reviewerId;
-    else if (role === 'mentor') allowed = logbook.user.company?.mentorId === reviewerId;
+    if (role === 'mentor') allowed = logbook.user.company?.mentorId === reviewerId;
     else if (role === 'hubin') allowed = true;
     else if (role === 'super_admin') allowed = true;
 

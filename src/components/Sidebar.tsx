@@ -42,12 +42,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'pemetaan',  icon: MapPin,          label: 'Pemetaan' },
       ];
     }
-    if (userRole === 'teacher' || userRole === 'mentor') {
+    if (userRole === 'mentor') {
       return [
         { id: 'dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
         { id: 'monitoring', icon: Activity,        label: 'Monitoring' },
         { id: 'attendance', icon: Camera,          label: 'Kehadiran' },
         { id: 'roster',     icon: Award,           label: 'Penilaian' },
+        { id: 'perizinan',  icon: FileCheck,       label: 'Perizinan' }
+      ];
+    }
+    if (userRole === 'teacher') {
+      return [
+        { id: 'dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
+        { id: 'monitoring', icon: Activity,        label: 'Monitoring' },
+        { id: 'attendance', icon: Camera,          label: 'Kehadiran' },
         { id: 'perizinan',  icon: FileCheck,       label: 'Perizinan' },
         { id: 'rekap',      icon: DownloadCloud,   label: 'Rekap' }
       ];

@@ -197,13 +197,13 @@ export default function App() {
           {activePage === 'attendance' && (userRole === 'teacher' || userRole === 'mentor') && (
             <MentorAttendance />
           )}
-          {activePage === 'roster' && (userRole === 'teacher' || userRole === 'mentor') && (
+          {activePage === 'roster' && userRole === 'mentor' && (
             <MentorRoster />
           )}
           {activePage === 'perizinan' && (userRole === 'teacher' || userRole === 'mentor') && (
             <TeacherPerizinan />
           )}
-          {activePage === 'rekap' && (userRole === 'teacher' || userRole === 'mentor') && (
+          {activePage === 'rekap' && userRole === 'teacher' && (
             <TeacherRekap />
           )}
           {activePage === 'pemetaan' && userRole === 'hubin' && (
