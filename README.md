@@ -179,3 +179,104 @@ Berikut urutan lengkap perintah dari awal hingga aplikasi berjalan, untuk refere
 10. Buka http://localhost:5173 dan login dengan akun pada langkah 6.
 
 Dengan mengikuti urutan di atas, lingkungan pengembangan Go-PKL berbasis MySQL Laragon di Windows akan siap digunakan.
+
+---
+
+## 11. Sinkronisasi Data Antar Anggota Kelompok
+
+### Mengapa data (misalnya lokasi PKL yang sudah dipetakan) tidak sinkron?
+
+Karena setiap anggota menjalankan **database MySQL lokal masing-masing**. Data seperti lokasi perusahaan yang sudah dipetakan (garis lintang/bujur & radius geofence), pengguna, kelas, perizinan, absensi, logbook, serta file PDF surat di folder `uploads/` hanya tersimpan di komputer anggota tersebut. Saat anggota lain menarik kode dari Git, yang tersinkron hanyalah **kode program**, bukan **datanya**.
+
+Ada dua strategi pilihan: menggunakan **database bersama** (SQL file) atau menyalakan **satu server database pusat**.
+
+---
+
+### Strategi A: Sinkronkan Melalui File (Cara Paling Mudah untuk Kelompok)
+
+Pendekatan ini mengekspor data dari database anggota yang paling lengkap (yang sudah memetakan lokasi PKL), lalu diimpor oleh anggota lain.
+
+**A.1 - Pilih satu anggota sebagai "sumber data"** (misalnya Anda yang sudah memetakan lokasi PKL). Pastikan datanya sudah selesai diinput dari sisi backend tersebut.
+
+**A.2 - Ekspor seluruh data dari database sumber.** Buka terminal, masuk ke MySQL sebagai admin, lalu buat file SQL berisi data:
+
+```sql
+mysqldump -u root -p ujikom_go_pkl > data_sinkron.sql
+```
+
+Catatan: `mysqldump` tersedia di bundel MySQL Laragon (folder `laragon/bin/mysql/<versi>/bin/`). Atau buka phpMyAdmin → pilih database `ujikom_go_pkl` → tab **Export** → pilih **Semua tabel** → format **SQL** → unduh file.
+
+**A.3 - Bagikan file** `data_sinkron.sql` ke anggota lain (misal via grup/WhatsApp, Google Drive, atau Git).
+
+**A.4 - Setiap anggota lain mengimpor data ke database lokalnya.** Masuk ke MySQL lalu jalankan:
+
+```sql
+mysql -u root -p ujikom_go_pkl < data_sinkron.sql
+```
+
+Atau lewat phpMyAdmin: pilih database `ujikom_go_pkl` → tab **Import** → unggah file `.sql` → **Go/Import**.
+
+> ⚠️ **Peringatan:** Impor akan **menimpa** data yang sudah ada sebelumnya pada database penerima. Pastikan anggota hanya mengimpor bila memang ingin menyamakan datanya dengan sumber, dan jangan menimpa database yang berisi data yang belum diekspor.
+
+---
+
+### Strategi B: Pakai Satu Database Pusat
+
+Cara ini agar seluruh anggota langsung membaca databasenya yang sama tanpa perlu ekspor-impor berulang. Cocok bila anggota bisa saling menjangkau server di jaringan/LAN yang sama, atau memakai database online (MySQL cloud gratis seperti InfinityFree, atau database pada server sekolah).
+
+**B.1 - Pilih satu komputer sebagai host database** yang selalu menyala, atau sediakan database online.
+
+**B.2 - Aktifkan akses remote pada server MySQL host** (secara manual di konfigurasi MySQL, atau hanya izinkan IP anggota di jaringan lokal yang sama).
+
+**B.3 - Semua anggota mengubah** `DATABASE_URL` di file `.env` masing-masing menuju alamat database pusat, misalnya:
+
+```
+DATABASE_URL="mysql://sail:password@192.168.1.20:3306/ujikom_go_pkl"
+```
+
+> ⚠️ **Peringatan keamanan:** Karena berkas `uploads/` (surat izin PDF) dan data pengguna tersimpan di database, gunakan kredensial khusus yang aman dan jangan pernah mengekspos password di repository Git (file `.env` sudah dikecualikan oleh `.gitignore`).
+
+**B.4 - Jaga agar schema tetap sama.** Setiap kali ada perubahan `prisma/schema.prisma` dari anggota mana pun yang sudah di-commit:
+
+```bash
+git pull
+npm install
+npx prisma generate
+npx prisma db push
+```
+
+`npx prisma db push` akan menyesuaikan struktur tabel agar cocok dengan versi terbaru kodene.
+
+---
+
+### Menyinkronkan File PDF Surat di `uploads/`
+
+Folder `uploads/` menyimpan surat izin PDF yang diunggah siswa dan menjadi lampiran yang dilihat guru/mentor. File ini **bukan** bagian dari database, sehingga tidak ikut tersinkron via ekspor SQL.
+
+Solusi yang dianjurkan:
+- Ekspor/impor database harus disertai penyalinan folder `uploads/` dari sumber ke penerima (salin `uploads/` satu folder utuh), atau
+- Simpan `uploads/` di Git (hapus baris `uploads/` dari `.gitignore` lalu `git add uploads && git commit`), agar seluruh anggota mengambil file yang sama lewat `git pull`.
+
+---
+
+### Tips Gambar Besar untuk Kelompok
+
+- Buat **satu anggota "pengelola data"** agar tidak saling menimpa data (misal hanya anggota tersebut yang mengisi data master seperti pemetaan lokasi PKL).
+- Biasakan selalu `git pull` sebelum mulai bekerja dan `git push` setelah selesai agar kode tetap sinkron.
+- Sebelum sesi uji coba, pastikan struktur database sudah terbaru dengan menjalankan `npx prisma db push`.
+- Gunakan `npx prisma studio` untuk memverifikasi bahwa data (misal koordinat & radius perusahaan) tersimpan benar di database.
+
+Berikut urutan lengkap perintah dari awal hingga aplikasi berjalan, untuk referensi cepat:
+
+1. Start All di Laragon (pastikan MySQL berjalan).
+2. Buat database dan pengguna melalui mysql -u root (langkah 1).
+3. cd ke folder proyek.
+4. Buat dan isi file .env (langkah 2).
+5. npm install
+6. npx prisma generate
+7. npx prisma db push
+8. npm run seed
+9. npm run dev
+10. Buka http://localhost:5173 dan login dengan akun pada langkah 6.
+
+Dengan mengikuti urutan di atas, lingkungan pengembangan Go-PKL berbasis MySQL Laragon di Windows akan siap digunakan.
