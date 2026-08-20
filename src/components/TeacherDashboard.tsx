@@ -175,7 +175,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ userName, sc
                     <Users className="w-4 h-4 text-white" />
                   </div>
                   <p className="text-[11px] font-bold uppercase tracking-widest text-white/60">
-                    Anak Bimbingan
+                    Tempat
                   </p>
                 </div>
                 <span className="text-[11px] font-bold bg-white/15 text-white px-3 py-1.5 rounded-full tabular-nums">

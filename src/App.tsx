@@ -10,6 +10,7 @@ import { Profile } from './components/Profile';
 import { Absensi } from './components/Absensi';
 import { TeacherDashboard } from './components/TeacherDashboard';
 import { TeacherMonitoring, TeacherPerizinan, TeacherRekap } from './components/TeacherPages';
+import { MentorAttendance, MentorRoster } from './components/MentorPages';
 import { HubinDashboard } from './components/HubinDashboard';
 import { HubinData } from './components/HubinPages';
 import { HubinPemetaan } from './components/HubinPemetaan';
@@ -139,7 +140,8 @@ export default function App() {
           {activePage === 'dashboard' && userRole === 'mentor' && (
             <MentorDashboard 
               userName={userName}
-              companyName="PT Tokopedia"
+              companyName={userCompanyName || 'Perusahaan'}
+              onNavigate={(page) => setActivePage(page)}
             />
           )}
 
@@ -191,6 +193,12 @@ export default function App() {
           )}
           {activePage === 'monitoring' && (userRole === 'teacher' || userRole === 'mentor') && (
             <TeacherMonitoring />
+          )}
+          {activePage === 'attendance' && (userRole === 'teacher' || userRole === 'mentor') && (
+            <MentorAttendance />
+          )}
+          {activePage === 'roster' && (userRole === 'teacher' || userRole === 'mentor') && (
+            <MentorRoster />
           )}
           {activePage === 'perizinan' && (userRole === 'teacher' || userRole === 'mentor') && (
             <TeacherPerizinan />

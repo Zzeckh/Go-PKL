@@ -9,6 +9,8 @@ export const getLogbooks = async (req, res, next) => {
       where = { userId: id };
     } else if (role === 'teacher') {
       where = { user: { teacherId: id } };
+    } else if (role === 'mentor') {
+      where = { user: { company: { mentorId: id } } };
     } else if (role === 'hubin') {
       where = {};
     } else if (role === 'super_admin') {
@@ -74,7 +76,7 @@ export const updateLogbook = async (req, res, next) => {
     const logbook = await prisma.logbook.findUnique({
       where: { id },
       include: {
-        user: { select: { id: true, teacherId: true } },
+        user: { select: { id: true, teacherId: true, company: { select: { mentorId: true } } } },
       },
     });
 
@@ -84,6 +86,7 @@ export const updateLogbook = async (req, res, next) => {
 
     let allowed = false;
     if (role === 'teacher') allowed = logbook.user.teacherId === reviewerId;
+    else if (role === 'mentor') allowed = logbook.user.company?.mentorId === reviewerId;
     else if (role === 'hubin') allowed = true;
     else if (role === 'super_admin') allowed = true;
 

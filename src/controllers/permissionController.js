@@ -9,6 +9,8 @@ export const getPermissions = async (req, res, next) => {
       where = { userId: id };
     } else if (role === 'teacher') {
       where = { user: { teacherId: id } };
+    } else if (role === 'mentor') {
+      where = { user: { company: { mentorId: id } } };
     } else if (role === 'hubin') {
       where = {};
     }
@@ -72,7 +74,7 @@ export const updatePermission = async (req, res, next) => {
     const permission = await prisma.permission.findUnique({
       where: { id },
       include: {
-        user: { select: { id: true, teacherId: true } },
+        user: { select: { id: true, teacherId: true, company: { select: { mentorId: true } } } },
       },
     });
 
@@ -82,6 +84,7 @@ export const updatePermission = async (req, res, next) => {
 
     let allowed = false;
     if (role === 'teacher') allowed = permission.user.teacherId === reviewerId;
+    else if (role === 'mentor') allowed = permission.user.company?.mentorId === reviewerId;
     else if (role === 'hubin') allowed = true;
     else if (role === 'super_admin') allowed = true;
 

@@ -9,6 +9,8 @@ export const getAllAbsensi = async (req, res, next) => {
       where = { userId: id };
     } else if (role === 'teacher') {
       where = { user: { teacherId: id } };
+    } else if (role === 'mentor') {
+      where = { user: { company: { mentorId: id } } };
     }
     // hubin & super_admin see all
 

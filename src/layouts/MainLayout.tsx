@@ -30,6 +30,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       case 'maps':             return 'Lokasi & Maps';
       case 'profile':          return 'Profile';
       case 'monitoring':       return 'Monitoring PKL';
+      case 'attendance':       return 'Kehadiran Siswa';
+      case 'roster':           return 'Penilaian Siswa';
       case 'perizinan':        return 'Verifikasi Perizinan';
       case 'rekap':            return 'Rekapitulasi Nilai';
       // ── Role Hubin ──

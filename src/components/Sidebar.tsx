@@ -2,7 +2,7 @@ import React from 'react';
 import { 
   LayoutDashboard, BookOpen, MapPin, LogOut, PanelLeftClose, PanelLeftOpen, 
   Camera, Activity, FileCheck, DownloadCloud, Package,
-  School, Users, ShieldCheck, Building2
+  School, Users, ShieldCheck, Building2, Award
 } from 'lucide-react';
 import { ActivePage, UserRole } from '../types';
 
@@ -46,6 +46,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       return [
         { id: 'dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
         { id: 'monitoring', icon: Activity,        label: 'Monitoring' },
+        { id: 'attendance', icon: Camera,          label: 'Kehadiran' },
+        { id: 'roster',     icon: Award,           label: 'Penilaian' },
         { id: 'perizinan',  icon: FileCheck,       label: 'Perizinan' },
         { id: 'rekap',      icon: DownloadCloud,   label: 'Rekap' }
       ];

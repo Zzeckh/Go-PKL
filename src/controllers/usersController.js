@@ -10,6 +10,8 @@ export const getUsers = async (req, res, next) => {
       where = { teacherId: id };
     } else if (role === 'student') {
       where = { id };
+    } else if (role === 'mentor') {
+      where = { company: { mentorId: id } };
     } else if (role === 'hubin') {
       where = {};
     } else if (role === 'super_admin') {

@@ -18,21 +18,29 @@ const generateToken = (user) =>
 const userInclude = {
   teacher: { select: { name: true } },
   class: { select: { name: true, major: true } },
+  company: { select: { name: true, address: true, latitude: true, longitude: true, radiusMeters: true } },
+  mentoredCompanies: { take: 1, select: { name: true, address: true, latitude: true, longitude: true, radiusMeters: true } },
 };
 
-const toFrontendUser = (user) => ({
-  id: user.id,
-  name: user.name,
-  email: user.email,
-  role: user.role,
-  companyName: null,
-  companyAddress: null,
-  companyLocation: null,
-  teacherName: user.teacher?.name ?? null,
-  className: user.class?.name ?? null,
-  major: user.class?.major ?? null,
-  academicYear: user.academicYear ?? null,
-});
+const toFrontendUser = (user) => {
+  const isMentor = user.role === 'mentor';
+  const company = isMentor ? user.mentoredCompanies?.[0] : user.company;
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    companyName: company?.name ?? null,
+    companyAddress: company?.address ?? null,
+    companyLocation: company && company.latitude != null
+      ? { lat: company.latitude, lng: company.longitude, radius: company.radiusMeters ?? 500 }
+      : null,
+    teacherName: user.teacher?.name ?? null,
+    className: user.class?.name ?? null,
+    major: user.class?.major ?? null,
+    academicYear: user.academicYear ?? null,
+  };
+};
 
 export const login = async (req, res, next) => {
   try {

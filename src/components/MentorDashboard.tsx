@@ -1,144 +1,219 @@
-import React, { useState } from 'react';
-import { 
-  Users, CheckCircle2, Clock, Search, 
-  Filter, Building, MessageSquare, AlertCircle
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Users, Building, FileCheck, ChevronRight, Activity, Clock, Calendar, BookOpen, CheckCircle2, MessageSquare } from 'lucide-react';
+import { ActivePage } from '../types';
 import { useApp } from '../context/AppContext';
 
 interface MentorDashboardProps {
   userName: string;
   companyName: string;
+  onNavigate?: (page: ActivePage) => void;
 }
 
-export const MentorDashboard: React.FC<MentorDashboardProps> = ({ userName, companyName }) => {
-  const { logEntries, updateLogStatus, siswaList } = useApp();
-  const [date] = useState(new Date());
+const getInitials = (name: string) =>
+  (name || '?').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+
+export const MentorDashboard: React.FC<MentorDashboardProps> = ({ userName, companyName, onNavigate }) => {
+  const { siswaList, logEntries, updateLogStatus } = useApp();
+
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const t = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   const pendingEntries = logEntries.filter(l => l.status === 'pending');
 
+  const activeYear = siswaList.find(s => s.academicYear && s.academicYear !== '-')?.academicYear || '2025/2026';
+
+  /* ── Kehadiran rata-rata siswa bimbingan ── */
+  const avgAttendance = siswaList.length
+    ? Math.round(siswaList.reduce((acc, s) => acc + (s.kehadiran || 0), 0) / siswaList.length)
+    : 0;
+
+  /* ── Logbook yang sudah diverifikasi ── */
+  const approvedCount = logEntries.filter(l => l.status === 'approved').length;
+
+  const stats = [
+    { icon: Users, label: 'Total Siswa Magang', value: siswaList.length, page: 'monitoring' as ActivePage },
+    { icon: Activity, label: 'Kehadiran Rata-rata', value: `${avgAttendance}%`, page: 'monitoring' as ActivePage },
+    { icon: BookOpen, label: 'Logbook Pending', value: pendingEntries.length, page: 'monitoring' as ActivePage },
+    { icon: FileCheck, label: 'Logbook Terverifikasi', value: approvedCount, page: 'rekap' as ActivePage },
+  ];
+
   return (
-    <div className="h-full w-full flex flex-col gap-4">
-      {/* ── Header & Quick Summary ── */}
-      <div className="shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-black/50">
-            {date.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-          </p>
-          <h1 className="text-2xl font-bold text-black leading-tight mt-1">Welcome back, Mentor {userName.split(',')[0]}</h1>
-          <div className="flex items-center gap-1.5 mt-2 bg-black/5 w-max px-2.5 py-1 rounded-full border border-black/10">
-            <Building className="w-3.5 h-3.5 text-black/60" />
-            <span className="text-[11px] font-bold text-black/80">{companyName}</span>
+    <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
+
+      {/* ── HEADER ── */}
+      <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
+        <div className="flex items-center gap-3 md:gap-4 min-w-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-2xl flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
+            <Building className="w-5 h-5 md:w-6 md:h-6" />
+          </div>
+          <div className="min-w-0">
+            <h2 className="font-bold text-lg md:text-xl text-navy leading-tight truncate">
+              Selamat Datang, {userName.split(',')[0].trim()}
+            </h2>
+            <p className="text-[13px] text-navy/60 font-semibold mt-0.5 truncate">
+              {companyName || 'Pembimbing Industri'} · Pantau siswa magang
+            </p>
           </div>
         </div>
-      </div>
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
-        <div className="bg-white/70 backdrop-blur-xl rounded-[24px] border border-white p-5 shadow-sm flex flex-col transition-all cursor-pointer">
-          <Users className="w-6 h-6 text-black/40 mb-3" />
-          <p className="text-3xl font-bold text-black">{siswaList.length}</p>
-          <p className="text-xs font-bold text-black/60 mt-1 uppercase tracking-wide">Total Students</p>
-        </div>
-        <div className="bg-white/70 backdrop-blur-xl rounded-[24px] border border-white p-5 shadow-sm flex flex-col transition-all cursor-pointer">
-          <CheckCircle2 className="w-6 h-6 text-black mb-3" />
-          <p className="text-3xl font-bold text-black">{siswaList.length - 1} <span className="text-sm font-semibold text-black/50">/ {siswaList.length}</span></p>
-          <p className="text-xs font-bold text-black/60 mt-1 uppercase tracking-wide">Present Today</p>
-        </div>
-        <div className="bg-white/70 backdrop-blur-xl rounded-[24px] border border-black/10 p-5 shadow-sm flex flex-col relative overflow-hidden transition-all cursor-pointer">
-          <Clock className="w-6 h-6 text-black/80 mb-3 relative z-10" />
-          <p className="text-3xl font-bold text-black relative z-10">{pendingEntries.length}</p>
-          <p className="text-xs font-bold text-black/70 mt-1 uppercase tracking-wide relative z-10">Pending Logbooks</p>
-          <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-black/5 rounded-full blur-2xl"></div>
-        </div>
-        <div className="bg-white/70 backdrop-blur-xl rounded-[24px] border border-white p-5 shadow-sm flex flex-col transition-all cursor-pointer">
-          <AlertCircle className="w-6 h-6 text-black/60 mb-3" />
-          <p className="text-3xl font-bold text-black">0</p>
-          <p className="text-xs font-bold text-black/60 mt-1 uppercase tracking-wide">Attendance Alert</p>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="hidden md:flex items-center gap-1.5 text-[11px] font-bold text-navy/60 bg-[#F1F4F8] border border-[#E2E8F0] px-3 py-2 rounded-full">
+            <Clock className="w-3.5 h-3.5" />
+            {time.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
+          </span>
+          <span className="hidden sm:flex items-center gap-1.5 text-[11px] font-bold text-steel bg-steel/10 border border-steel/20 px-3 py-2 rounded-full">
+            <Calendar className="w-3.5 h-3.5" />
+            TA {activeYear}
+          </span>
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-4 animate-in fade-in duration-300 flex-1 min-h-0">
-        
-        {/* Catatan Mentor (Kiri) */}
-        <div className="hidden lg:flex flex-col w-[300px] shrink-0 bg-white/70 backdrop-blur-xl rounded-[24px] border border-white shadow-sm h-full transition-all">
-          <div className="flex items-center justify-between p-5 pb-3 shrink-0">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-black/60">Catatan</p>
-              <p className="text-sm font-bold text-black">Catatan Mentor</p>
+      {/* ── STATS CARDS ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
+        {stats.map((s) => (
+          <button
+            key={s.label}
+            onClick={() => onNavigate && onNavigate(s.page)}
+            className="bg-white border border-mist/60 rounded-[24px] p-5 text-left transition-all hover:border-steel/40 hover:-translate-y-0.5 hover:shadow-md group flex flex-col justify-between min-h-[140px]"
+          >
+            <div className="flex items-center justify-between">
+              <div className="w-10 h-10 rounded-xl bg-[#F1F4F8] flex items-center justify-center group-hover:bg-steel/10 transition-colors">
+                <s.icon className="w-5 h-5 text-navy/60 group-hover:text-steel transition-colors" />
+              </div>
+              <ChevronRight className="w-4 h-4 text-navy/20 group-hover:text-steel group-hover:translate-x-0.5 transition-all" />
             </div>
-            <button className="w-8 h-8 rounded-xl flex items-center justify-center border transition-all shadow-sm bg-white text-black/60 border-black/10">
-              <Clock className="w-4 h-4" />
+            <div className="mt-4">
+              <p className="text-3xl font-bold text-navy tabular-nums leading-none">{s.value}</p>
+              <p className="text-[11px] font-bold text-navy/60 uppercase tracking-wide mt-2">{s.label}</p>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* ── MAIN GRID (3 + 2) ── */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-4 min-h-0">
+
+        {/* ══ LEFT: Logbook Pending Review ══ */}
+        <div className="lg:col-span-3 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col overflow-hidden min-h-[380px] lg:min-h-0">
+          <div className="flex items-center justify-between px-4 md:px-5 pt-4 pb-3 shrink-0">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-steel/15 flex items-center justify-center">
+                <BookOpen className="w-3.5 h-3.5 text-steel" />
+              </div>
+              <p className="text-[13px] font-bold uppercase tracking-widest text-navy/70">
+                Review Logbook ({pendingEntries.length})
+              </p>
+            </div>
+            <button
+              onClick={() => onNavigate && onNavigate('monitoring')}
+              className="text-[11px] font-bold bg-steel text-white px-3 py-1.5 rounded-lg hover:bg-steel/90 transition-colors flex items-center gap-1"
+            >
+              Monitoring <ChevronRight className="w-3 h-3" />
             </button>
           </div>
-          <div className="flex-1 mx-4 mb-4 bg-white/80 rounded-[20px] border border-black/5 overflow-hidden shadow-inner p-4 text-sm font-medium text-black/80 whitespace-pre-line leading-relaxed">
-            - Briefing siswa hari Senin pukul 09.00
-            - Cek logbook mingguan
-            - Siapkan feedback evaluasi bulan pertama
-          </div>
-        </div>
 
-        {/* Main Review Feed (Kanan) */}
-        <div className="flex-1 bg-white/60 backdrop-blur-xl border border-white rounded-[24px] shadow-sm flex flex-col overflow-hidden transition-all">
-          <div className="p-5 border-b border-black/5 shrink-0 flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-black text-lg">Pending Logbook Reviews ({pendingEntries.length})</h3>
-              <p className="text-xs font-semibold text-black/50 mt-0.5">Please review and approve student activities</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="bg-white border border-black/10 rounded-xl px-3 py-1.5 flex items-center gap-2">
-                <Search className="w-4 h-4 text-black/40" />
-                <input type="text" placeholder="Search..." className="bg-transparent outline-none text-xs w-24 sm:w-40 font-semibold" />
+          <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 min-h-0">
+            {pendingEntries.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-[#E4F0F1] flex items-center justify-center mb-3">
+                  <CheckCircle2 className="w-6 h-6 text-steel" />
+                </div>
+                <p className="text-sm font-bold text-navy mb-1">Semua logbook telah ditinjau</p>
+                <p className="text-xs text-navy/50 max-w-xs">
+                  Tidak ada jurnal harian yang menunggu persetujuan.
+                </p>
               </div>
-              <button className="p-2 border border-black/10 bg-white rounded-xl text-black/60">
-                <Filter className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-4">
-            {pendingEntries.length > 0 ? (
+            ) : (
               pendingEntries.map(log => (
-                <div key={log.id} className="bg-white rounded-[24px] p-5 border border-black/5 shadow-sm flex flex-col lg:flex-row gap-5">
-                  <div className="flex-1 flex flex-col gap-3">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-black/5 bg-black/5 flex items-center justify-center font-bold text-xs">
-                        BS
-                      </div>
-                      <div>
-                        <p className="font-bold text-sm text-black">Budi Santoso</p>
-                        <p className="text-[10px] font-bold text-black/50">SMK Negeri 1 • {log.date}</p>
-                      </div>
+                <div key={log.id} className="p-3 rounded-xl border border-mist/60 bg-white hover:border-steel/30 transition-all shrink-0">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
+                      {getInitials(log.title.split(' ')[0] || '?')}
                     </div>
-                    <div>
-                      <h4 className="font-bold text-sm text-black">{log.title}</h4>
-                      <p className="text-xs font-medium text-black/70 mt-1 leading-relaxed">{log.description}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-navy truncate">{log.title}</p>
+                      <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
+                        {log.date} · {log.hours} jam
+                      </p>
+                      <p className="text-xs font-medium text-navy/70 mt-1.5 leading-relaxed line-clamp-2">{log.description}</p>
                     </div>
                   </div>
-                  <div className="w-full lg:w-48 h-32 rounded-2xl overflow-hidden shrink-0 bg-black/5 relative border border-black/5">
-                    <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=400&q=80" alt="Proof" className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex flex-row lg:flex-col gap-2 shrink-0 border-t lg:border-t-0 pt-4 lg:pt-0 border-black/5 lg:w-40 justify-center">
-                    <button 
-                      onClick={() => updateLogStatus(log.id, 'approved')}
-                      className="flex-1 bg-black text-white py-2.5 rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-2"
-                    >
-                      <CheckCircle2 className="w-4 h-4" /> Approve
-                    </button>
-                    <button 
+                  <div className="flex items-center justify-end gap-2 mt-3 border-t border-mist/60 pt-2.5">
+                    <button
                       onClick={() => updateLogStatus(log.id, 'revision', 'Perlu perbaikan deskripsi')}
-                      className="flex-1 bg-white border border-black text-black py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2"
+                      className="text-[11px] font-bold bg-white border border-mist text-navy/70 px-3 py-1.5 rounded-lg hover:border-steel/40 hover:text-navy transition-colors flex items-center gap-1.5"
                     >
-                      <MessageSquare className="w-4 h-4" /> Revise
+                      <MessageSquare className="w-3.5 h-3.5" /> Revisi
+                    </button>
+                    <button
+                      onClick={() => updateLogStatus(log.id, 'approved')}
+                      className="text-[11px] font-bold bg-steel text-white px-3 py-1.5 rounded-lg hover:bg-steel/90 transition-colors flex items-center gap-1.5 shadow-sm shadow-steel/25"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Setujui
                     </button>
                   </div>
                 </div>
               ))
-            ) : (
-              <div className="bg-white p-8 rounded-[24px] border border-black/5 text-center">
-                <CheckCircle2 className="w-8 h-8 text-black/30 mx-auto mb-2" />
-                <p className="text-sm font-bold text-black">Semua logbook telah ditinjau!</p>
-                <p className="text-xs text-black/50 mt-1">Tidak ada jurnal harian yang menunggu persetujuan.</p>
-              </div>
             )}
+          </div>
+        </div>
+
+        {/* ══ RIGHT: Informasi + Catatan ══ */}
+        <div className="lg:col-span-2 flex flex-col gap-3 min-h-0">
+          <div className="bg-navy rounded-[24px] p-5 shrink-0 relative overflow-hidden shadow-lg shadow-navy/20">
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center">
+                    <Building className="w-4 h-4 text-white" />
+                  </div>
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-white/60">
+                    Tempat
+                  </p>
+                </div>
+                <span className="text-[11px] font-bold bg-white/15 text-white px-3 py-1.5 rounded-full tabular-nums">
+                  {siswaList.length} siswa
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-white/15 border border-white/10 flex items-center justify-center font-bold text-base text-white shrink-0">
+                  {getInitials(companyName) || 'M'}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-bold text-base text-white leading-tight truncate">
+                    {companyName || 'Perusahaan'}
+                  </p>
+                  <p className="text-[12px] font-semibold text-white/60 mt-0.5 truncate">
+                    Pembimbing Industri · {userName.split(',')[0].trim()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Card Catatan Mentor ── */}
+          <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm flex-1 flex flex-col min-h-[220px]">
+            <div className="flex items-center gap-2 p-5 pb-3 shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-mist/70 flex items-center justify-center">
+                <BookOpen className="w-4 h-4 text-navy" />
+              </div>
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-navy/60 leading-none">Catatan</p>
+                <p className="text-sm font-bold text-navy leading-tight mt-0.5">Catatan Mentor</p>
+              </div>
+            </div>
+            <div className="flex-1 px-5 pb-5 min-h-0">
+              <div className="w-full h-full overflow-y-auto custom-scrollbar text-[13px] font-medium text-navy/70 whitespace-pre-line leading-relaxed bg-[#F1F4F8]/60 border border-mist/60 rounded-xl p-3">
+                - Briefing siswa magang setiap Senin pagi
+                - Verifikasi logbook harian siswa
+                - Koordinasi dengan guru pembimbing sekolah
+                <span className="block mt-2 text-xs text-navy/40 italic">Review logbook dapat diakses dari menu Monitoring.</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
