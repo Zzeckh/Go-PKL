@@ -114,3 +114,24 @@ export const deactivateCompany = async (req, res, next) => {
     res.json(company);
   } catch (error) { next(error); }
 };
+
+/**
+ * DELETE /api/companies/:id/hard — hard delete (hapus permanen), super_admin only
+ */
+export const deleteCompany = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const existing = await prisma.company.findUnique({ where: { id } });
+    if (!existing) return res.status(404).json({ error: 'Perusahaan tidak ditemukan' });
+
+    const studentsCount = await prisma.user.count({ where: { companyId: id } });
+    if (studentsCount > 0) {
+      return res.status(400).json({
+        error: `Perusahaan masih memiliki ${studentsCount} siswa. Pindahkan siswa terlebih dahulu.`,
+      });
+    }
+
+    await prisma.company.delete({ where: { id } });
+    res.json({ success: true });
+  } catch (error) { next(error); }
+};

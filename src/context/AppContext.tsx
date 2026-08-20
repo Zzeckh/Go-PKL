@@ -112,6 +112,11 @@ interface AppContextType {
   loadSuperUsers: (filters?: { role?: string; search?: string }) => Promise<boolean>;
   toggleUser: (id: number) => Promise<any>;
   deleteUser: (id: number) => Promise<any>;
+  updateUserRole: (id: number, role: string) => Promise<any>;
+  loadCompanies: () => Promise<boolean>;
+  addCompany: (data: Partial<PerusahaanItem>) => Promise<any>;
+  updateCompany: (id: number, data: Partial<PerusahaanItem>) => Promise<any>;
+  deleteCompany: (id: number) => Promise<any>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -255,8 +260,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const loadSiswa = async () => {
     try {
       startLoading('siswa');
-      const response = await api.get('/api/users?role=student') as { data: any[] };
-      const mapped = response.data.map((u: any): SiswaItem => ({
+      const response = await api.get('/api/users?role=student') as any[];
+      const mapped = response.map((u: any): SiswaItem => ({
         id: u.id,
         name: u.name,
         kelas: u.class?.name || '-',
@@ -277,6 +282,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.warn('Gagal mengambil siswa:', error?.message);
     } finally {
       stopLoading('siswa');
+    }
+  };
+
+  const loadGuru = async () => {
+    try {
+      startLoading('guru');
+      const response = await api.get('/api/users?role=teacher') as any[];
+      const mapped = response.map((u: any): GuruItem => ({
+        id: u.id,
+        name: u.name,
+        subject: 'Guru Pembimbing',
+        totalSiswa: u._count?.students ?? 0,
+        totalDUDI: 0,
+      }));
+      setGuruList(mapped);
+    } catch (error: any) {
+      console.warn('Gagal mengambil guru:', error?.message);
+    } finally {
+      stopLoading('guru');
+    }
+  };
+
+  const loadMentor = async () => {
+    try {
+      startLoading('mentor');
+      const response = await api.get('/api/users?role=mentor') as any[];
+      const mapped = response.map((u: any): MentorItem => ({
+        id: u.id,
+        name: u.name,
+        perusahaan: u.company?.name || '-',
+        role: 'Mentor',
+        totalSiswa: u._count?.students ?? 0,
+      }));
+      setMentorList(mapped);
+    } catch (error: any) {
+      console.warn('Gagal mengambil mentor:', error?.message);
+    } finally {
+      stopLoading('mentor');
     }
   };
 
@@ -391,6 +434,58 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return res;
   };
 
+  const updateUserRole = async (id: number, role: string) => {
+    const res = await api.patch(`/api/super-admin/users/${id}/role`, { role });
+    await loadSuperUsers();
+    return res;
+  };
+
+  const loadCompanies = useCallback(async (): Promise<boolean> => {
+    if (!localStorage.getItem('pkl_token')) return false;
+    try {
+      const res = await api.get('/api/companies') as { data: any[] };
+      setPerusahaanList(res.data);
+      return true;
+    } catch (error: any) {
+      console.warn('Gagal mengambil daftar perusahaan:', error?.message);
+      return false;
+    }
+  }, []);
+
+  const addCompany = async (data: Partial<PerusahaanItem>) => {
+    const res = await api.post('/api/companies', {
+      name: data.name,
+      address: data.address,
+      category: data.category,
+      quota: Number(data.quota) || 0,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      radiusMeters: Number(data.radiusMeters) || 500,
+    });
+    await loadCompanies();
+    return res;
+  };
+
+  const updateCompany = async (id: number, data: Partial<PerusahaanItem>) => {
+    const res = await api.patch(`/api/companies/${id}`, {
+      name: data.name,
+      address: data.address,
+      category: data.category,
+      quota: data.quota !== undefined ? Number(data.quota) : undefined,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      radiusMeters: data.radiusMeters !== undefined ? Number(data.radiusMeters) : undefined,
+    });
+    await loadCompanies();
+    return res;
+  };
+
+  const deleteCompany = async (id: number) => {
+    const res = await api.delete(`/api/companies/${id}/hard`);
+    await loadCompanies();
+    return res;
+  };
+
   const refreshData = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -400,6 +495,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         loadSiswa(),
         loadPerizinan(),
         loadPerusahaan(),
+        loadGuru(),
+        loadMentor(),
       ]);
     } finally {
       setIsLoading(false);
@@ -610,7 +707,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         submitEvaluation, addSiswa, addPerusahaan, updateSiswaMapping, updateCompanyLocation,
         login, register, logout, refreshData,
         loadSuperStats, loadSuperClasses, createClass, deleteClass,
-        loadSuperUsers, toggleUser, deleteUser,
+        loadSuperUsers, toggleUser, deleteUser, updateUserRole,
+        loadCompanies, addCompany, updateCompany, deleteCompany,
       }}
     >
       {children}

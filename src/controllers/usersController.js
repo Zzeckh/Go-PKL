@@ -25,10 +25,12 @@ export const getUsers = async (req, res, next) => {
       include: {
         class: { select: { id: true, name: true, major: true } },
         teacher: { select: { id: true, name: true } },
+        company: { select: { id: true, name: true } },
         _count: {
           select: {
             absensis: true,
             logbooks: true,
+            students: true,
           },
         },
       },

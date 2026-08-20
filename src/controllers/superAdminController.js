@@ -166,3 +166,26 @@ export const deleteUser = async (req, res, next) => {
     next(error);
   }
 };
+
+/* ── PATCH /api/super-admin/users/:id/role ── */
+export const updateUserRole = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { role } = req.body;
+    const allowed = ['student', 'teacher', 'mentor', 'hubin'];
+    if (!allowed.includes(role)) {
+      return res.status(400).json({ error: 'Role tidak valid.' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return res.status(404).json({ error: 'User tidak ditemukan.' });
+    if (user.role === 'super_admin') {
+      return res.status(403).json({ error: 'Tidak dapat mengubah role super admin.' });
+    }
+
+    const updated = await prisma.user.update({ where: { id }, data: { role } });
+    res.json({ id: updated.id, role: updated.role });
+  } catch (error) {
+    next(error);
+  }
+};

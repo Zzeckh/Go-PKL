@@ -2,7 +2,7 @@ import React from 'react';
 import { 
   LayoutDashboard, BookOpen, MapPin, LogOut, PanelLeftClose, PanelLeftOpen, 
   Camera, Activity, FileCheck, DownloadCloud, Package,
-  School, Users, ShieldCheck
+  School, Users, ShieldCheck, Building2
 } from 'lucide-react';
 import { ActivePage, UserRole } from '../types';
 
@@ -32,6 +32,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'dashboard',        icon: LayoutDashboard, label: 'Dashboard' },
         { id: 'super-classes',    icon: School,          label: 'Kelola Kelas' },
         { id: 'super-users',      icon: Users,           label: 'Kelola Pengguna' },
+        { id: 'super-companies',  icon: Building2,       label: 'Kelola Perusahaan' },
       ];
     }
     if (userRole === 'hubin') {

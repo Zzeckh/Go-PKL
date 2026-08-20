@@ -52,6 +52,26 @@ model Class {
   users     User[]
 }
 
+model Company {
+  id           Int      @id @default(autoincrement())
+  name         String   @unique
+  address      String
+  phone        String?
+  category     String?
+  quota        Int      @default(0)
+  latitude     Float?
+  longitude    Float?
+  radiusMeters Int      @default(500)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  mentorId  Int?
+  mentor    User?    @relation("CompanyMentor", fields: [mentorId], references: [id])
+
+  students User[] @relation("CompanyStudents")
+}
+
 model User {
   id           Int      @id @default(autoincrement())
   name         String
@@ -67,6 +87,10 @@ model User {
   teacherId Int?
   teacher   User?   @relation("StudentTeacher", fields: [teacherId], references: [id])
   students  User[]  @relation("StudentTeacher")
+
+  companyId  Int?
+  company    Company?  @relation("CompanyStudents", fields: [companyId], references: [id])
+  mentoredCompanies Company[] @relation("CompanyMentor")
 
   absensis          Absensi[]
   logbooks          Logbook[]

@@ -531,7 +531,7 @@ const AddClassModal: React.FC<{
    KELOLA PENGGUNA
    ══════════════════════════════════════════════════════ */
 export const SuperUsers: React.FC = () => {
-  const { superUsers, loadSuperUsers, toggleUser, deleteUser, isAuthenticated } = useApp();
+  const { superUsers, loadSuperUsers, toggleUser, deleteUser, updateUserRole, isAuthenticated } = useApp();
   const [roleFilter, setRoleFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -637,6 +637,22 @@ export const SuperUsers: React.FC = () => {
                     </div>
                     {u.role !== 'super_admin' && (
                       <div className="flex items-center gap-1.5 shrink-0">
+                        <select
+                          value={u.role}
+                          onChange={(e) => {
+                            const role = e.target.value;
+                            if (confirm(`Ubah role "${u.name}" menjadi ${role.replace('_', ' ')}?`)) {
+                              updateUserRole(u.id, role).catch((err: any) => alert(err?.data?.error || err?.message || 'Gagal mengubah role.'));
+                            }
+                          }}
+                          title="Ubah role"
+                          className="h-9 bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg px-2 text-xs font-bold text-navy outline-none focus:border-steel cursor-pointer capitalize"
+                        >
+                          <option value="student">Siswa</option>
+                          <option value="teacher">Guru</option>
+                          <option value="mentor">Mentor</option>
+                          <option value="hubin">Hubin</option>
+                        </select>
                         <button
                           onClick={() => {
                             if (confirm(`Hapus pengguna "${u.name}"? Tindakan ini tidak dapat dibatalkan.`)) {
