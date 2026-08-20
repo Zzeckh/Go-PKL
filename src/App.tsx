@@ -148,6 +148,7 @@ export default function App() {
             <TeacherDashboard 
               userName={userName}
               schoolName={schoolName}
+              onNavigate={(page) => setActivePage(page)}
             />
           )}
 
