@@ -13,7 +13,8 @@ export const errorHandler = (err, req, res, next) => {
 
   // Prisma known errors — kasih pesan ramah
   if (err.code === 'P2002') {
-    const fields = err.meta?.target?.join(', ') || 'unique field';
+    const target = err.meta?.target;
+    const fields = Array.isArray(target) ? target.join(', ') : (target || 'unique field');
     return res.status(409).json({ error: `Data dengan ${fields} sudah terdaftar` });
   }
   if (err.code === 'P2025') {

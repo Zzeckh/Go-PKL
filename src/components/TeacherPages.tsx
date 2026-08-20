@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Search, CheckCircle2,
-  FileText, DownloadCloud, Check, X, Users, Clock, AlertCircle
+  FileText, DownloadCloud, Check, X, Users, Clock, AlertCircle, Activity, ChevronRight, BookOpen
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { assetUrl } from '../utils/api';
@@ -13,9 +13,10 @@ const getInitials = (name: string) =>
    TEACHER & MENTOR MONITORING
    ══════════════════════════════════════════════════════ */
 export const TeacherMonitoring: React.FC = () => {
-  const { siswaList, logEntries } = useApp();
+  const { siswaList, logEntries, attendances } = useApp();
   const [filterCompany, setFilterCompany] = useState('all');
   const [search, setSearch] = useState('');
+  const [selectedSiswa, setSelectedSiswa] = useState<any>(null);
 
   const companies = Array.from(new Set(siswaList.map(s => s.perusahaan).filter(c => c && c !== '-')));
 
@@ -124,7 +125,7 @@ export const TeacherMonitoring: React.FC = () => {
                     .slice(0, 1);
                   const latestLog = siswaLogs[0];
                   return (
-                    <tr key={siswa.id} className="border-b border-mist/40 transition-colors hover:bg-[#F1F4F8]/40">
+                    <tr key={siswa.id} onClick={() => setSelectedSiswa(siswa)} className="border-b border-mist/40 transition-colors hover:bg-[#F1F4F8]/60 cursor-pointer group/tr">
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full bg-navy text-white flex items-center justify-center font-bold text-xs shrink-0">
@@ -162,6 +163,124 @@ export const TeacherMonitoring: React.FC = () => {
               )}
             </tbody>
           </table>
+        </div>
+        <div className="shrink-0 text-[11px] font-semibold text-navy/40 px-4 py-2.5 border-t border-mist/60 bg-[#F1F4F8]/40">
+          <span className="flex items-center gap-1.5"><ChevronRight className="w-3 h-3" /> Klik baris siswa untuk melihat detail logbook & kehadiran</span>
+        </div>
+      </div>
+
+      {selectedSiswa && (
+        <MonitoringDetailModal
+          siswa={selectedSiswa}
+          logs={logEntries}
+          attendances={attendances}
+          onClose={() => setSelectedSiswa(null)}
+        />
+      )}
+    </div>
+  );
+};
+
+const MonitoringDetailModal: React.FC<{
+  siswa: any;
+  logs: any[];
+  attendances: any[];
+  onClose: () => void;
+}> = ({ siswa, logs, attendances, onClose }) => {
+  const siswaLogs = logs.filter(l =>
+    l.title.toLowerCase().includes(siswa.name.split(' ')[0].toLowerCase())
+  );
+
+  const statusLabel = (s: string) =>
+    s === 'approved' ? 'Disetujui' : s === 'revision' ? 'Revisi' : 'Menunggu';
+  const statusPill = (s: string) =>
+    s === 'approved' ? 'bg-steel/15 text-steel'
+    : s === 'revision' ? 'bg-rose-100 text-rose-700'
+    : 'bg-[#FBF3E2] text-[#9A6B15]';
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy/50 backdrop-blur-md">
+      <div className="bg-white rounded-[24px] max-w-lg w-full shadow-2xl border border-mist/60 overflow-hidden flex flex-col max-h-[92vh]">
+        <div className="p-5 border-b border-mist/60 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-full bg-navy text-white flex items-center justify-center font-bold text-sm">
+              {getInitials(siswa.name)}
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-lg font-bold text-navy leading-tight truncate">{siswa.name}</h3>
+              <p className="text-[11px] font-semibold text-navy/50">{siswa.kelas} · {siswa.perusahaan || '-'}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-9 h-9 rounded-xl bg-mist/60 hover:bg-mist flex items-center justify-center shrink-0">
+            <X className="w-4 h-4 text-navy/60" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-4">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex items-center gap-3 bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl p-3">
+              <Activity className="w-4 h-4 text-steel shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase text-navy/50">Kehadiran</p>
+                <p className="text-sm font-bold text-navy">{siswa.kehadiran || 0}%</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl p-3">
+              <BookOpen className="w-4 h-4 text-steel shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase text-navy/50">Total Logbook</p>
+                <p className="text-sm font-bold text-navy">{siswaLogs.length}</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-navy/40 mb-2 flex items-center gap-1.5">
+              <BookOpen className="w-3.5 h-3.5" /> Logbook
+            </p>
+            {siswaLogs.length === 0 ? (
+              <p className="text-xs text-navy/50 bg-[#F1F4F8]/60 border border-mist/60 rounded-xl p-3">Belum ada logbook.</p>
+            ) : (
+              <div className="space-y-2">
+                {siswaLogs.map(log => (
+                  <div key={log.id} className="p-3 rounded-xl border border-mist/60 bg-white">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-xs font-bold text-navy flex-1 min-w-0">{log.title}</p>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${statusPill(log.status)}`}>
+                        {statusLabel(log.status)}
+                      </span>
+                    </div>
+                    <p className="text-[11px] font-semibold text-navy/50 mt-0.5">
+                      {log.date} · {log.hours} jam
+                    </p>
+                    {log.description && (
+                      <p className="text-[11px] font-medium text-navy/70 mt-1.5 leading-relaxed">{log.description}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-navy/40 mb-2 flex items-center gap-1.5">
+              <Activity className="w-3.5 h-3.5" /> Riwayat Kehadiran
+            </p>
+            {attendances.length === 0 ? (
+              <p className="text-xs text-navy/50 bg-[#F1F4F8]/60 border border-mist/60 rounded-xl p-3">Belum ada data absensi.</p>
+            ) : (
+              <div className="space-y-1.5">
+                {attendances.slice(0, 6).map((a, i) => (
+                  <div key={i} className="flex items-center justify-between p-2.5 rounded-xl bg-[#F1F4F8]/60 border border-mist/60">
+                    <span className="text-xs font-bold text-navy">{a.date}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      a.status === 'Hadir' ? 'bg-steel/15 text-steel' : 'bg-[#FBF3E2] text-[#9A6B15]'
+                    }`}>{a.status}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

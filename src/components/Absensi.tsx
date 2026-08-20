@@ -47,6 +47,7 @@ export const Absensi: React.FC<AbsensiProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [time, setTime] = useState(new Date());
+  const [justCheckedIn, setJustCheckedIn] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -178,13 +179,16 @@ export const Absensi: React.FC<AbsensiProps> = ({
         userCoords?.lat,
         userCoords?.lng
       );
+      setJustCheckedIn(true);
     } catch (error: any) {
       setSubmitError(error?.message || 'Gagal mengirim absensi. Silakan coba lagi.');
       setIsSubmitting(false);
     }
   };
 
-  if (hasCheckedIn) {
+  const checkedIn = hasCheckedIn || justCheckedIn;
+
+  if (checkedIn) {
     return (
       <div className="h-full w-full flex items-center justify-center animate-in fade-in duration-500 p-4">
         <div className="bg-white rounded-[24px] border border-mist/60 shadow-xl max-w-sm w-full flex flex-col items-center text-center p-8">

@@ -46,6 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       return [
         { id: 'dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
         { id: 'monitoring', icon: Activity,        label: 'Monitoring' },
+        { id: 'logbook',    icon: BookOpen,        label: 'Logbook' },
         { id: 'attendance', icon: Camera,          label: 'Kehadiran' },
         { id: 'roster',     icon: Award,           label: 'Penilaian' },
         { id: 'perizinan',  icon: FileCheck,       label: 'Perizinan' }

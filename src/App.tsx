@@ -10,7 +10,7 @@ import { Profile } from './components/Profile';
 import { Absensi } from './components/Absensi';
 import { TeacherDashboard } from './components/TeacherDashboard';
 import { TeacherMonitoring, TeacherPerizinan, TeacherRekap } from './components/TeacherPages';
-import { MentorAttendance, MentorRoster } from './components/MentorPages';
+import { MentorAttendance, MentorLogbook, MentorRoster } from './components/MentorPages';
 import { HubinDashboard } from './components/HubinDashboard';
 import { HubinData } from './components/HubinPages';
 import { HubinPemetaan } from './components/HubinPemetaan';
@@ -165,7 +165,8 @@ export default function App() {
           )}
 
           {/* ── SHARED PAGES ── */}
-          {activePage === 'logbook' && (
+          {activePage === 'logbook' && userRole === 'mentor' && <MentorLogbook />}
+          {activePage === 'logbook' && userRole !== 'mentor' && (
             <Logbook 
               logs={logEntries} 
               onAddLog={addLogEntry} 

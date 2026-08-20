@@ -54,6 +54,7 @@ export const createLogbook = async (req, res, next) => {
         description,
         hours: hours || 8,
         category: category || null,
+        date: req.body.date ? new Date(req.body.date) : new Date(),
         status: 'pending',
       },
       include: {
