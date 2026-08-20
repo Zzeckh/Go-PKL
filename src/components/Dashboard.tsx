@@ -331,7 +331,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <button
                       onClick={() => deleteTodo(todo.id)}
                       title="Hapus task"
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-navy/40 hover:bg-rose-50 hover:text-rose-600 transition-colors shrink-0"
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-navy/40 hover:bg-navy/5 hover:text-navy/70 transition-colors shrink-0"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>

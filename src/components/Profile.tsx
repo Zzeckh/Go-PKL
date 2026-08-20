@@ -146,7 +146,7 @@ export const Profile: React.FC<ProfileProps> = ({ userRole = 'intern' }) => {
               </div>
             </div>
           </div>
-          <div className="bg-[#F1F4F8] rounded-[24px] border border-[#E2E8F0] p-5 flex flex-col gap-4 overflow-y-auto custom-scrollbar">
+          <div className="bg-shell rounded-[24px] border border-mist p-5 flex flex-col gap-4 overflow-y-auto custom-scrollbar">
             <p className="text-[10px] font-bold text-navy/40 uppercase tracking-widest mb-1">Role Terkelola</p>
             {[
               { icon: BookMarked, label: 'Siswa PKL', value: '1 User' },
@@ -196,7 +196,7 @@ export const Profile: React.FC<ProfileProps> = ({ userRole = 'intern' }) => {
               </div>
             </div>
           </div>
-          <div className="bg-[#F1F4F8] rounded-[24px] border border-[#E2E8F0] p-5 flex flex-col gap-4 overflow-y-auto custom-scrollbar">
+          <div className="bg-shell rounded-[24px] border border-mist p-5 flex flex-col gap-4 overflow-y-auto custom-scrollbar">
             <p className="text-[10px] font-bold text-navy/40 uppercase tracking-widest mb-1">
               {userRole === 'hubin' ? 'Sebaran Top DUDI' : 'Status Bimbingan'}
             </p>
@@ -254,7 +254,7 @@ export const Profile: React.FC<ProfileProps> = ({ userRole = 'intern' }) => {
             </div>
           </div>
         </div>
-        <div className="bg-[#F1F4F8] rounded-[24px] border border-[#E2E8F0] p-5 flex flex-col gap-4 overflow-y-auto custom-scrollbar">
+        <div className="bg-shell rounded-[24px] border border-mist p-5 flex flex-col gap-4 overflow-y-auto custom-scrollbar">
           {[
             { icon: Calendar, label: 'Durasi', value: '01 Sep – 30 Nov 2025' },
             { icon: Award, label: 'Evaluasi Bln 1', value: 'A — Sangat Baik' },
@@ -293,7 +293,7 @@ export const Profile: React.FC<ProfileProps> = ({ userRole = 'intern' }) => {
             className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold border transition-all ${
               editing
                 ? 'bg-steel text-white border-steel'
-                : 'bg-white text-navy border-mist hover:border-steel/40 hover:bg-[#F1F4F8]'
+                : 'bg-white text-navy border-mist hover:border-steel/40 hover:bg-shell'
             }`}
           >
             {editing ? <><Check className="w-4 h-4" /> Simpan</> : <><Edit2 className="w-4 h-4" /> Edit Profil</>}
@@ -352,12 +352,12 @@ export const Profile: React.FC<ProfileProps> = ({ userRole = 'intern' }) => {
             <div className="flex flex-wrap justify-center sm:justify-start items-center gap-3 mt-4">
               {editing ? (
                 <>
-                  <div className="flex items-center gap-2 bg-[#F1F4F8] border border-mist px-3 py-2 rounded-xl text-xs font-bold text-navy shadow-sm">
+                  <div className="flex items-center gap-2 bg-shell border border-mist px-3 py-2 rounded-xl text-xs font-bold text-navy shadow-sm">
                     <Building2 className="w-4 h-4 text-navy/40 shrink-0" />
                     <input name="company" value={profile.company} onChange={onChange} className="w-32 bg-transparent outline-none" />
                   </div>
                   {userRole === 'intern' && (
-                    <div className="flex items-center gap-2 bg-[#F1F4F8] border border-mist px-3 py-2 rounded-xl text-xs font-bold text-navy shadow-sm">
+                    <div className="flex items-center gap-2 bg-shell border border-mist px-3 py-2 rounded-xl text-xs font-bold text-navy shadow-sm">
                       <BookMarked className="w-4 h-4 text-navy/40 shrink-0" />
                       <input name="className" value={profile.className} onChange={onChange} className="w-24 bg-transparent outline-none" />
                     </div>
@@ -365,15 +365,15 @@ export const Profile: React.FC<ProfileProps> = ({ userRole = 'intern' }) => {
                 </>
               ) : (
                 <>
-                  <div className="flex items-center gap-2 bg-[#F1F4F8] border border-mist shadow-sm px-4 py-2 rounded-xl text-xs font-bold text-navy/80">
+                  <div className="flex items-center gap-2 bg-shell border border-mist shadow-sm px-4 py-2 rounded-xl text-xs font-bold text-navy/80">
                     <Building2 className="w-4 h-4 text-navy/40" /> {profile.company}
                   </div>
                   {userRole === 'intern' && (
-                    <div className="flex items-center gap-2 bg-[#F1F4F8] border border-mist shadow-sm px-4 py-2 rounded-xl text-xs font-bold text-navy/80">
+                    <div className="flex items-center gap-2 bg-shell border border-mist shadow-sm px-4 py-2 rounded-xl text-xs font-bold text-navy/80">
                       <BookMarked className="w-4 h-4 text-navy/40" /> {profile.className}
                     </div>
                   )}
-                  <div className="flex items-center gap-2 bg-[#F1F4F8] border border-mist shadow-sm px-4 py-2 rounded-xl text-xs font-bold text-navy/80">
+                  <div className="flex items-center gap-2 bg-shell border border-mist shadow-sm px-4 py-2 rounded-xl text-xs font-bold text-navy/80">
                     <Briefcase className="w-4 h-4 text-navy/40" /> {profile.role}
                   </div>
                 </>
@@ -404,7 +404,7 @@ export const Profile: React.FC<ProfileProps> = ({ userRole = 'intern' }) => {
               { icon: Phone, label: 'Telepon', field: 'phone' as const, val: profile.phone },
               { icon: MapPin, label: 'Alamat', field: 'address' as const, val: profile.address },
             ].map(({ icon: Icon, label, field, val }) => (
-              <div key={field} className="flex items-start gap-4 bg-[#F1F4F8] rounded-2xl border border-[#E2E8F0] p-4 hover:shadow-sm transition-all group">
+              <div key={field} className="flex items-start gap-4 bg-shell rounded-2xl border border-mist p-4 hover:shadow-sm transition-all group">
                 <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0 group-hover:bg-steel transition-colors duration-300 shadow-sm">
                   <Icon className="w-4 h-4 text-navy/50 group-hover:text-white transition-colors duration-300" />
                 </div>

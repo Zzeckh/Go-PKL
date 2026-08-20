@@ -60,7 +60,7 @@ export const MentorDashboard: React.FC<MentorDashboardProps> = ({ userName, comp
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="hidden md:flex items-center gap-1.5 text-[11px] font-bold text-navy/60 bg-[#F1F4F8] border border-[#E2E8F0] px-3 py-2 rounded-full">
+          <span className="hidden md:flex items-center gap-1.5 text-[11px] font-bold text-navy/60 bg-shell border border-mist px-3 py-2 rounded-full">
             <Clock className="w-3.5 h-3.5" />
             {time.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
           </span>
@@ -80,7 +80,7 @@ export const MentorDashboard: React.FC<MentorDashboardProps> = ({ userName, comp
             className="bg-white border border-mist/60 rounded-[24px] p-5 text-left transition-all hover:border-steel/40 hover:-translate-y-0.5 hover:shadow-md group flex flex-col justify-between min-h-[140px]"
           >
             <div className="flex items-center justify-between">
-              <div className="w-10 h-10 rounded-xl bg-[#F1F4F8] flex items-center justify-center group-hover:bg-steel/10 transition-colors">
+              <div className="w-10 h-10 rounded-xl bg-shell flex items-center justify-center group-hover:bg-steel/10 transition-colors">
                 <s.icon className="w-5 h-5 text-navy/60 group-hover:text-steel transition-colors" />
               </div>
               <ChevronRight className="w-4 h-4 text-navy/20 group-hover:text-steel group-hover:translate-x-0.5 transition-all" />
@@ -118,7 +118,7 @@ export const MentorDashboard: React.FC<MentorDashboardProps> = ({ userName, comp
           <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 min-h-0">
             {pendingEntries.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-14 h-14 rounded-2xl bg-[#E4F0F1] flex items-center justify-center mb-3">
+                <div className="w-14 h-14 rounded-2xl bg-steel/10 flex items-center justify-center mb-3">
                   <CheckCircle2 className="w-6 h-6 text-steel" />
                 </div>
                 <p className="text-sm font-bold text-navy mb-1">Semua logbook telah ditinjau</p>
@@ -207,7 +207,7 @@ export const MentorDashboard: React.FC<MentorDashboardProps> = ({ userName, comp
               </div>
             </div>
             <div className="flex-1 px-5 pb-5 min-h-0">
-              <div className="w-full h-full overflow-y-auto custom-scrollbar text-[13px] font-medium text-navy/70 whitespace-pre-line leading-relaxed bg-[#F1F4F8]/60 border border-mist/60 rounded-xl p-3">
+              <div className="w-full h-full overflow-y-auto custom-scrollbar text-[13px] font-medium text-navy/70 whitespace-pre-line leading-relaxed bg-shell/60 border border-mist/60 rounded-xl p-3">
                 - Briefing siswa magang setiap Senin pagi
                 - Verifikasi logbook harian siswa
                 - Koordinasi dengan guru pembimbing sekolah

@@ -19,23 +19,23 @@ const statusConfig = {
   approved: {
     label: 'Disetujui',
     icon: CheckCircle2,
-    bg: 'bg-[#E4F0F1]',
+    bg: 'bg-steel/10',
     text: 'text-steel',
     dot: 'bg-steel',
   },
   pending: {
     label: 'Menunggu',
     icon: Clock,
-    bg: 'bg-[#FBF3E2]',
-    text: 'text-[#9A6B15]',
-    dot: 'bg-[#D99A21]',
+    bg: 'bg-steel/10',
+    text: 'text-steel',
+    dot: 'bg-steel',
   },
   revision: {
     label: 'Revisi',
     icon: AlertCircle,
-    bg: 'bg-[#FDECEF]',
-    text: 'text-[#BE123C]',
-    dot: 'bg-[#E11D48]',
+    bg: 'bg-navy/10',
+    text: 'text-navy',
+    dot: 'bg-navy',
   },
 };
 
@@ -132,7 +132,7 @@ export const Logbook: React.FC<LogbookProps> = ({
         {/* Stats — semua card seragam #F1F4F8 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
           {/* Total Jurnal */}
-          <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-2xl p-3">
+          <div className="bg-shell border border-mist rounded-2xl p-3">
             <div className="flex items-center justify-between mb-1">
               <BookOpen className="w-4 h-4 text-navy/50" />
               <span className="text-2xl font-bold text-navy tabular-nums">{logs.length}</span>
@@ -141,7 +141,7 @@ export const Logbook: React.FC<LogbookProps> = ({
           </div>
 
           {/* Total Jam */}
-          <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-2xl p-3">
+          <div className="bg-shell border border-mist rounded-2xl p-3">
             <div className="flex items-center justify-between mb-1">
               <Clock className="w-4 h-4 text-navy/50" />
               <span className="text-2xl font-bold text-navy tabular-nums">
@@ -153,7 +153,7 @@ export const Logbook: React.FC<LogbookProps> = ({
           </div>
 
           {/* Disetujui */}
-          <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-2xl p-3">
+          <div className="bg-shell border border-mist rounded-2xl p-3">
             <div className="flex items-center justify-between mb-1">
               <CheckCircle2 className="w-4 h-4 text-navy/50" />
               <span className="text-2xl font-bold text-navy tabular-nums">{approved}</span>
@@ -162,7 +162,7 @@ export const Logbook: React.FC<LogbookProps> = ({
           </div>
 
           {/* Pending */}
-          <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-2xl p-3">
+          <div className="bg-shell border border-mist rounded-2xl p-3">
             <div className="flex items-center justify-between mb-1">
               <AlertCircle className="w-4 h-4 text-navy/50" />
               <div className="flex items-baseline gap-1.5">
@@ -348,19 +348,19 @@ export const Logbook: React.FC<LogbookProps> = ({
                       )}
 
                       {log.status === 'revision' && log.feedback && (
-                        <div className="mt-3 p-3 bg-[#FDECEF] border border-[#F5D0D9] rounded-xl">
+                        <div className="mt-3 p-3 bg-navy/10 border border-navy/15 rounded-xl">
                           <div className="flex items-start gap-2">
-                            <AlertCircle className="w-4 h-4 text-[#BE123C] shrink-0 mt-0.5" />
+                            <AlertCircle className="w-4 h-4 text-navy shrink-0 mt-0.5" />
                             <div className="flex-1 min-w-0">
-                              <p className="text-[11px] font-bold text-[#BE123C] mb-0.5">Catatan Revisi</p>
-                              <p className="text-xs font-medium text-[#881337]/80 leading-relaxed">{log.feedback}</p>
+                              <p className="text-[11px] font-bold text-navy mb-0.5">Catatan Revisi</p>
+                              <p className="text-xs font-medium text-navy/80 leading-relaxed">{log.feedback}</p>
                             </div>
                           </div>
                         </div>
                       )}
 
                       {log.status === 'approved' && log.feedback && (
-                        <div className="mt-3 p-3 bg-[#E4F0F1] border border-[#CBE2E4] rounded-xl">
+                        <div className="mt-3 p-3 bg-steel/10 border border-mist rounded-xl">
                           <div className="flex items-start gap-2">
                             <CheckCircle2 className="w-4 h-4 text-steel shrink-0 mt-0.5" />
                             <div className="flex-1 min-w-0">
@@ -461,7 +461,7 @@ export const Logbook: React.FC<LogbookProps> = ({
                       Deskripsi Aktivitas
                     </label>
                     <span className={`text-[11px] font-bold tabular-nums ${
-                      desc.length > 500 ? 'text-[#BE123C]' : desc.length > 400 ? 'text-[#9A6B15]' : 'text-navy/40'
+                      desc.length > 500 ? 'text-navy' : desc.length > 400 ? 'text-steel' : 'text-navy/40'
                     }`}>
                       {desc.length}/500
                     </span>

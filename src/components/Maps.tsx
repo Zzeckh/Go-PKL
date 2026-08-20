@@ -184,9 +184,9 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
       if (!companyCirclesRef.current.has(c.id)) {
         const circle = L.circle(latlng, {
           radius: c.radiusMeters ?? 500,
-          color: '#4A7A8C',
+          color: '#4478AE',
           weight: 2,
-          fillColor: '#4A7A8C',
+          fillColor: '#4478AE',
           fillOpacity: 0.08,
           dashArray: '4 4',
         }).addTo(map);
@@ -227,7 +227,7 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
     ];
     if (!polylineRef.current) {
       polylineRef.current = L.polyline(latlngs, {
-        color: '#4A7A8C',
+        color: '#4478AE',
         weight: 2,
         dashArray: '6 8',
         opacity: 0.8,
@@ -267,7 +267,7 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
     return (
       <div className="h-full w-full flex items-center justify-center p-4">
         <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm max-w-sm w-full flex flex-col items-center text-center p-8">
-          <div className="w-16 h-16 rounded-2xl bg-[#F1F4F8] flex items-center justify-center mb-4">
+          <div className="w-16 h-16 rounded-2xl bg-shell flex items-center justify-center mb-4">
             <Compass className="w-7 h-7 text-navy/40" />
           </div>
           <h2 className="text-lg font-bold text-navy mb-1">Belum Ada Lokasi PKL</h2>
@@ -284,8 +284,8 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
     return (
       <div className="h-full w-full flex items-center justify-center p-4">
         <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm max-w-sm w-full flex flex-col items-center text-center p-8">
-          <div className="w-16 h-16 rounded-2xl bg-[#FBF3E2] flex items-center justify-center mb-4">
-            <AlertTriangle className="w-7 h-7 text-[#9A6B15]" />
+          <div className="w-16 h-16 rounded-2xl bg-steel/10 flex items-center justify-center mb-4">
+            <AlertTriangle className="w-7 h-7 text-steel" />
           </div>
           <h2 className="text-lg font-bold text-navy mb-1">Kamu Belum Dipetakan</h2>
           <p className="text-sm text-navy/60 leading-relaxed">
@@ -313,7 +313,7 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
           </div>
         </div>
         <div className="hidden md:flex items-center gap-2 shrink-0">
-          <span className="flex items-center gap-1.5 text-[11px] font-bold text-navy/60 bg-[#F1F4F8] border border-[#E2E8F0] px-3 py-2 rounded-full">
+          <span className="flex items-center gap-1.5 text-[11px] font-bold text-navy/60 bg-shell border border-mist px-3 py-2 rounded-full">
             <Building2 className="w-3.5 h-3.5" />
             {companiesWithCoords.length} Lokasi · {siswaList.length} Siswa
           </span>
@@ -332,7 +332,7 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
               </div>
               <p className="text-[13px] font-bold uppercase tracking-widest text-navy/70">Peta Sebaran</p>
             </div>
-            <span className="text-[11px] font-bold bg-[#F1F4F8] text-navy/60 border border-[#E2E8F0] px-3 py-1.5 rounded-full flex items-center gap-1.5">
+            <span className="text-[11px] font-bold bg-shell text-navy/60 border border-mist px-3 py-1.5 rounded-full flex items-center gap-1.5">
               <MapIcon className="w-3 h-3" /> Peta Jalan
             </span>
           </div>
@@ -348,11 +348,11 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
                   <span className="text-xs font-bold text-navy">Mencari sinyal GPS...</span>
                 </div>
               ) : gpsError ? (
-                <div className="bg-white/95 backdrop-blur-sm px-3.5 py-2.5 rounded-xl border border-rose-200 shadow-lg flex items-start gap-2.5 max-w-[240px]">
-                  <AlertTriangle className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
+                <div className="bg-white/95 backdrop-blur-sm px-3.5 py-2.5 rounded-xl border border-navy/15 shadow-lg flex items-start gap-2.5 max-w-[240px]">
+                  <AlertTriangle className="w-3.5 h-3.5 text-navy/60 shrink-0 mt-0.5" />
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-rose-700 leading-tight">GPS tidak aktif</p>
-                    <p className="text-[10px] text-rose-600 mt-0.5 line-clamp-2">{gpsError}</p>
+                    <p className="text-xs font-bold text-navy leading-tight">GPS tidak aktif</p>
+                    <p className="text-[10px] text-navy/60 mt-0.5 line-clamp-2">{gpsError}</p>
                   </div>
                 </div>
               ) : (
@@ -360,15 +360,15 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
                   isWithinRadius === true
                     ? 'bg-white/95 backdrop-blur-sm border-steel/40'
                     : isWithinRadius === false
-                      ? 'bg-white/95 backdrop-blur-sm border-rose-200'
+                      ? 'bg-white/95 backdrop-blur-sm border-navy/15'
                       : 'bg-white/95 backdrop-blur-sm border-mist'
                 }`}>
                   <span className="relative flex h-2.5 w-2.5 shrink-0">
                     <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-40 ${
-                      isWithinRadius === true ? 'bg-steel' : isWithinRadius === false ? 'bg-rose-500' : 'bg-steel'
+                      isWithinRadius === true ? 'bg-steel' : isWithinRadius === false ? 'bg-navy' : 'bg-steel'
                     }`} />
                     <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
-                      isWithinRadius === true ? 'bg-steel' : isWithinRadius === false ? 'bg-rose-500' : 'bg-steel'
+                      isWithinRadius === true ? 'bg-steel' : isWithinRadius === false ? 'bg-navy' : 'bg-steel'
                     }`} />
                   </span>
                   <div className="min-w-0">
@@ -393,7 +393,7 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
             <button
               onClick={handleLocateMe}
               title="Pusatkan ke lokasi saya"
-              className="absolute left-3 top-3 z-[500] w-9 h-9 rounded-xl bg-white/95 backdrop-blur-sm border border-mist shadow-lg flex items-center justify-center text-steel hover:bg-[#F1F4F8] transition-colors"
+              className="absolute left-3 top-3 z-[500] w-9 h-9 rounded-xl bg-white/95 backdrop-blur-sm border border-mist shadow-lg flex items-center justify-center text-steel hover:bg-shell transition-colors"
             >
               <LocateFixed className="w-4 h-4" />
             </button>
@@ -432,7 +432,7 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
                   </div>
                   {distance != null && (
                     <span className={`text-[11px] font-bold px-3 py-1.5 rounded-full tabular-nums ${
-                      isWithinRadius ? 'bg-steel text-white' : 'bg-rose-500 text-white'
+                      isWithinRadius ? 'bg-steel text-white' : 'bg-navy text-white'
                     }`}>
                       {distance}m
                     </span>
@@ -449,12 +449,12 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
                     isWithinRadius === true
                       ? 'bg-steel/20 border-steel/40'
                       : isWithinRadius === false
-                        ? 'bg-rose-500/15 border-rose-500/40'
+                        ? 'bg-navy/10 border-navy/30'
                         : 'bg-white/10 border-white/15'
                   }`}>
                     <div className="flex items-center gap-2 min-w-0">
                       {isWithinRadius === false ? (
-                        <ShieldAlert className="w-4 h-4 text-rose-300 shrink-0" />
+                        <ShieldAlert className="w-4 h-4 text-white/70 shrink-0" />
                       ) : (
                         <ShieldCheck className="w-4 h-4 text-steel shrink-0" />
                       )}
@@ -488,7 +488,7 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
           {selected && (
             <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 shrink-0">
               <div className="grid grid-cols-2 gap-2 mb-3">
-                <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                <div className="bg-shell border border-mist rounded-xl px-3 py-2.5 flex items-center gap-2.5">
                   <Tag className="w-4 h-4 text-navy/50 shrink-0" />
                   <div className="min-w-0">
                     <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide leading-none">Kategori</p>
@@ -497,14 +497,14 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
                     </p>
                   </div>
                 </div>
-                <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                <div className="bg-shell border border-mist rounded-xl px-3 py-2.5 flex items-center gap-2.5">
                   <Users className="w-4 h-4 text-navy/50 shrink-0" />
                   <div className="min-w-0">
                     <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide leading-none">Siswa PKL</p>
                     <p className="text-[13px] font-bold text-navy mt-1">{internsCount} orang</p>
                   </div>
                 </div>
-                <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                <div className="bg-shell border border-mist rounded-xl px-3 py-2.5 flex items-center gap-2.5">
                   <Clock className="w-4 h-4 text-navy/50 shrink-0" />
                   <div className="min-w-0">
                     <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide leading-none">Radius</p>
@@ -513,7 +513,7 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
                     </p>
                   </div>
                 </div>
-                <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                <div className="bg-shell border border-mist rounded-xl px-3 py-2.5 flex items-center gap-2.5">
                   <Navigation className="w-4 h-4 text-navy/50 shrink-0" />
                   <div className="min-w-0">
                     <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide leading-none">Status</p>
@@ -558,7 +558,7 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
                 </div>
 
                 <div className="flex flex-col gap-2.5 mb-3 shrink-0">
-                  <div className="p-3.5 rounded-2xl border border-mist/60 bg-[#F1F4F8]/60">
+                  <div className="p-3.5 rounded-2xl border border-mist/60 bg-shell/60">
                     <div className="flex items-center gap-3">
                       <div className="w-11 h-11 rounded-2xl bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md shadow-navy/20">
                         {getInitials(teacherName)}
@@ -617,11 +617,11 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
                           className={`w-full text-left p-2.5 rounded-xl border transition-all shrink-0 flex items-center gap-2.5 ${
                             isSel
                               ? 'bg-steel/10 border-steel/40'
-                              : 'bg-white border-mist/60 hover:border-steel/30 hover:bg-[#F1F4F8]/50'
+                              : 'bg-white border-mist/60 hover:border-steel/30 hover:bg-shell/50'
                           }`}
                         >
                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                            isSel ? 'bg-steel text-white' : 'bg-[#F1F4F8] text-navy/50'
+                            isSel ? 'bg-steel text-white' : 'bg-shell text-navy/50'
                           }`}>
                             <MapPin className="w-3.5 h-3.5" />
                           </div>

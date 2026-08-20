@@ -119,7 +119,7 @@ export const HubinData: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="hidden sm:flex items-center gap-1.5 text-[11px] font-bold text-navy/60 bg-[#F1F4F8] border border-[#E2E8F0] px-3 py-2 rounded-full">
+          <span className="hidden sm:flex items-center gap-1.5 text-[11px] font-bold text-navy/60 bg-shell border border-mist px-3 py-2 rounded-full">
             <Clock className="w-3.5 h-3.5" /> TA {activeYear}
           </span>
           <button
@@ -138,7 +138,7 @@ export const HubinData: React.FC = () => {
             key={s.label}
             className="bg-white border border-mist/60 rounded-[24px] p-4 md:p-5 min-h-[100px] flex flex-col justify-between"
           >
-            <div className="w-10 h-10 rounded-xl bg-[#F1F4F8] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-shell flex items-center justify-center">
               <s.icon className="w-5 h-5 text-navy/60" />
             </div>
             <div>
@@ -155,7 +155,7 @@ export const HubinData: React.FC = () => {
         {/* Toolbar: segmented tabs + search */}
         <div className="px-4 md:px-5 pt-4 pb-3 shrink-0 space-y-3 border-b border-mist/60">
           {/* Segmented tabs grouped by Dalam/Luar */}
-          <div className="bg-[#F1F4F8] p-1 rounded-xl flex items-center gap-1 overflow-x-auto">
+          <div className="bg-shell p-1 rounded-xl flex items-center gap-1 overflow-x-auto">
             <span className="text-[10px] font-bold text-navy/40 uppercase tracking-widest px-2 shrink-0">
               Dalam
             </span>
@@ -211,7 +211,7 @@ export const HubinData: React.FC = () => {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder={`Cari ${activeTab === 'siswa' ? 'siswa, kelas, perusahaan...' : activeTab === 'guru' ? 'nama guru, mata pelajaran...' : activeTab === 'perusahaan' ? 'nama perusahaan, alamat...' : 'nama mentor, perusahaan, role...'}...`}
-              className="w-full bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
+              className="w-full bg-shell border border-mist rounded-xl pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
             />
             {search && (
               <button
@@ -251,15 +251,15 @@ export const HubinData: React.FC = () => {
                       </div>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
-                      <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-center">
+                      <div className="bg-shell border border-mist rounded-lg px-2 py-1.5 text-center">
                         <p className="text-sm font-bold text-navy tabular-nums leading-none">{s.kehadiran}%</p>
                         <p className="text-[9px] font-bold text-navy/50 uppercase tracking-wide mt-1">Hadir</p>
                       </div>
-                      <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-center">
+                      <div className="bg-shell border border-mist rounded-lg px-2 py-1.5 text-center">
                         <p className="text-sm font-bold text-navy tabular-nums leading-none">{s.logs}</p>
                         <p className="text-[9px] font-bold text-navy/50 uppercase tracking-wide mt-1">Log</p>
                       </div>
-                      <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-center">
+                      <div className="bg-shell border border-mist rounded-lg px-2 py-1.5 text-center">
                         <p className="text-sm font-bold text-navy tabular-nums leading-none">{s.berkasPct}%</p>
                         <p className="text-[9px] font-bold text-navy/50 uppercase tracking-wide mt-1">Berkas</p>
                       </div>
@@ -297,11 +297,11 @@ export const HubinData: React.FC = () => {
                       </span>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
-                      <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg px-2 py-2 text-center">
+                      <div className="bg-shell border border-mist rounded-lg px-2 py-2 text-center">
                         <p className="text-base font-bold text-navy tabular-nums leading-none">{g.totalSiswa}</p>
                         <p className="text-[9px] font-bold text-navy/50 uppercase tracking-wide mt-1">Siswa</p>
                       </div>
-                      <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg px-2 py-2 text-center">
+                      <div className="bg-shell border border-mist rounded-lg px-2 py-2 text-center">
                         <p className="text-base font-bold text-navy tabular-nums leading-none">{g.totalDUDI}</p>
                         <p className="text-[9px] font-bold text-navy/50 uppercase tracking-wide mt-1">DUDI</p>
                       </div>
@@ -337,13 +337,13 @@ export const HubinData: React.FC = () => {
                         </div>
                       </div>
                       <div className="space-y-1.5">
-                        <div className="flex justify-between items-center bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg px-2.5 py-1.5">
+                        <div className="flex justify-between items-center bg-shell border border-mist rounded-lg px-2.5 py-1.5">
                           <span className="text-[11px] font-bold text-navy/60">Kuota</span>
                           <span className="text-[11px] font-bold text-navy tabular-nums">
                             {count} / {c.quota}
                           </span>
                         </div>
-                        <div className="flex justify-between items-center bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg px-2.5 py-1.5">
+                        <div className="flex justify-between items-center bg-shell border border-mist rounded-lg px-2.5 py-1.5">
                           <span className="text-[11px] font-bold text-navy/60">Mentor</span>
                           <span className="text-[11px] font-bold text-navy truncate ml-2">
                             {c.mentor || '-'}
@@ -353,11 +353,11 @@ export const HubinData: React.FC = () => {
                         <div className={`flex justify-between items-center rounded-lg px-2.5 py-1.5 border ${
                           hasCoords 
                             ? 'bg-steel/10 border-steel/30' 
-                            : 'bg-[#FBF3E2] border-[#F0E1C0]'
+                            : 'bg-steel/10 border-steel/20'
                         }`}>
                           <div className="flex items-center gap-1.5">
-                            <MapPinned className={`w-3.5 h-3.5 ${hasCoords ? 'text-steel' : 'text-[#9A6B15]'}`} />
-                            <span className={`text-[11px] font-bold ${hasCoords ? 'text-steel' : 'text-[#9A6B15]'}`}>
+                            <MapPinned className={`w-3.5 h-3.5 ${hasCoords ? 'text-steel' : 'text-steel'}`} />
+                            <span className={`text-[11px] font-bold ${hasCoords ? 'text-steel' : 'text-steel'}`}>
                               {hasCoords ? 'Koordinat Aktif' : 'Belum Diatur'}
                             </span>
                           </div>
@@ -405,7 +405,7 @@ export const HubinData: React.FC = () => {
                         <Briefcase className="w-3 h-3" /> MENTOR
                       </span>
                     </div>
-                    <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg p-2.5 space-y-1.5">
+                    <div className="bg-shell border border-mist rounded-lg p-2.5 space-y-1.5">
                       <div className="flex items-center justify-between text-[11px]">
                         <span className="font-bold text-navy/60 flex items-center gap-1.5">
                           <BuildingIcon className="w-3.5 h-3.5" /> DUDI
@@ -450,11 +450,11 @@ export const HubinData: React.FC = () => {
 
           <h4 className="text-[11px] font-bold text-navy/50 uppercase tracking-wide mb-2">Info Pembimbing</h4>
           <div className="grid grid-cols-2 gap-2 mb-5">
-            <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl p-3">
+            <div className="bg-shell border border-mist rounded-xl p-3">
               <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">Guru Pembimbing</p>
               <p className="text-sm font-bold text-navy mt-0.5 truncate">{detailSiswa.guruPembimbing || '-'}</p>
             </div>
-            <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl p-3">
+            <div className="bg-shell border border-mist rounded-xl p-3">
               <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">Mentor</p>
               <p className="text-sm font-bold text-navy mt-0.5 truncate">{detailSiswa.mentor || '-'}</p>
             </div>
@@ -482,18 +482,18 @@ export const HubinData: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-2 mb-5">
-            <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl p-3">
+            <div className="bg-shell border border-mist rounded-xl p-3">
               <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">Mentor DUDI</p>
               <p className="text-sm font-bold text-navy mt-0.5 truncate">{detailPerusahaan.mentor || '-'}</p>
             </div>
-            <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl p-3">
+            <div className="bg-shell border border-mist rounded-xl p-3">
               <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">Radius</p>
               <p className="text-sm font-bold text-navy mt-0.5 tabular-nums">{detailPerusahaan.radiusMeters || 500}m</p>
             </div>
           </div>
 
           {detailPerusahaan.latitude && detailPerusahaan.longitude && (
-            <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl p-3 mb-5 flex items-center gap-2">
+            <div className="bg-shell border border-mist rounded-xl p-3 mb-5 flex items-center gap-2">
               <MapPin className="w-4 h-4 text-steel shrink-0" />
               <p className="text-[11px] font-bold text-navy/70 tabular-nums">
                 {detailPerusahaan.latitude.toFixed(4)}, {detailPerusahaan.longitude.toFixed(4)}
@@ -595,7 +595,7 @@ export const HubinData: React.FC = () => {
 
 const EmptyState: React.FC<{ label: string; search: string }> = ({ label, search }) => (
   <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
-    <div className="w-14 h-14 rounded-2xl bg-[#F1F4F8] flex items-center justify-center mb-3">
+    <div className="w-14 h-14 rounded-2xl bg-shell flex items-center justify-center mb-3">
       <Search className="w-6 h-6 text-navy/30" />
     </div>
     <p className="text-sm font-bold text-navy mb-1">Data {label} tidak ditemukan</p>
@@ -606,7 +606,7 @@ const EmptyState: React.FC<{ label: string; search: string }> = ({ label, search
 );
 
 const MiniStat: React.FC<{ label: string; value: string | number }> = ({ label, value }) => (
-  <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl p-3 text-center">
+  <div className="bg-shell border border-mist rounded-xl p-3 text-center">
     <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">{label}</p>
     <p className="text-xl font-bold text-navy tabular-nums mt-1">{value}</p>
   </div>
@@ -664,7 +664,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
 const SiswaPreviewList: React.FC<{ list: any[] }> = ({ list }) => {
   if (list.length === 0) {
     return (
-      <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl p-5 text-center">
+      <div className="bg-shell border border-mist rounded-xl p-5 text-center">
         <p className="text-xs font-semibold text-navy/50">Belum ada siswa yang terdaftar.</p>
       </div>
     );
@@ -692,7 +692,7 @@ const SiswaPreviewList: React.FC<{ list: any[] }> = ({ list }) => {
 const LogPreviewList: React.FC<{ logs: any[] }> = ({ logs }) => {
   if (logs.length === 0) {
     return (
-      <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl p-5 text-center">
+      <div className="bg-shell border border-mist rounded-xl p-5 text-center">
         <p className="text-xs font-semibold text-navy/50">Belum ada logbook tercatat.</p>
       </div>
     );
@@ -705,8 +705,8 @@ const LogPreviewList: React.FC<{ logs: any[] }> = ({ logs }) => {
             <span className="text-[10px] font-bold text-navy/40 uppercase tracking-wide">{l.date}</span>
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
               l.status === 'approved' ? 'bg-steel/15 text-steel'
-              : l.status === 'revision' ? 'bg-[#FDECEF] text-[#BE123C]'
-              : 'bg-[#FBF3E2] text-[#9A6B15]'
+              : l.status === 'revision' ? 'bg-navy/10 text-navy'
+              : 'bg-steel/10 text-steel'
             }`}>
               {l.status === 'approved' ? 'Disetujui' : l.status === 'revision' ? 'Revisi' : 'Menunggu'}
             </span>
@@ -791,7 +791,7 @@ const AddDataModal: React.FC<AddDataModalProps> = ({ onClose, activeTab, addSisw
               <X className="w-4 h-4" />
             </button>
           </div>
-          <div className="bg-[#F1F4F8] p-1 rounded-xl flex gap-1">
+          <div className="bg-shell p-1 rounded-xl flex gap-1">
             {([
               { key: 'siswa', label: 'Siswa', icon: UserPlus },
               { key: 'guru', label: 'Guru', icon: UserCog },
@@ -924,9 +924,9 @@ const AddDataModal: React.FC<AddDataModalProps> = ({ onClose, activeTab, addSisw
           )}
 
           {(formTab === 'guru' || formTab === 'mentor') && (
-            <div className="bg-[#FBF3E2] border border-[#F0E1C0] rounded-xl p-3 flex items-start gap-2 mt-2">
-              <ShieldCheck className="w-4 h-4 text-[#9A6B15] shrink-0 mt-0.5" />
-              <p className="text-[11px] font-medium text-[#9A6B15] leading-relaxed">
+            <div className="bg-steel/10 border border-steel/20 rounded-xl p-3 flex items-start gap-2 mt-2">
+              <ShieldCheck className="w-4 h-4 text-steel shrink-0 mt-0.5" />
+              <p className="text-[11px] font-medium text-steel leading-relaxed">
                 Endpoint untuk menambah guru/mentor belum diimplementasi di backend. Form akan gagal submit — data hanya bisa ditambah lewat seed atau database langsung.
               </p>
             </div>
@@ -958,7 +958,7 @@ const FormInput: React.FC<{
       onChange={e => onChange(e.target.value)}
       required={required}
       placeholder={placeholder}
-      className="w-full bg-[#F1F4F8] border border-mist rounded-xl px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
+      className="w-full bg-shell border border-mist rounded-xl px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
     />
   </div>
 );
@@ -971,7 +971,7 @@ const FormSelect: React.FC<{
     <select
       value={value}
       onChange={e => onChange(e.target.value)}
-      className="w-full bg-[#F1F4F8] border border-mist rounded-xl px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
+      className="w-full bg-shell border border-mist rounded-xl px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
     >
       <option value="">— Pilih —</option>
       {options.map(o => <option key={o} value={o}>{o}</option>)}

@@ -494,9 +494,9 @@ export const Absensi: React.FC<AbsensiProps> = ({
             )}
 
             {submitError && (
-              <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg flex items-start gap-2">
-                <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-rose-500 mt-0.5" />
-                <p className="text-[11px] font-semibold text-rose-700 leading-snug">{submitError}</p>
+              <div className="p-2.5 bg-navy/5 border border-navy/15 rounded-lg flex items-start gap-2">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-navy/60 mt-0.5" />
+                <p className="text-[11px] font-semibold text-navy leading-snug">{submitError}</p>
               </div>
             )}
 

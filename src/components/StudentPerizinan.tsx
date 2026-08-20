@@ -17,8 +17,8 @@ export const StudentPerizinan: React.FC = () => {
 
   const statusBadge = (status: string) => {
     if (status === 'approved') return { cls: 'bg-steel/15 text-steel', label: 'Disetujui', icon: CheckCircle2 };
-    if (status === 'rejected') return { cls: 'bg-rose-100 text-rose-700', label: 'Ditolak', icon: AlertCircle };
-    return { cls: 'bg-[#FBF3E2] text-[#9A6B15]', label: 'Menunggu', icon: Hourglass };
+    if (status === 'rejected') return { cls: 'bg-navy/10 text-navy', label: 'Ditolak', icon: AlertCircle };
+    return { cls: 'bg-steel/10 text-steel', label: 'Menunggu', icon: Hourglass };
   };
 
   return (
@@ -45,8 +45,8 @@ export const StudentPerizinan: React.FC = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 shrink-0">
         <div className="bg-white border border-mist/60 rounded-[24px] p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#FBF3E2] flex items-center justify-center">
-            <Hourglass className="w-5 h-5 text-[#9A6B15]" />
+          <div className="w-10 h-10 rounded-xl bg-steel/10 flex items-center justify-center">
+            <Hourglass className="w-5 h-5 text-steel" />
           </div>
           <div>
             <p className="text-2xl font-bold text-navy tabular-nums leading-none">{pending}</p>
@@ -63,8 +63,8 @@ export const StudentPerizinan: React.FC = () => {
           </div>
         </div>
         <div className="bg-white border border-mist/60 rounded-[24px] p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center">
-            <AlertCircle className="w-5 h-5 text-rose-700" />
+          <div className="w-10 h-10 rounded-xl bg-navy/10 flex items-center justify-center">
+            <AlertCircle className="w-5 h-5 text-navy" />
           </div>
           <div>
             <p className="text-2xl font-bold text-navy tabular-nums leading-none">{rejected}</p>
@@ -77,7 +77,7 @@ export const StudentPerizinan: React.FC = () => {
         <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5">
           {perizinanList.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-[#F1F4F8] flex items-center justify-center mb-3">
+              <div className="w-14 h-14 rounded-2xl bg-shell flex items-center justify-center mb-3">
                 <FileCheck className="w-6 h-6 text-navy/30" />
               </div>
               <p className="text-sm font-bold text-navy mb-1">Belum ada perizinan</p>
@@ -92,7 +92,7 @@ export const StudentPerizinan: React.FC = () => {
                 const Icon = badge.icon;
                 return (
                   <div key={p.id} className="p-3.5 rounded-2xl border border-mist/60 bg-white flex items-center gap-3">
-                    <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${p.type === 'Sakit' ? 'bg-rose-100 text-rose-700' : 'bg-steel text-white'}`}>
+                    <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${p.type === 'Sakit' ? 'bg-navy/10 text-navy' : 'bg-steel text-white'}`}>
                       {getInitials(p.name)}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -203,7 +203,7 @@ const PermissionModal: React.FC<{
                 type="button"
                 onClick={() => setForm({ ...form, type: 'izin' })}
                 className={`py-2.5 rounded-xl border text-sm font-bold transition-all ${
-                  form.type === 'izin' ? 'bg-steel border-steel text-white' : 'bg-[#F1F4F8] border-mist text-navy/60'
+                  form.type === 'izin' ? 'bg-steel border-steel text-white' : 'bg-shell border-mist text-navy/60'
                 }`}
               >
                 Izin
@@ -212,7 +212,7 @@ const PermissionModal: React.FC<{
                 type="button"
                 onClick={() => setForm({ ...form, type: 'sakit' })}
                 className={`py-2.5 rounded-xl border text-sm font-bold transition-all ${
-                  form.type === 'sakit' ? 'bg-rose-500 border-rose-500 text-white' : 'bg-[#F1F4F8] border-mist text-navy/60'
+                  form.type === 'sakit' ? 'bg-navy border-navy text-white' : 'bg-shell border-mist text-navy/60'
                 }`}
               >
                 Sakit
@@ -228,7 +228,7 @@ const PermissionModal: React.FC<{
               required
               value={form.date}
               onChange={e => setForm({ ...form, date: e.target.value })}
-              className="w-full bg-[#F1F4F8] border border-mist rounded-xl px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel transition-all"
+              className="w-full bg-shell border border-mist rounded-xl px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel transition-all"
             />
           </div>
           <div>
@@ -241,14 +241,14 @@ const PermissionModal: React.FC<{
               value={form.reason}
               onChange={e => setForm({ ...form, reason: e.target.value })}
               placeholder="Tuliskan alasan berhalangan hadir..."
-              className="w-full bg-[#F1F4F8] border border-mist rounded-xl px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel transition-all resize-none"
+              className="w-full bg-shell border border-mist rounded-xl px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel transition-all resize-none"
             />
           </div>
           <div>
             <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">
               Surat Keterangan (PDF wajib) *
             </label>
-            <label className="w-full flex items-center gap-2.5 bg-[#F1F4F8] border border-dashed border-navy/20 rounded-xl px-3 py-3 text-sm font-semibold text-navy/60 cursor-pointer hover:border-steel hover:text-steel transition-all">
+            <label className="w-full flex items-center gap-2.5 bg-shell border border-dashed border-navy/20 rounded-xl px-3 py-3 text-sm font-semibold text-navy/60 cursor-pointer hover:border-steel hover:text-steel transition-all">
               <FileText className="w-4 h-4 shrink-0" />
               <span className="truncate">
                 {file ? file.name : 'Unggah surat keterangan sakit (PDF)...'}
@@ -261,7 +261,7 @@ const PermissionModal: React.FC<{
               />
             </label>
             {fileError ? (
-              <p className="text-[11px] font-bold text-rose-600 mt-1.5">{fileError}</p>
+              <p className="text-[11px] font-bold text-navy/70 mt-1.5">{fileError}</p>
             ) : file ? (
               <p className="text-[11px] font-bold text-steel mt-1.5">
                 {(file.size / (1024 * 1024)).toFixed(2)} MB · siap diunggah
@@ -273,7 +273,7 @@ const PermissionModal: React.FC<{
             )}
           </div>
           {error && (
-            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs font-semibold text-rose-700">
+            <div className="p-3 bg-navy/5 border border-navy/15 rounded-xl text-xs font-semibold text-navy">
               {error}
             </div>
           )}

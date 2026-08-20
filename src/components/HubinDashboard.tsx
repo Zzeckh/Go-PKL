@@ -88,7 +88,7 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({ schoolName, onNa
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="hidden md:flex items-center gap-1.5 text-[11px] font-bold text-navy/60 bg-[#F1F4F8] border border-[#E2E8F0] px-3 py-2 rounded-full">
+          <span className="hidden md:flex items-center gap-1.5 text-[11px] font-bold text-navy/60 bg-shell border border-mist px-3 py-2 rounded-full">
             <Clock className="w-3.5 h-3.5" />
             {time.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
           </span>
@@ -108,7 +108,7 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({ schoolName, onNa
             className="bg-white border border-mist/60 rounded-[24px] p-5 text-left transition-all hover:border-steel/40 hover:-translate-y-0.5 hover:shadow-md group flex flex-col justify-between min-h-[140px]"
           >
             <div className="flex items-center justify-between">
-              <div className="w-10 h-10 rounded-xl bg-[#F1F4F8] flex items-center justify-center group-hover:bg-steel/10 transition-colors">
+              <div className="w-10 h-10 rounded-xl bg-shell flex items-center justify-center group-hover:bg-steel/10 transition-colors">
                 <s.icon className="w-5 h-5 text-navy/60 group-hover:text-steel transition-colors" />
               </div>
               <ChevronRight className="w-4 h-4 text-navy/20 group-hover:text-steel group-hover:translate-x-0.5 transition-all" />
@@ -148,7 +148,7 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({ schoolName, onNa
           <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 min-h-0">
             {perusahaanList.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-14 h-14 rounded-2xl bg-[#F1F4F8] flex items-center justify-center mb-3">
+                <div className="w-14 h-14 rounded-2xl bg-shell flex items-center justify-center mb-3">
                   <Building2 className="w-6 h-6 text-navy/30" />
                 </div>
                 <p className="text-sm font-bold text-navy mb-1">Belum ada perusahaan mitra</p>
@@ -164,7 +164,7 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({ schoolName, onNa
                   <button
                     key={c.id}
                     onClick={() => onNavigate && onNavigate('pemetaan')}
-                    className="p-3 rounded-xl border border-mist/60 bg-white hover:border-steel/30 hover:bg-[#F1F4F8]/50 transition-all shrink-0 text-left group"
+                    className="p-3 rounded-xl border border-mist/60 bg-white hover:border-steel/30 hover:bg-shell/50 transition-all shrink-0 text-left group"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-steel/10 flex items-center justify-center shrink-0 group-hover:bg-steel/20 transition-colors">
@@ -174,7 +174,7 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({ schoolName, onNa
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-sm font-bold text-navy truncate">{c.name}</p>
                           {dominantClass && (
-                            <span className="text-[10px] font-bold text-navy/60 bg-[#F1F4F8] border border-[#E2E8F0] px-2 py-0.5 rounded-md shrink-0">
+                            <span className="text-[10px] font-bold text-navy/60 bg-shell border border-mist px-2 py-0.5 rounded-md shrink-0">
                               {dominantClass}
                             </span>
                           )}
@@ -186,7 +186,7 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({ schoolName, onNa
                       <div className="flex items-center gap-2 shrink-0">
                         <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full tabular-nums ${
                           c.quota > 0 && count >= c.quota 
-                            ? 'bg-[#FBF3E2] text-[#9A6B15]' 
+                            ? 'bg-steel/10 text-steel' 
                             : 'bg-steel/10 text-steel'
                         }`}>
                           {count} siswa
@@ -290,7 +290,7 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({ schoolName, onNa
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
                   autoFocus
-                  className="w-full flex-1 min-h-[120px] text-sm font-medium text-navy bg-[#F1F4F8]/60 border border-mist focus:border-steel rounded-xl p-3 outline-none resize-none leading-relaxed placeholder:text-navy/40 transition-all"
+                  className="w-full flex-1 min-h-[120px] text-sm font-medium text-navy bg-shell/60 border border-mist focus:border-steel rounded-xl p-3 outline-none resize-none leading-relaxed placeholder:text-navy/40 transition-all"
                   placeholder="Ketik catatan koordinasi..."
                 />
               ) : (

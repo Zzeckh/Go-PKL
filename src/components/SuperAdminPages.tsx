@@ -89,7 +89,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="hidden md:flex items-center gap-1.5 text-[11px] font-bold text-navy/60 bg-[#F1F4F8] border border-[#E2E8F0] px-3 py-2 rounded-full">
+          <span className="hidden md:flex items-center gap-1.5 text-[11px] font-bold text-navy/60 bg-shell border border-mist px-3 py-2 rounded-full">
             <Clock className="w-3.5 h-3.5" />
             {time.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
           </span>
@@ -104,16 +104,16 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
       </div>
 
       {statsState === 'error' && (
-        <div className="shrink-0 bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-center justify-between gap-3">
+        <div className="shrink-0 bg-navy/5 border border-navy/15 rounded-2xl p-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
-            <p className="text-[12px] font-semibold text-rose-700 leading-snug">
+            <AlertCircle className="w-4 h-4 text-navy/60 shrink-0" />
+            <p className="text-[12px] font-semibold text-navy leading-snug">
               Gagal memuat statistik. Periksa terminal backend, lalu coba lagi.
             </p>
           </div>
           <button
             onClick={() => setStatsState('loading')}
-            className="shrink-0 text-[11px] font-bold bg-rose-500 text-white px-3 py-1.5 rounded-lg hover:bg-rose-600 transition-colors"
+            className="shrink-0 text-[11px] font-bold bg-navy text-white px-3 py-1.5 rounded-lg hover:bg-navy/80 transition-colors"
           >
             Coba Lagi
           </button>
@@ -137,7 +137,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                 className="bg-white border border-mist/60 rounded-[24px] p-4 md:p-5 min-h-[130px] text-left transition-all hover:border-steel/40 hover:-translate-y-0.5 hover:shadow-md group flex flex-col justify-between"
               >
                 <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-xl bg-[#F1F4F8] flex items-center justify-center group-hover:bg-steel/10 transition-colors">
+                  <div className="w-10 h-10 rounded-xl bg-shell flex items-center justify-center group-hover:bg-steel/10 transition-colors">
                     <s.icon className="w-5 h-5 text-navy/60 group-hover:text-steel transition-colors" />
                   </div>
                   <ChevronRight className="w-4 h-4 text-navy/20 group-hover:text-steel group-hover:translate-x-0.5 transition-all" />
@@ -174,7 +174,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
               <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 min-h-0">
                 {superClasses.length === 0 ? (
                   <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
-                    <div className="w-14 h-14 rounded-2xl bg-[#F1F4F8] flex items-center justify-center mb-3">
+                    <div className="w-14 h-14 rounded-2xl bg-shell flex items-center justify-center mb-3">
                       <BookMarked className="w-6 h-6 text-navy/30" />
                     </div>
                     <p className="text-sm font-bold text-navy mb-1">Belum ada kelas</p>
@@ -187,7 +187,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                     <button
                       key={c.id}
                       onClick={() => onNavigate('super-classes')}
-                      className="p-3 rounded-xl border border-mist/60 bg-white hover:border-steel/30 hover:bg-[#F1F4F8]/50 transition-all shrink-0 text-left group"
+                      className="p-3 rounded-xl border border-mist/60 bg-white hover:border-steel/30 hover:bg-shell/50 transition-all shrink-0 text-left group"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
@@ -200,7 +200,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                           </p>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <span className="text-[10px] font-bold bg-[#F1F4F8] border border-[#E2E8F0] text-navy/70 px-2 py-1 rounded-full tabular-nums">
+                          <span className="text-[10px] font-bold bg-shell border border-mist text-navy/70 px-2 py-1 rounded-full tabular-nums">
                             {c.totalStudents} siswa
                           </span>
                           <ChevronRight className="w-4 h-4 text-navy/20 group-hover:text-steel group-hover:translate-x-0.5 transition-all" />
@@ -266,7 +266,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
               <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 shrink-0">
                 <div className="grid grid-cols-3 gap-2">
                   {quickStats.map((q) => (
-                    <div key={q.label} className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                    <div key={q.label} className="bg-shell border border-mist rounded-xl px-3 py-2.5 flex items-center gap-2.5">
                       <q.icon className="w-4 h-4 text-navy/50 shrink-0" />
                       <div className="min-w-0">
                         <p className="text-lg font-bold text-navy tabular-nums leading-none">{q.value}</p>
@@ -286,7 +286,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                     <p className="text-[13px] font-bold text-navy">Perlu Perhatian</p>
                   </div>
                   <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full tabular-nums ${
-                    attention.length > 0 ? 'bg-[#FBF3E2] text-[#9A6B15]' : 'bg-[#F1F4F8] text-navy/40'
+                    attention.length > 0 ? 'bg-steel/10 text-steel' : 'bg-shell text-navy/40'
                   }`}>
                     {attention.length} item
                   </span>
@@ -295,7 +295,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                 <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2 min-h-0 pr-1">
                   {attention.length === 0 ? (
                     <div className="flex-1 flex flex-col items-center justify-center py-6 text-center">
-                      <div className="w-12 h-12 rounded-2xl bg-[#E4F0F1] flex items-center justify-center mb-3">
+                      <div className="w-12 h-12 rounded-2xl bg-steel/10 flex items-center justify-center mb-3">
                         <CheckCircle2 className="w-5 h-5 text-steel" />
                       </div>
                       <p className="text-xs font-bold text-navy">Semua data lengkap</p>
@@ -310,7 +310,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                       >
                         <div className="flex items-center gap-3">
                           <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                            a.tint === 'amber' ? 'bg-[#FBF3E2] text-[#9A6B15]' : 'bg-[#F1F4F8] text-navy/50'
+                            a.tint === 'amber' ? 'bg-steel/10 text-steel' : 'bg-shell text-navy/50'
                           }`}>
                             <a.icon className="w-4 h-4" />
                           </div>
@@ -433,7 +433,7 @@ export const SuperClasses: React.FC = () => {
                         onClick={() => {
                           if (confirm(`Hapus kelas "${c.name}"?`)) deleteClass(c.id);
                         }}
-                        className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center transition-colors"
+                        className="w-8 h-8 rounded-lg bg-navy/5 text-navy/60 hover:bg-navy/10 flex items-center justify-center transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -445,7 +445,7 @@ export const SuperClasses: React.FC = () => {
                     <div className="grid grid-cols-1 gap-2 mt-3">
                       <button
                         onClick={() => openDetail(c)}
-                        className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg p-2 text-center hover:border-steel/40 transition-colors"
+                        className="bg-shell border border-mist rounded-lg p-2 text-center hover:border-steel/40 transition-colors"
                       >
                         <p className="text-base font-bold text-navy tabular-nums">{c.totalStudents}</p>
                         <p className="text-[9px] font-bold text-navy/50 uppercase">Siswa · Lihat Detail</p>
@@ -524,7 +524,7 @@ const AddClassModal: React.FC<{
               value={form.name}
               onChange={e => setForm({ ...form, name: e.target.value })}
               placeholder="Contoh: XII RPL 2"
-              className="w-full bg-[#F1F4F8] border border-mist rounded-xl px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel transition-all"
+              className="w-full bg-shell border border-mist rounded-xl px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel transition-all"
             />
           </div>
           <div>
@@ -536,11 +536,11 @@ const AddClassModal: React.FC<{
               value={form.major}
               onChange={e => setForm({ ...form, major: e.target.value })}
               placeholder="Contoh: Rekayasa Perangkat Lunak"
-              className="w-full bg-[#F1F4F8] border border-mist rounded-xl px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel transition-all"
+              className="w-full bg-shell border border-mist rounded-xl px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel transition-all"
             />
           </div>
           {error && (
-            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs font-semibold text-rose-700">
+            <div className="p-3 bg-navy/5 border border-navy/15 rounded-xl text-xs font-semibold text-navy">
               {error}
             </div>
           )}
@@ -598,7 +598,7 @@ const ClassDetailModal: React.FC<{
             </div>
           ) : students.length === 0 ? (
             <div className="text-center py-12">
-              <div className="w-14 h-14 rounded-2xl bg-[#F1F4F8] flex items-center justify-center mx-auto mb-3">
+              <div className="w-14 h-14 rounded-2xl bg-shell flex items-center justify-center mx-auto mb-3">
                 <Users className="w-6 h-6 text-navy/30" />
               </div>
               <p className="text-sm font-bold text-navy">Belum ada siswa</p>
@@ -618,14 +618,14 @@ const ClassDetailModal: React.FC<{
                     </p>
                     <div className="flex items-center gap-1.5 mt-1">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        s.isActive ? 'bg-steel/15 text-steel' : 'bg-rose-100 text-rose-700'
+                        s.isActive ? 'bg-steel/15 text-steel' : 'bg-navy/10 text-navy'
                       }`}>
                         {s.isActive ? 'Aktif' : 'Nonaktif'}
                       </span>
-                      <span className="text-[10px] font-bold bg-[#F1F4F8] text-navy/60 px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] font-bold bg-shell text-navy/60 px-2 py-0.5 rounded-full">
                         {s.kehadiran} absensi
                       </span>
-                      <span className="text-[10px] font-bold bg-[#F1F4F8] text-navy/60 px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] font-bold bg-shell text-navy/60 px-2 py-0.5 rounded-full">
                         {s.logbooks} logbook
                       </span>
                     </div>
@@ -680,7 +680,7 @@ export const SuperUsers: React.FC = () => {
       </div>
 
       <div className="shrink-0 space-y-3">
-        <div className="bg-[#F1F4F8] p-1 rounded-xl flex gap-1 overflow-x-auto">
+        <div className="bg-shell p-1 rounded-xl flex gap-1 overflow-x-auto">
           {roles.map(r => {
             const Icon = r.icon;
             const active = roleFilter === r.key;
@@ -739,11 +739,11 @@ export const SuperUsers: React.FC = () => {
                       </p>
                       <div className="flex items-center gap-1.5 mt-1">
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          u.isActive ? 'bg-steel/15 text-steel' : 'bg-rose-100 text-rose-700'
+                          u.isActive ? 'bg-steel/15 text-steel' : 'bg-navy/10 text-navy'
                         }`}>
                           {u.isActive ? 'Aktif' : 'Nonaktif'}
                         </span>
-                        <span className="text-[10px] font-bold bg-[#F1F4F8] text-navy/60 px-2 py-0.5 rounded-full uppercase">
+                        <span className="text-[10px] font-bold bg-shell text-navy/60 px-2 py-0.5 rounded-full uppercase">
                           {u.role.replace('_', ' ')}
                         </span>
                       </div>
@@ -759,7 +759,7 @@ export const SuperUsers: React.FC = () => {
                             }
                           }}
                           title="Ubah role"
-                          className="h-9 bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg px-2 text-xs font-bold text-navy outline-none focus:border-steel cursor-pointer capitalize"
+                          className="h-9 bg-shell border border-mist rounded-lg px-2 text-xs font-bold text-navy outline-none focus:border-steel cursor-pointer capitalize"
                         >
                           <option value="student">Siswa</option>
                           <option value="teacher">Guru</option>
@@ -772,14 +772,14 @@ export const SuperUsers: React.FC = () => {
                               deleteUser(u.id).catch((err: any) => alert(err?.data?.error || err?.message || 'Gagal menghapus user.'));
                             }
                           }}
-                          className="w-9 h-9 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center transition-colors"
+                          className="w-9 h-9 rounded-lg bg-navy/5 text-navy/60 hover:bg-navy/10 flex items-center justify-center transition-colors"
                           title="Hapus user"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => toggleUser(u.id)}
-                          className="w-9 h-9 rounded-lg bg-[#F1F4F8] hover:bg-mist flex items-center justify-center text-navy/70 transition-colors"
+                          className="w-9 h-9 rounded-lg bg-shell hover:bg-mist flex items-center justify-center text-navy/70 transition-colors"
                           title={u.isActive ? 'Nonaktifkan' : 'Aktifkan'}
                         >
                           {u.isActive ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}

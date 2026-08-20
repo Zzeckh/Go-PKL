@@ -131,9 +131,9 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
     if (!circleRef.current) {
       circleRef.current = L.circle(latlng, {
         radius,
-        color: '#4A7A8C',
+        color: '#4478AE',
         weight: 2,
-        fillColor: '#4A7A8C',
+        fillColor: '#4478AE',
         fillOpacity: 0.1,
         dashArray: '4 4',
       }).addTo(map);
@@ -299,7 +299,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => (searchResults.length > 0 || noResults) && setShowDropdown(true)}
                   placeholder="Cari alamat / sekolah / tempat..."
-                  className="w-full bg-[#F1F4F8] border border-[#E2E8F0] rounded-2xl pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
+                  className="w-full bg-shell border border-mist rounded-2xl pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
                 />
                 {isSearching && (
                   <Loader2 className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-steel animate-spin" />
@@ -333,7 +333,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
                         key={i}
                         type="button"
                         onClick={() => handleSelectResult(r)}
-                        className="w-full text-left px-3.5 py-2.5 hover:bg-[#F1F4F8] transition-colors border-b border-mist/50 last:border-b-0"
+                        className="w-full text-left px-3.5 py-2.5 hover:bg-shell transition-colors border-b border-mist/50 last:border-b-0"
                       >
                         <p className="text-sm font-semibold text-navy line-clamp-2 leading-snug">{r.label}</p>
                         <p className="text-[10px] font-bold text-navy/40 tabular-nums mt-1">
@@ -346,7 +346,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
                   /* ── PEMBERITAHUAN: tempat tidak ada di OSM → alur manual ── */
                   <div className="p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <SearchX className="w-5 h-5 text-[#9A6B15]" />
+                      <SearchX className="w-5 h-5 text-steel" />
                       <p className="text-sm font-bold text-navy">Lokasi tidak ditemukan di pencarian</p>
                     </div>
                     <p className="text-[11px] font-medium text-navy/60 leading-relaxed mb-3">
@@ -365,7 +365,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
                       <button
                         type="button"
                         onClick={() => enterManualMode(false)}
-                        className="flex-1 flex items-center justify-center gap-1.5 bg-[#F1F4F8] border border-[#E2E8F0] text-navy text-xs font-bold py-2.5 rounded-xl hover:bg-mist transition-colors"
+                        className="flex-1 flex items-center justify-center gap-1.5 bg-shell border border-mist text-navy text-xs font-bold py-2.5 rounded-xl hover:bg-mist transition-colors"
                       >
                         <MousePointer2 className="w-3.5 h-3.5" /> Klik Langsung di Peta
                       </button>
@@ -449,7 +449,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
                 className={`w-full border rounded-2xl px-3.5 py-2.5 text-sm font-mono font-bold text-navy outline-none transition-all placeholder:text-navy/30 tabular-nums ${
                   manualMode
                     ? 'bg-white border-steel ring-2 ring-steel/20'
-                    : 'bg-[#F1F4F8] border-[#E2E8F0] focus:border-steel focus:bg-white'
+                    : 'bg-shell border-mist focus:border-steel focus:bg-white'
                 }`}
               />
             </div>
@@ -467,19 +467,19 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
                 className={`w-full border rounded-2xl px-3.5 py-2.5 text-sm font-mono font-bold text-navy outline-none transition-all placeholder:text-navy/30 tabular-nums ${
                   manualMode
                     ? 'bg-white border-steel ring-2 ring-steel/20'
-                    : 'bg-[#F1F4F8] border-[#E2E8F0] focus:border-steel focus:bg-white'
+                    : 'bg-shell border-mist focus:border-steel focus:bg-white'
                 }`}
               />
             </div>
           </div>
 
           {/* Radius card */}
-          <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-2xl p-3.5">
+          <div className="bg-shell border border-mist rounded-2xl p-3.5">
             <div className="flex items-center justify-between mb-2">
               <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide">
                 Radius Geofence
               </label>
-              <div className="flex items-center gap-1 bg-white border border-[#E2E8F0] px-2.5 py-1 rounded-full">
+              <div className="flex items-center gap-1 bg-white border border-mist px-2.5 py-1 rounded-full">
                 <MapPin className="w-3 h-3 text-steel" />
                 <span className="text-xs font-bold text-steel tabular-nums">{radius}m</span>
               </div>
@@ -501,9 +501,9 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
 
           {/* Pesan error/sukses */}
           {saveError && (
-            <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2 animate-in fade-in">
-              <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
-              <p className="text-[12px] font-semibold text-rose-700 leading-snug">{saveError}</p>
+            <div className="p-3 bg-navy/5 border border-navy/15 rounded-2xl flex items-start gap-2 animate-in fade-in">
+              <AlertCircle className="w-4 h-4 text-navy/60 shrink-0 mt-0.5" />
+              <p className="text-[12px] font-semibold text-navy leading-snug">{saveError}</p>
             </div>
           )}
           {saveSuccess && (

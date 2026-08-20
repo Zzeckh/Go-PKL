@@ -77,7 +77,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
         className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold outline-none transition-all ${
           open
             ? 'bg-white border-2 border-steel text-navy'
-            : 'bg-[#F1F4F8] border border-mist text-navy hover:border-steel/50'
+            : 'bg-shell border border-mist text-navy hover:border-steel/50'
         }`}
       >
         <span className={`truncate ${selected ? 'text-navy' : 'text-navy/40'}`}>
@@ -98,7 +98,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder="Cari..."
-                className="w-full bg-[#F1F4F8] border border-transparent rounded-lg pl-8 pr-3 py-2 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
+                className="w-full bg-shell border border-transparent rounded-lg pl-8 pr-3 py-2 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
               />
             </div>
           </div>
@@ -124,7 +124,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
                     className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center justify-between gap-2 ${
                       isSelected
                         ? 'bg-steel/10 text-steel'
-                        : 'text-navy hover:bg-[#F1F4F8]'
+                        : 'text-navy hover:bg-shell'
                     }`}
                   >
                     <div className="min-w-0 flex-1">
@@ -145,7 +145,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
           </div>
 
           {/* Footer info */}
-          <div className="px-3 py-1.5 border-t border-mist bg-[#F1F4F8]/50">
+          <div className="px-3 py-1.5 border-t border-mist bg-shell/50">
             <p className="text-[10px] font-bold text-navy/40 tabular-nums">
               {filtered.length} dari {options.length} data
             </p>
@@ -272,7 +272,7 @@ export const HubinPemetaan: React.FC = () => {
   const stats = [
     { icon: GraduationCap, label: 'Total Siswa', value: siswaList.length },
     { icon: Building2, label: 'Perusahaan Mitra', value: mapLocations.length },
-    { icon: CheckCircle2, label: 'Sudah Terpetakan', value: mappedCount, color: unmappedCount > 0 ? 'text-[#9A6B15]' : 'text-steel' },
+    { icon: CheckCircle2, label: 'Sudah Terpetakan', value: mappedCount, color: unmappedCount > 0 ? 'text-steel' : 'text-steel' },
   ];
 
   return (
@@ -308,7 +308,7 @@ export const HubinPemetaan: React.FC = () => {
             key={s.label}
             className="bg-white border border-mist/60 rounded-[24px] p-4 md:p-5 min-h-[100px] flex flex-col justify-between"
           >
-            <div className="w-10 h-10 rounded-xl bg-[#F1F4F8] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-shell flex items-center justify-center">
               <s.icon className={`w-5 h-5 ${'color' in s ? (s as any).color : 'text-navy'}`} />
             </div>
             <div>
@@ -347,7 +347,7 @@ export const HubinPemetaan: React.FC = () => {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Cari nama siswa atau kelas..."
-                className="w-full bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
+                className="w-full bg-shell border border-mist rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
               />
               {search && (
                 <button
@@ -360,7 +360,7 @@ export const HubinPemetaan: React.FC = () => {
             </div>
 
             {/* Filter pills */}
-            <div className="bg-[#F1F4F8] p-1 rounded-xl flex gap-1">
+            <div className="bg-shell p-1 rounded-xl flex gap-1">
               {([
                 { key: 'all', label: 'Semua', count: siswaList.length },
                 { key: 'mapped', label: 'Terpetakan', count: mappedCount },
@@ -386,7 +386,7 @@ export const HubinPemetaan: React.FC = () => {
           <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 min-h-0">
             {filteredSiswa.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-14 h-14 rounded-2xl bg-[#F1F4F8] flex items-center justify-center mb-3">
+                <div className="w-14 h-14 rounded-2xl bg-shell flex items-center justify-center mb-3">
                   <Search className="w-6 h-6 text-navy/30" />
                 </div>
                 <p className="text-sm font-bold text-navy mb-1">Siswa tidak ditemukan</p>
@@ -405,7 +405,7 @@ export const HubinPemetaan: React.FC = () => {
                     className={`p-3 rounded-xl border transition-all shrink-0 text-left group flex items-center gap-3 ${
                       isSelected
                         ? 'bg-steel/10 border-steel/30 shadow-sm'
-                        : 'bg-white border-mist/60 hover:border-steel/30 hover:bg-[#F1F4F8]/50'
+                        : 'bg-white border-mist/60 hover:border-steel/30 hover:bg-shell/50'
                     }`}
                   >
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
@@ -419,7 +419,7 @@ export const HubinPemetaan: React.FC = () => {
                           {s.name}
                         </p>
                         {s.kelas && s.kelas !== '-' && (
-                          <span className="text-[10px] font-bold text-navy/60 bg-[#F1F4F8] border border-[#E2E8F0] px-2 py-0.5 rounded-md shrink-0">
+                          <span className="text-[10px] font-bold text-navy/60 bg-shell border border-mist px-2 py-0.5 rounded-md shrink-0">
                             {s.kelas}
                           </span>
                         )}
@@ -429,7 +429,7 @@ export const HubinPemetaan: React.FC = () => {
                       </p>
                     </div>
                     <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 ${
-                      mapped ? 'bg-steel/10 text-steel' : 'bg-[#FBF3E2] text-[#9A6B15]'
+                      mapped ? 'bg-steel/10 text-steel' : 'bg-steel/10 text-steel'
                     }`}>
                       {mapped ? '✓ Terpetakan' : 'Belum'}
                     </span>
@@ -455,7 +455,7 @@ export const HubinPemetaan: React.FC = () => {
               </p>
 
               <div className="mt-6 w-full max-w-xs h-32 relative rounded-xl border border-navy/10 overflow-hidden">
-                <div className="absolute inset-0 bg-[#EDF1F7]">
+                <div className="absolute inset-0 bg-shell">
                   <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                     <rect x="36" y="8" width="26" height="22" rx="2" fill="#E7EBF2" />
                     <rect x="8" y="40" width="22" height="22" rx="2" fill="#E7EBF2" />
@@ -556,10 +556,10 @@ export const HubinPemetaan: React.FC = () => {
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5 min-h-0">
                   {!editing ? (
                     <div className="space-y-3">
-                      <div className={`p-3 rounded-xl border ${selectedLoc ? 'border-steel/30 bg-steel/5' : 'border-mist/60 bg-[#F1F4F8]/50'}`}>
+                      <div className={`p-3 rounded-xl border ${selectedLoc ? 'border-steel/30 bg-steel/5' : 'border-mist/60 bg-shell/50'}`}>
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                            selectedLoc ? 'bg-steel text-white' : 'bg-[#F1F4F8] text-navy/50'
+                            selectedLoc ? 'bg-steel text-white' : 'bg-shell text-navy/50'
                           }`}>
                             <Building2 className="w-4 h-4" />
                           </div>
@@ -592,7 +592,7 @@ export const HubinPemetaan: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className={`p-3 rounded-xl border ${selectedSiswa.mentor && selectedSiswa.mentor !== '-' ? 'border-steel/30 bg-steel/5' : 'border-mist/60 bg-[#F1F4F8]/50'}`}>
+                      <div className={`p-3 rounded-xl border ${selectedSiswa.mentor && selectedSiswa.mentor !== '-' ? 'border-steel/30 bg-steel/5' : 'border-mist/60 bg-shell/50'}`}>
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-steel flex items-center justify-center shrink-0">
                             <Briefcase className="w-4 h-4 text-white" />
@@ -609,7 +609,7 @@ export const HubinPemetaan: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="p-3 bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl flex items-start gap-2">
+                      <div className="p-3 bg-shell border border-mist rounded-xl flex items-start gap-2">
                         <ShieldCheck className="w-4 h-4 text-steel shrink-0 mt-0.5" />
                         <p className="text-[11px] font-medium text-navy/70 leading-relaxed">
                           Pemetaan ini menentukan tempat siswa melaksanakan PKL beserta guru dan mentor yang akan membimbing selama periode akademik.

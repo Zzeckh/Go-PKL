@@ -101,18 +101,18 @@ const ErrorBanner = ({
 }) => {
   const Icon = error.icon;
   return (
-    <div className="animate-in fade-in slide-in-from-top-2 duration-300 bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-start gap-3 shadow-sm">
-      <div className="w-9 h-9 rounded-lg bg-rose-100 flex items-center justify-center shrink-0">
-        <Icon className="w-4.5 h-4.5 text-rose-600" />
+    <div className="animate-in fade-in slide-in-from-top-2 duration-300 bg-navy/5 border border-navy/15 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+      <div className="w-9 h-9 rounded-lg bg-navy/10 flex items-center justify-center shrink-0">
+        <Icon className="w-4.5 h-4.5 text-navy/70" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold text-rose-900 leading-tight">{error.title}</p>
-        <p className="text-xs text-rose-700 mt-1 leading-relaxed">{error.message}</p>
+        <p className="text-sm font-bold text-navy leading-tight">{error.title}</p>
+        <p className="text-xs text-navy/70 mt-1 leading-relaxed">{error.message}</p>
       </div>
       <button
         type="button"
         onClick={onClose}
-        className="w-7 h-7 rounded-lg hover:bg-rose-100 flex items-center justify-center text-rose-600 hover:text-rose-800 transition-colors shrink-0"
+        className="w-7 h-7 rounded-lg hover:bg-navy/10 flex items-center justify-center text-navy/60 hover:text-navy transition-colors shrink-0"
         aria-label="Tutup"
       >
         <X className="w-4 h-4" />
