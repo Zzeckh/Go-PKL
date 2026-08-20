@@ -16,6 +16,7 @@ import { HubinData } from './components/HubinPages';
 import { HubinPemetaan } from './components/HubinPemetaan';
 import { SuperAdminDashboard, SuperClasses, SuperUsers } from './components/SuperAdminPages';
 import { SuperCompanies } from './components/SuperAdminCompanies';
+import { StudentPerizinan } from './components/StudentPerizinan';
 
 export default function App() {
   const {
@@ -202,6 +203,9 @@ export default function App() {
           )}
           {activePage === 'perizinan' && (userRole === 'teacher' || userRole === 'mentor') && (
             <TeacherPerizinan />
+          )}
+          {activePage === 'perizinan' && userRole === 'intern' && (
+            <StudentPerizinan />
           )}
           {activePage === 'rekap' && userRole === 'teacher' && (
             <TeacherRekap />

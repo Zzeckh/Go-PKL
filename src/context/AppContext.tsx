@@ -96,6 +96,7 @@ interface AppContextType {
   updateLogStatus: (id: string, status: 'approved' | 'rejected' | 'revision', feedback?: string) => Promise<void>;
   checkInAttendance: (imageUrl?: string, latitude?: number, longitude?: number) => Promise<void>;
   updatePerizinanStatus: (id: number, status: 'approved' | 'rejected', rejectReason?: string) => Promise<void>;
+  createPermission: (data: { type: string; reason: string; date: string; file?: File | null; attachmentUrl?: string }) => Promise<any>;
   submitEvaluation: (siswaId: number, nilaiDUDI: number, nilaiGuru: number) => Promise<void>;
   addSiswa: (newSiswa: Omit<SiswaItem, 'id' | 'kehadiran' | 'logs' | 'nilaiDUDI' | 'nilaiGuru' | 'finalNilai' | 'berkasPct'>) => Promise<void>;
   addPerusahaan: (data: { name: string; address: string; quota: number; mentor: string }) => Promise<void>;
@@ -327,8 +328,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const loadPerizinan = async () => {
     try {
       startLoading('perizinan');
-      const response = await api.get('/api/permissions') as { data: any[] };
-      const mapped = response.data.map((p: any): PerizinanItem => ({
+      const response = await api.get('/api/permissions') as any[];
+      const mapped = response.map((p: any): PerizinanItem => ({
         id: p.id,
         name: p.user?.name || 'Unknown',
         company: '-',
@@ -638,6 +639,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const createPermission = async (data: { type: string; reason: string; date: string; file?: File | null; attachmentUrl?: string }) => {
+    try {
+      const formData = new FormData();
+      formData.append('type', data.type);
+      formData.append('reason', data.reason);
+      formData.append('date', data.date);
+      if (data.file) formData.append('file', data.file);
+      else if (data.attachmentUrl) formData.append('attachmentUrl', data.attachmentUrl);
+
+      const res = await api.upload('/api/permissions', formData);
+      await loadPerizinan();
+      return res;
+    } catch (error: any) {
+      throw new Error(error.message || 'Gagal membuat perizinan');
+    }
+  };
+
   const submitEvaluation = async (siswaId: number, nilaiDUDI: number, nilaiGuru: number) => {
     try {
       await Promise.all([
@@ -711,7 +729,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         logEntries, attendances, perizinanList, mapLocations,
         superStats, superClasses, superUsers,
         addLogEntry, updateLogStatus, checkInAttendance, updatePerizinanStatus,
-        submitEvaluation, addSiswa, addPerusahaan, updateSiswaMapping, updateCompanyLocation,
+        createPermission, submitEvaluation, addSiswa, addPerusahaan, updateSiswaMapping, updateCompanyLocation,
         login, register, logout, refreshData,
         loadSuperStats, loadSuperClasses, createClass, deleteClass, loadClassStudents,
         loadSuperUsers, toggleUser, deleteUser, updateUserRole,

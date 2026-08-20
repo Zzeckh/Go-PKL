@@ -1,4 +1,34 @@
+import multer from 'multer';
+import path from 'node:path';
+import fs from 'node:fs';
 import prisma from '../config/db.js';
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = path.resolve('uploads/permissions');
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const safeName = file.originalname
+      .toLowerCase()
+      .replace(/[^a-z0-9.\-_]/g, '-')
+      .slice(-40);
+    cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeName}`);
+  },
+});
+
+export const uploadPermissionFile = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/pdf' || file.originalname.toLowerCase().endsWith('.pdf')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Hanya file PDF yang diperbolehkan.'));
+    }
+  },
+});
 
 export const getPermissions = async (req, res, next) => {
   try {
@@ -38,12 +68,18 @@ export const getPermissions = async (req, res, next) => {
 
 export const createPermission = async (req, res, next) => {
   try {
-    const { type, reason, attachmentUrl, date } = req.body;
+    const { type, reason, date } = req.body;
     const userId = req.user.id;
 
     if (!type || !reason || !date) {
       return res.status(400).json({ error: 'Type, reason, dan date wajib diisi' });
     }
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'Surat keterangan (file PDF) wajib diunggah.' });
+    }
+
+    const attachmentUrl = `/uploads/permissions/${req.file.filename}`;
 
     const permission = await prisma.permission.create({
       data: {

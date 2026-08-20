@@ -4,6 +4,7 @@ import {
   FileText, DownloadCloud, Check, X, Users, Clock, AlertCircle
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { assetUrl } from '../utils/api';
 
 const getInitials = (name: string) =>
   (name || '?').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -226,7 +227,21 @@ export const TeacherPerizinan: React.FC = () => {
 
                 <div className="flex items-center gap-2 bg-[#F1F4F8] p-3 rounded-2xl border border-mist/60">
                   <FileText className="w-4 h-4 text-navy/50 shrink-0" />
-                  <span className="text-xs font-bold text-navy truncate flex-1">{req.attachment || 'Tidak ada lampiran'}</span>
+                  {req.attachment ? (
+                    <>
+                      <span className="text-xs font-bold text-navy truncate flex-1">Surat keterangan terlampir</span>
+                      <a
+                        href={assetUrl(req.attachment)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-steel text-white rounded-lg text-[11px] font-bold hover:bg-steel/90 transition-colors shrink-0"
+                      >
+                        <DownloadCloud className="w-3.5 h-3.5" /> Lihat PDF
+                      </a>
+                    </>
+                  ) : (
+                    <span className="text-xs font-bold text-navy/50 truncate flex-1">Tidak ada lampiran</span>
+                  )}
                 </div>
 
                 <div className="flex gap-2 mt-auto pt-1">

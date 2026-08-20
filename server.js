@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'node:path';
 
 dotenv.config();
 
@@ -24,10 +25,13 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(requestLogger);
 
-/* ── 2. Health check ── */
+/* ── 2. Static: uploaded files (PDF surat izin) ── */
+app.use('/uploads', express.static(path.resolve('uploads')));
+
+/* ── 3. Health check ── */
 app.get('/api/health', (req, res) => res.json({ status: 'ok', app: 'Go-PKL API' }));
 
-/* ── 3. Routes ── */
+/* ── 4. Routes ── */
 app.use('/api/auth', authRoutes);
 app.use('/api/absensi', absensiRoutes);
 app.use('/api/logbook', logbookRoutes);

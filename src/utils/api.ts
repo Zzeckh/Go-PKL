@@ -1,5 +1,11 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000';
 
+export const assetUrl = (path: string) => {
+  if (!path) return '';
+  if (/^https?:\/\//.test(path)) return path;
+  return `${API_BASE_URL}${path}`;
+};
+
 class ApiError extends Error {
   constructor(
     public status: number,
@@ -79,6 +85,36 @@ export const api = {
 
   delete<T>(path: string) {
     return this.fetch<T>(path, { method: 'DELETE' });
+  },
+
+  async upload<T>(path: string, formData: FormData): Promise<T> {
+    const token = localStorage.getItem('pkl_token');
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}${path}`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        data = { error: 'Invalid JSON response' };
+      }
+
+      if (!response.ok) {
+        throw new ApiError(response.status, data.error || 'Upload failed', data);
+      }
+
+      return data;
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(500, 'Network error');
+    }
   },
 };
 
