@@ -614,12 +614,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const checkInAttendance = async (imageUrl?: string, latitude?: number, longitude?: number) => {
+  const checkInAttendance = async (_imageUrl?: string, latitude?: number, longitude?: number) => {
     try {
       await api.post('/api/absensi', {
         status: 'hadir',
         location: 'Current Location',
-        image_url: imageUrl || '',
         latitude,
         longitude,
       });

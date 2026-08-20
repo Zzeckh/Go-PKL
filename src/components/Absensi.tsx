@@ -168,13 +168,13 @@ export const Absensi: React.FC<AbsensiProps> = ({
     : (distance !== null && distance <= MAX_RADIUS);
 
   const handleSubmit = async () => {
-    if (!imageSrc || !isWithinRadius) return;
+    if (!isWithinRadius) return;
     setIsSubmitting(true);
     setSubmitError(null);
 
     try {
       await onCheckIn(
-        imageSrc,
+        undefined,
         userCoords?.lat,
         userCoords?.lng
       );

@@ -1,5 +1,19 @@
 import prisma from "../config/db.js";
 
+const haversineMeters = (lat1, lon1, lat2, lon2) => {
+  const R = 6371e3;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c);
+};
+
 export const getAllAbsensi = async (req, res, next) => {
   try {
     const { id, role } = req.user || {};
@@ -27,11 +41,40 @@ export const getAllAbsensi = async (req, res, next) => {
 
 export const createAbsensi = async (req, res, next) => {
   try {
-    const { status, image_url, latitude, longitude } = req.body;
+    const { status, latitude, longitude } = req.body;
     const userId = req.user.id;
 
     if (!status) {
       return res.status(400).json({ error: "status wajib diisi" });
+    }
+
+    // Radius check (server-side, authoritative)
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { company: true },
+    });
+    const company = user?.company;
+    if (
+      company &&
+      company.isActive &&
+      company.latitude != null &&
+      company.longitude != null
+    ) {
+      if (latitude == null || longitude == null) {
+        return res.status(400).json({ error: "Koordinat absensi tidak ditemukan. Aktifkan GPS dan coba lagi." });
+      }
+      const radius = company.radiusMeters ?? 500;
+      const dist = haversineMeters(
+        Number(latitude),
+        Number(longitude),
+        company.latitude,
+        company.longitude
+      );
+      if (dist > radius) {
+        return res.status(403).json({
+          error: `Anda berada di luar radius area PKL (${dist}m > ${radius}m). Absensi tidak dapat dikirim.`,
+        });
+      }
     }
 
     const today = new Date();
@@ -51,7 +94,6 @@ export const createAbsensi = async (req, res, next) => {
         date: today,
         status: status || 'hadir',
         checkInTime: new Date(),
-        imageUrl: image_url || null,
         latitude: latitude ? Number(latitude) : null,
         longitude: longitude ? Number(longitude) : null,
       },
