@@ -44,7 +44,7 @@ export const MentorLogbook: React.FC = () => {
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-2xl flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[24px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <BookOpen className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div className="min-w-0">
@@ -60,7 +60,7 @@ export const MentorLogbook: React.FC = () => {
       </div>
 
       <div className="shrink-0 space-y-3">
-        <div className="bg-shell p-1 rounded-xl flex gap-1 overflow-x-auto">
+        <div className="bg-shell p-1 rounded-[24px] flex gap-1 overflow-x-auto">
           {tabs.map(t => (
             <button
               key={t.key}
@@ -83,7 +83,7 @@ export const MentorLogbook: React.FC = () => {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Cari judul logbook..."
-            className="w-full bg-white border border-mist/60 rounded-xl pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel transition-all"
+            className="w-full bg-white border border-mist/60 rounded-[24px] pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel transition-all"
           />
         </div>
       </div>
@@ -92,7 +92,7 @@ export const MentorLogbook: React.FC = () => {
         <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5">
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-shell flex items-center justify-center mb-3">
+              <div className="w-14 h-14 rounded-[24px] bg-shell flex items-center justify-center mb-3">
                 <BookOpen className="w-6 h-6 text-navy/30" />
               </div>
               <p className="text-sm font-bold text-navy mb-1">Tidak ada logbook</p>
@@ -101,9 +101,9 @@ export const MentorLogbook: React.FC = () => {
           ) : (
             <div className="space-y-2">
               {filtered.map(log => (
-                <div key={log.id} className="p-3.5 rounded-2xl border border-mist/60 bg-white hover:border-steel/30 transition-all">
+                <div key={log.id} className="p-3.5 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 transition-all">
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
+                    <div className="w-10 h-10 rounded-[24px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
                       {getInitials(log.title.split(' ')[0] || '?')}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -177,7 +177,7 @@ export const MentorAttendance: React.FC = () => {
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-2xl flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[24px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <Activity className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div className="min-w-0">
@@ -191,8 +191,8 @@ export const MentorAttendance: React.FC = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 shrink-0">
         {stats.map((s) => (
-          <div key={s.label} className="bg-white border border-mist/60 rounded-2xl p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-shell flex items-center justify-center shrink-0">
+          <div key={s.label} className="bg-white border border-mist/60 rounded-[24px] p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-[24px] bg-shell flex items-center justify-center shrink-0">
               <s.icon className="w-5 h-5 text-steel" />
             </div>
             <div className="min-w-0">
@@ -210,7 +210,7 @@ export const MentorAttendance: React.FC = () => {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Cari nama atau perusahaan..."
-          className="w-full bg-white border border-mist/60 rounded-xl pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel transition-all"
+          className="w-full bg-white border border-mist/60 rounded-[24px] pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel transition-all"
         />
       </div>
 
@@ -229,7 +229,7 @@ export const MentorAttendance: React.FC = () => {
                   <button
                     key={s.id}
                     onClick={() => setSelectedStudent(s)}
-                    className="w-full p-3 rounded-2xl border border-mist/60 bg-white flex items-center gap-3 hover:border-steel/30 transition-all text-left group"
+                    className="w-full p-3 rounded-[24px] border border-mist/60 bg-white flex items-center gap-3 hover:border-steel/30 transition-all text-left group"
                   >
                     <div className="w-11 h-11 rounded-full bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
                       {getInitials(s.name)}
@@ -283,26 +283,26 @@ const StudentDetailModal: React.FC<{ student: any; attendances: any[]; onClose: 
               <p className="text-[11px] font-semibold text-navy/50">{student.kelas || '-'}</p>
             </div>
           </div>
-          <button onClick={onClose} className="w-9 h-9 rounded-xl bg-mist/60 hover:bg-mist flex items-center justify-center">
+          <button onClick={onClose} className="w-9 h-9 rounded-[24px] bg-mist/60 hover:bg-mist flex items-center justify-center">
             <X className="w-4 h-4 text-navy/60" />
           </button>
         </div>
         <div className="p-5 space-y-3">
-          <div className="flex items-center gap-3 bg-shell border border-mist rounded-xl p-3">
+          <div className="flex items-center gap-3 bg-shell border border-mist rounded-[24px] p-3">
             <Building className="w-4 h-4 text-steel shrink-0" />
             <div className="min-w-0">
               <p className="text-[10px] font-bold uppercase text-navy/50">Tempat Magang</p>
               <p className="text-sm font-bold text-navy truncate">{student.perusahaan || '-'}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 bg-shell border border-mist rounded-xl p-3">
+          <div className="flex items-center gap-3 bg-shell border border-mist rounded-[24px] p-3">
             <Activity className="w-4 h-4 text-steel shrink-0" />
             <div className="min-w-0">
               <p className="text-[10px] font-bold uppercase text-navy/50">Rekap Kehadiran</p>
               <p className="text-sm font-bold text-navy">{student.kehadiran || 0}%</p>
             </div>
           </div>
-          <div className="w-full h-full overflow-y-auto custom-scrollbar text-[13px] font-medium text-navy/70 leading-relaxed bg-shell/60 border border-mist/60 rounded-xl p-3 max-h-40">
+          <div className="w-full h-full overflow-y-auto custom-scrollbar text-[13px] font-medium text-navy/70 leading-relaxed bg-shell/60 border border-mist/60 rounded-[24px] p-3 max-h-40">
             <p className="text-[10px] font-bold uppercase text-navy/50 mb-2">Riwayat Absensi Terakhir</p>
             {attendances.length === 0 ? (
               <p className="text-xs text-navy/50">Belum ada data absensi.</p>
@@ -356,7 +356,7 @@ export const MentorRoster: React.FC = () => {
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-2xl flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[24px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <Award className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div className="min-w-0">
@@ -377,9 +377,9 @@ export const MentorRoster: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {siswaList.map(student => (
-                <div key={student.id} className="p-4 rounded-2xl border border-mist/60 bg-white hover:border-steel/30 transition-all flex flex-col">
+                <div key={student.id} className="p-4 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 transition-all flex flex-col">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-11 h-11 rounded-xl bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
+                    <div className="w-11 h-11 rounded-[24px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
                       {getInitials(student.name)}
                     </div>
                     <div className="min-w-0">
@@ -398,7 +398,7 @@ export const MentorRoster: React.FC = () => {
                         <div className="h-full bg-steel rounded-full" style={{ width: `${student.kehadiran || 0}%` }}></div>
                       </div>
                     </div>
-                    <div className="flex justify-between items-center bg-shell border border-mist p-2.5 rounded-xl">
+                    <div className="flex justify-between items-center bg-shell border border-mist p-2.5 rounded-[24px]">
                       <span className="text-xs font-bold text-navy/60">Nilai Industri</span>
                       <span className="text-sm font-bold text-navy tabular-nums">{student.nilaiDUDI || '0'}</span>
                     </div>
@@ -406,7 +406,7 @@ export const MentorRoster: React.FC = () => {
 
                   <button
                     onClick={() => openEval(student)}
-                    className="mt-auto w-full bg-steel text-white font-bold text-xs py-2.5 rounded-xl hover:bg-steel/90 shadow-sm shadow-steel/25 transition-colors flex items-center justify-center gap-2"
+                    className="mt-auto w-full bg-steel text-white font-bold text-xs py-2.5 rounded-[24px] hover:bg-steel/90 shadow-sm shadow-steel/25 transition-colors flex items-center justify-center gap-2"
                   >
                     <Award className="w-4 h-4" /> Nilai & Evaluasi
                   </button>
@@ -422,7 +422,7 @@ export const MentorRoster: React.FC = () => {
           <div className="bg-white rounded-[24px] max-w-md w-full shadow-2xl border border-mist/60">
             <div className="p-5 border-b border-mist/60 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-navy flex items-center justify-center">
+                <div className="w-10 h-10 rounded-[24px] bg-navy flex items-center justify-center">
                   <Award className="w-4 h-4 text-white" />
                 </div>
                 <div>
@@ -430,7 +430,7 @@ export const MentorRoster: React.FC = () => {
                   <p className="text-[11px] font-semibold text-navy/50">{selectedStudent.name}</p>
                 </div>
               </div>
-              <button onClick={() => setShowEvalModal(false)} className="w-9 h-9 rounded-xl bg-mist/60 hover:bg-mist flex items-center justify-center">
+              <button onClick={() => setShowEvalModal(false)} className="w-9 h-9 rounded-[24px] bg-mist/60 hover:bg-mist flex items-center justify-center">
                 <X className="w-4 h-4 text-navy/60" />
               </button>
             </div>
@@ -445,19 +445,19 @@ export const MentorRoster: React.FC = () => {
                   max={100}
                   value={gradeDUDI}
                   onChange={e => setGradeDUDI(e.target.value)}
-                  className="w-full bg-shell border border-mist rounded-xl px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel transition-all"
+                  className="w-full bg-shell border border-mist rounded-[24px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel transition-all"
                 />
               </div>
               {error && (
-                <div className="p-3 bg-navy/5 border border-navy/15 rounded-xl text-xs font-semibold text-navy">
+                <div className="p-3 bg-navy/5 border border-navy/15 rounded-[24px] text-xs font-semibold text-navy">
                   {error}
                 </div>
               )}
               <div className="flex gap-2 pt-2">
-                <button type="button" onClick={() => setShowEvalModal(false)} className="flex-1 bg-mist/60 text-navy/70 font-bold text-sm py-3 rounded-xl">
+                <button type="button" onClick={() => setShowEvalModal(false)} className="flex-1 bg-mist/60 text-navy/70 font-bold text-sm py-3 rounded-[24px]">
                   Batal
                 </button>
-                <button onClick={handleSaveEval} disabled={loading} className="flex-1 bg-steel text-white font-bold text-sm py-3 rounded-xl hover:bg-steel/90 shadow-lg shadow-steel/25 disabled:opacity-60">
+                <button onClick={handleSaveEval} disabled={loading} className="flex-1 bg-steel text-white font-bold text-sm py-3 rounded-[24px] hover:bg-steel/90 shadow-lg shadow-steel/25 disabled:opacity-60">
                   {loading ? 'Menyimpan...' : 'Simpan Evaluasi'}
                 </button>
               </div>

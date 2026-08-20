@@ -76,7 +76,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
 
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-2xl flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[24px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <ShieldCheck className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div className="min-w-0">
@@ -104,7 +104,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
       </div>
 
       {statsState === 'error' && (
-        <div className="shrink-0 bg-navy/5 border border-navy/15 rounded-2xl p-4 flex items-center justify-between gap-3">
+        <div className="shrink-0 bg-navy/5 border border-navy/15 rounded-[24px] p-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
             <AlertCircle className="w-4 h-4 text-navy/60 shrink-0" />
             <p className="text-[12px] font-semibold text-navy leading-snug">
@@ -137,7 +137,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                 className="bg-white border border-mist/60 rounded-[24px] p-4 md:p-5 min-h-[130px] text-left transition-all hover:border-steel/40 hover:-translate-y-0.5 hover:shadow-md group flex flex-col justify-between"
               >
                 <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-xl bg-shell flex items-center justify-center group-hover:bg-steel/10 transition-colors">
+                  <div className="w-10 h-10 rounded-[24px] bg-shell flex items-center justify-center group-hover:bg-steel/10 transition-colors">
                     <s.icon className="w-5 h-5 text-navy/60 group-hover:text-steel transition-colors" />
                   </div>
                   <ChevronRight className="w-4 h-4 text-navy/20 group-hover:text-steel group-hover:translate-x-0.5 transition-all" />
@@ -174,7 +174,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
               <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 min-h-0">
                 {superClasses.length === 0 ? (
                   <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
-                    <div className="w-14 h-14 rounded-2xl bg-shell flex items-center justify-center mb-3">
+                    <div className="w-14 h-14 rounded-[24px] bg-shell flex items-center justify-center mb-3">
                       <BookMarked className="w-6 h-6 text-navy/30" />
                     </div>
                     <p className="text-sm font-bold text-navy mb-1">Belum ada kelas</p>
@@ -187,10 +187,10 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                     <button
                       key={c.id}
                       onClick={() => onNavigate('super-classes')}
-                      className="p-3 rounded-xl border border-mist/60 bg-white hover:border-steel/30 hover:bg-shell/50 transition-all shrink-0 text-left group"
+                      className="p-3 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 hover:bg-shell/50 transition-all shrink-0 text-left group"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
+                        <div className="w-10 h-10 rounded-[24px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
                           {getInitials(c.name)}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -219,7 +219,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                 <div className="relative z-10">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-[24px] bg-white/15 flex items-center justify-center">
                         <Users className="w-4 h-4 text-white" />
                       </div>
                       <p className="text-[11px] font-bold uppercase tracking-widest text-white/60">
@@ -266,7 +266,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
               <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 shrink-0">
                 <div className="grid grid-cols-3 gap-2">
                   {quickStats.map((q) => (
-                    <div key={q.label} className="bg-shell border border-mist rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                    <div key={q.label} className="bg-shell border border-mist rounded-[24px] px-3 py-2.5 flex items-center gap-2.5">
                       <q.icon className="w-4 h-4 text-navy/50 shrink-0" />
                       <div className="min-w-0">
                         <p className="text-lg font-bold text-navy tabular-nums leading-none">{q.value}</p>
@@ -295,7 +295,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                 <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2 min-h-0 pr-1">
                   {attention.length === 0 ? (
                     <div className="flex-1 flex flex-col items-center justify-center py-6 text-center">
-                      <div className="w-12 h-12 rounded-2xl bg-steel/10 flex items-center justify-center mb-3">
+                      <div className="w-12 h-12 rounded-[24px] bg-steel/10 flex items-center justify-center mb-3">
                         <CheckCircle2 className="w-5 h-5 text-steel" />
                       </div>
                       <p className="text-xs font-bold text-navy">Semua data lengkap</p>
@@ -306,7 +306,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                       <button
                         key={a.key}
                         onClick={() => onNavigate(a.page)}
-                        className="p-2.5 rounded-xl border border-mist/60 bg-white hover:border-steel/30 transition-all shrink-0 text-left group"
+                        className="p-2.5 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 transition-all shrink-0 text-left group"
                       >
                         <div className="flex items-center gap-3">
                           <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
@@ -375,7 +375,7 @@ export const SuperClasses: React.FC = () => {
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-2xl flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[24px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <BookMarked className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div className="min-w-0">
@@ -387,7 +387,7 @@ export const SuperClasses: React.FC = () => {
         </div>
         <button
           onClick={() => setShowAdd(true)}
-          className="flex items-center gap-1.5 bg-steel text-white text-xs font-bold px-4 py-2 rounded-xl shadow-md shadow-steel/25 hover:bg-steel/90 hover:-translate-y-0.5 transition-all shrink-0"
+          className="flex items-center gap-1.5 bg-steel text-white text-xs font-bold px-4 py-2 rounded-[24px] shadow-md shadow-steel/25 hover:bg-steel/90 hover:-translate-y-0.5 transition-all shrink-0"
         >
           <Plus className="w-4 h-4" /> Tambah Kelas
         </button>
@@ -400,7 +400,7 @@ export const SuperClasses: React.FC = () => {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Cari kelas atau jurusan..."
-          className="w-full bg-white border border-mist/60 rounded-xl pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel transition-all"
+          className="w-full bg-white border border-mist/60 rounded-[24px] pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel transition-all"
         />
       </div>
 
@@ -421,11 +421,11 @@ export const SuperClasses: React.FC = () => {
                 </div>
               ) : (
                 filtered.map(c => (
-                  <div key={c.id} className="p-4 rounded-2xl border border-mist/60 bg-white hover:border-steel/30 transition-all">
+                  <div key={c.id} className="p-4 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 transition-all">
                     <div className="flex items-start justify-between mb-3">
                       <button
                         onClick={() => openDetail(c)}
-                        className="w-11 h-11 rounded-xl bg-navy text-white flex items-center justify-center shrink-0 hover:bg-navy/90 transition-colors"
+                        className="w-11 h-11 rounded-[24px] bg-navy text-white flex items-center justify-center shrink-0 hover:bg-navy/90 transition-colors"
                       >
                         <BookMarked className="w-5 h-5" />
                       </button>
@@ -504,12 +504,12 @@ const AddClassModal: React.FC<{
       <div className="bg-white rounded-[24px] max-w-md w-full shadow-2xl border border-mist/60">
         <div className="p-5 border-b border-mist/60 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-navy flex items-center justify-center">
+            <div className="w-10 h-10 rounded-[24px] bg-navy flex items-center justify-center">
               <BookMarked className="w-4 h-4 text-white" />
             </div>
             <h3 className="text-lg font-bold text-navy">Tambah Kelas Baru</h3>
           </div>
-          <button onClick={onClose} className="w-9 h-9 rounded-xl bg-mist/60 hover:bg-mist flex items-center justify-center">
+          <button onClick={onClose} className="w-9 h-9 rounded-[24px] bg-mist/60 hover:bg-mist flex items-center justify-center">
             <X className="w-4 h-4 text-navy/60" />
           </button>
         </div>
@@ -524,7 +524,7 @@ const AddClassModal: React.FC<{
               value={form.name}
               onChange={e => setForm({ ...form, name: e.target.value })}
               placeholder="Contoh: XII RPL 2"
-              className="w-full bg-shell border border-mist rounded-xl px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel transition-all"
+              className="w-full bg-shell border border-mist rounded-[24px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel transition-all"
             />
           </div>
           <div>
@@ -536,19 +536,19 @@ const AddClassModal: React.FC<{
               value={form.major}
               onChange={e => setForm({ ...form, major: e.target.value })}
               placeholder="Contoh: Rekayasa Perangkat Lunak"
-              className="w-full bg-shell border border-mist rounded-xl px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel transition-all"
+              className="w-full bg-shell border border-mist rounded-[24px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel transition-all"
             />
           </div>
           {error && (
-            <div className="p-3 bg-navy/5 border border-navy/15 rounded-xl text-xs font-semibold text-navy">
+            <div className="p-3 bg-navy/5 border border-navy/15 rounded-[24px] text-xs font-semibold text-navy">
               {error}
             </div>
           )}
           <div className="flex gap-2 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 bg-mist/60 text-navy/70 font-bold text-sm py-3 rounded-xl">
+            <button type="button" onClick={onClose} className="flex-1 bg-mist/60 text-navy/70 font-bold text-sm py-3 rounded-[24px]">
               Batal
             </button>
-            <button type="submit" disabled={loading} className="flex-1 bg-steel text-white font-bold text-sm py-3 rounded-xl hover:bg-steel/90 shadow-lg shadow-steel/25 disabled:opacity-60">
+            <button type="submit" disabled={loading} className="flex-1 bg-steel text-white font-bold text-sm py-3 rounded-[24px] hover:bg-steel/90 shadow-lg shadow-steel/25 disabled:opacity-60">
               {loading ? 'Menyimpan...' : 'Simpan'}
             </button>
           </div>
@@ -573,7 +573,7 @@ const ClassDetailModal: React.FC<{
       <div className="bg-white rounded-[24px] max-w-2xl w-full shadow-2xl border border-mist/60 flex flex-col max-h-[90vh]">
         <div className="p-5 border-b border-mist/60 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-navy flex items-center justify-center">
+            <div className="w-10 h-10 rounded-[24px] bg-navy flex items-center justify-center">
               <BookMarked className="w-4 h-4 text-white" />
             </div>
             <div className="min-w-0">
@@ -583,7 +583,7 @@ const ClassDetailModal: React.FC<{
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="w-9 h-9 rounded-xl bg-mist/60 hover:bg-mist flex items-center justify-center shrink-0">
+          <button onClick={onClose} className="w-9 h-9 rounded-[24px] bg-mist/60 hover:bg-mist flex items-center justify-center shrink-0">
             <X className="w-4 h-4 text-navy/60" />
           </button>
         </div>
@@ -598,7 +598,7 @@ const ClassDetailModal: React.FC<{
             </div>
           ) : students.length === 0 ? (
             <div className="text-center py-12">
-              <div className="w-14 h-14 rounded-2xl bg-shell flex items-center justify-center mx-auto mb-3">
+              <div className="w-14 h-14 rounded-[24px] bg-shell flex items-center justify-center mx-auto mb-3">
                 <Users className="w-6 h-6 text-navy/30" />
               </div>
               <p className="text-sm font-bold text-navy">Belum ada siswa</p>
@@ -607,7 +607,7 @@ const ClassDetailModal: React.FC<{
           ) : (
             <div className="space-y-2">
               {students.map((s: any) => (
-                <div key={s.id} className="p-3 rounded-2xl border border-mist/60 bg-white flex items-center gap-3">
+                <div key={s.id} className="p-3 rounded-[24px] border border-mist/60 bg-white flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
                     {getInitials(s.name)}
                   </div>
@@ -667,7 +667,7 @@ export const SuperUsers: React.FC = () => {
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-2xl flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[24px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <Users className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div className="min-w-0">
@@ -680,7 +680,7 @@ export const SuperUsers: React.FC = () => {
       </div>
 
       <div className="shrink-0 space-y-3">
-        <div className="bg-shell p-1 rounded-xl flex gap-1 overflow-x-auto">
+        <div className="bg-shell p-1 rounded-[24px] flex gap-1 overflow-x-auto">
           {roles.map(r => {
             const Icon = r.icon;
             const active = roleFilter === r.key;
@@ -704,7 +704,7 @@ export const SuperUsers: React.FC = () => {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Cari nama atau email..."
-            className="w-full bg-white border border-mist/60 rounded-xl pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel transition-all"
+            className="w-full bg-white border border-mist/60 rounded-[24px] pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel transition-all"
           />
         </div>
       </div>
@@ -726,7 +726,7 @@ export const SuperUsers: React.FC = () => {
                 </div>
               ) : (
                 superUsers.map(u => (
-                  <div key={u.id} className="p-3 rounded-2xl border border-mist/60 bg-white flex items-center gap-3">
+                  <div key={u.id} className="p-3 rounded-[24px] border border-mist/60 bg-white flex items-center gap-3">
                     <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
                       u.role === 'mentor' || u.role === 'hubin' ? 'bg-steel text-white' : 'bg-navy text-white'
                     }`}>

@@ -33,7 +33,6 @@ export default function App() {
     userCompanyLocation,
     logEntries,
     attendances,
-    mapLocations,
     addLogEntry,
     checkInAttendance,
     login,
@@ -134,6 +133,7 @@ export default function App() {
               onOpenLogbookModal={openLogbookModal}
               onCheckIn={checkInAttendance}
               onGoToProfile={() => setActivePage('profile')}
+              onNavigate={(page) => setActivePage(page as any)}
             />
           )}
 
@@ -175,11 +175,7 @@ export default function App() {
             />
           )}
           {activePage === 'maps' && (
-            <Maps 
-              locations={mapLocations} 
-              attendances={attendances} 
-              onCheckIn={checkInAttendance} 
-            />
+            <Maps />
           )}
           {activePage === 'profile' && (
             <Profile userRole={userRole} />

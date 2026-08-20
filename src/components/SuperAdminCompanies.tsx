@@ -56,7 +56,7 @@ export const SuperCompanies: React.FC = () => {
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-2xl flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[24px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <Building2 className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div className="min-w-0">
@@ -68,7 +68,7 @@ export const SuperCompanies: React.FC = () => {
         </div>
         <button
           onClick={() => { setEditing(null); setShowForm(true); }}
-          className="flex items-center gap-1.5 bg-steel text-white text-xs font-bold px-4 py-2 rounded-xl shadow-md shadow-steel/25 hover:bg-steel/90 hover:-translate-y-0.5 transition-all shrink-0"
+          className="flex items-center gap-1.5 bg-steel text-white text-xs font-bold px-4 py-2 rounded-[24px] shadow-md shadow-steel/25 hover:bg-steel/90 hover:-translate-y-0.5 transition-all shrink-0"
         >
           <Plus className="w-4 h-4" /> Tambah Perusahaan
         </button>
@@ -81,7 +81,7 @@ export const SuperCompanies: React.FC = () => {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Cari nama perusahaan, alamat, kategori..."
-          className="w-full bg-white border border-mist/60 rounded-xl pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel transition-all"
+          className="w-full bg-white border border-mist/60 rounded-[24px] pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel transition-all"
         />
       </div>
 
@@ -96,7 +96,7 @@ export const SuperCompanies: React.FC = () => {
             </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-12">
-              <div className="w-14 h-14 rounded-2xl bg-shell flex items-center justify-center mb-3 mx-auto">
+              <div className="w-14 h-14 rounded-[24px] bg-shell flex items-center justify-center mb-3 mx-auto">
                 <Building2 className="w-6 h-6 text-navy/30" />
               </div>
               <p className="text-sm font-bold text-navy mb-1">{search ? 'Tidak ada hasil' : 'Belum ada perusahaan'}</p>
@@ -107,9 +107,9 @@ export const SuperCompanies: React.FC = () => {
               {filtered.map(c => {
                 const hasCoords = c.latitude != null && c.longitude != null;
                 return (
-                  <div key={c.id} className="p-4 rounded-2xl border border-mist/60 bg-white hover:border-steel/30 transition-all">
+                  <div key={c.id} className="p-4 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 transition-all">
                     <div className="flex items-start justify-between mb-3">
-                      <div className="w-11 h-11 rounded-xl bg-steel/10 flex items-center justify-center shrink-0">
+                      <div className="w-11 h-11 rounded-[24px] bg-steel/10 flex items-center justify-center shrink-0">
                         <Building2 className="w-5 h-5 text-steel" />
                       </div>
                       <div className="flex items-center gap-1.5">
@@ -378,10 +378,10 @@ const CompanyFormModal: React.FC<{
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-6 bg-navy/60 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-white rounded-[28px] max-w-3xl w-full max-h-[94vh] shadow-2xl flex flex-col overflow-hidden border border-white/40">
+      <div className="bg-white rounded-[24px] max-w-3xl w-full max-h-[94vh] shadow-2xl flex flex-col overflow-hidden border border-white/40">
         <div className="p-5 border-b border-mist/60 shrink-0 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-navy flex items-center justify-center">
+            <div className="w-10 h-10 rounded-[24px] bg-navy flex items-center justify-center">
               <Building2 className="w-4 h-4 text-white" />
             </div>
             <div>
@@ -389,7 +389,7 @@ const CompanyFormModal: React.FC<{
               <p className="text-[12px] font-semibold text-navy/60 mt-0.5">Lengkapi data & geofence lokasi</p>
             </div>
           </div>
-          <button onClick={onClose} disabled={saving} className="w-9 h-9 rounded-xl bg-mist/60 hover:bg-mist flex items-center justify-center text-navy/60 transition-colors shrink-0 disabled:opacity-50">
+          <button onClick={onClose} disabled={saving} className="w-9 h-9 rounded-[24px] bg-mist/60 hover:bg-mist flex items-center justify-center text-navy/60 transition-colors shrink-0 disabled:opacity-50">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -402,7 +402,7 @@ const CompanyFormModal: React.FC<{
                 value={form.name}
                 onChange={e => setForm({ ...form, name: e.target.value })}
                 placeholder="Contoh: UPTD Tikomdik"
-                className="w-full bg-shell border border-mist rounded-2xl px-3.5 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
+                className="w-full bg-shell border border-mist rounded-[24px] px-3.5 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
               />
             </div>
             <div className="sm:col-span-2">
@@ -411,7 +411,7 @@ const CompanyFormModal: React.FC<{
                 value={form.address}
                 onChange={e => setForm({ ...form, address: e.target.value })}
                 placeholder="Alamat lengkap"
-                className="w-full bg-shell border border-mist rounded-2xl px-3.5 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
+                className="w-full bg-shell border border-mist rounded-[24px] px-3.5 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
               />
             </div>
             <div>
@@ -420,7 +420,7 @@ const CompanyFormModal: React.FC<{
                 value={form.category}
                 onChange={e => setForm({ ...form, category: e.target.value })}
                 placeholder="Contoh: IT"
-                className="w-full bg-shell border border-mist rounded-2xl px-3.5 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
+                className="w-full bg-shell border border-mist rounded-[24px] px-3.5 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
               />
             </div>
             <div>
@@ -430,7 +430,7 @@ const CompanyFormModal: React.FC<{
                 value={form.quota}
                 min={0}
                 onChange={e => setForm({ ...form, quota: Number(e.target.value) || 0 })}
-                className="w-full bg-shell border border-mist rounded-2xl px-3.5 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
+                className="w-full bg-shell border border-mist rounded-[24px] px-3.5 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
               />
             </div>
           </div>
@@ -457,7 +457,7 @@ const CompanyFormModal: React.FC<{
                       onChange={e => setSearchQuery(e.target.value)}
                       onFocus={() => (searchResults.length > 0 || noResults) && setShowDropdown(true)}
                       placeholder="Cari alamat / sekolah / tempat..."
-                      className="w-full bg-shell border border-mist rounded-xl pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
+                      className="w-full bg-shell border border-mist rounded-[24px] pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
                     />
                     {isSearching && <Loader2 className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-steel animate-spin" />}
                     {!isSearching && searchQuery && (
@@ -468,13 +468,13 @@ const CompanyFormModal: React.FC<{
                     )}
                   </div>
                   <button type="button" onClick={handleLocateMe} title="Gunakan lokasi saya"
-                    className="w-10 h-10 rounded-xl bg-steel/10 hover:bg-steel/20 text-steel flex items-center justify-center transition-colors shrink-0">
+                    className="w-10 h-10 rounded-[24px] bg-steel/10 hover:bg-steel/20 text-steel flex items-center justify-center transition-colors shrink-0">
                     <Navigation className="w-4 h-4" />
                   </button>
                 </div>
 
                 {showDropdown && (searchResults.length > 0 || noResults) && (
-                  <div className="absolute left-3 right-3 mt-2 bg-white border border-mist rounded-2xl overflow-hidden z-[2000] animate-in fade-in slide-in-from-top-1 duration-150 shadow-[0_10px_40px_rgba(21,42,66,0.25)] border-t-2 border-t-steel">
+                  <div className="absolute left-3 right-3 mt-2 bg-white border border-mist rounded-[24px] overflow-hidden z-[2000] animate-in fade-in slide-in-from-top-1 duration-150 shadow-[0_10px_40px_rgba(21,42,66,0.25)] border-t-2 border-t-steel">
                     {searchResults.length > 0 ? (
                       <div className="max-h-60 overflow-y-auto custom-scrollbar">
                         {searchResults.map((r, i) => (
@@ -497,11 +497,11 @@ const CompanyFormModal: React.FC<{
                         </p>
                         <div className="flex flex-col sm:flex-row gap-2">
                           <button type="button" onClick={() => enterManualMode(true)}
-                            className="flex-1 flex items-center justify-center gap-1.5 bg-steel text-white text-xs font-bold py-2.5 rounded-xl hover:bg-steel/90 transition-colors">
+                            className="flex-1 flex items-center justify-center gap-1.5 bg-steel text-white text-xs font-bold py-2.5 rounded-[24px] hover:bg-steel/90 transition-colors">
                             <Keyboard className="w-3.5 h-3.5" /> Input Manual via Koordinat
                           </button>
                           <button type="button" onClick={() => enterManualMode(false)}
-                            className="flex-1 flex items-center justify-center gap-1.5 bg-shell border border-mist text-navy text-xs font-bold py-2.5 rounded-xl hover:bg-mist transition-colors">
+                            className="flex-1 flex items-center justify-center gap-1.5 bg-shell border border-mist text-navy text-xs font-bold py-2.5 rounded-[24px] hover:bg-mist transition-colors">
                             <MousePointer2 className="w-3.5 h-3.5" /> Klik Langsung di Peta
                           </button>
                         </div>
@@ -514,7 +514,7 @@ const CompanyFormModal: React.FC<{
               {manualMode && (
                 <div className="bg-steel/10 border-b border-steel/30 px-3.5 py-3">
                   <div className="flex items-start gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-steel text-white flex items-center justify-center shrink-0"><Lightbulb className="w-4 h-4" /></div>
+                    <div className="w-8 h-8 rounded-[24px] bg-steel text-white flex items-center justify-center shrink-0"><Lightbulb className="w-4 h-4" /></div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[12px] font-bold text-navy mb-1">Mode Manual Aktif — cari titik koordinat sendiri</p>
                       <ol className="text-[11px] font-medium text-navy/70 leading-relaxed list-decimal pl-4 space-y-0.5">
@@ -549,7 +549,7 @@ const CompanyFormModal: React.FC<{
                     onBlur={handleManualInputCommit}
                     onKeyDown={e => { if (e.key === 'Enter') handleManualInputCommit(); }}
                     placeholder="-6.914744"
-                    className={`w-full border rounded-xl px-3 py-2 text-sm font-mono font-bold text-navy outline-none transition-all placeholder:text-navy/30 tabular-nums ${
+                    className={`w-full border rounded-[24px] px-3 py-2 text-sm font-mono font-bold text-navy outline-none transition-all placeholder:text-navy/30 tabular-nums ${
                       manualMode ? 'bg-white border-steel ring-2 ring-steel/20' : 'bg-shell border-mist focus:border-steel focus:bg-white'
                     }`}
                   />
@@ -562,7 +562,7 @@ const CompanyFormModal: React.FC<{
                     onBlur={handleManualInputCommit}
                     onKeyDown={e => { if (e.key === 'Enter') handleManualInputCommit(); }}
                     placeholder="107.609628"
-                    className={`w-full border rounded-xl px-3 py-2 text-sm font-mono font-bold text-navy outline-none transition-all placeholder:text-navy/30 tabular-nums ${
+                    className={`w-full border rounded-[24px] px-3 py-2 text-sm font-mono font-bold text-navy outline-none transition-all placeholder:text-navy/30 tabular-nums ${
                       manualMode ? 'bg-white border-steel ring-2 ring-steel/20' : 'bg-shell border-mist focus:border-steel focus:bg-white'
                     }`}
                   />
@@ -587,7 +587,7 @@ const CompanyFormModal: React.FC<{
           </div>
 
           {error && (
-            <div className="p-3 bg-navy/5 border border-navy/15 rounded-2xl flex items-start gap-2 animate-in fade-in">
+            <div className="p-3 bg-navy/5 border border-navy/15 rounded-[24px] flex items-start gap-2 animate-in fade-in">
               <AlertCircle className="w-4 h-4 text-navy/60 shrink-0 mt-0.5" />
               <p className="text-[12px] font-semibold text-navy leading-snug">{error}</p>
             </div>
@@ -596,11 +596,11 @@ const CompanyFormModal: React.FC<{
 
         <div className="p-4 md:p-5 pt-3 border-t border-mist/60 flex gap-2 shrink-0">
           <button type="button" onClick={onClose} disabled={saving}
-            className="flex-1 bg-mist/60 text-navy/70 font-bold text-sm py-3 rounded-2xl hover:bg-mist transition-colors disabled:opacity-50">
+            className="flex-1 bg-mist/60 text-navy/70 font-bold text-sm py-3 rounded-[24px] hover:bg-mist transition-colors disabled:opacity-50">
             Batal
           </button>
           <button type="button" onClick={handleSubmit} disabled={saving}
-            className={`flex-1 font-bold text-sm py-3 rounded-2xl transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 font-bold text-sm py-3 rounded-[24px] transition-all flex items-center justify-center gap-1.5 ${
               saving ? 'bg-mist text-navy/40 cursor-not-allowed' : 'bg-steel text-white hover:bg-steel/90 hover:-translate-y-0.5 shadow-lg shadow-steel/25'
             }`}>
             {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...</> : <><Check className="w-4 h-4" /> {isEdit ? 'Simpan Perubahan' : 'Simpan Perusahaan'}</>}

@@ -113,7 +113,7 @@ export const Logbook: React.FC<LogbookProps> = ({
       <div className="shrink-0 bg-white rounded-[24px] border border-mist/60 shadow-sm p-5">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-navy flex items-center justify-center shadow-md shadow-navy/20">
+            <div className="w-11 h-11 rounded-[24px] bg-navy flex items-center justify-center shadow-md shadow-navy/20">
               <BookOpen className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -123,7 +123,7 @@ export const Logbook: React.FC<LogbookProps> = ({
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-steel text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-steel/90 transition-all shadow-md shadow-steel/20 hover:-translate-y-0.5 shrink-0"
+            className="bg-steel text-white px-5 py-2.5 rounded-[24px] text-sm font-bold flex items-center gap-2 hover:bg-steel/90 transition-all shadow-md shadow-steel/20 hover:-translate-y-0.5 shrink-0"
           >
             <Plus className="w-4 h-4" /> Tambah Jurnal
           </button>
@@ -132,7 +132,7 @@ export const Logbook: React.FC<LogbookProps> = ({
         {/* Stats — semua card seragam #F1F4F8 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
           {/* Total Jurnal */}
-          <div className="bg-shell border border-mist rounded-2xl p-3">
+          <div className="bg-shell border border-mist rounded-[24px] p-3">
             <div className="flex items-center justify-between mb-1">
               <BookOpen className="w-4 h-4 text-navy/50" />
               <span className="text-2xl font-bold text-navy tabular-nums">{logs.length}</span>
@@ -141,7 +141,7 @@ export const Logbook: React.FC<LogbookProps> = ({
           </div>
 
           {/* Total Jam */}
-          <div className="bg-shell border border-mist rounded-2xl p-3">
+          <div className="bg-shell border border-mist rounded-[24px] p-3">
             <div className="flex items-center justify-between mb-1">
               <Clock className="w-4 h-4 text-navy/50" />
               <span className="text-2xl font-bold text-navy tabular-nums">
@@ -153,7 +153,7 @@ export const Logbook: React.FC<LogbookProps> = ({
           </div>
 
           {/* Disetujui */}
-          <div className="bg-shell border border-mist rounded-2xl p-3">
+          <div className="bg-shell border border-mist rounded-[24px] p-3">
             <div className="flex items-center justify-between mb-1">
               <CheckCircle2 className="w-4 h-4 text-navy/50" />
               <span className="text-2xl font-bold text-navy tabular-nums">{approved}</span>
@@ -162,7 +162,7 @@ export const Logbook: React.FC<LogbookProps> = ({
           </div>
 
           {/* Pending */}
-          <div className="bg-shell border border-mist rounded-2xl p-3">
+          <div className="bg-shell border border-mist rounded-[24px] p-3">
             <div className="flex items-center justify-between mb-1">
               <AlertCircle className="w-4 h-4 text-navy/50" />
               <div className="flex items-baseline gap-1.5">
@@ -187,7 +187,7 @@ export const Logbook: React.FC<LogbookProps> = ({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Cari jurnal berdasarkan judul, deskripsi, atau kategori..."
-              className="w-full bg-mist/40 border border-mist rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
+              className="w-full bg-mist/40 border border-mist rounded-[24px] pl-10 pr-4 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
             />
             {search && (
               <button
@@ -199,7 +199,7 @@ export const Logbook: React.FC<LogbookProps> = ({
             )}
           </div>
 
-          <div className="bg-mist/40 p-1 rounded-xl flex gap-1 shrink-0 overflow-x-auto">
+          <div className="bg-mist/40 p-1 rounded-[24px] flex gap-1 shrink-0 overflow-x-auto">
             {([
               { key: 'all', label: 'Semua', count: logs.length },
               { key: 'approved', label: 'OK', count: approved },
@@ -236,7 +236,7 @@ export const Logbook: React.FC<LogbookProps> = ({
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
             {search || filter !== 'all' ? (
               <>
-                <div className="w-16 h-16 rounded-2xl bg-mist/50 flex items-center justify-center mb-4">
+                <div className="w-16 h-16 rounded-[24px] bg-mist/50 flex items-center justify-center mb-4">
                   <Search className="w-7 h-7 text-navy/30" />
                 </div>
                 <p className="text-base font-bold text-navy mb-1">Tidak ada hasil</p>
@@ -249,7 +249,7 @@ export const Logbook: React.FC<LogbookProps> = ({
               </>
             ) : (
               <>
-                <div className="w-16 h-16 rounded-2xl bg-steel/10 flex items-center justify-center mb-4">
+                <div className="w-16 h-16 rounded-[24px] bg-steel/10 flex items-center justify-center mb-4">
                   <Sparkles className="w-7 h-7 text-steel" />
                 </div>
                 <p className="text-base font-bold text-navy mb-1">Mulai menulis jurnal pertama!</p>
@@ -257,19 +257,19 @@ export const Logbook: React.FC<LogbookProps> = ({
                   Catat setiap aktivitas PKL kamu. Jurnal akan direview oleh mentor dan guru pembimbing.
                 </p>
                 <div className="grid grid-cols-3 gap-3 max-w-md w-full mb-5">
-                  <div className="bg-mist/30 rounded-xl p-3 flex flex-col items-center text-center">
+                  <div className="bg-mist/30 rounded-[24px] p-3 flex flex-col items-center text-center">
                     <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center mb-2">
                       <FileEdit className="w-4 h-4 text-steel" />
                     </div>
                     <p className="text-[11px] font-semibold text-navy/70 leading-tight">Tulis aktivitas harian</p>
                   </div>
-                  <div className="bg-mist/30 rounded-xl p-3 flex flex-col items-center text-center">
+                  <div className="bg-mist/30 rounded-[24px] p-3 flex flex-col items-center text-center">
                     <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center mb-2">
                       <Clock className="w-4 h-4 text-steel" />
                     </div>
                     <p className="text-[11px] font-semibold text-navy/70 leading-tight">Pantau total jam kerja</p>
                   </div>
-                  <div className="bg-mist/30 rounded-xl p-3 flex flex-col items-center text-center">
+                  <div className="bg-mist/30 rounded-[24px] p-3 flex flex-col items-center text-center">
                     <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center mb-2">
                       <CheckCircle2 className="w-4 h-4 text-steel" />
                     </div>
@@ -278,7 +278,7 @@ export const Logbook: React.FC<LogbookProps> = ({
                 </div>
                 <button
                   onClick={() => setIsModalOpen(true)}
-                  className="bg-steel text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-steel/90 transition-all shadow-md shadow-steel/20"
+                  className="bg-steel text-white px-6 py-2.5 rounded-[24px] text-sm font-bold flex items-center gap-2 hover:bg-steel/90 transition-all shadow-md shadow-steel/20"
                 >
                   <Plus className="w-4 h-4" /> Tulis Jurnal Pertama
                 </button>
@@ -296,12 +296,12 @@ export const Logbook: React.FC<LogbookProps> = ({
               return (
                 <div
                   key={log.id}
-                  className="bg-white rounded-2xl border border-mist/60 hover:border-steel/30 hover:shadow-sm transition-all p-4 shrink-0 group"
+                  className="bg-white rounded-[24px] border border-mist/60 hover:border-steel/30 hover:shadow-sm transition-all p-4 shrink-0 group"
                 >
                   <div className="flex gap-3">
                     {/* Icon + Date */}
                     <div className="flex flex-col items-center gap-1 shrink-0">
-                      <div className="w-10 h-10 rounded-xl bg-navy flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-[24px] bg-navy flex items-center justify-center">
                         <BookOpen className="w-4 h-4 text-white" />
                       </div>
                       <span className="text-[10px] font-bold text-navy/50 uppercase tracking-wider whitespace-nowrap">
@@ -348,7 +348,7 @@ export const Logbook: React.FC<LogbookProps> = ({
                       )}
 
                       {log.status === 'revision' && log.feedback && (
-                        <div className="mt-3 p-3 bg-navy/10 border border-navy/15 rounded-xl">
+                        <div className="mt-3 p-3 bg-navy/10 border border-navy/15 rounded-[24px]">
                           <div className="flex items-start gap-2">
                             <AlertCircle className="w-4 h-4 text-navy shrink-0 mt-0.5" />
                             <div className="flex-1 min-w-0">
@@ -360,7 +360,7 @@ export const Logbook: React.FC<LogbookProps> = ({
                       )}
 
                       {log.status === 'approved' && log.feedback && (
-                        <div className="mt-3 p-3 bg-steel/10 border border-mist rounded-xl">
+                        <div className="mt-3 p-3 bg-steel/10 border border-mist rounded-[24px]">
                           <div className="flex items-start gap-2">
                             <CheckCircle2 className="w-4 h-4 text-steel shrink-0 mt-0.5" />
                             <div className="flex-1 min-w-0">
@@ -386,7 +386,7 @@ export const Logbook: React.FC<LogbookProps> = ({
             <div className="p-5 md:p-6 border-b border-mist/60 shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-navy flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-[24px] bg-navy flex items-center justify-center">
                     <FileEdit className="w-4 h-4 text-white" />
                   </div>
                   <div>
@@ -397,7 +397,7 @@ export const Logbook: React.FC<LogbookProps> = ({
                 <button 
                   onClick={() => setIsModalOpen(false)} 
                   disabled={isSubmitting}
-                  className="w-9 h-9 rounded-xl bg-mist/60 hover:bg-mist flex items-center justify-center text-navy/60 hover:text-navy transition-colors shrink-0 disabled:opacity-50"
+                  className="w-9 h-9 rounded-[24px] bg-mist/60 hover:bg-mist flex items-center justify-center text-navy/60 hover:text-navy transition-colors shrink-0 disabled:opacity-50"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -417,7 +417,7 @@ export const Logbook: React.FC<LogbookProps> = ({
                     placeholder="Misal: Membuat komponen dashboard PKL" 
                     required
                     disabled={isSubmitting}
-                    className="w-full bg-mist/30 border border-mist rounded-xl px-4 py-3 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40 disabled:opacity-50" 
+                    className="w-full bg-mist/30 border border-mist rounded-[24px] px-4 py-3 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40 disabled:opacity-50" 
                   />
                 </div>
 
@@ -430,7 +430,7 @@ export const Logbook: React.FC<LogbookProps> = ({
                       value={category}
                       onChange={e => setCategory(e.target.value)}
                       disabled={isSubmitting}
-                      className="w-full bg-mist/30 border border-mist rounded-xl px-4 py-3 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all disabled:opacity-50"
+                      className="w-full bg-mist/30 border border-mist rounded-[24px] px-4 py-3 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all disabled:opacity-50"
                     >
                       {categories.map(c => (
                         <option key={c} value={c}>{c}</option>
@@ -450,7 +450,7 @@ export const Logbook: React.FC<LogbookProps> = ({
                       onChange={e => setHours(Number(e.target.value))} 
                       required
                       disabled={isSubmitting}
-                      className="w-full bg-mist/30 border border-mist rounded-xl px-4 py-3 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all tabular-nums disabled:opacity-50" 
+                      className="w-full bg-mist/30 border border-mist rounded-[24px] px-4 py-3 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all tabular-nums disabled:opacity-50" 
                     />
                   </div>
                 </div>
@@ -473,12 +473,12 @@ export const Logbook: React.FC<LogbookProps> = ({
                     placeholder="Jelaskan secara detail apa yang kamu kerjakan hari ini, tantangan yang dihadapi, dan hasil yang dicapai..." 
                     required
                     disabled={isSubmitting}
-                    className="w-full bg-mist/30 border border-mist rounded-xl px-4 py-3 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all resize-none leading-relaxed placeholder:text-navy/40 disabled:opacity-50" 
+                    className="w-full bg-mist/30 border border-mist rounded-[24px] px-4 py-3 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all resize-none leading-relaxed placeholder:text-navy/40 disabled:opacity-50" 
                   />
                 </div>
 
                 {/* Tips */}
-                <div className="bg-steel/5 border border-steel/20 rounded-xl p-3 flex gap-2.5">
+                <div className="bg-steel/5 border border-steel/20 rounded-[24px] p-3 flex gap-2.5">
                   <Sparkles className="w-4 h-4 text-steel shrink-0 mt-0.5" />
                   <div>
                     <p className="text-[11px] font-bold text-steel mb-0.5">Tips menulis jurnal</p>
@@ -494,14 +494,14 @@ export const Logbook: React.FC<LogbookProps> = ({
                   type="button" 
                   onClick={() => setIsModalOpen(false)} 
                   disabled={isSubmitting}
-                  className="flex-1 py-3 text-sm font-bold text-navy/70 hover:bg-mist/50 rounded-xl transition-colors disabled:opacity-50"
+                  className="flex-1 py-3 text-sm font-bold text-navy/70 hover:bg-mist/50 rounded-[24px] transition-colors disabled:opacity-50"
                 >
                   Batal
                 </button>
                 <button 
                   type="submit" 
                   disabled={isSubmitting || !title || !desc}
-                  className="flex-1 bg-navy text-white py-3 rounded-xl text-sm font-bold hover:bg-navy/90 transition-all shadow-lg shadow-navy/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-navy text-white py-3 rounded-[24px] text-sm font-bold hover:bg-navy/90 transition-all shadow-lg shadow-navy/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...</>

@@ -39,7 +39,7 @@ export const TeacherMonitoring: React.FC = () => {
 
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-2xl flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[24px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <Users className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div className="min-w-0">
@@ -52,7 +52,7 @@ export const TeacherMonitoring: React.FC = () => {
       </div>
 
       <div className="shrink-0 space-y-3">
-        <div className="bg-shell p-1 rounded-xl flex gap-1 overflow-x-auto">
+        <div className="bg-shell p-1 rounded-[24px] flex gap-1 overflow-x-auto">
           <button
             onClick={() => setFilterCompany('all')}
             className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
@@ -80,7 +80,7 @@ export const TeacherMonitoring: React.FC = () => {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Cari nama siswa atau perusahaan..."
-            className="w-full bg-white border border-mist/60 rounded-xl pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel transition-all"
+            className="w-full bg-white border border-mist/60 rounded-[24px] pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel transition-all"
           />
           {search && (
             <button
@@ -110,7 +110,7 @@ export const TeacherMonitoring: React.FC = () => {
                 <tr>
                   <td colSpan={5} className="p-10 text-center">
                     <div className="flex flex-col items-center justify-center text-center">
-                      <div className="w-14 h-14 rounded-2xl bg-shell flex items-center justify-center mb-3">
+                      <div className="w-14 h-14 rounded-[24px] bg-shell flex items-center justify-center mb-3">
                         <Search className="w-6 h-6 text-navy/30" />
                       </div>
                       <p className="text-sm font-bold text-navy mb-1">Siswa tidak ditemukan</p>
@@ -211,21 +211,21 @@ const MonitoringDetailModal: React.FC<{
               <p className="text-[11px] font-semibold text-navy/50">{siswa.kelas} · {siswa.perusahaan || '-'}</p>
             </div>
           </div>
-          <button onClick={onClose} className="w-9 h-9 rounded-xl bg-mist/60 hover:bg-mist flex items-center justify-center shrink-0">
+          <button onClick={onClose} className="w-9 h-9 rounded-[24px] bg-mist/60 hover:bg-mist flex items-center justify-center shrink-0">
             <X className="w-4 h-4 text-navy/60" />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-4">
           <div className="grid grid-cols-2 gap-2">
-            <div className="flex items-center gap-3 bg-shell border border-mist rounded-xl p-3">
+            <div className="flex items-center gap-3 bg-shell border border-mist rounded-[24px] p-3">
               <Activity className="w-4 h-4 text-steel shrink-0" />
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase text-navy/50">Kehadiran</p>
                 <p className="text-sm font-bold text-navy">{siswa.kehadiran || 0}%</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 bg-shell border border-mist rounded-xl p-3">
+            <div className="flex items-center gap-3 bg-shell border border-mist rounded-[24px] p-3">
               <BookOpen className="w-4 h-4 text-steel shrink-0" />
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase text-navy/50">Total Logbook</p>
@@ -239,11 +239,11 @@ const MonitoringDetailModal: React.FC<{
               <BookOpen className="w-3.5 h-3.5" /> Logbook
             </p>
             {siswaLogs.length === 0 ? (
-              <p className="text-xs text-navy/50 bg-shell/60 border border-mist/60 rounded-xl p-3">Belum ada logbook.</p>
+              <p className="text-xs text-navy/50 bg-shell/60 border border-mist/60 rounded-[24px] p-3">Belum ada logbook.</p>
             ) : (
               <div className="space-y-2">
                 {siswaLogs.map(log => (
-                  <div key={log.id} className="p-3 rounded-xl border border-mist/60 bg-white">
+                  <div key={log.id} className="p-3 rounded-[24px] border border-mist/60 bg-white">
                     <div className="flex items-start justify-between gap-2">
                       <p className="text-xs font-bold text-navy flex-1 min-w-0">{log.title}</p>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${statusPill(log.status)}`}>
@@ -267,11 +267,11 @@ const MonitoringDetailModal: React.FC<{
               <Activity className="w-3.5 h-3.5" /> Riwayat Kehadiran
             </p>
             {attendances.length === 0 ? (
-              <p className="text-xs text-navy/50 bg-shell/60 border border-mist/60 rounded-xl p-3">Belum ada data absensi.</p>
+              <p className="text-xs text-navy/50 bg-shell/60 border border-mist/60 rounded-[24px] p-3">Belum ada data absensi.</p>
             ) : (
               <div className="space-y-1.5">
                 {attendances.slice(0, 6).map((a, i) => (
-                  <div key={i} className="flex items-center justify-between p-2.5 rounded-xl bg-shell/60 border border-mist/60">
+                  <div key={i} className="flex items-center justify-between p-2.5 rounded-[24px] bg-shell/60 border border-mist/60">
                     <span className="text-xs font-bold text-navy">{a.date}</span>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                       a.status === 'Hadir' ? 'bg-steel/15 text-steel' : 'bg-steel/10 text-steel'
@@ -297,7 +297,7 @@ export const TeacherPerizinan: React.FC = () => {
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-2xl flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[24px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <FileText className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div className="min-w-0">
@@ -313,7 +313,7 @@ export const TeacherPerizinan: React.FC = () => {
         <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5 grid grid-cols-1 lg:grid-cols-2 gap-3 content-start">
           {perizinanList.length === 0 ? (
             <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-shell flex items-center justify-center mb-3">
+              <div className="w-14 h-14 rounded-[24px] bg-shell flex items-center justify-center mb-3">
                 <CheckCircle2 className="w-6 h-6 text-steel" />
               </div>
               <p className="text-sm font-bold text-navy mb-1">Tidak ada pengajuan perizinan</p>
@@ -344,7 +344,7 @@ export const TeacherPerizinan: React.FC = () => {
                   <p className="text-xs font-semibold text-navy/80 leading-relaxed">{req.reason}</p>
                 </div>
 
-                <div className="flex items-center gap-2 bg-shell p-3 rounded-2xl border border-mist/60">
+                <div className="flex items-center gap-2 bg-shell p-3 rounded-[24px] border border-mist/60">
                   <FileText className="w-4 h-4 text-navy/50 shrink-0" />
                   {req.attachment ? (
                     <>
@@ -368,19 +368,19 @@ export const TeacherPerizinan: React.FC = () => {
                     <>
                       <button
                         onClick={() => updatePerizinanStatus(req.id, 'rejected')}
-                        className="flex-1 py-3 bg-navy/5 border border-navy/15 text-navy rounded-2xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-navy/10 transition-colors"
+                        className="flex-1 py-3 bg-navy/5 border border-navy/15 text-navy rounded-[24px] text-xs font-bold flex items-center justify-center gap-2 hover:bg-navy/10 transition-colors"
                       >
                         <X className="w-4 h-4" /> Tolak Izin
                       </button>
                       <button
                         onClick={() => updatePerizinanStatus(req.id, 'approved')}
-                        className="flex-1 py-3 bg-steel text-white rounded-2xl text-xs font-bold shadow-md shadow-steel/25 flex items-center justify-center gap-2 hover:bg-steel/90 transition-colors"
+                        className="flex-1 py-3 bg-steel text-white rounded-[24px] text-xs font-bold shadow-md shadow-steel/25 flex items-center justify-center gap-2 hover:bg-steel/90 transition-colors"
                       >
                         <Check className="w-4 h-4" /> Setujui Izin
                       </button>
                     </>
                   ) : (
-                    <div className={`w-full py-2 rounded-xl text-center border ${
+                    <div className={`w-full py-2 rounded-[24px] text-center border ${
                       req.status === 'approved' ? 'bg-steel/10 border-steel/20' : 'bg-navy/5 border-navy/15'
                     }`}>
                       <span className={`text-xs font-bold capitalize ${req.status === 'approved' ? 'text-steel' : 'text-navy'}`}>
@@ -408,7 +408,7 @@ export const TeacherRekap: React.FC = () => {
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-2xl flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[24px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <DownloadCloud className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div className="min-w-0">
@@ -418,7 +418,7 @@ export const TeacherRekap: React.FC = () => {
             </p>
           </div>
         </div>
-        <button className="hidden sm:flex items-center gap-1.5 bg-steel text-white text-xs font-bold px-4 py-2 rounded-xl shadow-md shadow-steel/25 hover:bg-steel/90 hover:-translate-y-0.5 transition-all shrink-0">
+        <button className="hidden sm:flex items-center gap-1.5 bg-steel text-white text-xs font-bold px-4 py-2 rounded-[24px] shadow-md shadow-steel/25 hover:bg-steel/90 hover:-translate-y-0.5 transition-all shrink-0">
           <DownloadCloud className="w-4 h-4" /> Export Rekap
         </button>
       </div>
@@ -427,7 +427,7 @@ export const TeacherRekap: React.FC = () => {
         <div className="flex-1 overflow-x-auto overflow-y-auto custom-scrollbar p-4 md:p-5">
           {siswaList.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-shell flex items-center justify-center mb-3">
+              <div className="w-14 h-14 rounded-[24px] bg-shell flex items-center justify-center mb-3">
                 <AlertCircle className="w-6 h-6 text-navy/30" />
               </div>
               <p className="text-sm font-bold text-navy mb-1">Belum ada data rekap</p>
@@ -453,7 +453,7 @@ export const TeacherRekap: React.FC = () => {
                     <td className="py-4 text-sm font-bold text-navy">{siswa.nilaiDUDI}</td>
                     <td className="py-4 text-sm font-bold text-navy">{siswa.nilaiGuru}</td>
                     <td className="py-4 text-center">
-                      <span className="text-sm font-black bg-steel/10 text-steel px-4 py-1.5 rounded-2xl inline-block">
+                      <span className="text-sm font-black bg-steel/10 text-steel px-4 py-1.5 rounded-[24px] inline-block">
                         {siswa.finalNilai}
                       </span>
                     </td>

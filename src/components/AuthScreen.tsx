@@ -101,7 +101,7 @@ const ErrorBanner = ({
 }) => {
   const Icon = error.icon;
   return (
-    <div className="animate-in fade-in slide-in-from-top-2 duration-300 bg-navy/5 border border-navy/15 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+    <div className="animate-in fade-in slide-in-from-top-2 duration-300 bg-navy/5 border border-navy/15 rounded-[24px] p-4 flex items-start gap-3 shadow-sm">
       <div className="w-9 h-9 rounded-lg bg-navy/10 flex items-center justify-center shrink-0">
         <Icon className="w-4.5 h-4.5 text-navy/70" />
       </div>
@@ -330,7 +330,7 @@ const AuthForm = ({
   return (
     <div className="space-y-5">
       <div>
-        <div className="w-12 h-12 bg-navy text-white rounded-2xl flex items-center justify-center font-bold text-xl mb-6 shadow-lg border border-steel/20">
+        <div className="w-12 h-12 bg-navy text-white rounded-[24px] flex items-center justify-center font-bold text-xl mb-6 shadow-lg border border-steel/20">
           Go
         </div>
         <h2 className="text-3xl font-extrabold text-navy tracking-tight">
@@ -360,7 +360,7 @@ const AuthForm = ({
                 onChange={(e) => { setName(e.target.value); clearError(); }}
                 type="text"
                 placeholder="John Doe"
-                className="w-full bg-white/90 border border-mist shadow-sm rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-steel/30 focus:border-steel outline-none transition-all placeholder:text-navy/40 text-navy"
+                className="w-full bg-white/90 border border-mist shadow-sm rounded-[24px] px-4 py-2.5 text-sm focus:ring-2 focus:ring-steel/30 focus:border-steel outline-none transition-all placeholder:text-navy/40 text-navy"
                 required
               />
             </div>
@@ -372,7 +372,7 @@ const AuthForm = ({
                 <select
                   value={classId}
                   onChange={(e) => { setClassId(e.target.value ? Number(e.target.value) : ''); clearError(); }}
-                  className="w-full bg-white/90 border border-mist shadow-sm rounded-xl px-4 py-2.5 text-sm pr-10 focus:ring-2 focus:ring-steel/30 focus:border-steel outline-none transition-all text-navy appearance-none"
+                  className="w-full bg-white/90 border border-mist shadow-sm rounded-[24px] px-4 py-2.5 text-sm pr-10 focus:ring-2 focus:ring-steel/30 focus:border-steel outline-none transition-all text-navy appearance-none"
                   required
                   disabled={classesLoading}
                 >
@@ -398,7 +398,7 @@ const AuthForm = ({
             onChange={(e) => { setEmail(e.target.value); clearError(); }}
             type="email"
             placeholder="you@example.com"
-            className="w-full bg-white/90 border border-mist shadow-sm rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-steel/30 focus:border-steel outline-none transition-all placeholder:text-navy/40 text-navy"
+            className="w-full bg-white/90 border border-mist shadow-sm rounded-[24px] px-4 py-2.5 text-sm focus:ring-2 focus:ring-steel/30 focus:border-steel outline-none transition-all placeholder:text-navy/40 text-navy"
             required
           />
         </div>
@@ -419,7 +419,7 @@ const AuthForm = ({
               value={password}
               onChange={(e) => { setPassword(e.target.value); clearError(); }}
               type={showPassword ? 'text' : 'password'}
-              className="w-full bg-white/90 border border-mist shadow-sm rounded-xl px-4 py-2.5 text-sm pr-10 focus:ring-2 focus:ring-steel/30 focus:border-steel outline-none transition-all placeholder:text-navy/40 text-navy"
+              className="w-full bg-white/90 border border-mist shadow-sm rounded-[24px] px-4 py-2.5 text-sm pr-10 focus:ring-2 focus:ring-steel/30 focus:border-steel outline-none transition-all placeholder:text-navy/40 text-navy"
               placeholder="••••••••"
               required
             />
@@ -436,7 +436,7 @@ const AuthForm = ({
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-navy text-white py-3 rounded-xl font-bold text-sm shadow-xl shadow-navy/20 hover:shadow-navy/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+          className="w-full bg-navy text-white py-3 rounded-[24px] font-bold text-sm shadow-xl shadow-navy/20 hover:shadow-navy/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0"
         >
           {isLoading ? (
             <Loader2 className="w-5 h-5 animate-spin" />
@@ -477,7 +477,7 @@ const MobileForm = ({
   return (
     <div className="space-y-5 w-full">
       <div className="flex items-center gap-3 mb-2 pt-4">
-        <div className="w-10 h-10 bg-navy text-white rounded-2xl flex items-center justify-center font-bold text-lg shadow-lg border border-steel/20 shrink-0">
+        <div className="w-10 h-10 bg-navy text-white rounded-[24px] flex items-center justify-center font-bold text-lg shadow-lg border border-steel/20 shrink-0">
           Go
         </div>
         <div>
@@ -507,7 +507,7 @@ const MobileForm = ({
                 onChange={(e) => { setName(e.target.value); clearError(); }}
                 type="text"
                 placeholder="John Doe"
-                className="w-full bg-white/90 border border-mist shadow-sm rounded-2xl px-4 py-3.5 text-sm focus:ring-2 focus:ring-steel/30 outline-none transition-all placeholder:text-navy/30 text-navy"
+                className="w-full bg-white/90 border border-mist shadow-sm rounded-[24px] px-4 py-3.5 text-sm focus:ring-2 focus:ring-steel/30 outline-none transition-all placeholder:text-navy/30 text-navy"
                 required
               />
             </div>
@@ -519,7 +519,7 @@ const MobileForm = ({
                 <select
                   value={classId}
                   onChange={(e) => { setClassId(e.target.value ? Number(e.target.value) : ''); clearError(); }}
-                  className="w-full bg-white/90 border border-mist shadow-sm rounded-2xl px-4 py-3.5 text-sm pr-12 focus:ring-2 focus:ring-steel/30 outline-none transition-all text-navy appearance-none"
+                  className="w-full bg-white/90 border border-mist shadow-sm rounded-[24px] px-4 py-3.5 text-sm pr-12 focus:ring-2 focus:ring-steel/30 outline-none transition-all text-navy appearance-none"
                   required
                   disabled={classesLoading}
                 >
@@ -545,7 +545,7 @@ const MobileForm = ({
             onChange={(e) => { setEmail(e.target.value); clearError(); }}
             type="email"
             placeholder="you@example.com"
-            className="w-full bg-white/90 border border-mist shadow-sm rounded-2xl px-4 py-3.5 text-sm focus:ring-2 focus:ring-steel/30 outline-none transition-all placeholder:text-navy/30 text-navy"
+            className="w-full bg-white/90 border border-mist shadow-sm rounded-[24px] px-4 py-3.5 text-sm focus:ring-2 focus:ring-steel/30 outline-none transition-all placeholder:text-navy/30 text-navy"
             required
           />
         </div>
@@ -567,7 +567,7 @@ const MobileForm = ({
               onChange={(e) => { setPassword(e.target.value); clearError(); }}
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
-              className="w-full bg-white/90 border border-mist shadow-sm rounded-2xl px-4 py-3.5 text-sm pr-12 focus:ring-2 focus:ring-steel/30 outline-none transition-all text-navy"
+              className="w-full bg-white/90 border border-mist shadow-sm rounded-[24px] px-4 py-3.5 text-sm pr-12 focus:ring-2 focus:ring-steel/30 outline-none transition-all text-navy"
               required
             />
             <button
@@ -583,7 +583,7 @@ const MobileForm = ({
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-navy text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-navy/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-70 disabled:cursor-not-allowed"
+          className="w-full bg-navy text-white py-4 rounded-[24px] font-bold text-sm shadow-xl shadow-navy/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <Loader2 className="w-5 h-5 animate-spin" />

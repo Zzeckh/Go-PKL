@@ -202,7 +202,7 @@ export const Absensi: React.FC<AbsensiProps> = ({
               {time.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
             </span>
           </p>
-          <div className="w-full bg-mist/50 rounded-2xl p-4 flex items-center justify-center gap-3 border border-mist">
+          <div className="w-full bg-mist/50 rounded-[24px] p-4 flex items-center justify-center gap-3 border border-mist">
             <MapPin className="w-4 h-4 text-steel" />
             <span className="text-xs font-bold text-navy">{companyName} • Geofence Valid</span>
           </div>
@@ -218,7 +218,7 @@ export const Absensi: React.FC<AbsensiProps> = ({
       {/* ── HEADER ─ */}
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-2xl flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[24px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <Camera className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div className="min-w-0">
@@ -275,7 +275,7 @@ export const Absensi: React.FC<AbsensiProps> = ({
                 {/* ── EMPTY STATE: panduan selfie (isi ruang kosong) ── */}
                 {!isCameraActive && (
                   <div className="w-full max-w-sm px-6 py-4 flex flex-col items-center text-center">
-                    <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center mb-3">
+                    <div className="w-14 h-14 rounded-[24px] bg-white/10 border border-white/10 flex items-center justify-center mb-3">
                       <ImageIcon className="w-6 h-6 text-white/60" />
                     </div>
                     <p className="text-base font-bold text-white">
@@ -287,7 +287,7 @@ export const Absensi: React.FC<AbsensiProps> = ({
                     {cameraError && (
                       <button 
                         onClick={startCamera} 
-                        className="mt-3 text-xs bg-white text-navy px-5 py-2.5 rounded-xl font-bold hover:bg-shell transition-colors"
+                        className="mt-3 text-xs bg-white text-navy px-5 py-2.5 rounded-[24px] font-bold hover:bg-shell transition-colors"
                       >
                         Coba Lagi
                       </button>
@@ -296,19 +296,19 @@ export const Absensi: React.FC<AbsensiProps> = ({
                     {/* Panduan selfie 3 langkah */}
                     <div className="w-full mt-5 pt-4 border-t border-white/10 grid grid-cols-3 gap-2">
                       <div className="flex flex-col items-center gap-1.5">
-                        <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
+                        <div className="w-9 h-9 rounded-[24px] bg-white/10 flex items-center justify-center">
                           <ScanFace className="w-4 h-4 text-steel" />
                         </div>
                         <p className="text-[11px] font-semibold text-white/70 leading-tight">Wajah di tengah frame</p>
                       </div>
                       <div className="flex flex-col items-center gap-1.5">
-                        <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
+                        <div className="w-9 h-9 rounded-[24px] bg-white/10 flex items-center justify-center">
                           <Sun className="w-4 h-4 text-steel" />
                         </div>
                         <p className="text-[11px] font-semibold text-white/70 leading-tight">Pencahayaan cukup</p>
                       </div>
                       <div className="flex flex-col items-center gap-1.5">
-                        <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
+                        <div className="w-9 h-9 rounded-[24px] bg-white/10 flex items-center justify-center">
                           <ShieldCheck className="w-4 h-4 text-steel" />
                         </div>
                         <p className="text-[11px] font-semibold text-white/70 leading-tight">Tanpa penutup wajah</p>
@@ -336,7 +336,7 @@ export const Absensi: React.FC<AbsensiProps> = ({
             type="button"
             onClick={capturePhoto}
             disabled={!isCameraActive || !!imageSrc}
-            className={`mt-3 w-full py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-sm shrink-0 ${
+            className={`mt-3 w-full py-3.5 rounded-[24px] flex items-center justify-center gap-2 transition-all shadow-sm shrink-0 ${
               !isCameraActive || !!imageSrc
                 ? 'bg-mist/70 text-navy/40 cursor-not-allowed'
                 : 'bg-steel text-white hover:bg-steel/90 active:scale-[0.99] shadow-steel/20 shadow-md'
@@ -357,7 +357,7 @@ export const Absensi: React.FC<AbsensiProps> = ({
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-[24px] bg-white/15 flex items-center justify-center">
                     <Building2 className="w-4 h-4 text-white" />
                   </div>
                   <p className="text-[11px] font-bold uppercase tracking-widest text-white/60">Lokasi PKL</p>
@@ -378,12 +378,12 @@ export const Absensi: React.FC<AbsensiProps> = ({
 
               <div className="mt-4 pt-4 border-t border-white/10">
                 {isLoadingLocation ? (
-                  <div className="flex items-center gap-2 bg-white/10 px-3 py-2.5 rounded-xl text-xs font-bold text-white">
+                  <div className="flex items-center gap-2 bg-white/10 px-3 py-2.5 rounded-[24px] text-xs font-bold text-white">
                     <Loader2 className="w-3.5 h-3.5 animate-spin" /> 
                     <span>Mengambil Lokasi GPS...</span>
                   </div>
                 ) : locationError ? (
-                  <div className="flex items-start gap-2 bg-white/10 border border-white/15 p-3 rounded-xl text-xs text-white">
+                  <div className="flex items-start gap-2 bg-white/10 border border-white/15 p-3 rounded-[24px] text-xs text-white">
                     <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                     <div className="flex-1">
                       <p className="font-semibold leading-relaxed">{locationError}</p>
@@ -393,14 +393,14 @@ export const Absensi: React.FC<AbsensiProps> = ({
                     </div>
                   </div>
                 ) : !companyLocation ? (
-                  <div className="flex items-start gap-2 bg-white/10 border border-white/15 p-3 rounded-xl text-xs text-white">
+                  <div className="flex items-start gap-2 bg-white/10 border border-white/15 p-3 rounded-[24px] text-xs text-white">
                     <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                     <div className="flex-1">
                       <p className="font-semibold leading-relaxed">Koordinat geofence belum diatur. Hubungi admin untuk setup.</p>
                     </div>
                   </div>
                 ) : (
-                  <div className={`flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border ${
+                  <div className={`flex items-center justify-between gap-2 px-3 py-2.5 rounded-[24px] border ${
                     isWithinRadius 
                       ? 'bg-steel/20 border-steel/40' 
                       : 'bg-white/10 border-white/15'
@@ -445,7 +445,7 @@ export const Absensi: React.FC<AbsensiProps> = ({
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-              <div className={`p-3 rounded-xl border transition-all ${
+              <div className={`p-3 rounded-[24px] border transition-all ${
                 imageSrc ? 'bg-steel/5 border-steel/30' : 'bg-mist/30 border-mist/60'
               }`}>
                 <div className="flex items-center gap-2 mb-1.5">
@@ -461,7 +461,7 @@ export const Absensi: React.FC<AbsensiProps> = ({
                 </p>
               </div>
 
-              <div className={`p-3 rounded-xl border transition-all ${
+              <div className={`p-3 rounded-[24px] border transition-all ${
                 isWithinRadius && !isLoadingLocation && !!companyLocation ? 'bg-steel/5 border-steel/30' : 'bg-mist/30 border-mist/60'
               }`}>
                 <div className="flex items-center gap-2 mb-1.5">
@@ -503,7 +503,7 @@ export const Absensi: React.FC<AbsensiProps> = ({
             <button
               onClick={handleSubmit}
               disabled={!imageSrc || isSubmitting || !isWithinRadius || !!locationError || !companyLocation}
-              className={`w-full py-3.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+              className={`w-full py-3.5 rounded-[24px] text-sm font-bold transition-all flex items-center justify-center gap-2 ${
                 !imageSrc || !isWithinRadius || !!locationError || !companyLocation
                   ? 'bg-mist text-navy/40 cursor-not-allowed' 
                   : 'bg-navy text-white hover:bg-navy/90 hover:-translate-y-0.5 active:translate-y-0 shadow-lg shadow-navy/20'
@@ -531,7 +531,7 @@ export const Absensi: React.FC<AbsensiProps> = ({
 
             <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2 min-h-0 pr-1">
               {attendances.slice(0, 7).map((a) => (
-                <div key={a.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-mist/30 border border-mist/50 shrink-0">
+                <div key={a.id} className="flex items-center gap-3 p-2.5 rounded-[24px] bg-mist/30 border border-mist/50 shrink-0">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                     a.status === 'Hadir' ? 'bg-steel/15 text-steel' : 'bg-mist text-navy/50'
                   }`}>

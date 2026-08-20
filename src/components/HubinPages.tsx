@@ -106,7 +106,7 @@ export const HubinData: React.FC = () => {
       {/* ── HEADER ── */}
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-2xl flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[24px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <Package className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div className="min-w-0">
@@ -124,7 +124,7 @@ export const HubinData: React.FC = () => {
           </span>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-1.5 bg-steel text-white text-xs font-bold px-4 py-2 rounded-xl shadow-md shadow-steel/25 hover:bg-steel/90 hover:-translate-y-0.5 transition-all"
+            className="flex items-center gap-1.5 bg-steel text-white text-xs font-bold px-4 py-2 rounded-[24px] shadow-md shadow-steel/25 hover:bg-steel/90 hover:-translate-y-0.5 transition-all"
           >
             <Plus className="w-4 h-4" /> Tambah Data
           </button>
@@ -138,7 +138,7 @@ export const HubinData: React.FC = () => {
             key={s.label}
             className="bg-white border border-mist/60 rounded-[24px] p-4 md:p-5 min-h-[100px] flex flex-col justify-between"
           >
-            <div className="w-10 h-10 rounded-xl bg-shell flex items-center justify-center">
+            <div className="w-10 h-10 rounded-[24px] bg-shell flex items-center justify-center">
               <s.icon className="w-5 h-5 text-navy/60" />
             </div>
             <div>
@@ -155,7 +155,7 @@ export const HubinData: React.FC = () => {
         {/* Toolbar: segmented tabs + search */}
         <div className="px-4 md:px-5 pt-4 pb-3 shrink-0 space-y-3 border-b border-mist/60">
           {/* Segmented tabs grouped by Dalam/Luar */}
-          <div className="bg-shell p-1 rounded-xl flex items-center gap-1 overflow-x-auto">
+          <div className="bg-shell p-1 rounded-[24px] flex items-center gap-1 overflow-x-auto">
             <span className="text-[10px] font-bold text-navy/40 uppercase tracking-widest px-2 shrink-0">
               Dalam
             </span>
@@ -211,7 +211,7 @@ export const HubinData: React.FC = () => {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder={`Cari ${activeTab === 'siswa' ? 'siswa, kelas, perusahaan...' : activeTab === 'guru' ? 'nama guru, mata pelajaran...' : activeTab === 'perusahaan' ? 'nama perusahaan, alamat...' : 'nama mentor, perusahaan, role...'}...`}
-              className="w-full bg-shell border border-mist rounded-xl pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
+              className="w-full bg-shell border border-mist rounded-[24px] pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
             />
             {search && (
               <button
@@ -237,7 +237,7 @@ export const HubinData: React.FC = () => {
                   <button
                     key={s.id}
                     onClick={() => setDetailSiswa(s)}
-                    className="p-4 rounded-2xl border border-mist/60 bg-white hover:border-steel/30 hover:shadow-sm transition-all text-left group"
+                    className="p-4 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 hover:shadow-sm transition-all text-left group"
                   >
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-11 h-11 rounded-full bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
@@ -280,7 +280,7 @@ export const HubinData: React.FC = () => {
                   <button
                     key={g.id}
                     onClick={() => setDetailGuru(g)}
-                    className="p-4 rounded-2xl border border-mist/60 bg-white hover:border-steel/30 hover:shadow-sm transition-all text-left"
+                    className="p-4 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 hover:shadow-sm transition-all text-left"
                   >
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-11 h-11 rounded-full bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
@@ -325,10 +325,10 @@ export const HubinData: React.FC = () => {
                     <button
                       key={c.id}
                       onClick={() => setDetailPerusahaan(c)}
-                      className="p-4 rounded-2xl border border-mist/60 bg-white hover:border-steel/30 hover:shadow-sm transition-all text-left group"
+                      className="p-4 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 hover:shadow-sm transition-all text-left group"
                     >
                       <div className="flex items-center gap-3 mb-3">
-                        <div className="w-11 h-11 rounded-xl bg-steel/10 flex items-center justify-center shrink-0">
+                        <div className="w-11 h-11 rounded-[24px] bg-steel/10 flex items-center justify-center shrink-0">
                           <BuildingIcon className="w-5 h-5 text-steel" />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -391,7 +391,7 @@ export const HubinData: React.FC = () => {
                   <button
                     key={m.id}
                     onClick={() => setDetailMentor(m)}
-                    className="p-4 rounded-2xl border border-mist/60 bg-white hover:border-steel/30 hover:shadow-sm transition-all text-left"
+                    className="p-4 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 hover:shadow-sm transition-all text-left"
                   >
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-11 h-11 rounded-full bg-steel text-white flex items-center justify-center font-bold text-sm shrink-0">
@@ -450,11 +450,11 @@ export const HubinData: React.FC = () => {
 
           <h4 className="text-[11px] font-bold text-navy/50 uppercase tracking-wide mb-2">Info Pembimbing</h4>
           <div className="grid grid-cols-2 gap-2 mb-5">
-            <div className="bg-shell border border-mist rounded-xl p-3">
+            <div className="bg-shell border border-mist rounded-[24px] p-3">
               <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">Guru Pembimbing</p>
               <p className="text-sm font-bold text-navy mt-0.5 truncate">{detailSiswa.guruPembimbing || '-'}</p>
             </div>
-            <div className="bg-shell border border-mist rounded-xl p-3">
+            <div className="bg-shell border border-mist rounded-[24px] p-3">
               <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">Mentor</p>
               <p className="text-sm font-bold text-navy mt-0.5 truncate">{detailSiswa.mentor || '-'}</p>
             </div>
@@ -482,18 +482,18 @@ export const HubinData: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-2 mb-5">
-            <div className="bg-shell border border-mist rounded-xl p-3">
+            <div className="bg-shell border border-mist rounded-[24px] p-3">
               <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">Mentor DUDI</p>
               <p className="text-sm font-bold text-navy mt-0.5 truncate">{detailPerusahaan.mentor || '-'}</p>
             </div>
-            <div className="bg-shell border border-mist rounded-xl p-3">
+            <div className="bg-shell border border-mist rounded-[24px] p-3">
               <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">Radius</p>
               <p className="text-sm font-bold text-navy mt-0.5 tabular-nums">{detailPerusahaan.radiusMeters || 500}m</p>
             </div>
           </div>
 
           {detailPerusahaan.latitude && detailPerusahaan.longitude && (
-            <div className="bg-shell border border-mist rounded-xl p-3 mb-5 flex items-center gap-2">
+            <div className="bg-shell border border-mist rounded-[24px] p-3 mb-5 flex items-center gap-2">
               <MapPin className="w-4 h-4 text-steel shrink-0" />
               <p className="text-[11px] font-bold text-navy/70 tabular-nums">
                 {detailPerusahaan.latitude.toFixed(4)}, {detailPerusahaan.longitude.toFixed(4)}
@@ -505,7 +505,7 @@ export const HubinData: React.FC = () => {
           <button
             type="button"
             onClick={() => setPickerCompany(detailPerusahaan)}
-            className={`w-full mb-5 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all ${
+            className={`w-full mb-5 flex items-center justify-center gap-2 py-3 rounded-[24px] font-bold text-sm transition-all ${
               detailPerusahaan.latitude && detailPerusahaan.longitude
                 ? 'bg-mist text-navy hover:bg-mist/80'
                 : 'bg-steel text-white hover:bg-steel/90 shadow-md shadow-steel/25'
@@ -595,7 +595,7 @@ export const HubinData: React.FC = () => {
 
 const EmptyState: React.FC<{ label: string; search: string }> = ({ label, search }) => (
   <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
-    <div className="w-14 h-14 rounded-2xl bg-shell flex items-center justify-center mb-3">
+    <div className="w-14 h-14 rounded-[24px] bg-shell flex items-center justify-center mb-3">
       <Search className="w-6 h-6 text-navy/30" />
     </div>
     <p className="text-sm font-bold text-navy mb-1">Data {label} tidak ditemukan</p>
@@ -606,7 +606,7 @@ const EmptyState: React.FC<{ label: string; search: string }> = ({ label, search
 );
 
 const MiniStat: React.FC<{ label: string; value: string | number }> = ({ label, value }) => (
-  <div className="bg-shell border border-mist rounded-xl p-3 text-center">
+  <div className="bg-shell border border-mist rounded-[24px] p-3 text-center">
     <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">{label}</p>
     <p className="text-xl font-bold text-navy tabular-nums mt-1">{value}</p>
   </div>
@@ -630,7 +630,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
     <div className="bg-white rounded-[24px] max-w-2xl w-full max-h-[85vh] shadow-2xl flex flex-col overflow-hidden border border-mist/60">
       <div className="bg-navy p-5 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3 min-w-0">
-          <div className={`w-12 h-12 rounded-2xl ${avatarBg === 'bg-navy' ? 'bg-white/15' : 'bg-white'} flex items-center justify-center shrink-0 ${avatarBg === 'bg-navy' ? 'text-white' : 'text-steel'}`}>
+          <div className={`w-12 h-12 rounded-[24px] ${avatarBg === 'bg-navy' ? 'bg-white/15' : 'bg-white'} flex items-center justify-center shrink-0 ${avatarBg === 'bg-navy' ? 'text-white' : 'text-steel'}`}>
             {typeof avatarContent === 'string' ? (
               <span className="font-bold text-base">{avatarContent}</span>
             ) : avatarContent}
@@ -649,7 +649,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
         </div>
         <button
           onClick={onClose}
-          className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors shrink-0"
+          className="w-9 h-9 rounded-[24px] bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors shrink-0"
         >
           <X className="w-4 h-4" />
         </button>
@@ -664,7 +664,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
 const SiswaPreviewList: React.FC<{ list: any[] }> = ({ list }) => {
   if (list.length === 0) {
     return (
-      <div className="bg-shell border border-mist rounded-xl p-5 text-center">
+      <div className="bg-shell border border-mist rounded-[24px] p-5 text-center">
         <p className="text-xs font-semibold text-navy/50">Belum ada siswa yang terdaftar.</p>
       </div>
     );
@@ -672,7 +672,7 @@ const SiswaPreviewList: React.FC<{ list: any[] }> = ({ list }) => {
   return (
     <div className="space-y-2">
       {list.map(s => (
-        <div key={s.id} className="p-2.5 rounded-xl border border-mist/60 bg-white flex items-center gap-3">
+        <div key={s.id} className="p-2.5 rounded-[24px] border border-mist/60 bg-white flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-navy text-white flex items-center justify-center font-bold text-xs shrink-0">
             {getInitials(s.name)}
           </div>
@@ -692,7 +692,7 @@ const SiswaPreviewList: React.FC<{ list: any[] }> = ({ list }) => {
 const LogPreviewList: React.FC<{ logs: any[] }> = ({ logs }) => {
   if (logs.length === 0) {
     return (
-      <div className="bg-shell border border-mist rounded-xl p-5 text-center">
+      <div className="bg-shell border border-mist rounded-[24px] p-5 text-center">
         <p className="text-xs font-semibold text-navy/50">Belum ada logbook tercatat.</p>
       </div>
     );
@@ -700,7 +700,7 @@ const LogPreviewList: React.FC<{ logs: any[] }> = ({ logs }) => {
   return (
     <div className="space-y-2">
       {logs.map(l => (
-        <div key={l.id} className="p-3 rounded-xl border border-mist/60 bg-white">
+        <div key={l.id} className="p-3 rounded-[24px] border border-mist/60 bg-white">
           <div className="flex items-center justify-between gap-2 mb-1">
             <span className="text-[10px] font-bold text-navy/40 uppercase tracking-wide">{l.date}</span>
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
@@ -779,7 +779,7 @@ const AddDataModal: React.FC<AddDataModalProps> = ({ onClose, activeTab, addSisw
         <div className="p-5 border-b border-mist/60 shrink-0">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-navy flex items-center justify-center">
+              <div className="w-10 h-10 rounded-[24px] bg-navy flex items-center justify-center">
                 <UserPlus className="w-4 h-4 text-white" />
               </div>
               <div>
@@ -787,11 +787,11 @@ const AddDataModal: React.FC<AddDataModalProps> = ({ onClose, activeTab, addSisw
                 <p className="text-[12px] font-semibold text-navy/60 mt-0.5">Pilih tipe data yang akan ditambah</p>
               </div>
             </div>
-            <button onClick={onClose} className="w-9 h-9 rounded-xl bg-mist/60 hover:bg-mist flex items-center justify-center text-navy/60 transition-colors shrink-0">
+            <button onClick={onClose} className="w-9 h-9 rounded-[24px] bg-mist/60 hover:bg-mist flex items-center justify-center text-navy/60 transition-colors shrink-0">
               <X className="w-4 h-4" />
             </button>
           </div>
-          <div className="bg-shell p-1 rounded-xl flex gap-1">
+          <div className="bg-shell p-1 rounded-[24px] flex gap-1">
             {([
               { key: 'siswa', label: 'Siswa', icon: UserPlus },
               { key: 'guru', label: 'Guru', icon: UserCog },
@@ -924,7 +924,7 @@ const AddDataModal: React.FC<AddDataModalProps> = ({ onClose, activeTab, addSisw
           )}
 
           {(formTab === 'guru' || formTab === 'mentor') && (
-            <div className="bg-steel/10 border border-steel/20 rounded-xl p-3 flex items-start gap-2 mt-2">
+            <div className="bg-steel/10 border border-steel/20 rounded-[24px] p-3 flex items-start gap-2 mt-2">
               <ShieldCheck className="w-4 h-4 text-steel shrink-0 mt-0.5" />
               <p className="text-[11px] font-medium text-steel leading-relaxed">
                 Endpoint untuk menambah guru/mentor belum diimplementasi di backend. Form akan gagal submit — data hanya bisa ditambah lewat seed atau database langsung.
@@ -934,10 +934,10 @@ const AddDataModal: React.FC<AddDataModalProps> = ({ onClose, activeTab, addSisw
         </form>
 
         <div className="p-5 pt-3 border-t border-mist/60 flex gap-2 shrink-0">
-          <button onClick={onClose} type="button" className="flex-1 bg-mist/60 text-navy/70 font-bold text-sm py-3 rounded-xl hover:bg-mist transition-colors">
+          <button onClick={onClose} type="button" className="flex-1 bg-mist/60 text-navy/70 font-bold text-sm py-3 rounded-[24px] hover:bg-mist transition-colors">
             Batal
           </button>
-          <button type="submit" onClick={handleSubmit} className="flex-1 bg-steel text-white font-bold text-sm py-3 rounded-xl hover:bg-steel/90 shadow-lg shadow-steel/25 transition-all flex items-center justify-center gap-1.5">
+          <button type="submit" onClick={handleSubmit} className="flex-1 bg-steel text-white font-bold text-sm py-3 rounded-[24px] hover:bg-steel/90 shadow-lg shadow-steel/25 transition-all flex items-center justify-center gap-1.5">
             <Plus className="w-4 h-4" /> Simpan Data
           </button>
         </div>
@@ -958,7 +958,7 @@ const FormInput: React.FC<{
       onChange={e => onChange(e.target.value)}
       required={required}
       placeholder={placeholder}
-      className="w-full bg-shell border border-mist rounded-xl px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
+      className="w-full bg-shell border border-mist rounded-[24px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
     />
   </div>
 );
@@ -971,7 +971,7 @@ const FormSelect: React.FC<{
     <select
       value={value}
       onChange={e => onChange(e.target.value)}
-      className="w-full bg-shell border border-mist rounded-xl px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
+      className="w-full bg-shell border border-mist rounded-[24px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
     >
       <option value="">— Pilih —</option>
       {options.map(o => <option key={o} value={o}>{o}</option>)}

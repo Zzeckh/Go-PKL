@@ -155,7 +155,7 @@ export const Profile: React.FC<ProfileProps> = ({ userRole = 'intern' }) => {
               { icon: ShieldCheck, label: 'Tim Hubin', value: '1 User' },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0 shadow-sm">
+                <div className="w-10 h-10 rounded-[24px] bg-white flex items-center justify-center shrink-0 shadow-sm">
                   <Icon className="w-4 h-4 text-steel" />
                 </div>
                 <div>
@@ -164,7 +164,7 @@ export const Profile: React.FC<ProfileProps> = ({ userRole = 'intern' }) => {
                 </div>
               </div>
             ))}
-            <button className="mt-auto w-full py-3 bg-navy text-white rounded-xl text-xs font-bold hover:bg-navy/90 transition-colors shadow-sm">
+            <button className="mt-auto w-full py-3 bg-navy text-white rounded-[24px] text-xs font-bold hover:bg-navy/90 transition-colors shadow-sm">
               Unduh Laporan Global
             </button>
           </div>
@@ -206,7 +206,7 @@ export const Profile: React.FC<ProfileProps> = ({ userRole = 'intern' }) => {
               { icon: Users, label: userRole === 'hubin' ? 'PT Traveloka' : 'XII TKJ 1', value: userRole === 'hubin' ? '0 Siswa' : '1 Siswa' },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0 shadow-sm">
+                <div className="w-10 h-10 rounded-[24px] bg-white flex items-center justify-center shrink-0 shadow-sm">
                   <Icon className="w-4 h-4 text-navy/60" />
                 </div>
                 <div>
@@ -215,7 +215,7 @@ export const Profile: React.FC<ProfileProps> = ({ userRole = 'intern' }) => {
                 </div>
               </div>
             ))}
-            <button className="mt-auto w-full py-3 bg-navy text-white rounded-xl text-xs font-bold hover:bg-navy/90 transition-colors shadow-sm">
+            <button className="mt-auto w-full py-3 bg-navy text-white rounded-[24px] text-xs font-bold hover:bg-navy/90 transition-colors shadow-sm">
               Unduh Laporan Evaluasi
             </button>
           </div>
@@ -231,7 +231,7 @@ export const Profile: React.FC<ProfileProps> = ({ userRole = 'intern' }) => {
           <div className="relative z-10">
             <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-3">Pembimbing Industri</p>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 shrink-0 bg-white/5">
+              <div className="w-10 h-10 rounded-[24px] overflow-hidden border border-white/10 shrink-0 bg-white/5">
                 <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80" alt="Mentor" className="w-full h-full object-cover" />
               </div>
               <div>
@@ -244,7 +244,7 @@ export const Profile: React.FC<ProfileProps> = ({ userRole = 'intern' }) => {
           <div className="relative z-10">
             <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-3">Pembimbing Sekolah</p>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 shrink-0 bg-white/5">
+              <div className="w-10 h-10 rounded-[24px] overflow-hidden border border-white/10 shrink-0 bg-white/5">
                 <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80" alt="Teacher" className="w-full h-full object-cover" />
               </div>
               <div>
@@ -262,7 +262,7 @@ export const Profile: React.FC<ProfileProps> = ({ userRole = 'intern' }) => {
             { icon: Star, label: 'Poin Prestasi', value: '1.250 poin' },
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0 shadow-sm">
+              <div className="w-10 h-10 rounded-[24px] bg-white flex items-center justify-center shrink-0 shadow-sm">
                 <Icon className="w-4 h-4 text-navy/60" />
               </div>
               <div>
@@ -271,7 +271,7 @@ export const Profile: React.FC<ProfileProps> = ({ userRole = 'intern' }) => {
               </div>
             </div>
           ))}
-          <button className="mt-auto w-full py-3 bg-navy text-white rounded-xl text-xs font-bold hover:bg-navy/90 transition-colors shadow-sm">
+          <button className="mt-auto w-full py-3 bg-navy text-white rounded-[24px] text-xs font-bold hover:bg-navy/90 transition-colors shadow-sm">
             Unduh Surat Penempatan PDF
           </button>
         </div>
@@ -352,12 +352,12 @@ export const Profile: React.FC<ProfileProps> = ({ userRole = 'intern' }) => {
             <div className="flex flex-wrap justify-center sm:justify-start items-center gap-3 mt-4">
               {editing ? (
                 <>
-                  <div className="flex items-center gap-2 bg-shell border border-mist px-3 py-2 rounded-xl text-xs font-bold text-navy shadow-sm">
+                  <div className="flex items-center gap-2 bg-shell border border-mist px-3 py-2 rounded-[24px] text-xs font-bold text-navy shadow-sm">
                     <Building2 className="w-4 h-4 text-navy/40 shrink-0" />
                     <input name="company" value={profile.company} onChange={onChange} className="w-32 bg-transparent outline-none" />
                   </div>
                   {userRole === 'intern' && (
-                    <div className="flex items-center gap-2 bg-shell border border-mist px-3 py-2 rounded-xl text-xs font-bold text-navy shadow-sm">
+                    <div className="flex items-center gap-2 bg-shell border border-mist px-3 py-2 rounded-[24px] text-xs font-bold text-navy shadow-sm">
                       <BookMarked className="w-4 h-4 text-navy/40 shrink-0" />
                       <input name="className" value={profile.className} onChange={onChange} className="w-24 bg-transparent outline-none" />
                     </div>
@@ -365,15 +365,15 @@ export const Profile: React.FC<ProfileProps> = ({ userRole = 'intern' }) => {
                 </>
               ) : (
                 <>
-                  <div className="flex items-center gap-2 bg-shell border border-mist shadow-sm px-4 py-2 rounded-xl text-xs font-bold text-navy/80">
+                  <div className="flex items-center gap-2 bg-shell border border-mist shadow-sm px-4 py-2 rounded-[24px] text-xs font-bold text-navy/80">
                     <Building2 className="w-4 h-4 text-navy/40" /> {profile.company}
                   </div>
                   {userRole === 'intern' && (
-                    <div className="flex items-center gap-2 bg-shell border border-mist shadow-sm px-4 py-2 rounded-xl text-xs font-bold text-navy/80">
+                    <div className="flex items-center gap-2 bg-shell border border-mist shadow-sm px-4 py-2 rounded-[24px] text-xs font-bold text-navy/80">
                       <BookMarked className="w-4 h-4 text-navy/40" /> {profile.className}
                     </div>
                   )}
-                  <div className="flex items-center gap-2 bg-shell border border-mist shadow-sm px-4 py-2 rounded-xl text-xs font-bold text-navy/80">
+                  <div className="flex items-center gap-2 bg-shell border border-mist shadow-sm px-4 py-2 rounded-[24px] text-xs font-bold text-navy/80">
                     <Briefcase className="w-4 h-4 text-navy/40" /> {profile.role}
                   </div>
                 </>
@@ -404,8 +404,8 @@ export const Profile: React.FC<ProfileProps> = ({ userRole = 'intern' }) => {
               { icon: Phone, label: 'Telepon', field: 'phone' as const, val: profile.phone },
               { icon: MapPin, label: 'Alamat', field: 'address' as const, val: profile.address },
             ].map(({ icon: Icon, label, field, val }) => (
-              <div key={field} className="flex items-start gap-4 bg-shell rounded-2xl border border-mist p-4 hover:shadow-sm transition-all group">
-                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0 group-hover:bg-steel transition-colors duration-300 shadow-sm">
+              <div key={field} className="flex items-start gap-4 bg-shell rounded-[24px] border border-mist p-4 hover:shadow-sm transition-all group">
+                <div className="w-10 h-10 rounded-[24px] bg-white flex items-center justify-center shrink-0 group-hover:bg-steel transition-colors duration-300 shadow-sm">
                   <Icon className="w-4 h-4 text-navy/50 group-hover:text-white transition-colors duration-300" />
                 </div>
                 <div className="min-w-0 flex-1">

@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { 
   Edit2, Check, Play, Pause, Square, Bell, MapPin, Clock, 
   BookOpen, UserCheck, Zap, CheckCircle2, ArrowRight, 
-  Target, Calendar, ChevronRight, Plus, X
+  Target, Calendar, ChevronRight, Plus, X, ShieldCheck, ShieldAlert
 } from 'lucide-react';
 import { LogEntry, AttendanceRecord } from '../types';
+import { useApp } from '../context/AppContext';
 
 interface DashboardProps {
   userName: string;
@@ -13,6 +14,7 @@ interface DashboardProps {
   onOpenLogbookModal: () => void;
   onCheckIn: () => void;
   onGoToProfile: () => void;
+  onNavigate?: (page: string) => void;
 }
 
 /* ── Indikator "Mode Edit" dengan dot pulse ── */
@@ -29,7 +31,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   attendances, 
   onOpenLogbookModal,
   onCheckIn,
-  onGoToProfile 
+  onGoToProfile,
+  onNavigate
 }) => {
   const totalHadir = attendances.filter(a => a.status === 'Hadir').length;
   const totalDays = 90;
@@ -81,12 +84,24 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [notes, setNotes] = useState('- ID Card Digital\n- Laptop Pribadi\n- Jurnal Cetak\n- Alat Tulis\n\nPastikan selalu kemeja rapi!');
   const [editNotes, setEditNotes] = useState(false);
 
+  const { perizinanList } = useApp();
+
   const notifications = [
-    { id: 1, title: 'Logbook Disetujui', time: '10 menit yang lalu', unread: true },
-    { id: 2, title: 'Jadwal Meeting Pembimbing', time: '1 jam yang lalu', unread: true },
-    { id: 3, title: 'Pengumuman Libur Nasional', time: 'Kemarin', unread: false },
-    { id: 4, title: 'Tugas Baru: UI Design', time: 'Kemarin', unread: false },
-  ];
+    ...recentLogs.filter(log => log.status === 'approved' || log.status === 'revision').map((log) => ({
+      id: Number(log.id.replace('LOG-', '')),
+      title: log.status === 'approved' ? `Logbook Disetujui: ${log.title}` : `Logbook Revisi: ${log.title}`,
+      time: log.date,
+      unread: log.status === 'revision',
+      type: 'logbook' as const,
+    })),
+    ...perizinanList.filter(p => p.status === 'approved' || p.status === 'rejected').map((p) => ({
+      id: p.id + 10000,
+      title: p.status === 'approved' ? `Izin Disetujui: ${p.type} ${p.date}` : `Izin Ditolak: ${p.type} ${p.date}`,
+      time: p.date,
+      unread: p.status === 'rejected',
+      type: 'perizinan' as const,
+    })),
+  ].slice(0, 5);
 
   const getInitials = (name: string) => {
     if (!name) return 'U';
@@ -127,7 +142,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="flex items-center gap-3 min-w-0">
           <button 
             onClick={onGoToProfile}
-            className="w-12 h-12 rounded-2xl bg-navy text-white flex items-center justify-center font-bold text-lg shadow-md shadow-steel/40 shrink-0 hover:scale-105 transition-transform"
+            className="w-12 h-12 rounded-[24px] bg-navy text-white flex items-center justify-center font-bold text-lg shadow-md shadow-steel/40 shrink-0 hover:scale-105 transition-transform"
           >
             {getInitials(userName)}
           </button>
@@ -170,9 +185,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
           <div className="relative z-10 flex items-center gap-3">
             <button
-              onClick={onCheckIn}
+              onClick={() => {
+                if (!checkedInToday) {
+                  onNavigate ? onNavigate('absensi') : onCheckIn();
+                }
+              }}
               disabled={checkedInToday}
-              className="flex-1 bg-white text-navy font-bold py-3.5 px-5 rounded-2xl flex items-center justify-center gap-2 hover:bg-shell transition-all shadow-lg shadow-navy/30 disabled:opacity-60 disabled:cursor-not-allowed group"
+              className="flex-1 bg-white text-navy font-bold py-3.5 px-5 rounded-[24px] flex items-center justify-center gap-2 hover:bg-shell transition-all shadow-lg shadow-navy/30 disabled:opacity-60 disabled:cursor-not-allowed group"
             >
               <Zap className="w-4 h-4 fill-current" />
               <span>{checkedInToday ? 'Sudah Absen' : 'Absen Sekarang'}</span>
@@ -180,7 +199,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </button>
             <button 
               onClick={onOpenLogbookModal}
-              className="w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-2xl flex items-center justify-center transition-all border border-white/20 shrink-0"
+              className="w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-[24px] flex items-center justify-center transition-all border border-white/20 shrink-0"
               title="Buka Logbook"
             >
               <BookOpen className="w-5 h-5" />
@@ -191,7 +210,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* 📊 Attendance */}
         <div className="c2 bg-white rounded-[24px] border border-mist/60 shadow-sm p-5 h-[210px] flex flex-col">
           <div className="flex items-center justify-between shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-mist/70 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-[24px] bg-mist/70 flex items-center justify-center">
               <UserCheck className="w-5 h-5 text-steel" />
             </div>
             <span className="text-xs font-bold text-navy/40 uppercase tracking-wider">Kehadiran</span>
@@ -414,10 +433,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {notifications.map((notif) => (
                 <div 
                   key={notif.id} 
-                  className="flex gap-3 p-3 rounded-2xl hover:bg-white/60 transition-colors cursor-pointer group"
+                  className="flex gap-3 p-3 rounded-[24px] hover:bg-white/60 transition-colors cursor-pointer group"
                 >
                   <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${notif.unread ? 'bg-steel text-white' : 'bg-mist/60 text-navy/40'}`}>
-                    {notif.unread ? <Bell className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+                    {notif.unread ? (
+                      (notif as any).type === 'perizinan' ? <ShieldAlert className="w-4 h-4" /> : <Bell className="w-4 h-4" />
+                    ) : (
+                      (notif as any).type === 'perizinan' ? <ShieldCheck className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0 flex flex-col justify-center">
                     <div className="flex items-center justify-between gap-2">
@@ -460,7 +483,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <button
                 onClick={() => setEditNotes(!editNotes)}
                 title={editNotes ? 'Simpan catatan' : 'Edit catatan'}
-                className={`w-8 h-8 rounded-xl flex items-center justify-center border transition-all ${editNotes ? 'bg-navy text-white border-navy shadow-md shadow-navy/30' : 'bg-white text-navy/60 border-mist hover:border-steel hover:text-steel'}`}
+                className={`w-8 h-8 rounded-[24px] flex items-center justify-center border transition-all ${editNotes ? 'bg-navy text-white border-navy shadow-md shadow-navy/30' : 'bg-white text-navy/60 border-mist hover:border-steel hover:text-steel'}`}
               >
                 {editNotes ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
               </button>
@@ -473,7 +496,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
                 autoFocus
-                className="w-full flex-1 min-h-[120px] text-sm font-medium text-navy bg-white/60 border border-mist focus:border-steel rounded-xl p-3 outline-none resize-none leading-relaxed placeholder:text-navy/40 transition-all"
+                className="w-full flex-1 min-h-[120px] text-sm font-medium text-navy bg-white/60 border border-mist focus:border-steel rounded-[24px] p-3 outline-none resize-none leading-relaxed placeholder:text-navy/40 transition-all"
                 placeholder="Ketik catatanmu..."
               />
             ) : (

@@ -259,12 +259,12 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-6 bg-navy/60 backdrop-blur-md animate-in fade-in duration-200">
       
       {/* ══ CARD MODAL ══ */}
-      <div className="bg-white rounded-[28px] max-w-3xl w-full max-h-[92vh] shadow-2xl flex flex-col overflow-hidden border border-white/40">
+      <div className="bg-white rounded-[24px] max-w-3xl w-full max-h-[92vh] shadow-2xl flex flex-col overflow-hidden border border-white/40">
         
         {/* Header navy */}
         <div className="bg-navy p-4 md:p-5 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-white/15 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-[24px] bg-white/15 flex items-center justify-center shrink-0">
               <MapPin className="w-5 h-5 text-white" />
             </div>
             <div className="min-w-0">
@@ -279,7 +279,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
           <button
             onClick={onClose}
             disabled={isSaving}
-            className="w-9 h-9 rounded-2xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors shrink-0 disabled:opacity-50"
+            className="w-9 h-9 rounded-[24px] bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors shrink-0 disabled:opacity-50"
           >
             <X className="w-4 h-4" />
           </button>
@@ -299,7 +299,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => (searchResults.length > 0 || noResults) && setShowDropdown(true)}
                   placeholder="Cari alamat / sekolah / tempat..."
-                  className="w-full bg-shell border border-mist rounded-2xl pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
+                  className="w-full bg-shell border border-mist rounded-[24px] pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
                 />
                 {isSearching && (
                   <Loader2 className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-steel animate-spin" />
@@ -317,7 +317,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
                 type="button"
                 onClick={handleLocateMe}
                 title="Gunakan lokasi saya"
-                className="w-10 h-10 rounded-2xl bg-steel/10 hover:bg-steel/20 text-steel flex items-center justify-center transition-colors shrink-0"
+                className="w-10 h-10 rounded-[24px] bg-steel/10 hover:bg-steel/20 text-steel flex items-center justify-center transition-colors shrink-0"
               >
                 <Navigation className="w-4 h-4" />
               </button>
@@ -325,7 +325,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
 
             {/* Dropdown hasil / tidak ditemukan */}
             {showDropdown && (searchResults.length > 0 || noResults) && (
-              <div className="absolute left-0 right-0 mt-2 bg-white border border-mist rounded-2xl overflow-hidden z-[2000] animate-in fade-in slide-in-from-top-1 duration-150 shadow-[0_10px_40px_rgba(21,42,66,0.25)] border-t-2 border-t-steel">
+              <div className="absolute left-0 right-0 mt-2 bg-white border border-mist rounded-[24px] overflow-hidden z-[2000] animate-in fade-in slide-in-from-top-1 duration-150 shadow-[0_10px_40px_rgba(21,42,66,0.25)] border-t-2 border-t-steel">
                 {searchResults.length > 0 ? (
                   <div className="max-h-60 overflow-y-auto custom-scrollbar">
                     {searchResults.map((r, i) => (
@@ -358,14 +358,14 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
                       <button
                         type="button"
                         onClick={() => enterManualMode(true)}
-                        className="flex-1 flex items-center justify-center gap-1.5 bg-steel text-white text-xs font-bold py-2.5 rounded-xl hover:bg-steel/90 transition-colors"
+                        className="flex-1 flex items-center justify-center gap-1.5 bg-steel text-white text-xs font-bold py-2.5 rounded-[24px] hover:bg-steel/90 transition-colors"
                       >
                         <Keyboard className="w-3.5 h-3.5" /> Input Manual via Koordinat
                       </button>
                       <button
                         type="button"
                         onClick={() => enterManualMode(false)}
-                        className="flex-1 flex items-center justify-center gap-1.5 bg-shell border border-mist text-navy text-xs font-bold py-2.5 rounded-xl hover:bg-mist transition-colors"
+                        className="flex-1 flex items-center justify-center gap-1.5 bg-shell border border-mist text-navy text-xs font-bold py-2.5 rounded-[24px] hover:bg-mist transition-colors"
                       >
                         <MousePointer2 className="w-3.5 h-3.5" /> Klik Langsung di Peta
                       </button>
@@ -378,9 +378,9 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
 
           {/* ── BANNER MODE MANUAL: panduan ambil koordinat ── */}
           {manualMode && (
-            <div className="bg-steel/10 border border-steel/30 rounded-2xl p-3.5 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="bg-steel/10 border border-steel/30 rounded-[24px] p-3.5 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="flex items-start gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-steel text-white flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-[24px] bg-steel text-white flex items-center justify-center shrink-0">
                   <Lightbulb className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -446,7 +446,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
                 onBlur={handleManualInputCommit}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleManualInputCommit(); }}
                 placeholder="-6.914744"
-                className={`w-full border rounded-2xl px-3.5 py-2.5 text-sm font-mono font-bold text-navy outline-none transition-all placeholder:text-navy/30 tabular-nums ${
+                className={`w-full border rounded-[24px] px-3.5 py-2.5 text-sm font-mono font-bold text-navy outline-none transition-all placeholder:text-navy/30 tabular-nums ${
                   manualMode
                     ? 'bg-white border-steel ring-2 ring-steel/20'
                     : 'bg-shell border-mist focus:border-steel focus:bg-white'
@@ -464,7 +464,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
                 onBlur={handleManualInputCommit}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleManualInputCommit(); }}
                 placeholder="107.609628"
-                className={`w-full border rounded-2xl px-3.5 py-2.5 text-sm font-mono font-bold text-navy outline-none transition-all placeholder:text-navy/30 tabular-nums ${
+                className={`w-full border rounded-[24px] px-3.5 py-2.5 text-sm font-mono font-bold text-navy outline-none transition-all placeholder:text-navy/30 tabular-nums ${
                   manualMode
                     ? 'bg-white border-steel ring-2 ring-steel/20'
                     : 'bg-shell border-mist focus:border-steel focus:bg-white'
@@ -474,7 +474,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
           </div>
 
           {/* Radius card */}
-          <div className="bg-shell border border-mist rounded-2xl p-3.5">
+          <div className="bg-shell border border-mist rounded-[24px] p-3.5">
             <div className="flex items-center justify-between mb-2">
               <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide">
                 Radius Geofence
@@ -501,13 +501,13 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
 
           {/* Pesan error/sukses */}
           {saveError && (
-            <div className="p-3 bg-navy/5 border border-navy/15 rounded-2xl flex items-start gap-2 animate-in fade-in">
+            <div className="p-3 bg-navy/5 border border-navy/15 rounded-[24px] flex items-start gap-2 animate-in fade-in">
               <AlertCircle className="w-4 h-4 text-navy/60 shrink-0 mt-0.5" />
               <p className="text-[12px] font-semibold text-navy leading-snug">{saveError}</p>
             </div>
           )}
           {saveSuccess && (
-            <div className="p-3 bg-steel/10 border border-steel/30 rounded-2xl flex items-start gap-2 animate-in fade-in">
+            <div className="p-3 bg-steel/10 border border-steel/30 rounded-[24px] flex items-start gap-2 animate-in fade-in">
               <Check className="w-4 h-4 text-steel shrink-0 mt-0.5" />
               <p className="text-[12px] font-semibold text-steel leading-snug">Lokasi berhasil disimpan!</p>
             </div>
@@ -520,7 +520,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
             type="button"
             onClick={onClose}
             disabled={isSaving}
-            className="flex-1 bg-mist/60 text-navy/70 font-bold text-sm py-3 rounded-2xl hover:bg-mist transition-colors disabled:opacity-50"
+            className="flex-1 bg-mist/60 text-navy/70 font-bold text-sm py-3 rounded-[24px] hover:bg-mist transition-colors disabled:opacity-50"
           >
             Batal
           </button>
@@ -528,7 +528,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
             type="button"
             onClick={handleSave}
             disabled={!hasValidCoord || isSaving}
-            className={`flex-1 font-bold text-sm py-3 rounded-2xl transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 font-bold text-sm py-3 rounded-[24px] transition-all flex items-center justify-center gap-1.5 ${
               !hasValidCoord || isSaving
                 ? 'bg-mist text-navy/40 cursor-not-allowed'
                 : 'bg-steel text-white hover:bg-steel/90 hover:-translate-y-0.5 shadow-lg shadow-steel/25'

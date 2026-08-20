@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
-  Compass, MapPin, CheckCircle2, Navigation, Users, Clock, 
+  Compass, MapPin, Navigation, Users, Clock, 
   Building2, LocateFixed, Tag, ShieldCheck, ShieldAlert,
   GraduationCap, Briefcase, AlertTriangle, Loader2, Map as MapIcon
 } from 'lucide-react';
-import { AttendanceRecord } from '../types';
 import { useApp } from '../context/AppContext';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -13,18 +12,14 @@ import {
   haversineMeters, isValidCoord,
 } from '../utils/leafletHelpers';
 
-interface MapsProps {
-  locations: any[];
-  attendances: AttendanceRecord[];
-  onCheckIn: () => void;
-}
+type MapsProps = Record<string, never>;
 
 const getInitials = (name: string) => {
   if (!name || name === '-') return '?';
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 };
 
-export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
+export const Maps: React.FC<MapsProps> = () => {
   const {
     perusahaanList, siswaList,
     userCompanyName, userCompanyLocation,
@@ -74,9 +69,6 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
       null,
     [companiesWithCoords, selectedId, userCompanyName]
   );
-
-  const todayString = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-  const hasCheckedIn = attendances.some(a => a.date === todayString);
 
   const [distance, setDistance] = useState<number | null>(null);
   const [isWithinRadius, setIsWithinRadius] = useState<boolean | null>(null);
@@ -267,7 +259,7 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
     return (
       <div className="h-full w-full flex items-center justify-center p-4">
         <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm max-w-sm w-full flex flex-col items-center text-center p-8">
-          <div className="w-16 h-16 rounded-2xl bg-shell flex items-center justify-center mb-4">
+          <div className="w-16 h-16 rounded-[24px] bg-shell flex items-center justify-center mb-4">
             <Compass className="w-7 h-7 text-navy/40" />
           </div>
           <h2 className="text-lg font-bold text-navy mb-1">Belum Ada Lokasi PKL</h2>
@@ -284,7 +276,7 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
     return (
       <div className="h-full w-full flex items-center justify-center p-4">
         <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm max-w-sm w-full flex flex-col items-center text-center p-8">
-          <div className="w-16 h-16 rounded-2xl bg-steel/10 flex items-center justify-center mb-4">
+          <div className="w-16 h-16 rounded-[24px] bg-steel/10 flex items-center justify-center mb-4">
             <AlertTriangle className="w-7 h-7 text-steel" />
           </div>
           <h2 className="text-lg font-bold text-navy mb-1">Kamu Belum Dipetakan</h2>
@@ -302,7 +294,7 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
       {/* ── HEADER ── */}
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-2xl flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[24px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <Compass className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div className="min-w-0">
@@ -343,12 +335,12 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
             {/* ── GPS Status badge ── */}
             <div className="absolute left-3 bottom-3 z-[500] flex flex-col gap-2">
               {isLoadingGps ? (
-                <div className="bg-white/95 backdrop-blur-sm px-3.5 py-2.5 rounded-xl border border-mist shadow-lg flex items-center gap-2.5">
+                <div className="bg-white/95 backdrop-blur-sm px-3.5 py-2.5 rounded-[24px] border border-mist shadow-lg flex items-center gap-2.5">
                   <Loader2 className="w-3.5 h-3.5 text-steel animate-spin" />
                   <span className="text-xs font-bold text-navy">Mencari sinyal GPS...</span>
                 </div>
               ) : gpsError ? (
-                <div className="bg-white/95 backdrop-blur-sm px-3.5 py-2.5 rounded-xl border border-navy/15 shadow-lg flex items-start gap-2.5 max-w-[240px]">
+                <div className="bg-white/95 backdrop-blur-sm px-3.5 py-2.5 rounded-[24px] border border-navy/15 shadow-lg flex items-start gap-2.5 max-w-[240px]">
                   <AlertTriangle className="w-3.5 h-3.5 text-navy/60 shrink-0 mt-0.5" />
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-navy leading-tight">GPS tidak aktif</p>
@@ -356,7 +348,7 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
                   </div>
                 </div>
               ) : (
-                <div className={`px-3.5 py-2.5 rounded-xl border shadow-lg flex items-center gap-2.5 ${
+                <div className={`px-3.5 py-2.5 rounded-[24px] border shadow-lg flex items-center gap-2.5 ${
                   isWithinRadius === true
                     ? 'bg-white/95 backdrop-blur-sm border-steel/40'
                     : isWithinRadius === false
@@ -393,13 +385,13 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
             <button
               onClick={handleLocateMe}
               title="Pusatkan ke lokasi saya"
-              className="absolute left-3 top-3 z-[500] w-9 h-9 rounded-xl bg-white/95 backdrop-blur-sm border border-mist shadow-lg flex items-center justify-center text-steel hover:bg-shell transition-colors"
+              className="absolute left-3 top-3 z-[500] w-9 h-9 rounded-[24px] bg-white/95 backdrop-blur-sm border border-mist shadow-lg flex items-center justify-center text-steel hover:bg-shell transition-colors"
             >
               <LocateFixed className="w-4 h-4" />
             </button>
 
             {/* ── Legend ── */}
-            <div className="absolute right-3 top-3 z-[500] bg-white/95 backdrop-blur-sm border border-mist rounded-xl p-2.5 shadow-lg flex flex-col gap-1.5 text-[10px] font-bold">
+            <div className="absolute right-3 top-3 z-[500] bg-white/95 backdrop-blur-sm border border-mist rounded-[24px] p-2.5 shadow-lg flex flex-col gap-1.5 text-[10px] font-bold">
               <div className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full bg-navy border-2 border-white shadow" />
                 <span className="text-navy/70">Lokasi Kamu</span>
@@ -425,7 +417,7 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-[24px] bg-white/15 flex items-center justify-center">
                       <Building2 className="w-4 h-4 text-white" />
                     </div>
                     <p className="text-[11px] font-bold uppercase tracking-widest text-white/60">Lokasi Aktif</p>
@@ -445,7 +437,7 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
                 </p>
 
                 <div className="mt-4 pt-4 border-t border-white/10">
-                  <div className={`flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border ${
+                  <div className={`flex items-center justify-between gap-2 px-3 py-2.5 rounded-[24px] border ${
                     isWithinRadius === true
                       ? 'bg-steel/20 border-steel/40'
                       : isWithinRadius === false
@@ -488,7 +480,7 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
           {selected && (
             <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 shrink-0">
               <div className="grid grid-cols-2 gap-2 mb-3">
-                <div className="bg-shell border border-mist rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                <div className="bg-shell border border-mist rounded-[24px] px-3 py-2.5 flex items-center gap-2.5">
                   <Tag className="w-4 h-4 text-navy/50 shrink-0" />
                   <div className="min-w-0">
                     <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide leading-none">Kategori</p>
@@ -497,14 +489,14 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
                     </p>
                   </div>
                 </div>
-                <div className="bg-shell border border-mist rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                <div className="bg-shell border border-mist rounded-[24px] px-3 py-2.5 flex items-center gap-2.5">
                   <Users className="w-4 h-4 text-navy/50 shrink-0" />
                   <div className="min-w-0">
                     <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide leading-none">Siswa PKL</p>
                     <p className="text-[13px] font-bold text-navy mt-1">{internsCount} orang</p>
                   </div>
                 </div>
-                <div className="bg-shell border border-mist rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                <div className="bg-shell border border-mist rounded-[24px] px-3 py-2.5 flex items-center gap-2.5">
                   <Clock className="w-4 h-4 text-navy/50 shrink-0" />
                   <div className="min-w-0">
                     <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide leading-none">Radius</p>
@@ -513,7 +505,7 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
                     </p>
                   </div>
                 </div>
-                <div className="bg-shell border border-mist rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                <div className="bg-shell border border-mist rounded-[24px] px-3 py-2.5 flex items-center gap-2.5">
                   <Navigation className="w-4 h-4 text-navy/50 shrink-0" />
                   <div className="min-w-0">
                     <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide leading-none">Status</p>
@@ -522,24 +514,7 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
                 </div>
               </div>
 
-              <button
-                onClick={onCheckIn}
-                disabled={hasCheckedIn || isWithinRadius === false}
-                className={`w-full py-3.5 rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-                  hasCheckedIn
-                    ? 'bg-mist/70 text-navy/40 cursor-not-allowed'
-                    : isWithinRadius === false
-                      ? 'bg-mist text-navy/40 cursor-not-allowed'
-                      : 'bg-steel text-white hover:bg-steel/90 hover:-translate-y-0.5 active:translate-y-0 shadow-lg shadow-steel/25'
-                }`}
-              >
-                {hasCheckedIn
-                  ? <><CheckCircle2 className="w-4 h-4" /> Sudah Check-in Hari Ini</>
-                  : isWithinRadius === false
-                    ? <><AlertTriangle className="w-4 h-4" /> Di Luar Radius</>
-                    : <><Navigation className="w-4 h-4" /> Validasi Kehadiran</>
-                }
-              </button>
+
             </div>
           )}
 
@@ -558,9 +533,9 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
                 </div>
 
                 <div className="flex flex-col gap-2.5 mb-3 shrink-0">
-                  <div className="p-3.5 rounded-2xl border border-mist/60 bg-shell/60">
+                  <div className="p-3.5 rounded-[24px] border border-mist/60 bg-shell/60">
                     <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-2xl bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md shadow-navy/20">
+                      <div className="w-11 h-11 rounded-[24px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md shadow-navy/20">
                         {getInitials(teacherName)}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -575,9 +550,9 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
                     </div>
                   </div>
 
-                  <div className="p-3.5 rounded-2xl border border-steel/30 bg-steel/5">
+                  <div className="p-3.5 rounded-[24px] border border-steel/30 bg-steel/5">
                     <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-2xl bg-steel text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md shadow-steel/25">
+                      <div className="w-11 h-11 rounded-[24px] bg-steel text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md shadow-steel/25">
                         {getInitials(mentorName)}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -593,51 +568,7 @@ export const Maps: React.FC<MapsProps> = ({ attendances, onCheckIn }) => {
                   </div>
                 </div>
 
-                {/* List perusahaan (pilih pin) */}
-                <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-                  <div className="flex items-center justify-between mb-2 shrink-0">
-                    <p className="text-[11px] font-bold text-navy/50 uppercase tracking-wide">
-                      Perusahaan Lain
-                    </p>
-                    <span className="text-[10px] font-bold text-navy/40 tabular-nums">
-                      {companiesWithCoords.length} total
-                    </span>
-                  </div>
-                  <div className="flex-1 flex flex-col gap-1.5 min-h-0 overflow-y-auto custom-scrollbar pr-1">
-                    {companiesWithCoords.map(c => {
-                      const isSel = selected.id === c.id;
-                      const count = internsCountByCompany[c.name] || 0;
-                      return (
-                        <button
-                          key={c.id}
-                          onClick={() => {
-                            setSelectedId(c.id);
-                            mapRef.current?.flyTo([c.latitude as number, c.longitude as number], 15, { duration: 0.6 });
-                          }}
-                          className={`w-full text-left p-2.5 rounded-xl border transition-all shrink-0 flex items-center gap-2.5 ${
-                            isSel
-                              ? 'bg-steel/10 border-steel/40'
-                              : 'bg-white border-mist/60 hover:border-steel/30 hover:bg-shell/50'
-                          }`}
-                        >
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                            isSel ? 'bg-steel text-white' : 'bg-shell text-navy/50'
-                          }`}>
-                            <MapPin className="w-3.5 h-3.5" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className={`text-[12px] font-bold truncate ${isSel ? 'text-steel' : 'text-navy'}`}>
-                              {c.name}
-                            </p>
-                            <p className="text-[10px] font-semibold text-navy/50 truncate mt-0.5">
-                              {count} siswa · {c.radiusMeters ?? 500}m
-                            </p>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+
               </>
             ) : (
               <div className="flex-1 flex items-center justify-center text-center py-8">

@@ -176,7 +176,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div
                 onClick={(e) => { e.stopPropagation(); onLogout(); }}
                 title="Logout"
-                className="flex items-center justify-center p-2 rounded-xl text-navy/60 hover:bg-mist hover:text-navy transition-colors"
+                className="flex items-center justify-center p-2 rounded-[24px] text-navy/60 hover:bg-mist hover:text-navy transition-colors"
               >
                 <LogOut className="w-4 h-4" />
               </div>
@@ -185,7 +185,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="w-full flex items-center gap-3 py-2.5 rounded-2xl text-sm font-bold text-navy/60 hover:bg-mist/70 hover:text-navy transition-all duration-200 overflow-hidden"
+            className="w-full flex items-center gap-3 py-2.5 rounded-[24px] text-sm font-bold text-navy/60 hover:bg-mist/70 hover:text-navy transition-all duration-200 overflow-hidden"
           >
             <div className="shrink-0 flex items-center justify-center w-5 h-5 ml-4">
               {collapsed ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
