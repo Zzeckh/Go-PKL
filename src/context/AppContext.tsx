@@ -99,16 +99,17 @@ interface AppContextType {
   submitEvaluation: (siswaId: number, nilaiDUDI: number, nilaiGuru: number) => Promise<void>;
   addSiswa: (newSiswa: Omit<SiswaItem, 'id' | 'kehadiran' | 'logs' | 'nilaiDUDI' | 'nilaiGuru' | 'finalNilai' | 'berkasPct'>) => Promise<void>;
   addPerusahaan: (data: { name: string; address: string; quota: number; mentor: string }) => Promise<void>;
-  updateSiswaMapping: (siswaId: number, data: { perusahaan: string; guruPembimbing: string; mentor: string }) => Promise<void>;
+  updateSiswaMapping: (siswaId: number, data: { perusahaan: string; guruPembimbing: string; mentor: string; companyId?: number | string; teacherId?: number | string; mentorName?: string }) => Promise<void>;
   updateCompanyLocation: (companyId: number, lat: number, lng: number, radius: number) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, institution?: string) => Promise<void>;
+  register: (name: string, email: string, password: string, institution?: string, classId?: number) => Promise<void>;
   logout: () => void;
   refreshData: () => Promise<void>;
   loadSuperStats: () => Promise<boolean>;
   loadSuperClasses: () => Promise<boolean>;
   createClass: (data: { name: string; major?: string }) => Promise<any>;
   deleteClass: (id: number) => Promise<void>;
+  loadClassStudents: (id: number) => Promise<any>;
   loadSuperUsers: (filters?: { role?: string; search?: string }) => Promise<boolean>;
   toggleUser: (id: number) => Promise<any>;
   deleteUser: (id: number) => Promise<any>;
@@ -266,9 +267,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         name: u.name,
         kelas: u.class?.name || '-',
         academicYear: u.academicYear || '-',
-        perusahaan: '-',
+        perusahaan: u.company?.name || '-',
         guruPembimbing: u.teacher?.name || '-',
-        mentor: '-',
+        mentor: u.company?.mentor?.name || '-',
         kehadiran: u._count?.absensis || 0,
         logs: u._count?.logbooks || 0,
         nilaiDUDI: '0',
@@ -404,6 +405,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await api.delete(`/api/super-admin/classes/${id}`);
     await loadSuperClasses();
     await loadSuperStats();
+  };
+
+  const loadClassStudents = async (id: number) => {
+    return await api.get(`/api/super-admin/classes/${id}/students`) as any;
   };
 
   const loadSuperUsers = useCallback(async (filters?: { role?: string; search?: string }): Promise<boolean> => {
@@ -553,12 +558,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const register = async (name: string, email: string, password: string, _institution?: string) => {
+  const register = async (name: string, email: string, password: string, _institution?: string, classId?: number) => {
     try {
       const data = await api.post('/api/auth/register', {
         name,
         email,
         password,
+        classId,
       }) as { token: string; user: any };
       
       localStorage.setItem('pkl_token', data.token);
@@ -671,10 +677,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const updateSiswaMapping = async (siswaId: number, data: { perusahaan: string; guruPembimbing: string; mentor: string }) => {
+  const updateSiswaMapping = async (siswaId: number, data: { perusahaan: string; guruPembimbing: string; mentor: string; companyId?: number | string; teacherId?: number | string; mentorName?: string }) => {
     try {
       await api.patch(`/api/users/${siswaId}`, {
-        companyName: data.perusahaan,
+        companyId: data.companyId ? Number(data.companyId) : undefined,
+        teacherId: data.teacherId ? Number(data.teacherId) : undefined,
+        mentorName: data.mentorName,
       });
       await loadSiswa();
     } catch (error: any) {
@@ -706,7 +714,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addLogEntry, updateLogStatus, checkInAttendance, updatePerizinanStatus,
         submitEvaluation, addSiswa, addPerusahaan, updateSiswaMapping, updateCompanyLocation,
         login, register, logout, refreshData,
-        loadSuperStats, loadSuperClasses, createClass, deleteClass,
+        loadSuperStats, loadSuperClasses, createClass, deleteClass, loadClassStudents,
         loadSuperUsers, toggleUser, deleteUser, updateUserRole,
         loadCompanies, addCompany, updateCompany, deleteCompany,
       }}

@@ -27,7 +27,7 @@ export const getUsers = async (req, res, next) => {
       include: {
         class: { select: { id: true, name: true, major: true } },
         teacher: { select: { id: true, name: true } },
-        company: { select: { id: true, name: true } },
+        company: { select: { id: true, name: true, mentor: { select: { name: true } } } },
         _count: {
           select: {
             absensis: true,
@@ -69,15 +69,31 @@ export const getUserById = async (req, res, next) => {
 export const updateUser = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
-    const { name, classId, teacherId } = req.body;
+    const { name, classId, teacherId, companyId, mentorName } = req.body;
+
+    const data = {
+      name: name ?? undefined,
+      classId: classId ? parseInt(classId) : undefined,
+      teacherId: teacherId ? parseInt(teacherId) : undefined,
+      companyId: companyId ? parseInt(companyId) : undefined,
+    };
+
+    if (mentorName) {
+      const mentor = await prisma.user.findFirst({
+        where: { name: mentorName, role: 'mentor' },
+        select: { id: true },
+      });
+      if (mentor) {
+        await prisma.company.update({
+          where: { id: data.companyId },
+          data: { mentorId: mentor.id },
+        });
+      }
+    }
 
     const user = await prisma.user.update({
       where: { id },
-      data: {
-        name,
-        classId: classId ? parseInt(classId) : null,
-        teacherId: teacherId ? parseInt(teacherId) : null,
-      },
+      data,
       include: {
         class: { select: { name: true } },
         teacher: { select: { name: true } },

@@ -160,7 +160,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
    MAIN COMPONENT
    ══════════════════════════════════════════════════════ */
 export const HubinPemetaan: React.FC = () => {
-  const { mapLocations, siswaList, guruList, mentorList, updateSiswaMapping } = useApp();
+  const { perusahaanList: mapLocations, siswaList, guruList, mentorList, updateSiswaMapping } = useApp();
 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
@@ -177,7 +177,7 @@ export const HubinPemetaan: React.FC = () => {
     if (!company || company === '-') return undefined;
     const q = normalize(company);
     return mapLocations.find(l =>
-      normalize(l.companyName).includes(q) || q.includes(normalize(l.companyName).split('(')[0].trim())
+      normalize(l.name).includes(q) || q.includes(normalize(l.name).split('(')[0].trim())
     );
   };
 
@@ -206,7 +206,7 @@ export const HubinPemetaan: React.FC = () => {
   /* ── Options untuk SearchableSelect ── */
   const companyOptions: SearchableOption[] = mapLocations.map(loc => ({
     id: loc.id,
-    label: loc.companyName,
+    label: loc.name,
     sublabel: loc.address,
   }));
 
@@ -246,9 +246,12 @@ export const HubinPemetaan: React.FC = () => {
     const guru = guruList.find(g => String(g.id) === String(formGuruId));
     const mentor = mentorList.find(m => String(m.id) === String(formMentorId));
     await updateSiswaMapping(selectedSiswa.id, {
-      perusahaan: loc ? loc.companyName.replace(/\s*\(.*\)$/, '') : selectedSiswa.perusahaan,
+      perusahaan: loc ? loc.name.replace(/\s*\(.*\)$/, '') : selectedSiswa.perusahaan,
       guruPembimbing: guru ? guru.name : selectedSiswa.guruPembimbing,
       mentor: mentor ? mentor.name : selectedSiswa.mentor,
+      companyId: formCompanyId,
+      teacherId: formGuruId,
+      mentorName: mentor ? mentor.name : undefined,
     });
     setEditing(false);
     setJustSaved(true);
@@ -469,7 +472,7 @@ export const HubinPemetaan: React.FC = () => {
                   <div
                     key={loc.id}
                     className="absolute -translate-x-1/2 -translate-y-1/2"
-                    style={{ left: `${loc.coordinates.x}%`, top: `${loc.coordinates.y}%` }}
+                    style={{ left: `${20 + i * 30}%`, top: `${30 + (i % 2) * 30}%` }}
                   >
                     <div className={`w-5 h-5 rounded-full border-2 border-white shadow-md flex items-center justify-center ${
                       i === 0 ? 'bg-steel' : 'bg-white'
@@ -570,11 +573,13 @@ export const HubinPemetaan: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="p-3 rounded-xl border border-mist/60 bg-white">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-navy flex items-center justify-center shrink-0">
-                            <Users className="w-4 h-4 text-white" />
-                          </div>
+                      <div className={`p-3 rounded-xl border ${
+  selectedSiswa.guruPembimbing && selectedSiswa.guruPembimbing !== '-' ? 'border-steel/30 bg-steel/5' : 'border-mist/60 bg-white'
+}`}>
+  <div className="flex items-center gap-3">
+    <div className="w-10 h-10 rounded-xl bg-navy flex items-center justify-center shrink-0">
+      <Users className="w-4 h-4 text-white" />
+    </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">Guru Pembimbing</p>
                             <p className="text-sm font-bold text-navy truncate mt-0.5">

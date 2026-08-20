@@ -337,16 +337,31 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
    KELOLA KELAS
    ══════════════════════════════════════════════════════ */
 export const SuperClasses: React.FC = () => {
-  const { superClasses, loadSuperClasses, createClass, deleteClass, isAuthenticated } = useApp();
+  const { superClasses, loadSuperClasses, createClass, deleteClass, loadClassStudents, isAuthenticated } = useApp();
   const [showAdd, setShowAdd] = useState(false);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [detail, setDetail] = useState<any>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) return;
     setLoading(true);
     loadSuperClasses().finally(() => setLoading(false));
   }, [isAuthenticated, loadSuperClasses]);
+
+  const openDetail = async (cls: any) => {
+    setDetailLoading(true);
+    setDetail({ id: cls.id, name: cls.name, major: cls.major || '-', students: [] });
+    try {
+      const res = await loadClassStudents(cls.id);
+      setDetail(res);
+    } catch (err: any) {
+      alert(err?.data?.error || err?.message || 'Gagal memuat siswa kelas.');
+    } finally {
+      setDetailLoading(false);
+    }
+  };
 
   const filtered = useMemo(
     () => superClasses.filter(c => 
@@ -408,9 +423,12 @@ export const SuperClasses: React.FC = () => {
                 filtered.map(c => (
                   <div key={c.id} className="p-4 rounded-2xl border border-mist/60 bg-white hover:border-steel/30 transition-all">
                     <div className="flex items-start justify-between mb-3">
-                      <div className="w-11 h-11 rounded-xl bg-navy text-white flex items-center justify-center shrink-0">
+                      <button
+                        onClick={() => openDetail(c)}
+                        className="w-11 h-11 rounded-xl bg-navy text-white flex items-center justify-center shrink-0 hover:bg-navy/90 transition-colors"
+                      >
                         <BookMarked className="w-5 h-5" />
-                      </div>
+                      </button>
                       <button
                         onClick={() => {
                           if (confirm(`Hapus kelas "${c.name}"?`)) deleteClass(c.id);
@@ -420,13 +438,18 @@ export const SuperClasses: React.FC = () => {
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-                    <h3 className="font-bold text-sm text-navy truncate">{c.name}</h3>
-                    <p className="text-[11px] text-navy/50 truncate mt-0.5">{c.major || 'Jurusan belum diisi'}</p>
+                    <button onClick={() => openDetail(c)} className="w-full text-left">
+                      <h3 className="font-bold text-sm text-navy truncate">{c.name}</h3>
+                      <p className="text-[11px] text-navy/50 truncate mt-0.5">{c.major || 'Jurusan belum diisi'}</p>
+                    </button>
                     <div className="grid grid-cols-1 gap-2 mt-3">
-                      <div className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg p-2 text-center">
+                      <button
+                        onClick={() => openDetail(c)}
+                        className="bg-[#F1F4F8] border border-[#E2E8F0] rounded-lg p-2 text-center hover:border-steel/40 transition-colors"
+                      >
                         <p className="text-base font-bold text-navy tabular-nums">{c.totalStudents}</p>
-                        <p className="text-[9px] font-bold text-navy/50 uppercase">Siswa</p>
-                      </div>
+                        <p className="text-[9px] font-bold text-navy/50 uppercase">Siswa · Lihat Detail</p>
+                      </button>
                     </div>
                   </div>
                 ))
@@ -440,6 +463,14 @@ export const SuperClasses: React.FC = () => {
         <AddClassModal
           onClose={() => setShowAdd(false)}
           onCreate={createClass}
+        />
+      )}
+
+      {detail && (
+        <ClassDetailModal
+          detail={detail}
+          loading={detailLoading}
+          onClose={() => setDetail(null)}
         />
       )}
     </div>
@@ -522,6 +553,88 @@ const AddClassModal: React.FC<{
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════════
+   MODAL DETAIL SISWA PER KELAS
+   ══════════════════════════════════════════════════════ */
+const ClassDetailModal: React.FC<{
+  detail: any;
+  loading: boolean;
+  onClose: () => void;
+}> = ({ detail, loading, onClose }) => {
+  const students = detail.students || [];
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy/50 backdrop-blur-md">
+      <div className="bg-white rounded-[24px] max-w-2xl w-full shadow-2xl border border-mist/60 flex flex-col max-h-[90vh]">
+        <div className="p-5 border-b border-mist/60 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-navy flex items-center justify-center">
+              <BookMarked className="w-4 h-4 text-white" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-lg font-bold text-navy leading-tight">{detail.name}</h3>
+              <p className="text-[11px] font-semibold text-navy/50">
+                {detail.major || 'Jurusan belum diisi'} · {students.length} siswa
+              </p>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-9 h-9 rounded-xl bg-mist/60 hover:bg-mist flex items-center justify-center shrink-0">
+            <X className="w-4 h-4 text-navy/60" />
+          </button>
+        </div>
+
+        <div className="p-5 overflow-y-auto custom-scrollbar flex-1 min-h-0">
+          {loading ? (
+            <div className="flex items-center justify-center h-40">
+              <div className="flex items-center gap-2 text-navy/60">
+                <Loader2 className="w-5 h-5 animate-spin text-steel" />
+                <span className="text-sm font-semibold">Memuat siswa...</span>
+              </div>
+            </div>
+          ) : students.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-14 h-14 rounded-2xl bg-[#F1F4F8] flex items-center justify-center mx-auto mb-3">
+                <Users className="w-6 h-6 text-navy/30" />
+              </div>
+              <p className="text-sm font-bold text-navy">Belum ada siswa</p>
+              <p className="text-xs text-navy/50 mt-1">Tidak ada siswa terdaftar di kelas ini.</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {students.map((s: any) => (
+                <div key={s.id} className="p-3 rounded-2xl border border-mist/60 bg-white flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
+                    {getInitials(s.name)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-bold text-navy truncate">{s.name}</p>
+                    <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
+                      {s.email} · {s.perusahaan}
+                    </p>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        s.isActive ? 'bg-steel/15 text-steel' : 'bg-rose-100 text-rose-700'
+                      }`}>
+                        {s.isActive ? 'Aktif' : 'Nonaktif'}
+                      </span>
+                      <span className="text-[10px] font-bold bg-[#F1F4F8] text-navy/60 px-2 py-0.5 rounded-full">
+                        {s.kehadiran} absensi
+                      </span>
+                      <span className="text-[10px] font-bold bg-[#F1F4F8] text-navy/60 px-2 py-0.5 rounded-full">
+                        {s.logbooks} logbook
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

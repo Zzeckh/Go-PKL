@@ -51,12 +51,12 @@ export default function App() {
     }
   }, [isAuthenticated]);
 
-  const handleAuthSubmit = async (payload: { name: string; email: string; password: string; institution?: string }) => {
+  const handleAuthSubmit = async (payload: { name: string; email: string; password: string; institution?: string; classId?: number }) => {
     try {
       if (authMode === 'login') {
         await login(payload.email, payload.password);
       } else {
-        await register(payload.name, payload.email, payload.password, payload.institution);
+        await register(payload.name, payload.email, payload.password, payload.institution, payload.classId);
       }
 
       setAuthExiting(true);

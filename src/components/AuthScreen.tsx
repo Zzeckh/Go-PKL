@@ -1,14 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Eye, EyeOff, ArrowRight, Sparkles, MapPin, CheckCircle2,
-  Users, LineChart, Loader2, Lock, Mail, WifiOff, AlertCircle, X
+  Users, LineChart, Loader2, Lock, Mail, WifiOff, AlertCircle, X, GraduationCap
 } from 'lucide-react';
 import { AuthMode } from '../types';
+import { api } from '../utils/api';
 
 interface AuthScreenProps {
   authMode: AuthMode;
   setAuthMode: (mode: AuthMode) => void;
-  onSubmit: (payload: { name: string; email: string; password: string; institution?: string }) => void | Promise<void>;
+  onSubmit: (payload: { name: string; email: string; password: string; institution?: string; classId?: number }) => void | Promise<void>;
+}
+
+interface ClassOption {
+  id: number;
+  name: string;
+  major: string | null;
 }
 
 // ─── Error Classification Helper ───
@@ -124,11 +131,25 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [institution, setInstitution] = useState('');
+  const [classId, setClassId] = useState<number | ''>('');
+  const [classes, setClasses] = useState<ClassOption[]>([]);
+  const [classesLoading, setClassesLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState<AuthError | null>(null);
 
   // ✅ Hanya isLogin yang dipakai — isRegister dihapus (tidak digunakan)
   const isLogin = authMode === 'login';
+
+  useEffect(() => {
+    if (isLogin) return;
+    let cancelled = false;
+    setClassesLoading(true);
+    api.get('/api/static/classes')
+      .then((data) => { if (!cancelled) setClasses(Array.isArray(data) ? data : (data as any)?.data || []); })
+      .catch(() => { if (!cancelled) setClasses([]); })
+      .finally(() => { if (!cancelled) setClassesLoading(false); });
+    return () => { cancelled = true; };
+  }, [isLogin]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,6 +162,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         email,
         password,
         institution: !isLogin ? institution : undefined,
+        classId: !isLogin && classId !== '' ? Number(classId) : undefined,
       });
     } catch (error: any) {
       setAuthError(classifyAuthError(error, !isLogin));
@@ -165,6 +187,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     email, setEmail,
     password, setPassword,
     institution, setInstitution,
+    classId, setClassId,
+    classes, classesLoading,
     onSubmit: handleSubmit,
     onSwitch: handleSwitch,
     isLoading,
@@ -297,7 +321,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 const AuthForm = ({
   mode, showPassword, setShowPassword,
   name, setName, email, setEmail, password, setPassword,
-  institution, setInstitution,
+  classId, setClassId, classes, classesLoading,
   onSubmit, onSwitch, isLoading,
   authError, clearError,
 }: any) => {
@@ -342,16 +366,25 @@ const AuthForm = ({
             </div>
             <div>
               <label className="block text-xs uppercase tracking-wider font-bold text-navy/60 mb-1.5">
-                Institution
+                Kelas
               </label>
-              <input
-                value={institution}
-                onChange={(e) => { setInstitution(e.target.value); clearError(); }}
-                type="text"
-                placeholder="School / Company"
-                className="w-full bg-white/90 border border-mist shadow-sm rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-steel/30 focus:border-steel outline-none transition-all placeholder:text-navy/40 text-navy"
-                required
-              />
+              <div className="relative">
+                <select
+                  value={classId}
+                  onChange={(e) => { setClassId(e.target.value ? Number(e.target.value) : ''); clearError(); }}
+                  className="w-full bg-white/90 border border-mist shadow-sm rounded-xl px-4 py-2.5 text-sm pr-10 focus:ring-2 focus:ring-steel/30 focus:border-steel outline-none transition-all text-navy appearance-none"
+                  required
+                  disabled={classesLoading}
+                >
+                  <option value="" disabled>{classesLoading ? 'Memuat kelas...' : 'Pilih Kelas'}</option>
+                  {classes.map((c: ClassOption) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}{c.major ? ` (${c.major})` : ''}
+                    </option>
+                  ))}
+                </select>
+                <GraduationCap className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-navy/40 pointer-events-none" />
+              </div>
             </div>
           </div>
         )}
@@ -436,7 +469,7 @@ const AuthForm = ({
 const MobileForm = ({
   mode, showPassword, setShowPassword,
   name, setName, email, setEmail, password, setPassword,
-  institution, setInstitution,
+  classId, setClassId, classes, classesLoading,
   onSubmit, onSwitch, isLoading,
   authError, clearError,
 }: any) => {
@@ -480,16 +513,25 @@ const MobileForm = ({
             </div>
             <div>
               <label className="block text-xs uppercase tracking-wider font-bold text-navy/50 mb-1.5">
-                Institution
+                Kelas
               </label>
-              <input
-                value={institution}
-                onChange={(e) => { setInstitution(e.target.value); clearError(); }}
-                type="text"
-                placeholder="School / Company Name"
-                className="w-full bg-white/90 border border-mist shadow-sm rounded-2xl px-4 py-3.5 text-sm focus:ring-2 focus:ring-steel/30 outline-none transition-all placeholder:text-navy/30 text-navy"
-                required
-              />
+              <div className="relative">
+                <select
+                  value={classId}
+                  onChange={(e) => { setClassId(e.target.value ? Number(e.target.value) : ''); clearError(); }}
+                  className="w-full bg-white/90 border border-mist shadow-sm rounded-2xl px-4 py-3.5 text-sm pr-12 focus:ring-2 focus:ring-steel/30 outline-none transition-all text-navy appearance-none"
+                  required
+                  disabled={classesLoading}
+                >
+                  <option value="" disabled>{classesLoading ? 'Memuat kelas...' : 'Pilih Kelas'}</option>
+                  {classes.map((c: ClassOption) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}{c.major ? ` (${c.major})` : ''}
+                    </option>
+                  ))}
+                </select>
+                <GraduationCap className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-navy/40 pointer-events-none" />
+              </div>
             </div>
           </div>
         )}

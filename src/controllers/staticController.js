@@ -24,3 +24,13 @@ export const getMapLocations = async (req, res, next) => {
     res.json([]);
   } catch (error) { next(error); }
 };
+
+export const getClasses = async (req, res, next) => {
+  try {
+    const classes = await prisma.class.findMany({
+      orderBy: { id: 'asc' },
+      select: { id: true, name: true, major: true },
+    });
+    res.json(classes);
+  } catch (error) { next(error); }
+};

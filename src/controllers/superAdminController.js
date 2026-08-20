@@ -92,6 +92,47 @@ export const deleteClass = async (req, res, next) => {
   }
 };
 
+/* ── GET /api/super-admin/classes/:id/students ── */
+export const getClassStudents = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id);
+    const foundClass = await prisma.class.findUnique({
+      where: { id },
+      include: {
+        users: {
+          where: { role: 'student' },
+          include: {
+            company: { select: { id: true, name: true } },
+            teacher: { select: { id: true, name: true } },
+            _count: {
+              select: { absensis: true, logbooks: true },
+            },
+          },
+          orderBy: { id: 'asc' },
+        },
+      },
+    });
+
+    if (!foundClass) return res.status(404).json({ error: 'Kelas tidak ditemukan.' });
+
+    const students = foundClass.users.map((s) => ({
+      id: s.id,
+      name: s.name,
+      email: s.email,
+      isActive: s.isActive,
+      academicYear: s.academicYear || '-',
+      perusahaan: s.company?.name || '-',
+      guruPembimbing: s.teacher?.name || '-',
+      kehadiran: s._count.absensis,
+      logbooks: s._count.logbooks,
+    }));
+
+    res.json({ id: foundClass.id, name: foundClass.name, major: foundClass.major || '-', students });
+  } catch (error) {
+    next(error);
+  }
+};
+
 /* ── GET /api/super-admin/users ── */
 export const getUsers = async (req, res, next) => {
   try {

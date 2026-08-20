@@ -67,7 +67,7 @@ export const login = async (req, res, next) => {
 
 export const register = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, classId } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Nama, email, dan password wajib diisi' });
@@ -85,6 +85,7 @@ export const register = async (req, res, next) => {
         email,
         password: await bcrypt.hash(password, 10),
         role: 'student',
+        classId: classId ? parseInt(classId) : null,
       },
       include: userInclude,
     });
