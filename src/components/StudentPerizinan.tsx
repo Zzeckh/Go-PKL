@@ -140,8 +140,8 @@ const PermissionModal: React.FC<{
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0] || null;
     setFileError(null);
-    if (selected && selected.type !== 'application/pdf' && !selected.name.toLowerCase().endsWith('.pdf')) {
-      setFileError('Hanya file PDF yang diperbolehkan.');
+    if (selected && !selected.type.startsWith('image/')) {
+      setFileError('Hanya file gambar (JPG, PNG, WEBP) yang diperbolehkan.');
       setFile(null);
       e.target.value = '';
       return;
@@ -159,7 +159,7 @@ const PermissionModal: React.FC<{
     e.preventDefault();
     setError(null);
     if (!file) {
-      setFileError('Surat keterangan (file PDF) wajib diunggah.');
+      setFileError('Bukti gambar wajib diunggah.');
       return;
     }
     setLoading(true);
@@ -246,16 +246,16 @@ const PermissionModal: React.FC<{
           </div>
           <div>
             <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">
-              Surat Keterangan (PDF wajib) *
+              Bukti Pendukung (Gambar wajib) *
             </label>
             <label className="w-full flex items-center gap-2.5 bg-shell border border-dashed border-navy/20 rounded-[24px] px-3 py-3 text-sm font-semibold text-navy/60 cursor-pointer hover:border-steel hover:text-steel transition-all">
               <FileText className="w-4 h-4 shrink-0" />
               <span className="truncate">
-                {file ? file.name : 'Unggah surat keterangan sakit (PDF)...'}
+                {file ? file.name : 'Unggah bukti pendukung (gambar)...'}
               </span>
               <input
                 type="file"
-                accept="application/pdf,.pdf"
+                accept="image/*"
                 onChange={handleFileChange}
                 className="hidden"
               />
@@ -268,7 +268,7 @@ const PermissionModal: React.FC<{
               </p>
             ) : (
               <p className="text-[11px] text-navy/40 mt-1.5">
-                Wajib unggah PDF, maksimal 5 MB (surat yang sudah ditandatangani).
+                Wajib unggah gambar (JPG, PNG, WEBP), maksimal 5 MB.
               </p>
             )}
           </div>
