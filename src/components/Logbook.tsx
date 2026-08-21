@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { LogEntry } from '../types';
 import { useApp } from '../context/AppContext';
+import { Pencil } from 'lucide-react';
 
 interface LogbookProps {
   logs: LogEntry[];
@@ -55,7 +56,7 @@ export const Logbook: React.FC<LogbookProps> = ({
   isModalOpen, 
   setIsModalOpen 
 }) => {
-  const { loadingResources } = useApp();
+  const { loadingResources, updateLogEntry } = useApp();
   const isLoading = loadingResources.has('logbook');
 
   const [title, setTitle] = useState('');
@@ -66,6 +67,12 @@ export const Logbook: React.FC<LogbookProps> = ({
   const [filter, setFilter] = useState<FilterType>('all');
   const [search, setSearch] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [editingLog, setEditingLog] = useState<LogEntry | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [editHours, setEditHours] = useState(8);
+  const [editCategory, setEditCategory] = useState('Frontend Development');
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,6 +95,37 @@ export const Logbook: React.FC<LogbookProps> = ({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingLog || !editTitle || !editDesc) return;
+    setIsEditSubmitting(true);
+    try {
+      await updateLogEntry(editingLog.id, {
+        title: editTitle,
+        description: editDesc,
+        hours: Number(editHours),
+        category: editCategory,
+      });
+      setEditingLog(null);
+      setEditTitle('');
+      setEditDesc('');
+      setEditHours(8);
+      setEditCategory('Frontend Development');
+    } catch (error) {
+      console.error('Gagal update logbook', error);
+    } finally {
+      setIsEditSubmitting(false);
+    }
+  };
+
+  const openEditModal = (log: LogEntry) => {
+    setEditingLog(log);
+    setEditTitle(log.title);
+    setEditDesc(log.description);
+    setEditHours(log.hours);
+    setEditCategory(log.category);
   };
 
   const totalHours = logs.reduce((s, l) => s + l.hours, 0);
@@ -359,6 +397,17 @@ export const Logbook: React.FC<LogbookProps> = ({
                         </div>
                       )}
 
+                      {log.status === 'revision' && (
+                        <div className="mt-3 flex justify-end">
+                          <button
+                            onClick={() => openEditModal(log)}
+                            className="text-[11px] font-bold bg-navy text-white px-4 py-2 rounded-[24px] flex items-center gap-1.5 hover:bg-navy/90 transition-all shadow-md shadow-navy/20"
+                          >
+                            <Pencil className="w-3.5 h-3.5" /> Edit & Revisi
+                          </button>
+                        </div>
+                      )}
+
                       {log.status === 'approved' && log.feedback && (
                         <div className="mt-3 p-3 bg-steel/10 border border-mist rounded-[24px]">
                           <div className="flex items-start gap-2">
@@ -378,6 +427,144 @@ export const Logbook: React.FC<LogbookProps> = ({
           </div>
         )}
       </div>
+
+      {/* ── EDIT MODAL ── */}
+      {editingLog && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy/40 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white rounded-[24px] max-w-2xl w-full max-h-[85vh] shadow-2xl flex flex-col overflow-hidden border border-mist/60">
+            <div className="p-5 md:p-6 border-b border-mist/60 shrink-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center">
+                    <Pencil className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-navy">Revisi Jurnal</h3>
+                    <p className="text-[12px] font-semibold text-navy/60 mt-0.5">Perbaiki jurnal sesuai catatan mentor</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setEditingLog(null)} 
+                  disabled={isEditSubmitting}
+                  className="w-9 h-9 rounded-[10px] bg-mist/60 hover:bg-mist flex items-center justify-center text-navy/60 hover:text-navy transition-colors shrink-0 disabled:opacity-50"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleEditSubmit} className="flex-1 overflow-y-auto custom-scrollbar p-5 md:p-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-2">
+                    Judul Aktivitas
+                  </label>
+                  <input 
+                    type="text" 
+                    value={editTitle} 
+                    onChange={e => setEditTitle(e.target.value)} 
+                    placeholder="Misal: Membuat komponen dashboard PKL" 
+                    required
+                    disabled={isEditSubmitting}
+                    className="w-full bg-mist/30 border border-mist rounded-[24px] px-4 py-3 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40 disabled:opacity-50" 
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-2">
+                      Kategori
+                    </label>
+                    <select
+                      value={editCategory}
+                      onChange={e => setEditCategory(e.target.value)}
+                      disabled={isEditSubmitting}
+                      className="w-full bg-mist/30 border border-mist rounded-[24px] px-4 py-3 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all disabled:opacity-50"
+                    >
+                      {categories.map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-2">
+                      Durasi (Jam)
+                    </label>
+                    <input 
+                      type="number" 
+                      min="0.5" 
+                      max="12" 
+                      step="0.5"
+                      value={editHours} 
+                      onChange={e => setEditHours(Number(e.target.value))} 
+                      required
+                      disabled={isEditSubmitting}
+                      className="w-full bg-mist/30 border border-mist rounded-[24px] px-4 py-3 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all tabular-nums disabled:opacity-50" 
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide">
+                      Deskripsi Aktivitas
+                    </label>
+                    <span className={`text-[11px] font-bold tabular-nums ${
+                      editDesc.length > 500 ? 'text-navy' : editDesc.length > 400 ? 'text-steel' : 'text-navy/40'
+                    }`}>
+                      {editDesc.length}/500
+                    </span>
+                  </div>
+                  <textarea 
+                    rows={6} 
+                    value={editDesc} 
+                    onChange={e => setEditDesc(e.target.value.slice(0, 500))} 
+                    placeholder="Jelaskan secara detail apa yang kamu kerjakan hari ini, tantangan yang dihadapi, dan hasil yang dicapai..." 
+                    required
+                    disabled={isEditSubmitting}
+                    className="w-full bg-mist/30 border border-mist rounded-[24px] px-4 py-3 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all resize-none leading-relaxed placeholder:text-navy/40 disabled:opacity-50" 
+                  />
+                </div>
+
+                {/* Feedback mentor */}
+                {editingLog.feedback && (
+                  <div className="bg-navy/10 border border-navy/15 rounded-[24px] p-3">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-navy shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-bold text-navy mb-0.5">Catatan Revisi Mentor</p>
+                        <p className="text-xs font-medium text-navy/80 leading-relaxed">{editingLog.feedback}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3 pt-5 mt-5 border-t border-mist/60">
+                <button 
+                  type="button" 
+                  onClick={() => setEditingLog(null)} 
+                  disabled={isEditSubmitting}
+                  className="flex-1 py-3 text-sm font-bold text-navy/70 hover:bg-mist/50 rounded-[24px] transition-colors disabled:opacity-50"
+                >
+                  Batal
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={isEditSubmitting || !editTitle || !editDesc}
+                  className="flex-1 bg-navy text-white py-3 rounded-[24px] text-sm font-bold hover:bg-navy/90 transition-all shadow-lg shadow-navy/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isEditSubmitting ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...</>
+                  ) : (
+                    <><CheckCircle2 className="w-4 h-4" /> Simpan Revisi</>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ── MODAL ── */}
       {isModalOpen && (

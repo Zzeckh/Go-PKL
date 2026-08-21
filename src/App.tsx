@@ -189,7 +189,7 @@ export default function App() {
               hasCheckedIn={attendances.some(a => a.date === new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }))} 
             />
           )}
-          {activePage === 'monitoring' && (userRole === 'teacher' || userRole === 'mentor') && (
+          {activePage === 'monitoring' && userRole === 'teacher' && (
             <TeacherMonitoring />
           )}
           {activePage === 'attendance' && (userRole === 'teacher' || userRole === 'mentor') && (

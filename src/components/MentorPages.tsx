@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { X, Award, Calendar, Search, ChevronRight, Activity, GraduationCap, Building, BookOpen, CheckCircle2, MessageSquare, Clock } from 'lucide-react';
+import { X, Award, Calendar, Search, ChevronRight, Activity, GraduationCap, Building, BookOpen, CheckCircle2, MessageSquare, Clock, AlertCircle, Loader2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 const getInitials = (name: string) =>
@@ -12,6 +12,9 @@ export const MentorLogbook: React.FC = () => {
   const { logEntries, updateLogStatus } = useApp();
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'revision'>('all');
   const [search, setSearch] = useState('');
+  const [revisionLogId, setRevisionLogId] = useState<string | null>(null);
+  const [revisionFeedback, setRevisionFeedback] = useState('');
+  const [isSubmittingRevision, setIsSubmittingRevision] = useState(false);
 
   const filtered = useMemo(
     () => logEntries.filter(l =>
@@ -124,7 +127,7 @@ export const MentorLogbook: React.FC = () => {
                   {log.status === 'pending' && (
                     <div className="flex items-center justify-end gap-2 mt-3 border-t border-mist/60 pt-2.5">
                       <button
-                        onClick={() => updateLogStatus(log.id, 'revision', 'Perlu perbaikan deskripsi')}
+                        onClick={() => { setRevisionLogId(log.id); setRevisionFeedback(''); }}
                         className="text-[11px] font-bold bg-white border border-mist text-navy/70 px-3 py-1.5 rounded-lg hover:border-steel/40 hover:text-navy transition-colors flex items-center gap-1.5"
                       >
                         <MessageSquare className="w-3.5 h-3.5" /> Revisi
@@ -143,6 +146,80 @@ export const MentorLogbook: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* ── MODAL REVISI ── */}
+      {revisionLogId && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy/40 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white rounded-[24px] max-w-md w-full shadow-2xl border border-mist/60 overflow-hidden">
+            <div className="p-5 border-b border-mist/60 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center">
+                  <MessageSquare className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-navy">Catatan Revisi</h3>
+                  <p className="text-[11px] font-semibold text-navy/60">Jelaskan apa yang perlu diperbaiki</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setRevisionLogId(null)}
+                disabled={isSubmittingRevision}
+                className="w-9 h-9 rounded-[10px] bg-mist/60 hover:bg-mist flex items-center justify-center text-navy/60 hover:text-navy transition-colors shrink-0 disabled:opacity-50"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-5">
+              <div className="flex items-start gap-2 bg-navy/5 border border-navy/10 rounded-[24px] p-3 mb-4">
+                <AlertCircle className="w-4 h-4 text-navy shrink-0 mt-0.5" />
+                <p className="text-[11px] font-medium text-navy/80 leading-relaxed">
+                  Feedback ini akan ditampilkan kepada siswa sebagai catatan revisi pada logbook mereka.
+                </p>
+              </div>
+              <textarea
+                rows={4}
+                value={revisionFeedback}
+                onChange={e => setRevisionFeedback(e.target.value)}
+                placeholder="Contoh: Deskripsi aktivitas kurang detail, tambahkan tantangan dan hasil yang dicapai..."
+                disabled={isSubmittingRevision}
+                className="w-full bg-mist/30 border border-mist rounded-[24px] px-4 py-3 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all resize-none leading-relaxed placeholder:text-navy/40 disabled:opacity-50"
+              />
+              <div className="flex gap-3 mt-4">
+                <button
+                  onClick={() => setRevisionLogId(null)}
+                  disabled={isSubmittingRevision}
+                  className="flex-1 py-2.5 text-sm font-bold text-navy/70 hover:bg-mist/50 rounded-[24px] transition-colors disabled:opacity-50"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!revisionFeedback.trim()) return;
+                    setIsSubmittingRevision(true);
+                    try {
+                      await updateLogStatus(revisionLogId, 'rejected', revisionFeedback.trim());
+                      setRevisionLogId(null);
+                      setRevisionFeedback('');
+                    } catch (err) {
+                      console.error('Gagal merevisi logbook', err);
+                    } finally {
+                      setIsSubmittingRevision(false);
+                    }
+                  }}
+                  disabled={isSubmittingRevision || !revisionFeedback.trim()}
+                  className="flex-1 bg-navy text-white py-2.5 rounded-[24px] text-sm font-bold hover:bg-navy/90 transition-all shadow-lg shadow-navy/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmittingRevision ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Mengirim...</>
+                  ) : (
+                    <><MessageSquare className="w-4 h-4" /> Kirim Revisi</>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

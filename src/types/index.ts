@@ -30,6 +30,9 @@ export interface LogEntry {
   status: 'approved' | 'pending' | 'revision';
   feedback?: string;
   attachmentName?: string;
+  userId?: number;
+  userName?: string;
+  userClass?: string;
 }
 
 export interface PKLMapLocation {

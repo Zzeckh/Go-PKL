@@ -121,7 +121,7 @@ export const TeacherMonitoring: React.FC = () => {
               ) : (
                 filteredSiswa.map((siswa) => {
                   const siswaLogs = logEntries
-                    .filter(l => l.title.toLowerCase().includes(siswa.name.split(' ')[0].toLowerCase()))
+                    .filter(l => l.userId === siswa.id)
                     .slice(0, 1);
                   const latestLog = siswaLogs[0];
                   return (
@@ -187,9 +187,7 @@ const MonitoringDetailModal: React.FC<{
   attendances: any[];
   onClose: () => void;
 }> = ({ siswa, logs, attendances, onClose }) => {
-  const siswaLogs = logs.filter(l =>
-    l.title.toLowerCase().includes(siswa.name.split(' ')[0].toLowerCase())
-  );
+  const siswaLogs = logs.filter(l => l.userId === siswa.id);
 
   const statusLabel = (s: string) =>
     s === 'approved' ? 'Disetujui' : s === 'revision' ? 'Revisi' : 'Menunggu';
