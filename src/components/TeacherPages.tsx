@@ -353,7 +353,7 @@ export const TeacherPerizinan: React.FC = () => {
                         rel="noopener noreferrer"
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-steel text-white rounded-lg text-[11px] font-bold hover:bg-steel/90 transition-colors shrink-0"
                       >
-                        <DownloadCloud className="w-3.5 h-3.5" /> Lihat PDF
+                        <DownloadCloud className="w-3.5 h-3.5" /> Lihat Gambar
                       </a>
                     </>
                   ) : (
