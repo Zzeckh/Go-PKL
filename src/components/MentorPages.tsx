@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { X, Award, Calendar, Search, ChevronRight, Activity, GraduationCap, Building, BookOpen, CheckCircle2, MessageSquare, Clock, AlertCircle, Loader2 } from 'lucide-react';
+import { X, Award, Calendar, Search, ChevronRight, Activity, GraduationCap, Building, BookOpen, CheckCircle2, MessageSquare, Clock, AlertCircle, Loader2, User } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 const getInitials = (name: string) =>
@@ -107,7 +107,7 @@ export const MentorLogbook: React.FC = () => {
                 <div key={log.id} className="p-3.5 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 transition-all">
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
-                      {getInitials(log.title.split(' ')[0] || '?')}
+                      {log.userName ? getInitials(log.userName) : getInitials(log.title.split(' ')[0] || '?')}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
@@ -116,9 +116,16 @@ export const MentorLogbook: React.FC = () => {
                           {statusLabel(log.status)}
                         </span>
                       </div>
-                      <p className="text-[11px] font-semibold text-navy/50 mt-0.5">
-                        {log.date} · {log.hours} jam · {log.category}
-                      </p>
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        {log.userName && (
+                          <span className="text-[11px] font-bold text-navy/70 bg-navy/10 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <User className="w-3 h-3" />{log.userName}
+                          </span>
+                        )}
+                        <span className="text-[11px] font-semibold text-navy/50">
+                          {log.date} · {log.hours} jam · {log.category}
+                        </span>
+                      </div>
                       {log.description && (
                         <p className="text-xs font-medium text-navy/70 mt-1.5 leading-relaxed">{log.description}</p>
                       )}
@@ -300,8 +307,8 @@ export const MentorAttendance: React.FC = () => {
           ) : (
             <div className="space-y-2">
               {filtered.map(s => {
-                const pct = s.kehadiran || 0;
-                const statusLabel = pct >= 75 ? 'Rajin' : pct >= 50 ? 'Cukup' : 'Perlu Perhatian';
+                const hadirCount = attendances.filter(a => a.userId === s.id && a.status === 'Hadir').length;
+                const izinCount = attendances.filter(a => a.userId === s.id && (a.status === 'Izin' || a.status === 'Sakit')).length;
                 return (
                   <button
                     key={s.id}
@@ -317,17 +324,14 @@ export const MentorAttendance: React.FC = () => {
                         {s.kelas || '-'} · {s.perusahaan || '-'}
                       </p>
                       <div className="mt-2 flex items-center gap-2">
-                        <div className="flex-1 h-1.5 bg-shell rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all duration-500"
-                            style={{ width: `${pct}%`, backgroundColor: pct >= 75 ? 'var(--color-steel, #0f766e)' : pct >= 50 ? '#F59E0B' : '#F43F5E' }}
-                          />
-                        </div>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${
-                          pct >= 75 ? 'bg-steel/15 text-steel' : pct >= 50 ? 'bg-steel/10 text-steel' : 'bg-navy/10 text-navy'
-                        }`}>
-                          {pct}% · {statusLabel}
+                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-steel/15 text-steel tabular-nums">
+                          Hadir {hadirCount}
                         </span>
+                        {izinCount > 0 && (
+                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#9CA3AF]/20 text-[#6B7280] tabular-nums">
+                            Izin {izinCount}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <ChevronRight className="w-4 h-4 text-navy/20 group-hover:text-steel group-hover:translate-x-0.5 transition-all shrink-0" />
@@ -372,11 +376,20 @@ const StudentDetailModal: React.FC<{ student: any; attendances: any[]; onClose: 
               <p className="text-sm font-bold text-navy truncate">{student.perusahaan || '-'}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 bg-shell border border-mist rounded-[24px] p-3">
-            <Activity className="w-4 h-4 text-steel shrink-0" />
-            <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase text-navy/50">Rekap Kehadiran</p>
-              <p className="text-sm font-bold text-navy">{student.kehadiran || 0}%</p>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex items-center gap-3 bg-shell border border-mist rounded-[24px] p-3">
+              <Activity className="w-4 h-4 text-steel shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase text-navy/50">Hadir</p>
+                <p className="text-sm font-bold text-steel">{attendances.filter(a => a.userId === student.id && a.status === 'Hadir').length}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 bg-shell border border-mist rounded-[24px] p-3">
+              <AlertCircle className="w-4 h-4 text-[#6B7280] shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase text-navy/50">Izin / Sakit</p>
+                <p className="text-sm font-bold text-[#6B7280]">{attendances.filter(a => a.userId === student.id && (a.status === 'Izin' || a.status === 'Sakit')).length}</p>
+              </div>
             </div>
           </div>
           <div className="w-full h-full overflow-y-auto custom-scrollbar text-[13px] font-medium text-navy/70 leading-relaxed bg-shell/60 border border-mist/60 rounded-[24px] p-3 max-h-40">

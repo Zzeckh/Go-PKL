@@ -172,6 +172,7 @@ export default function App() {
               onAddLog={addLogEntry} 
               isModalOpen={isJournalModalOpen}
               setIsModalOpen={setIsJournalModalOpen}
+              userRole={userRole}
             />
           )}
           {activePage === 'maps' && (

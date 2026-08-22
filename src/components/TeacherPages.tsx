@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Search, CheckCircle2,
-  FileText, DownloadCloud, Check, X, Users, Clock, AlertCircle, Activity, ChevronRight, BookOpen
+  FileText, DownloadCloud, Check, X, Users, Clock, AlertCircle, Activity, ChevronRight, BookOpen, User
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { assetUrl } from '../utils/api';
@@ -124,6 +124,8 @@ export const TeacherMonitoring: React.FC = () => {
                     .filter(l => l.userId === siswa.id)
                     .slice(0, 1);
                   const latestLog = siswaLogs[0];
+                  const hadirCount = attendances.filter(a => a.userId === siswa.id && a.status === 'Hadir').length;
+                  const izinCount = attendances.filter(a => a.userId === siswa.id && (a.status === 'Izin' || a.status === 'Sakit')).length;
                   return (
                     <tr key={siswa.id} onClick={() => setSelectedSiswa(siswa)} className="border-b border-mist/40 transition-colors hover:bg-shell/60 cursor-pointer group/tr">
                       <td className="p-4">
@@ -139,9 +141,16 @@ export const TeacherMonitoring: React.FC = () => {
                       </td>
                       <td className="p-4 text-xs font-semibold text-navy/60">{siswa.perusahaan}</td>
                       <td className="p-4">
-                        <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-steel/10 text-steel tabular-nums">
-                          Hadir ({siswa.kehadiran}%)
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-steel/15 text-steel tabular-nums">
+                            Hadir {hadirCount}
+                          </span>
+                          {izinCount > 0 && (
+                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#9CA3AF]/20 text-[#6B7280] tabular-nums">
+                              Izin {izinCount}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="p-4 text-xs font-semibold text-navy/80">
                         {latestLog ? latestLog.title : `${siswa.logs} logbook`}
@@ -219,8 +228,15 @@ const MonitoringDetailModal: React.FC<{
             <div className="flex items-center gap-3 bg-shell border border-mist rounded-[24px] p-3">
               <Activity className="w-4 h-4 text-steel shrink-0" />
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase text-navy/50">Kehadiran</p>
-                <p className="text-sm font-bold text-navy">{siswa.kehadiran || 0}%</p>
+                <p className="text-[10px] font-bold uppercase text-navy/50">Hadir</p>
+                <p className="text-sm font-bold text-steel">{attendances.filter(a => a.userId === siswa.id && a.status === 'Hadir').length}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 bg-shell border border-mist rounded-[24px] p-3">
+              <Activity className="w-4 h-4 text-[#6B7280] shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase text-navy/50">Izin / Sakit</p>
+                <p className="text-sm font-bold text-[#6B7280]">{attendances.filter(a => a.userId === siswa.id && (a.status === 'Izin' || a.status === 'Sakit')).length}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 bg-shell border border-mist rounded-[24px] p-3">
@@ -248,9 +264,16 @@ const MonitoringDetailModal: React.FC<{
                         {statusLabel(log.status)}
                       </span>
                     </div>
-                    <p className="text-[11px] font-semibold text-navy/50 mt-0.5">
-                      {log.date} · {log.hours} jam
-                    </p>
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      {log.userName && (
+                        <span className="text-[10px] font-bold text-navy/70 bg-navy/10 px-2 py-0.5 rounded-md flex items-center gap-1">
+                          <User className="w-3 h-3" />{log.userName}
+                        </span>
+                      )}
+                      <span className="text-[11px] font-semibold text-navy/50">
+                        {log.date} · {log.hours} jam
+                      </span>
+                    </div>
                     {log.description && (
                       <p className="text-[11px] font-medium text-navy/70 mt-1.5 leading-relaxed">{log.description}</p>
                     )}

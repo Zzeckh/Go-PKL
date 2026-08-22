@@ -254,6 +254,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           : item.status === 'izin' ? 'Izin'
           : item.status === 'alpha' ? 'Alpha'
           : 'Sakit',
+        userId: item.user?.id || item.userId,
       }));
       setAttendances(mapped);
     } catch (error: any) {

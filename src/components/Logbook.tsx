@@ -3,15 +3,16 @@ import {
   Plus, BookOpen, CheckCircle2, Clock, X, Search, 
   AlertCircle, Loader2, Sparkles, FileEdit 
 } from 'lucide-react';
-import { LogEntry } from '../types';
+import { LogEntry, UserRole } from '../types';
 import { useApp } from '../context/AppContext';
-import { Pencil } from 'lucide-react';
+import { Pencil, User } from 'lucide-react';
 
 interface LogbookProps {
   logs: LogEntry[];
   onAddLog: (log: Omit<LogEntry, 'id' | 'date' | 'status'>) => Promise<void>;
   isModalOpen: boolean;
   setIsModalOpen: (v: boolean) => void;
+  userRole?: UserRole;
 }
 
 type FilterType = 'all' | 'approved' | 'pending' | 'revision';
@@ -54,7 +55,8 @@ export const Logbook: React.FC<LogbookProps> = ({
   logs, 
   onAddLog, 
   isModalOpen, 
-  setIsModalOpen 
+  setIsModalOpen,
+  userRole
 }) => {
   const { loadingResources, updateLogEntry } = useApp();
   const isLoading = loadingResources.has('logbook');
@@ -355,9 +357,21 @@ export const Logbook: React.FC<LogbookProps> = ({
                           {log.title}
                         </h3>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <span className="text-[11px] font-bold text-navy/50 uppercase tracking-wide whitespace-nowrap">
-                            {log.date}
-                          </span>
+                          {userRole === 'teacher' && log.userName && (
+                            <span className="text-[11px] font-bold text-navy/70 bg-navy/10 px-2 py-0.5 rounded-md flex items-center gap-1">
+                              <User className="w-3 h-3" />{log.userName}
+                            </span>
+                          )}
+                          {userRole === 'teacher' && log.userClass && (
+                            <span className="text-[11px] font-bold text-steel bg-steel/10 px-2 py-0.5 rounded-md">
+                              {log.userClass}
+                            </span>
+                          )}
+                          {(userRole !== 'teacher' || !log.userName) && (
+                            <span className="text-[11px] font-bold text-navy/50 uppercase tracking-wide whitespace-nowrap">
+                              {log.date}
+                            </span>
+                          )}
                           <span className="w-1 h-1 rounded-full bg-navy/20 shrink-0" />
                           <span className="text-[11px] font-bold text-steel bg-steel/10 px-2 py-0.5 rounded-md">
                             {log.category}

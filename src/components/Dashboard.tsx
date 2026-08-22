@@ -35,6 +35,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onNavigate
 }) => {
   const totalHadir = attendances.filter(a => a.status === 'Hadir').length;
+  const totalIzin = attendances.filter(a => a.status === 'Izin').length;
+  const hasIzin = totalIzin > 0;
   const totalDays = 90;
   const pct = Math.min(100, Math.round((totalHadir / totalDays) * 100));
 
@@ -219,14 +221,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex items-baseline gap-1 mt-2">
             <span className="text-3xl font-light text-navy tabular-nums tracking-tight">{totalHadir}</span>
             <span className="text-sm font-semibold text-navy/50">/ {totalDays}</span>
-            <span className="ml-auto text-sm font-bold text-steel">{pct}%</span>
+            <span className={`ml-auto text-sm font-bold ${hasIzin ? 'text-navy/40' : 'text-steel'}`}>{pct}%</span>
           </div>
           <div className="w-full h-1.5 bg-mist/60 rounded-full overflow-hidden mt-2">
             <div 
-              className="h-full bg-steel rounded-full transition-all duration-1000 ease-out" 
+              className={`h-full rounded-full transition-all duration-1000 ease-out ${hasIzin ? 'bg-[#9CA3AF]' : 'bg-steel'}`} 
               style={{ width: `${pct}%` }} 
             />
           </div>
+          {hasIzin && (
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#9CA3AF]" />
+              <span className="text-[10px] font-bold text-navy/40">{totalIzin} hari izin</span>
+            </div>
+          )}
 
           <div className="mt-auto pt-3">
             <div className="flex items-end gap-1 h-8">
