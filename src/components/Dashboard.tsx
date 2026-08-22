@@ -136,8 +136,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
     return `${day}/${month}`;
   });
 
-  /* ✅ FIX: badge status SOLID (style switch card Jam) —
-     Disetujui = pill steel solid putih; Menunggu = card putih border mist */
   const statusStyle = (s: string) =>
     s === 'approved' ? 'bg-steel text-white shadow-sm shadow-steel/30'
     : s === 'revision' ? 'bg-navy text-white'
@@ -265,7 +263,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
 
-        {/* 🕐 Clock — reference style switch: pill solid steel */}
+        {/* 🕐 Clock */}
         <div className="c3 bg-white/70 backdrop-blur-xl rounded-[24px] border border-white shadow-sm p-4 h-[210px] flex flex-col">
           <div className="flex gap-1 bg-mist/60 p-1 rounded-full mb-2">
             <button 
@@ -377,7 +375,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     onClick={() => setTodos(todos.map((t, idx) => idx === i ? { ...t, done: !t.done } : t))}
                     className="flex items-center gap-2.5 w-full text-left group min-w-0"
                   >
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 border-2 transition-all ${todo.done ? 'bg-steel border-steel' : 'border-navy/20 group-hover:border-steel/60'}`}>
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 border-2 transition-all ${todo.done ? 'bg-navy border-navy' : 'border-navy/20 group-hover:border-navy/60'}`}>
                       {todo.done && <Check className="w-3 h-3 text-white" />}
                     </div>
                     <span className={`text-sm font-semibold leading-tight transition-all truncate ${todo.done ? 'line-through text-navy/40' : 'text-navy'}`}>
@@ -388,7 +386,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
             ))}
 
-            {/* Input tambah task (hanya saat edit) */}
             {editing && (
               <div className="flex items-center gap-2 pt-1 shrink-0">
                 <input
@@ -452,7 +449,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   key={notif.id} 
                   className="flex gap-3 p-3 rounded-[24px] hover:bg-white/60 transition-colors cursor-pointer group"
                 >
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${notif.unread ? 'bg-steel text-white' : 'bg-mist/60 text-navy/40'}`}>
+                  {/* ✅ FIX: kotak rounded-lg w-8 h-8 (seragam dengan semua chip ikon) */}
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${notif.unread ? 'bg-steel text-white' : 'bg-navy text-white'}`}>
                     {notif.unread ? (
                       (notif as any).type === 'perizinan' ? <ShieldAlert className="w-4 h-4" /> : <Bell className="w-4 h-4" />
                     ) : (
@@ -521,7 +519,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 {notes || <span className="text-navy/40 italic text-xs">Belum ada catatan.</span>}
               </div>
             )}
-            {/* Footer indikator karakter saat edit */}
             {editNotes && (
               <div className="flex items-center justify-between pt-2 shrink-0">
                 <span className="text-[11px] font-semibold text-navy/40">

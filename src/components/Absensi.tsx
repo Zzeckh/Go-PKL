@@ -27,9 +27,9 @@ const getDistanceInMeters = (lat1: number, lon1: number, lat2: number, lon2: num
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return Math.round(R * c);
 };
@@ -245,8 +245,8 @@ export const Absensi: React.FC<AbsensiProps> = ({
         <div className="lg:col-span-3 bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 md:p-5 flex flex-col relative overflow-hidden min-h-[320px] lg:min-h-0">
           <div className="flex items-center justify-between mb-3 shrink-0">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-steel/15 flex items-center justify-center">
-                <Camera className="w-3.5 h-3.5 text-steel" />
+              <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center">
+                <Camera className="w-3.5 h-3.5 text-white" />
               </div>
               <p className="text-[13px] font-bold uppercase tracking-widest text-navy/70">Preview Kamera</p>
             </div>
@@ -272,7 +272,6 @@ export const Absensi: React.FC<AbsensiProps> = ({
                   muted
                   className={`w-full h-full object-cover -scale-x-100 ${isCameraActive ? 'block' : 'hidden'}`}
                 />
-                {/* ── EMPTY STATE: panduan selfie (isi ruang kosong) ── */}
                 {!isCameraActive && (
                   <div className="w-full max-w-sm px-6 py-4 flex flex-col items-center text-center">
                     <div className="w-14 h-14 rounded-[10px] bg-white/10 border border-white/10 flex items-center justify-center mb-3">
@@ -293,7 +292,6 @@ export const Absensi: React.FC<AbsensiProps> = ({
                       </button>
                     )}
 
-                    {/* Panduan selfie 3 langkah */}
                     <div className="w-full mt-5 pt-4 border-t border-white/10 grid grid-cols-3 gap-2">
                       <div className="flex flex-col items-center gap-1.5">
                         <div className="w-9 h-9 rounded-[10px] bg-white/10 flex items-center justify-center">
@@ -431,8 +429,8 @@ export const Absensi: React.FC<AbsensiProps> = ({
           <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 flex flex-col gap-3 shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-steel/15 flex items-center justify-center">
-                  <Clock className="w-3.5 h-3.5 text-steel" />
+                <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center">
+                  <Clock className="w-3.5 h-3.5 text-white" />
                 </div>
                 <p className="text-[13px] font-bold text-navy">Kirim Absensi</p>
               </div>
@@ -450,7 +448,7 @@ export const Absensi: React.FC<AbsensiProps> = ({
               }`}>
                 <div className="flex items-center gap-2 mb-1.5">
                   <div className={`w-5 h-5 rounded-full flex items-center justify-center border-2 shrink-0 transition-all ${
-                    imageSrc ? 'bg-steel border-steel' : 'border-navy/20'
+                    imageSrc ? 'bg-navy border-navy' : 'border-navy/20'
                   }`}>
                     {imageSrc && <CheckCircle2 className="w-3 h-3 text-white" />}
                   </div>
@@ -466,7 +464,7 @@ export const Absensi: React.FC<AbsensiProps> = ({
               }`}>
                 <div className="flex items-center gap-2 mb-1.5">
                   <div className={`w-5 h-5 rounded-full flex items-center justify-center border-2 shrink-0 transition-all ${
-                    isWithinRadius && !isLoadingLocation && !!companyLocation ? 'bg-steel border-steel' : 'border-navy/20'
+                    isWithinRadius && !isLoadingLocation && !!companyLocation ? 'bg-navy border-navy' : 'border-navy/20'
                   }`}>
                     {isWithinRadius && !isLoadingLocation && !!companyLocation && <CheckCircle2 className="w-3 h-3 text-white" />}
                   </div>
@@ -517,12 +515,12 @@ export const Absensi: React.FC<AbsensiProps> = ({
             </button>
           </div>
 
-          {/* ── RIWAYAT KEHADIRAN (isi ruang kosong) ── */}
+          {/* ── RIWAYAT KEHADIRAN ── */}
           <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 flex-1 flex flex-col min-h-[180px]">
             <div className="flex items-center justify-between mb-3 shrink-0">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-mist flex items-center justify-center">
-                  <History className="w-3.5 h-3.5 text-navy" />
+                <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center">
+                  <History className="w-3.5 h-3.5 text-white" />
                 </div>
                 <p className="text-[13px] font-bold text-navy">Riwayat Kehadiran</p>
               </div>
@@ -532,9 +530,8 @@ export const Absensi: React.FC<AbsensiProps> = ({
             <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2 min-h-0 pr-1">
               {attendances.slice(0, 7).map((a) => (
                 <div key={a.id} className="flex items-center gap-3 p-2.5 rounded-[24px] bg-mist/30 border border-mist/50 shrink-0">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                    a.status === 'Hadir' ? 'bg-steel/15 text-steel' : 'bg-mist text-navy/50'
-                  }`}>
+                  {/* ✅ FIX: icon item riwayat — semua navy solid + icon putih (seragam dengan chip lain) */}
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-navy text-white">
                     {a.status === 'Hadir' ? <CheckCircle2 className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -543,8 +540,11 @@ export const Absensi: React.FC<AbsensiProps> = ({
                       {a.checkInTime ? `Check-in ${a.checkInTime}` : 'Tanpa check-in'}
                     </p>
                   </div>
-                  <span className={`text-[10px] font-bold px-2 py-1 rounded-full shrink-0 ${
-                    a.status === 'Hadir' ? 'bg-steel/15 text-steel' : 'bg-mist text-navy/60'
+                  {/* Pill status: Hadir = solid steel, lain = card putih */}
+                  <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 ${
+                    a.status === 'Hadir' 
+                      ? 'bg-steel text-white shadow-sm shadow-steel/30' 
+                      : 'bg-white text-navy/70 border border-mist/60 shadow-sm'
                   }`}>
                     {a.status}
                   </span>
