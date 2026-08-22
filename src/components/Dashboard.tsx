@@ -136,10 +136,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
     return `${day}/${month}`;
   });
 
+  /* ✅ FIX: badge status SOLID (style switch card Jam) —
+     Disetujui = pill steel solid putih; Menunggu = card putih border mist */
   const statusStyle = (s: string) =>
-    s === 'approved' ? 'bg-steel/15 text-steel'
+    s === 'approved' ? 'bg-steel text-white shadow-sm shadow-steel/30'
     : s === 'revision' ? 'bg-navy text-white'
-    : 'bg-mist text-navy/70';
+    : 'bg-white text-navy/70 border border-mist/60 shadow-sm';
   const statusLabel = (s: string) =>
     s === 'approved' ? 'Disetujui' : s === 'revision' ? 'Revisi' : 'Menunggu';
 
@@ -216,7 +218,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
 
-        {/* 📊 Attendance — chip icon diseragamkan: navy solid + ikon putih */}
+        {/* 📊 Attendance */}
         <div className="c2 bg-white rounded-[24px] border border-mist/60 shadow-sm p-5 h-[210px] flex flex-col">
           <div className="flex items-center justify-between shrink-0">
             <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
@@ -263,7 +265,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
 
-        {/* 🕐 Clock */}
+        {/* 🕐 Clock — reference style switch: pill solid steel */}
         <div className="c3 bg-white/70 backdrop-blur-xl rounded-[24px] border border-white shadow-sm p-4 h-[210px] flex flex-col">
           <div className="flex gap-1 bg-mist/60 p-1 rounded-full mb-2">
             <button 
@@ -318,7 +320,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* ── ROW 2 ── */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-4 flex-1 min-h-[260px]">
         
-        {/* ✓ Tasks — chip navy (reference style) */}
+        {/* ✓ Tasks */}
         <div className={`c4 bg-white rounded-[24px] border shadow-sm p-5 flex flex-col min-h-0 transition-all ${editing ? 'border-steel/40 ring-2 ring-steel/20' : 'border-mist/60'}`}>
           <div className="flex items-center justify-between mb-4 shrink-0">
             <div className="flex items-center gap-2">
@@ -421,7 +423,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
 
-        {/* 🔔 Notifications — chip navy (reference style) */}
+        {/* 🔔 Notifications */}
         <div className="lg:col-span-2 c5 bg-white/70 backdrop-blur-xl rounded-[24px] border border-white shadow-sm flex flex-col min-h-0">
           <div className="flex items-center justify-between p-5 pb-3 shrink-0">
             <div className="flex items-center gap-2">
@@ -481,7 +483,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
 
-        {/* 📝 Notes — chip icon diseragamkan: navy solid + ikon putih */}
+        {/* 📝 Notes */}
         <div className={`c5 bg-white/70 backdrop-blur-xl rounded-[24px] border shadow-sm flex flex-col min-h-0 transition-all ${editNotes ? 'border-steel/40 ring-2 ring-steel/20' : 'border-white'}`}>
           <div className="flex items-center justify-between p-5 pb-3 shrink-0">
             <div className="flex items-center gap-2">
@@ -534,7 +536,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </div>
 
-      {/* ── ROW 3 — chip icon diseragamkan: navy solid + ikon putih */}
+      {/* ── ROW 3 ── */}
       <div className="c5 shrink-0 bg-white/70 backdrop-blur-xl rounded-[24px] border border-white shadow-sm">
         <div className="flex items-center justify-between p-5 pb-3">
           <div className="flex items-center gap-2">
@@ -560,7 +562,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <div key={log.id} className="py-3 md:py-2 md:px-5 md:first:pl-0 md:last:pr-0 flex flex-col gap-1.5">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-navy/40">{log.date}</span>
-                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${statusStyle(log.status)}`}>
+                  <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${statusStyle(log.status)}`}>
                     {statusLabel(log.status)}
                   </span>
                 </div>
