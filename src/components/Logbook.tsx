@@ -167,50 +167,58 @@ export const Logbook: React.FC<LogbookProps> = ({
           </button>
         </div>
 
-        {/* Stats — semua card seragam #F1F4F8 */}
+        {/* Stats — background PUTIH seragam */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
           {/* Total Jurnal */}
-          <div className="bg-shell border border-mist rounded-[24px] p-3">
-            <div className="flex items-center justify-between mb-1">
-              <BookOpen className="w-4 h-4 text-navy/50" />
-              <span className="text-2xl font-bold text-navy tabular-nums">{logs.length}</span>
+          <div className="bg-white border border-mist/60 rounded-2xl p-4 shadow-sm flex flex-col justify-between min-h-[110px]">
+            <div className="flex items-center justify-between">
+              <div className="w-9 h-9 rounded-xl bg-[#F1F4F8] flex items-center justify-center">
+                <BookOpen className="w-4 h-4 text-navy/60" />
+              </div>
+              <span className="text-2xl font-bold text-navy tabular-nums leading-none">{logs.length}</span>
             </div>
-            <p className="text-[11px] font-bold text-navy/60 uppercase tracking-wide">Total Jurnal</p>
+            <p className="text-[11px] font-bold text-navy/60 uppercase tracking-wide mt-3">Total Jurnal</p>
           </div>
 
           {/* Total Jam */}
-          <div className="bg-shell border border-mist rounded-[24px] p-3">
-            <div className="flex items-center justify-between mb-1">
-              <Clock className="w-4 h-4 text-navy/50" />
-              <span className="text-2xl font-bold text-navy tabular-nums">
+          <div className="bg-white border border-mist/60 rounded-2xl p-4 shadow-sm flex flex-col justify-between min-h-[110px]">
+            <div className="flex items-center justify-between">
+              <div className="w-9 h-9 rounded-xl bg-[#F1F4F8] flex items-center justify-center">
+                <Clock className="w-4 h-4 text-navy/60" />
+              </div>
+              <span className="text-2xl font-bold text-navy tabular-nums leading-none">
                 {totalHours}
                 <span className="text-sm text-navy/50 ml-0.5">j</span>
               </span>
             </div>
-            <p className="text-[11px] font-bold text-navy/60 uppercase tracking-wide">Total Jam</p>
+            <p className="text-[11px] font-bold text-navy/60 uppercase tracking-wide mt-3">Total Jam</p>
           </div>
 
           {/* Disetujui */}
-          <div className="bg-shell border border-mist rounded-[24px] p-3">
-            <div className="flex items-center justify-between mb-1">
-              <CheckCircle2 className="w-4 h-4 text-navy/50" />
-              <span className="text-2xl font-bold text-navy tabular-nums">{approved}</span>
+          <div className="bg-white border border-mist/60 rounded-2xl p-4 shadow-sm flex flex-col justify-between min-h-[110px]">
+            <div className="flex items-center justify-between">
+              <div className="w-9 h-9 rounded-xl bg-[#F1F4F8] flex items-center justify-center">
+                <CheckCircle2 className="w-4 h-4 text-navy/60" />
+              </div>
+              <span className="text-2xl font-bold text-navy tabular-nums leading-none">{approved}</span>
             </div>
-            <p className="text-[11px] font-bold text-navy/60 uppercase tracking-wide">Disetujui</p>
+            <p className="text-[11px] font-bold text-navy/60 uppercase tracking-wide mt-3">Disetujui</p>
           </div>
 
           {/* Pending */}
-          <div className="bg-shell border border-mist rounded-[24px] p-3">
-            <div className="flex items-center justify-between mb-1">
-              <AlertCircle className="w-4 h-4 text-navy/50" />
+          <div className="bg-white border border-mist/60 rounded-2xl p-4 shadow-sm flex flex-col justify-between min-h-[110px]">
+            <div className="flex items-center justify-between">
+              <div className="w-9 h-9 rounded-xl bg-[#F1F4F8] flex items-center justify-center">
+                <AlertCircle className="w-4 h-4 text-navy/60" />
+              </div>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-2xl font-bold text-navy tabular-nums">{pending}</span>
+                <span className="text-2xl font-bold text-navy tabular-nums leading-none">{pending}</span>
                 {revision > 0 && (
                   <span className="text-xs font-bold text-navy/50">+{revision}</span>
                 )}
               </div>
             </div>
-            <p className="text-[11px] font-bold text-navy/60 uppercase tracking-wide">
+            <p className="text-[11px] font-bold text-navy/60 uppercase tracking-wide mt-3">
               Pending{revision > 0 ? ' & Revisi' : ''}
             </p>
           </div>
@@ -334,92 +342,91 @@ export const Logbook: React.FC<LogbookProps> = ({
               return (
                 <div
                   key={log.id}
-                  className="bg-white rounded-[24px] border border-mist/60 hover:border-steel/30 hover:shadow-sm transition-all p-4 shrink-0 group"
+                  className="bg-white rounded-[24px] border border-mist/60 hover:border-steel/30 hover:shadow-sm transition-all p-4 md:p-5 shrink-0 group"
                 >
-                  <div className="flex gap-3">
-                    {/* Icon + Date */}
-                    <div className="flex flex-col items-center gap-1 shrink-0">
-                      <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center">
-                        <BookOpen className="w-4 h-4 text-white" />
+                  {/* ── Row 1: identitas + status ── */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-11 h-11 rounded-2xl bg-navy flex items-center justify-center shrink-0">
+                        <BookOpen className="w-5 h-5 text-white" />
                       </div>
-                      <span className="text-[10px] font-bold text-navy/50 uppercase tracking-wider whitespace-nowrap">
-                        {log.date.split(' ').slice(0, 2).join(' ')}
-                      </span>
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-3 mb-1.5">
-                        <h3 className="text-sm font-bold text-navy leading-snug pr-2 line-clamp-2">
+                      <div className="min-w-0">
+                        <h3 className="text-sm md:text-[15px] font-bold text-navy leading-snug line-clamp-1">
                           {log.title}
                         </h3>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <span className="text-[11px] font-bold bg-mist/60 text-navy/70 px-2 py-1 rounded-full flex items-center gap-1 tabular-nums">
-                            <Clock className="w-3 h-3" />{log.hours}j
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <span className="text-[11px] font-bold text-navy/50 uppercase tracking-wide whitespace-nowrap">
+                            {log.date}
                           </span>
-                          <span className={`text-[11px] font-bold px-2 py-1 rounded-full flex items-center gap-1 ${config.bg} ${config.text}`}>
-                            <StatusIcon className="w-3 h-3" />
-                            {config.label}
+                          <span className="w-1 h-1 rounded-full bg-navy/20 shrink-0" />
+                          <span className="text-[11px] font-bold text-steel bg-steel/10 px-2 py-0.5 rounded-md">
+                            {log.category}
                           </span>
                         </div>
                       </div>
-
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-[11px] font-bold text-steel bg-steel/10 px-2 py-0.5 rounded-md">
-                          {log.category}
-                        </span>
-                      </div>
-
-                      <p className={`text-[13px] font-medium text-navy/70 leading-relaxed ${
-                        isExpanded ? '' : 'line-clamp-2'
-                      }`}>
-                        {log.description}
-                      </p>
-
-                      {isLong && (
-                        <button
-                          onClick={() => setExpandedId(isExpanded ? null : log.id)}
-                          className="text-[11px] font-bold text-steel hover:text-steel/70 mt-1 transition-colors"
-                        >
-                          {isExpanded ? 'Tutup' : 'Baca selengkapnya'}
-                        </button>
-                      )}
-
-                      {log.status === 'revision' && log.feedback && (
-                        <div className="mt-3 p-3 bg-navy/10 border border-navy/15 rounded-[24px]">
-                          <div className="flex items-start gap-2">
-                            <AlertCircle className="w-4 h-4 text-navy shrink-0 mt-0.5" />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-[11px] font-bold text-navy mb-0.5">Catatan Revisi</p>
-                              <p className="text-xs font-medium text-navy/80 leading-relaxed">{log.feedback}</p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {log.status === 'revision' && (
-                        <div className="mt-3 flex justify-end">
-                          <button
-                            onClick={() => openEditModal(log)}
-                            className="text-[11px] font-bold bg-navy text-white px-4 py-2 rounded-[24px] flex items-center gap-1.5 hover:bg-navy/90 transition-all shadow-md shadow-navy/20"
-                          >
-                            <Pencil className="w-3.5 h-3.5" /> Edit & Revisi
-                          </button>
-                        </div>
-                      )}
-
-                      {log.status === 'approved' && log.feedback && (
-                        <div className="mt-3 p-3 bg-steel/10 border border-mist rounded-[24px]">
-                          <div className="flex items-start gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-steel shrink-0 mt-0.5" />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-[11px] font-bold text-steel mb-0.5">Feedback Mentor</p>
-                              <p className="text-xs font-medium text-navy/70 leading-relaxed">{log.feedback}</p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
                     </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="text-[11px] font-bold bg-mist/60 text-navy/70 px-2.5 py-1 rounded-full flex items-center gap-1 tabular-nums">
+                        <Clock className="w-3 h-3" />{log.hours}j
+                      </span>
+                      <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 ${config.bg} ${config.text}`}>
+                        <StatusIcon className="w-3 h-3" />
+                        {config.label}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* ── Row 2: deskripsi (sejajar dengan judul) ── */}
+                  <div className="mt-3 md:pl-14">
+                    <p className={`text-[13px] font-medium text-navy/70 leading-relaxed ${
+                      isExpanded ? '' : 'line-clamp-2'
+                    }`}>
+                      {log.description}
+                    </p>
+
+                    {isLong && (
+                      <button
+                        onClick={() => setExpandedId(isExpanded ? null : log.id)}
+                        className="text-[11px] font-bold text-steel hover:text-steel/70 mt-1.5 transition-colors"
+                      >
+                        {isExpanded ? 'Tutup' : 'Baca selengkapnya'}
+                      </button>
+                    )}
+
+                    {log.status === 'revision' && log.feedback && (
+                      <div className="mt-3 p-3 bg-navy/10 border border-navy/15 rounded-2xl">
+                        <div className="flex items-start gap-2">
+                          <AlertCircle className="w-4 h-4 text-navy shrink-0 mt-0.5" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[11px] font-bold text-navy mb-0.5">Catatan Revisi</p>
+                            <p className="text-xs font-medium text-navy/80 leading-relaxed">{log.feedback}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {log.status === 'revision' && (
+                      <div className="mt-3 flex justify-end">
+                        <button
+                          onClick={() => openEditModal(log)}
+                          className="text-[11px] font-bold bg-navy text-white px-4 py-2 rounded-[24px] flex items-center gap-1.5 hover:bg-navy/90 transition-all shadow-md shadow-navy/20"
+                        >
+                          <Pencil className="w-3.5 h-3.5" /> Edit & Revisi
+                        </button>
+                      </div>
+                    )}
+
+                    {log.status === 'approved' && log.feedback && (
+                      <div className="mt-3 p-3 bg-steel/10 border border-mist rounded-2xl">
+                        <div className="flex items-start gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-steel shrink-0 mt-0.5" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[11px] font-bold text-steel mb-0.5">Feedback Mentor</p>
+                            <p className="text-xs font-medium text-navy/70 leading-relaxed">{log.feedback}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -566,7 +573,7 @@ export const Logbook: React.FC<LogbookProps> = ({
         </div>
       )}
 
-      {/* ── MODAL ── */}
+      {/* ── MODAL TAMBAH ── */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy/40 backdrop-blur-md animate-in fade-in duration-200">
           <div className="bg-white rounded-[24px] max-w-2xl w-full max-h-[85vh] shadow-2xl flex flex-col overflow-hidden border border-mist/60">
