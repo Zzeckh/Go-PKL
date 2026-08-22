@@ -17,7 +17,7 @@ export const StudentPerizinan: React.FC = () => {
 
   const statusBadge = (status: string) => {
     if (status === 'approved') return { cls: 'bg-steel/15 text-steel', label: 'Disetujui', icon: CheckCircle2 };
-    if (status === 'rejected') return { cls: 'bg-navy/10 text-navy', label: 'Ditolak', icon: AlertCircle };
+    if (status === 'rejected') return { cls: 'bg-steel/20 text-steel', label: 'Ditolak', icon: AlertCircle };
     return { cls: 'bg-steel/10 text-steel', label: 'Menunggu', icon: Hourglass };
   };
 
@@ -43,6 +43,7 @@ export const StudentPerizinan: React.FC = () => {
         </button>
       </div>
 
+      {/* ── STATS: gradasi steel seragam (/10 → /15 → /20) ── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 shrink-0">
         <div className="bg-white border border-mist/60 rounded-[24px] p-4 flex items-center gap-3">
           <div className="w-10 h-10 rounded-[10px] bg-steel/10 flex items-center justify-center">
@@ -63,8 +64,9 @@ export const StudentPerizinan: React.FC = () => {
           </div>
         </div>
         <div className="bg-white border border-mist/60 rounded-[24px] p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-[10px] bg-navy/10 flex items-center justify-center">
-            <AlertCircle className="w-5 h-5 text-navy" />
+          {/* ✅ FIX: icon Ditolak sekarang steel (serasi dengan 2 card lain) */}
+          <div className="w-10 h-10 rounded-[10px] bg-steel/20 flex items-center justify-center">
+            <AlertCircle className="w-5 h-5 text-steel" />
           </div>
           <div>
             <p className="text-2xl font-bold text-navy tabular-nums leading-none">{rejected}</p>
