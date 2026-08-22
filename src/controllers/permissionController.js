@@ -22,10 +22,16 @@ export const uploadPermissionFile = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/pdf' || file.originalname.toLowerCase().endsWith('.pdf')) {
+    const allowed = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/webp',
+    ];
+    if (allowed.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Hanya file PDF yang diperbolehkan.'));
+      cb(new Error('Hanya file gambar (JPG, PNG, WEBP) yang diperbolehkan.'));
     }
   },
 });
@@ -76,7 +82,7 @@ export const createPermission = async (req, res, next) => {
     }
 
     if (!req.file) {
-      return res.status(400).json({ error: 'Surat keterangan (file PDF) wajib diunggah.' });
+      return res.status(400).json({ error: 'Bukti gambar wajib diunggah.' });
     }
 
     const attachmentUrl = `/uploads/permissions/${req.file.filename}`;
