@@ -216,11 +216,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
 
-        {/* 📊 Attendance */}
+        {/* 📊 Attendance — chip icon diseragamkan: navy solid + ikon putih */}
         <div className="c2 bg-white rounded-[24px] border border-mist/60 shadow-sm p-5 h-[210px] flex flex-col">
           <div className="flex items-center justify-between shrink-0">
-            <div className="w-9 h-9 rounded-[10px] bg-mist/70 flex items-center justify-center">
-              <UserCheck className="w-5 h-5 text-steel" />
+            <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
+              <UserCheck className="w-4 h-4 text-white" />
             </div>
             <span className="text-xs font-bold text-navy/40 uppercase tracking-wider">Kehadiran</span>
           </div>
@@ -318,7 +318,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* ── ROW 2 ── */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-4 flex-1 min-h-[260px]">
         
-        {/* ✓ Tasks — dengan Mode Edit + Indikator */}
+        {/* ✓ Tasks — chip navy (reference style) */}
         <div className={`c4 bg-white rounded-[24px] border shadow-sm p-5 flex flex-col min-h-0 transition-all ${editing ? 'border-steel/40 ring-2 ring-steel/20' : 'border-mist/60'}`}>
           <div className="flex items-center justify-between mb-4 shrink-0">
             <div className="flex items-center gap-2">
@@ -421,7 +421,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
 
-        {/* 🔔 Notifications */}
+        {/* 🔔 Notifications — chip navy (reference style) */}
         <div className="lg:col-span-2 c5 bg-white/70 backdrop-blur-xl rounded-[24px] border border-white shadow-sm flex flex-col min-h-0">
           <div className="flex items-center justify-between p-5 pb-3 shrink-0">
             <div className="flex items-center gap-2">
@@ -481,12 +481,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
 
-        {/* 📝 Notes — dengan Mode Edit + Indikator */}
+        {/* 📝 Notes — chip icon diseragamkan: navy solid + ikon putih */}
         <div className={`c5 bg-white/70 backdrop-blur-xl rounded-[24px] border shadow-sm flex flex-col min-h-0 transition-all ${editNotes ? 'border-steel/40 ring-2 ring-steel/20' : 'border-white'}`}>
           <div className="flex items-center justify-between p-5 pb-3 shrink-0">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-mist/70 flex items-center justify-center">
-                <BookOpen className="w-4 h-4 text-navy" />
+              <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
+                <BookOpen className="w-4 h-4 text-white" />
               </div>
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-widest text-navy/60 leading-none">Catatan</p>
@@ -534,12 +534,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </div>
 
-      {/* ── ROW 3 ── */}
+      {/* ── ROW 3 — chip icon diseragamkan: navy solid + ikon putih */}
       <div className="c5 shrink-0 bg-white/70 backdrop-blur-xl rounded-[24px] border border-white shadow-sm">
         <div className="flex items-center justify-between p-5 pb-3">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-steel/15 flex items-center justify-center">
-              <BookOpen className="w-4 h-4 text-steel" />
+            <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
+              <BookOpen className="w-4 h-4 text-white" />
             </div>
             <div>
               <p className="text-[11px] font-bold uppercase tracking-widest text-navy/60 leading-none">Logbook</p>
