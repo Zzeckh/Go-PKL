@@ -12,7 +12,12 @@ import {
   haversineMeters, isValidCoord,
 } from '../utils/leafletHelpers';
 
-type MapsProps = Record<string, never>;
+/* ✅ Props opsional — aman dipakai dengan/ tanpa props dari App */
+interface MapsProps {
+  locations?: any[];
+  attendances?: any[];
+  onCheckIn?: (...args: any[]) => void;
+}
 
 const getInitials = (name: string) => {
   if (!name || name === '-') return '?';
@@ -37,7 +42,6 @@ export const Maps: React.FC<MapsProps> = () => {
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [isLoadingGps, setIsLoadingGps] = useState(true);
 
-  /* ── FIX ERROR #1: null-check sebelum isValidCoord ── */
   const companiesWithCoords = useMemo(
     () =>
       perusahaanList.filter(
@@ -259,8 +263,8 @@ export const Maps: React.FC<MapsProps> = () => {
     return (
       <div className="h-full w-full flex items-center justify-center p-4">
         <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm max-w-sm w-full flex flex-col items-center text-center p-8">
-          <div className="w-16 h-16 rounded-[10px] bg-shell flex items-center justify-center mb-4">
-            <Compass className="w-7 h-7 text-navy/40" />
+          <div className="w-16 h-16 rounded-[10px] bg-navy flex items-center justify-center mb-4">
+            <Compass className="w-7 h-7 text-white" />
           </div>
           <h2 className="text-lg font-bold text-navy mb-1">Belum Ada Lokasi PKL</h2>
           <p className="text-sm text-navy/60 leading-relaxed">
@@ -276,8 +280,8 @@ export const Maps: React.FC<MapsProps> = () => {
     return (
       <div className="h-full w-full flex items-center justify-center p-4">
         <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm max-w-sm w-full flex flex-col items-center text-center p-8">
-          <div className="w-16 h-16 rounded-[10px] bg-steel/10 flex items-center justify-center mb-4">
-            <AlertTriangle className="w-7 h-7 text-steel" />
+          <div className="w-16 h-16 rounded-[10px] bg-navy flex items-center justify-center mb-4">
+            <AlertTriangle className="w-7 h-7 text-white" />
           </div>
           <h2 className="text-lg font-bold text-navy mb-1">Kamu Belum Dipetakan</h2>
           <p className="text-sm text-navy/60 leading-relaxed">
@@ -291,7 +295,7 @@ export const Maps: React.FC<MapsProps> = () => {
   return (
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
 
-      {/* ── HEADER ── */}
+      {/* ── HEADER ─ */}
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
           <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[10px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
@@ -305,7 +309,8 @@ export const Maps: React.FC<MapsProps> = () => {
           </div>
         </div>
         <div className="hidden md:flex items-center gap-2 shrink-0">
-          <span className="flex items-center gap-1.5 text-[11px] font-bold text-navy/60 bg-shell border border-mist px-3 py-2 rounded-full">
+          {/* ✅ badge: background seperti search bar Logbook (mist/40) */}
+          <span className="flex items-center gap-1.5 text-[11px] font-bold text-navy/60 bg-mist/40 border border-mist px-3 py-2 rounded-full">
             <Building2 className="w-3.5 h-3.5" />
             {companiesWithCoords.length} Lokasi · {siswaList.length} Siswa
           </span>
@@ -319,12 +324,14 @@ export const Maps: React.FC<MapsProps> = () => {
         <div className="lg:col-span-3 bg-white rounded-[24px] border border-mist/60 shadow-sm overflow-hidden flex flex-col min-h-[380px] lg:min-h-0">
           <div className="flex items-center justify-between px-4 md:px-5 pt-4 pb-3 shrink-0">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-steel/15 flex items-center justify-center">
-                <MapPin className="w-3.5 h-3.5 text-steel" />
+              {/* ✅ chip navy solid + icon putih */}
+              <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center">
+                <MapPin className="w-3.5 h-3.5 text-white" />
               </div>
               <p className="text-[13px] font-bold uppercase tracking-widest text-navy/70">Peta Sebaran</p>
             </div>
-            <span className="text-[11px] font-bold bg-shell text-navy/60 border border-mist px-3 py-1.5 rounded-full flex items-center gap-1.5">
+            {/* ✅ badge Peta Jalan: background seperti search bar Logbook */}
+            <span className="text-[11px] font-bold bg-mist/40 text-navy/60 border border-mist px-3 py-1.5 rounded-full flex items-center gap-1.5">
               <MapIcon className="w-3 h-3" /> Peta Jalan
             </span>
           </div>
@@ -417,14 +424,14 @@ export const Maps: React.FC<MapsProps> = () => {
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-[10px] bg-white/15 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
                       <Building2 className="w-4 h-4 text-white" />
                     </div>
                     <p className="text-[11px] font-bold uppercase tracking-widest text-white/60">Lokasi Aktif</p>
                   </div>
                   {distance != null && (
                     <span className={`text-[11px] font-bold px-3 py-1.5 rounded-full tabular-nums ${
-                      isWithinRadius ? 'bg-steel text-white' : 'bg-navy text-white'
+                      isWithinRadius ? 'bg-steel text-white' : 'bg-white/10 text-white'
                     }`}>
                       {distance}m
                     </span>
@@ -441,7 +448,7 @@ export const Maps: React.FC<MapsProps> = () => {
                     isWithinRadius === true
                       ? 'bg-steel/20 border-steel/40'
                       : isWithinRadius === false
-                        ? 'bg-navy/10 border-navy/30'
+                        ? 'bg-white/10 border-white/15'
                         : 'bg-white/10 border-white/15'
                   }`}>
                     <div className="flex items-center gap-2 min-w-0">
@@ -476,12 +483,15 @@ export const Maps: React.FC<MapsProps> = () => {
             </div>
           )}
 
-          {/* ── Card putih: Stats + CTA ── */}
+          {/* ── Card putih: Stats — LEBIH TINGGI (flex-1 menutup space kosong) ── */}
           {selected && (
-            <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 shrink-0">
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                <div className="bg-shell border border-mist rounded-[24px] px-3 py-2.5 flex items-center gap-2.5">
-                  <Tag className="w-4 h-4 text-navy/50 shrink-0" />
+            <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 flex-1 flex flex-col min-h-[220px]">
+              <div className="grid grid-cols-2 grid-rows-2 gap-2 flex-1">
+                {/* ✅ background PUTIH + icon chip navy solid */}
+                <div className="bg-white border border-mist/60 rounded-[24px] px-3 py-3 flex items-center gap-3 shadow-sm min-h-[96px]">
+                  <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center shrink-0">
+                    <Tag className="w-4 h-4 text-white" />
+                  </div>
                   <div className="min-w-0">
                     <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide leading-none">Kategori</p>
                     <p className="text-[13px] font-bold text-navy truncate mt-1">
@@ -489,15 +499,19 @@ export const Maps: React.FC<MapsProps> = () => {
                     </p>
                   </div>
                 </div>
-                <div className="bg-shell border border-mist rounded-[24px] px-3 py-2.5 flex items-center gap-2.5">
-                  <Users className="w-4 h-4 text-navy/50 shrink-0" />
+                <div className="bg-white border border-mist/60 rounded-[24px] px-3 py-3 flex items-center gap-3 shadow-sm min-h-[96px]">
+                  <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center shrink-0">
+                    <Users className="w-4 h-4 text-white" />
+                  </div>
                   <div className="min-w-0">
                     <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide leading-none">Siswa PKL</p>
                     <p className="text-[13px] font-bold text-navy mt-1">{internsCount} orang</p>
                   </div>
                 </div>
-                <div className="bg-shell border border-mist rounded-[24px] px-3 py-2.5 flex items-center gap-2.5">
-                  <Clock className="w-4 h-4 text-navy/50 shrink-0" />
+                <div className="bg-white border border-mist/60 rounded-[24px] px-3 py-3 flex items-center gap-3 shadow-sm min-h-[96px]">
+                  <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center shrink-0">
+                    <Clock className="w-4 h-4 text-white" />
+                  </div>
                   <div className="min-w-0">
                     <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide leading-none">Radius</p>
                     <p className="text-[13px] font-bold text-navy mt-1 tabular-nums">
@@ -505,35 +519,38 @@ export const Maps: React.FC<MapsProps> = () => {
                     </p>
                   </div>
                 </div>
-                <div className="bg-shell border border-mist rounded-[24px] px-3 py-2.5 flex items-center gap-2.5">
-                  <Navigation className="w-4 h-4 text-navy/50 shrink-0" />
+                <div className="bg-white border border-mist/60 rounded-[24px] px-3 py-3 flex items-center gap-3 shadow-sm min-h-[96px]">
+                  <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center shrink-0">
+                    <Navigation className="w-4 h-4 text-white" />
+                  </div>
                   <div className="min-w-0">
                     <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide leading-none">Status</p>
-                    <p className="text-[13px] font-bold text-steel mt-1">Aktif</p>
+                    {/* ✅ "Aktif" jadi navy (hitam) seperti card lain */}
+                    <p className="text-[13px] font-bold text-navy mt-1">Aktif</p>
                   </div>
                 </div>
               </div>
-
-
             </div>
           )}
 
-          {/* ── Card putih: PEMBIMBING + List Perusahaan ── */}
-          <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 flex-1 flex flex-col min-h-[200px]">
+          {/* ── Card putih: PEMBIMBING (warna konsisten, shrink-0) ── */}
+          <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 shrink-0 flex flex-col">
             {selected ? (
               <>
                 <div className="flex items-center justify-between mb-3 shrink-0">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-mist flex items-center justify-center">
-                      <Users className="w-3.5 h-3.5 text-navy" />
+                    {/* ✅ chip navy solid + icon putih */}
+                    <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center">
+                      <Users className="w-3.5 h-3.5 text-white" />
                     </div>
                     <p className="text-[13px] font-bold text-navy">Pembimbing</p>
                   </div>
                   <span className="text-[11px] font-bold text-navy/40 tabular-nums">2 orang</span>
                 </div>
 
-                <div className="flex flex-col gap-2.5 mb-3 shrink-0">
-                  <div className="p-3.5 rounded-[24px] border border-mist/60 bg-shell/60">
+                <div className="flex flex-col gap-2.5 shrink-0">
+                  {/* ✅ kedua item: background mist/30 + border mist/60 (konsisten) */}
+                  <div className="p-3.5 rounded-[24px] border border-mist/60 bg-mist/30">
                     <div className="flex items-center gap-3">
                       <div className="w-11 h-11 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md shadow-navy/20">
                         {getInitials(teacherName)}
@@ -550,7 +567,7 @@ export const Maps: React.FC<MapsProps> = () => {
                     </div>
                   </div>
 
-                  <div className="p-3.5 rounded-[24px] border border-steel/30 bg-steel/5">
+                  <div className="p-3.5 rounded-[24px] border border-mist/60 bg-mist/30">
                     <div className="flex items-center gap-3">
                       <div className="w-11 h-11 rounded-[10px] bg-steel text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md shadow-steel/25">
                         {getInitials(mentorName)}
@@ -567,8 +584,6 @@ export const Maps: React.FC<MapsProps> = () => {
                     </div>
                   </div>
                 </div>
-
-
               </>
             ) : (
               <div className="flex-1 flex items-center justify-center text-center py-8">

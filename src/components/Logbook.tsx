@@ -17,26 +17,27 @@ interface LogbookProps {
 
 type FilterType = 'all' | 'approved' | 'pending' | 'revision';
 
+/* ✅ Badge status SOLID — tidak ada tint transparan */
 const statusConfig = {
   approved: {
     label: 'Disetujui',
     icon: CheckCircle2,
-    bg: 'bg-steel/10',
-    text: 'text-steel',
+    bg: 'bg-steel',
+    text: 'text-white shadow-sm shadow-steel/30',
     dot: 'bg-steel',
   },
   pending: {
     label: 'Menunggu',
     icon: Clock,
-    bg: 'bg-steel/10',
-    text: 'text-steel',
-    dot: 'bg-steel',
+    bg: 'bg-white border border-mist/60 shadow-sm',
+    text: 'text-navy/70',
+    dot: 'bg-navy',
   },
   revision: {
     label: 'Revisi',
     icon: AlertCircle,
-    bg: 'bg-navy/10',
-    text: 'text-navy',
+    bg: 'bg-navy',
+    text: 'text-white',
     dot: 'bg-navy',
   },
 };
@@ -169,13 +170,13 @@ export const Logbook: React.FC<LogbookProps> = ({
           </button>
         </div>
 
-        {/* Stats — background PUTIH seragam */}
+        {/* Stats — icon chip navy solid + icon putih */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
           {/* Total Jurnal */}
           <div className="bg-white border border-mist/60 rounded-2xl p-4 shadow-sm flex flex-col justify-between min-h-[110px]">
             <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-xl bg-[#F1F4F8] flex items-center justify-center">
-                <BookOpen className="w-4 h-4 text-navy/60" />
+              <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
+                <BookOpen className="w-4 h-4 text-white" />
               </div>
               <span className="text-2xl font-bold text-navy tabular-nums leading-none">{logs.length}</span>
             </div>
@@ -185,8 +186,8 @@ export const Logbook: React.FC<LogbookProps> = ({
           {/* Total Jam */}
           <div className="bg-white border border-mist/60 rounded-2xl p-4 shadow-sm flex flex-col justify-between min-h-[110px]">
             <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-xl bg-[#F1F4F8] flex items-center justify-center">
-                <Clock className="w-4 h-4 text-navy/60" />
+              <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
+                <Clock className="w-4 h-4 text-white" />
               </div>
               <span className="text-2xl font-bold text-navy tabular-nums leading-none">
                 {totalHours}
@@ -199,8 +200,8 @@ export const Logbook: React.FC<LogbookProps> = ({
           {/* Disetujui */}
           <div className="bg-white border border-mist/60 rounded-2xl p-4 shadow-sm flex flex-col justify-between min-h-[110px]">
             <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-xl bg-[#F1F4F8] flex items-center justify-center">
-                <CheckCircle2 className="w-4 h-4 text-navy/60" />
+              <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
+                <CheckCircle2 className="w-4 h-4 text-white" />
               </div>
               <span className="text-2xl font-bold text-navy tabular-nums leading-none">{approved}</span>
             </div>
@@ -210,8 +211,8 @@ export const Logbook: React.FC<LogbookProps> = ({
           {/* Pending */}
           <div className="bg-white border border-mist/60 rounded-2xl p-4 shadow-sm flex flex-col justify-between min-h-[110px]">
             <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-xl bg-[#F1F4F8] flex items-center justify-center">
-                <AlertCircle className="w-4 h-4 text-navy/60" />
+              <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
+                <AlertCircle className="w-4 h-4 text-white" />
               </div>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-2xl font-bold text-navy tabular-nums leading-none">{pending}</span>
@@ -247,6 +248,7 @@ export const Logbook: React.FC<LogbookProps> = ({
             )}
           </div>
 
+          {/* ✅ Filter aktif = pill steel solid + teks putih (style switch) */}
           <div className="bg-mist/40 p-1 rounded-[24px] flex gap-1 shrink-0 overflow-x-auto">
             {([
               { key: 'all', label: 'Semua', count: logs.length },
@@ -257,14 +259,14 @@ export const Logbook: React.FC<LogbookProps> = ({
               <button
                 key={f.key}
                 onClick={() => setFilter(f.key)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
                   filter === f.key 
-                    ? 'bg-white text-navy shadow-sm' 
+                    ? 'bg-steel text-white shadow' 
                     : 'text-navy/60 hover:text-navy'
                 }`}
               >
                 {f.label}
-                <span className={`text-[10px] tabular-nums ${filter === f.key ? 'text-steel' : 'text-navy/40'}`}>
+                <span className={`text-[10px] tabular-nums ${filter === f.key ? 'text-white/80' : 'text-navy/40'}`}>
                   {f.count}
                 </span>
               </button>
@@ -284,8 +286,8 @@ export const Logbook: React.FC<LogbookProps> = ({
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
             {search || filter !== 'all' ? (
               <>
-                <div className="w-16 h-16 rounded-[10px] bg-mist/50 flex items-center justify-center mb-4">
-                  <Search className="w-7 h-7 text-navy/30" />
+                <div className="w-16 h-16 rounded-[10px] bg-navy flex items-center justify-center mb-4">
+                  <Search className="w-7 h-7 text-white" />
                 </div>
                 <p className="text-base font-bold text-navy mb-1">Tidak ada hasil</p>
                 <p className="text-sm text-navy/60 max-w-sm">
@@ -297,8 +299,8 @@ export const Logbook: React.FC<LogbookProps> = ({
               </>
             ) : (
               <>
-                <div className="w-16 h-16 rounded-[10px] bg-steel/10 flex items-center justify-center mb-4">
-                  <Sparkles className="w-7 h-7 text-steel" />
+                <div className="w-16 h-16 rounded-[10px] bg-navy flex items-center justify-center mb-4">
+                  <Sparkles className="w-7 h-7 text-white" />
                 </div>
                 <p className="text-base font-bold text-navy mb-1">Mulai menulis jurnal pertama!</p>
                 <p className="text-sm text-navy/60 max-w-sm mb-5">
@@ -306,20 +308,20 @@ export const Logbook: React.FC<LogbookProps> = ({
                 </p>
                 <div className="grid grid-cols-3 gap-3 max-w-md w-full mb-5">
                   <div className="bg-mist/30 rounded-[24px] p-3 flex flex-col items-center text-center">
-                    <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center mb-2">
-                      <FileEdit className="w-4 h-4 text-steel" />
+                    <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center mb-2">
+                      <FileEdit className="w-4 h-4 text-white" />
                     </div>
                     <p className="text-[11px] font-semibold text-navy/70 leading-tight">Tulis aktivitas harian</p>
                   </div>
                   <div className="bg-mist/30 rounded-[24px] p-3 flex flex-col items-center text-center">
-                    <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center mb-2">
-                      <Clock className="w-4 h-4 text-steel" />
+                    <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center mb-2">
+                      <Clock className="w-4 h-4 text-white" />
                     </div>
                     <p className="text-[11px] font-semibold text-navy/70 leading-tight">Pantau total jam kerja</p>
                   </div>
                   <div className="bg-mist/30 rounded-[24px] p-3 flex flex-col items-center text-center">
-                    <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center mb-2">
-                      <CheckCircle2 className="w-4 h-4 text-steel" />
+                    <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center mb-2">
+                      <CheckCircle2 className="w-4 h-4 text-white" />
                     </div>
                     <p className="text-[11px] font-semibold text-navy/70 leading-tight">Dapatkan feedback mentor</p>
                   </div>
@@ -340,6 +342,8 @@ export const Logbook: React.FC<LogbookProps> = ({
               const StatusIcon = config.icon;
               const isExpanded = expandedId === log.id;
               const isLong = log.description.length > 150;
+              const logUserName = (log as any).userName as string | undefined;
+              const logUserClass = (log as any).userClass as string | undefined;
 
               return (
                 <div
@@ -349,31 +353,33 @@ export const Logbook: React.FC<LogbookProps> = ({
                   {/* ── Row 1: identitas + status ── */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-11 h-11 rounded-2xl bg-navy flex items-center justify-center shrink-0">
-                        <BookOpen className="w-5 h-5 text-white" />
+                      {/* ✅ icon item: kotak rounded-lg navy solid + icon putih */}
+                      <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center shrink-0">
+                        <BookOpen className="w-4 h-4 text-white" />
                       </div>
                       <div className="min-w-0">
                         <h3 className="text-sm md:text-[15px] font-bold text-navy leading-snug line-clamp-1">
                           {log.title}
                         </h3>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          {userRole === 'teacher' && log.userName && (
-                            <span className="text-[11px] font-bold text-navy/70 bg-navy/10 px-2 py-0.5 rounded-md flex items-center gap-1">
-                              <User className="w-3 h-3" />{log.userName}
+                          {userRole === 'teacher' && logUserName && (
+                            <span className="text-[11px] font-bold text-white bg-navy px-2 py-0.5 rounded-md flex items-center gap-1">
+                              <User className="w-3 h-3" />{logUserName}
                             </span>
                           )}
-                          {userRole === 'teacher' && log.userClass && (
-                            <span className="text-[11px] font-bold text-steel bg-steel/10 px-2 py-0.5 rounded-md">
-                              {log.userClass}
+                          {userRole === 'teacher' && logUserClass && (
+                            <span className="text-[11px] font-bold text-steel bg-white border border-steel/30 px-2 py-0.5 rounded-md shadow-sm">
+                              {logUserClass}
                             </span>
                           )}
-                          {(userRole !== 'teacher' || !log.userName) && (
+                          {(userRole !== 'teacher' || !logUserName) && (
                             <span className="text-[11px] font-bold text-navy/50 uppercase tracking-wide whitespace-nowrap">
                               {log.date}
                             </span>
                           )}
                           <span className="w-1 h-1 rounded-full bg-navy/20 shrink-0" />
-                          <span className="text-[11px] font-bold text-steel bg-steel/10 px-2 py-0.5 rounded-md">
+                          {/* ✅ chip kategori: putih ber-border (bukan transparan) */}
+                          <span className="text-[11px] font-bold text-steel bg-white border border-steel/30 px-2 py-0.5 rounded-md shadow-sm">
                             {log.category}
                           </span>
                         </div>
@@ -383,6 +389,7 @@ export const Logbook: React.FC<LogbookProps> = ({
                       <span className="text-[11px] font-bold bg-mist/60 text-navy/70 px-2.5 py-1 rounded-full flex items-center gap-1 tabular-nums">
                         <Clock className="w-3 h-3" />{log.hours}j
                       </span>
+                      {/* ✅ badge status SOLID */}
                       <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 ${config.bg} ${config.text}`}>
                         <StatusIcon className="w-3 h-3" />
                         {config.label}
@@ -390,8 +397,8 @@ export const Logbook: React.FC<LogbookProps> = ({
                     </div>
                   </div>
 
-                  {/* ── Row 2: deskripsi (sejajar dengan judul) ── */}
-                  <div className="mt-3 md:pl-14">
+                  {/* ── Row 2: deskripsi (sejajar judul: w-8 + gap-3 = pl-11) ── */}
+                  <div className="mt-3 md:pl-11">
                     <p className={`text-[13px] font-medium text-navy/70 leading-relaxed ${
                       isExpanded ? '' : 'line-clamp-2'
                     }`}>
