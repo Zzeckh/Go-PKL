@@ -235,7 +235,7 @@ export const MentorLogbook: React.FC = () => {
    KEHADIRAN SISWA (MENTOR)
    ══════════════════════════════════════════════════════ */
 export const MentorAttendance: React.FC = () => {
-  const { siswaList, attendances } = useApp();
+  const { siswaList, attendances, perizinanList } = useApp();
   const [search, setSearch] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
 
@@ -308,7 +308,7 @@ export const MentorAttendance: React.FC = () => {
             <div className="space-y-2">
               {filtered.map(s => {
                 const hadirCount = attendances.filter(a => a.userId === s.id && a.status === 'Hadir').length;
-                const izinCount = attendances.filter(a => a.userId === s.id && (a.status === 'Izin' || a.status === 'Sakit')).length;
+                const izinCount = perizinanList.filter(p => p.userId === s.id && p.status === 'approved').length;
                 return (
                   <button
                     key={s.id}
@@ -344,13 +344,13 @@ export const MentorAttendance: React.FC = () => {
       </div>
 
       {selectedStudent && (
-        <StudentDetailModal student={selectedStudent} attendances={attendances} onClose={() => setSelectedStudent(null)} />
+        <StudentDetailModal student={selectedStudent} attendances={attendances} perizinanList={perizinanList} onClose={() => setSelectedStudent(null)} />
       )}
     </div>
   );
 };
 
-const StudentDetailModal: React.FC<{ student: any; attendances: any[]; onClose: () => void }> = ({ student, attendances, onClose }) => {
+const StudentDetailModal: React.FC<{ student: any; attendances: any[]; perizinanList: any[]; onClose: () => void }> = ({ student, attendances, perizinanList, onClose }) => {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy/50 backdrop-blur-md">
       <div className="bg-white rounded-[24px] max-w-md w-full shadow-2xl border border-mist/60 overflow-hidden">
@@ -388,7 +388,7 @@ const StudentDetailModal: React.FC<{ student: any; attendances: any[]; onClose: 
               <AlertCircle className="w-4 h-4 text-[#6B7280] shrink-0" />
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase text-navy/50">Izin / Sakit</p>
-                <p className="text-sm font-bold text-[#6B7280]">{attendances.filter(a => a.userId === student.id && (a.status === 'Izin' || a.status === 'Sakit')).length}</p>
+                <p className="text-sm font-bold text-[#6B7280]">{perizinanList.filter(p => p.userId === student.id && p.status === 'approved').length}</p>
               </div>
             </div>
           </div>

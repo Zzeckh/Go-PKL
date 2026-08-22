@@ -38,6 +38,7 @@ export interface MentorItem {
 export interface PerizinanItem {
   id: number;
   name: string;
+  userId?: number;
   company: string;
   date: string;
   type: 'Sakit' | 'Izin';
@@ -337,6 +338,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const mapped = response.map((p: any): PerizinanItem => ({
         id: p.id,
         name: p.user?.name || 'Unknown',
+        userId: p.user?.id || p.userId,
         company: '-',
         date: formatDate(p.date),
         type: p.type === 'sakit' ? 'Sakit' : 'Izin',

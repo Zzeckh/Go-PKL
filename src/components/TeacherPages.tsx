@@ -13,7 +13,7 @@ const getInitials = (name: string) =>
    TEACHER & MENTOR MONITORING
    ══════════════════════════════════════════════════════ */
 export const TeacherMonitoring: React.FC = () => {
-  const { siswaList, logEntries, attendances } = useApp();
+  const { siswaList, logEntries, attendances, perizinanList } = useApp();
   const [filterCompany, setFilterCompany] = useState('all');
   const [search, setSearch] = useState('');
   const [selectedSiswa, setSelectedSiswa] = useState<any>(null);
@@ -125,7 +125,7 @@ export const TeacherMonitoring: React.FC = () => {
                     .slice(0, 1);
                   const latestLog = siswaLogs[0];
                   const hadirCount = attendances.filter(a => a.userId === siswa.id && a.status === 'Hadir').length;
-                  const izinCount = attendances.filter(a => a.userId === siswa.id && (a.status === 'Izin' || a.status === 'Sakit')).length;
+                  const izinCount = perizinanList.filter(p => p.userId === siswa.id && p.status === 'approved').length;
                   return (
                     <tr key={siswa.id} onClick={() => setSelectedSiswa(siswa)} className="border-b border-mist/40 transition-colors hover:bg-shell/60 cursor-pointer group/tr">
                       <td className="p-4">
@@ -183,6 +183,7 @@ export const TeacherMonitoring: React.FC = () => {
           siswa={selectedSiswa}
           logs={logEntries}
           attendances={attendances}
+          perizinanList={perizinanList}
           onClose={() => setSelectedSiswa(null)}
         />
       )}
@@ -194,8 +195,9 @@ const MonitoringDetailModal: React.FC<{
   siswa: any;
   logs: any[];
   attendances: any[];
+  perizinanList: any[];
   onClose: () => void;
-}> = ({ siswa, logs, attendances, onClose }) => {
+}> = ({ siswa, logs, attendances, perizinanList, onClose }) => {
   const siswaLogs = logs.filter(l => l.userId === siswa.id);
 
   const statusLabel = (s: string) =>
@@ -236,7 +238,7 @@ const MonitoringDetailModal: React.FC<{
               <Activity className="w-4 h-4 text-[#6B7280] shrink-0" />
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase text-navy/50">Izin / Sakit</p>
-                <p className="text-sm font-bold text-[#6B7280]">{attendances.filter(a => a.userId === siswa.id && (a.status === 'Izin' || a.status === 'Sakit')).length}</p>
+                <p className="text-sm font-bold text-[#6B7280]">{perizinanList.filter(p => p.userId === siswa.id && p.status === 'approved').length}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 bg-shell border border-mist rounded-[24px] p-3">

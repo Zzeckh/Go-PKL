@@ -35,7 +35,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onNavigate
 }) => {
   const totalHadir = attendances.filter(a => a.status === 'Hadir').length;
-  const totalIzin = attendances.filter(a => a.status === 'Izin').length;
+  const { perizinanList } = useApp();
+  const totalIzin = perizinanList.filter(p => p.status === 'approved').length;
   const hasIzin = totalIzin > 0;
   const totalDays = 90;
   const pct = Math.min(100, Math.round((totalHadir / totalDays) * 100));
@@ -85,8 +86,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   /* ── Notes ── */
   const [notes, setNotes] = useState('- ID Card Digital\n- Laptop Pribadi\n- Jurnal Cetak\n- Alat Tulis\n\nPastikan selalu kemeja rapi!');
   const [editNotes, setEditNotes] = useState(false);
-
-  const { perizinanList } = useApp();
 
   const notifications = [
     ...recentLogs.filter(log => log.status === 'approved' || log.status === 'revision').map((log) => ({
@@ -221,11 +220,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex items-baseline gap-1 mt-2">
             <span className="text-3xl font-light text-navy tabular-nums tracking-tight">{totalHadir}</span>
             <span className="text-sm font-semibold text-navy/50">/ {totalDays}</span>
-            <span className={`ml-auto text-sm font-bold ${hasIzin ? 'text-navy/40' : 'text-steel'}`}>{pct}%</span>
+            <span className="ml-auto text-sm font-bold text-steel">{pct}%</span>
           </div>
           <div className="w-full h-1.5 bg-mist/60 rounded-full overflow-hidden mt-2">
             <div 
-              className={`h-full rounded-full transition-all duration-1000 ease-out ${hasIzin ? 'bg-[#9CA3AF]' : 'bg-steel'}`} 
+              className="h-full bg-steel rounded-full transition-all duration-1000 ease-out" 
               style={{ width: `${pct}%` }} 
             />
           </div>
