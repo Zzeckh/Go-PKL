@@ -121,11 +121,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const checkedInToday = attendances.some(a => a.date === today);
 
   const todayIdx = (new Date().getDay() + 6) % 7;
-  const weekData = Array.from({ length: 7 }, (_, i) => {
+  const weekDates = Array.from({ length: 7 }, (_, i) => {
     const target = new Date();
     target.setDate(target.getDate() - (todayIdx - i));
-    const key = target.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    return target;
+  });
+  const weekData = weekDates.map((d) => {
+    const key = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     return attendances.some(a => a.date === key && a.status === 'Hadir') ? 1 : 0;
+  });
+  const weekLabels = weekDates.map(d => {
+    const day = d.getDate();
+    const month = d.getMonth() + 1;
+    return `${day}/${month}`;
   });
 
   const statusStyle = (s: string) =>
@@ -246,8 +254,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
               ))}
             </div>
             <div className="flex gap-1 mt-1">
-              {['S', 'S', 'R', 'K', 'J', 'S', 'M'].map((d, i) => (
-                <span key={i} className={`flex-1 text-center text-[10px] font-bold ${i === todayIdx ? 'text-steel' : 'text-navy/30'}`}>
+              {weekLabels.map((d, i) => (
+                <span key={i} className={`flex-1 text-center text-[8px] md:text-[9px] font-bold ${i === todayIdx ? 'text-steel' : 'text-navy/30'}`}>
                   {d}
                 </span>
               ))}
