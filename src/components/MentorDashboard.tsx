@@ -47,7 +47,7 @@ export const MentorDashboard: React.FC<MentorDashboardProps> = ({ userName, comp
   return (
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
 
-      {/* ── HEADER ── */}
+      {/* ── HEADER ─ */}
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
           <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[10px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
@@ -63,18 +63,20 @@ export const MentorDashboard: React.FC<MentorDashboardProps> = ({ userName, comp
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="hidden md:flex items-center gap-1.5 text-[11px] font-bold text-navy/60 bg-shell border border-mist px-3 py-2 rounded-full">
+          {/* ✅ chip tanggal: bg mist/40 (style search bar Logbook) */}
+          <span className="hidden md:flex items-center gap-1.5 text-[11px] font-bold text-navy/60 bg-mist/40 border border-mist px-3 py-2 rounded-full">
             <Clock className="w-3.5 h-3.5" />
             {time.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
           </span>
-          <span className="hidden sm:flex items-center gap-1.5 text-[11px] font-bold text-steel bg-steel/10 border border-steel/20 px-3 py-2 rounded-full">
+          {/* ✅ chip TA: card putih ber-border steel */}
+          <span className="hidden sm:flex items-center gap-1.5 text-[11px] font-bold text-steel bg-white border border-steel/30 shadow-sm px-3 py-2 rounded-full">
             <Calendar className="w-3.5 h-3.5" />
             TA {activeYear}
           </span>
         </div>
       </div>
 
-      {/* ── STATS CARDS ── */}
+      {/* ── STATS CARDS — icon chip navy solid + icon putih ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
         {stats.map((s) => (
           <button
@@ -83,8 +85,8 @@ export const MentorDashboard: React.FC<MentorDashboardProps> = ({ userName, comp
             className="bg-white border border-mist/60 rounded-[24px] p-5 text-left transition-all hover:border-steel/40 hover:-translate-y-0.5 hover:shadow-md group flex flex-col justify-between min-h-[140px]"
           >
             <div className="flex items-center justify-between">
-              <div className="w-10 h-10 rounded-[10px] bg-shell flex items-center justify-center group-hover:bg-steel/10 transition-colors">
-                <s.icon className="w-5 h-5 text-navy/60 group-hover:text-steel transition-colors" />
+              <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
+                <s.icon className="w-4 h-4 text-white" />
               </div>
               <ChevronRight className="w-4 h-4 text-navy/20 group-hover:text-steel group-hover:translate-x-0.5 transition-all" />
             </div>
@@ -103,8 +105,9 @@ export const MentorDashboard: React.FC<MentorDashboardProps> = ({ userName, comp
         <div className="lg:col-span-3 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col overflow-hidden min-h-[380px] lg:min-h-0">
           <div className="flex items-center justify-between px-4 md:px-5 pt-4 pb-3 shrink-0">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-steel/15 flex items-center justify-center">
-                <BookOpen className="w-3.5 h-3.5 text-steel" />
+              {/* ✅ chip navy solid + icon putih */}
+              <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center">
+                <BookOpen className="w-3.5 h-3.5 text-white" />
               </div>
               <p className="text-[13px] font-bold uppercase tracking-widest text-navy/70">
                 Review Logbook ({pendingEntries.length})
@@ -121,8 +124,9 @@ export const MentorDashboard: React.FC<MentorDashboardProps> = ({ userName, comp
           <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 min-h-0">
             {pendingEntries.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-14 h-14 rounded-[10px] bg-steel/10 flex items-center justify-center mb-3">
-                  <CheckCircle2 className="w-6 h-6 text-steel" />
+                {/* ✅ empty state: navy solid + icon putih */}
+                <div className="w-14 h-14 rounded-[10px] bg-navy flex items-center justify-center mb-3">
+                  <CheckCircle2 className="w-6 h-6 text-white" />
                 </div>
                 <p className="text-sm font-bold text-navy mb-1">Semua logbook telah ditinjau</p>
                 <p className="text-xs text-navy/50 max-w-xs">
@@ -130,36 +134,47 @@ export const MentorDashboard: React.FC<MentorDashboardProps> = ({ userName, comp
                 </p>
               </div>
             ) : (
-              pendingEntries.map(log => (
-                <div key={log.id} className="p-3 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 transition-all shrink-0">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
-                      {getInitials(log.title.split(' ')[0] || '?')}
+              pendingEntries.map(log => {
+                const logUserName = (log as any).userName as string | undefined;
+                return (
+                  <div key={log.id} className="p-3 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 transition-all shrink-0">
+                    <div className="flex items-start gap-3">
+                      {/* ✅ avatar = inisial nama siswa (bukan judul jurnal) */}
+                      <div className="w-10 h-10 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md shadow-navy/20">
+                        {getInitials(logUserName || log.title)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-bold text-navy truncate">{log.title}</p>
+                          {logUserName && (
+                            <span className="text-[10px] font-bold text-white bg-navy px-2 py-0.5 rounded-md flex items-center gap-1 shrink-0">
+                              <Users className="w-3 h-3" />{logUserName}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
+                          {log.date} · {log.hours} jam
+                        </p>
+                        <p className="text-xs font-medium text-navy/70 mt-1.5 leading-relaxed line-clamp-2">{log.description}</p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-navy truncate">{log.title}</p>
-                      <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
-                        {log.date} · {log.hours} jam
-                      </p>
-                      <p className="text-xs font-medium text-navy/70 mt-1.5 leading-relaxed line-clamp-2">{log.description}</p>
+                    <div className="flex items-center justify-end gap-2 mt-3 border-t border-mist/60 pt-2.5">
+                      <button
+                        onClick={() => { setRevisionLogId(log.id); setRevisionFeedback(''); }}
+                        className="text-[11px] font-bold bg-white border border-mist text-navy/70 px-3 py-1.5 rounded-lg hover:border-steel/40 hover:text-navy transition-colors flex items-center gap-1.5"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" /> Revisi
+                      </button>
+                      <button
+                        onClick={() => updateLogStatus(log.id, 'approved')}
+                        className="text-[11px] font-bold bg-steel text-white px-3 py-1.5 rounded-lg hover:bg-steel/90 transition-colors flex items-center gap-1.5 shadow-sm shadow-steel/25"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Setujui
+                      </button>
                     </div>
                   </div>
-                  <div className="flex items-center justify-end gap-2 mt-3 border-t border-mist/60 pt-2.5">
-                    <button
-                      onClick={() => { setRevisionLogId(log.id); setRevisionFeedback(''); }}
-                      className="text-[11px] font-bold bg-white border border-mist text-navy/70 px-3 py-1.5 rounded-lg hover:border-steel/40 hover:text-navy transition-colors flex items-center gap-1.5"
-                    >
-                      <MessageSquare className="w-3.5 h-3.5" /> Revisi
-                    </button>
-                    <button
-                      onClick={() => updateLogStatus(log.id, 'approved')}
-                      className="text-[11px] font-bold bg-steel text-white px-3 py-1.5 rounded-lg hover:bg-steel/90 transition-colors flex items-center gap-1.5 shadow-sm shadow-steel/25"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Setujui
-                    </button>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -170,7 +185,7 @@ export const MentorDashboard: React.FC<MentorDashboardProps> = ({ userName, comp
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-[10px] bg-white/15 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
                     <Building className="w-4 h-4 text-white" />
                   </div>
                   <p className="text-[11px] font-bold uppercase tracking-widest text-white/60">
@@ -201,8 +216,9 @@ export const MentorDashboard: React.FC<MentorDashboardProps> = ({ userName, comp
           {/* ── Card Catatan Mentor ── */}
           <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm flex-1 flex flex-col min-h-[220px]">
             <div className="flex items-center gap-2 p-5 pb-3 shrink-0">
-              <div className="w-8 h-8 rounded-lg bg-mist/70 flex items-center justify-center">
-                <BookOpen className="w-4 h-4 text-navy" />
+              {/* ✅ chip navy solid + icon putih */}
+              <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
+                <BookOpen className="w-4 h-4 text-white" />
               </div>
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-widest text-navy/60 leading-none">Catatan</p>
@@ -210,7 +226,7 @@ export const MentorDashboard: React.FC<MentorDashboardProps> = ({ userName, comp
               </div>
             </div>
             <div className="flex-1 px-5 pb-5 min-h-0">
-              <div className="w-full h-full overflow-y-auto custom-scrollbar text-[13px] font-medium text-navy/70 whitespace-pre-line leading-relaxed bg-shell/60 border border-mist/60 rounded-[24px] p-3">
+              <div className="w-full h-full overflow-y-auto custom-scrollbar text-[13px] font-medium text-navy/70 whitespace-pre-line leading-relaxed bg-mist/30 border border-mist/60 rounded-[24px] p-3">
                 - Briefing siswa magang setiap Senin pagi
                 - Verifikasi logbook harian siswa
                 - Koordinasi dengan guru pembimbing sekolah
