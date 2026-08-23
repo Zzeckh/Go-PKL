@@ -74,6 +74,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
   return (
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
 
+      {/* ── HEADER ── */}
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
           <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[10px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
@@ -89,11 +90,13 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="hidden md:flex items-center gap-1.5 text-[11px] font-bold text-navy/60 bg-shell border border-mist px-3 py-2 rounded-full">
+          {/* ✅ chip tanggal: bg mist/40 */}
+          <span className="hidden md:flex items-center gap-1.5 text-[11px] font-bold text-navy/60 bg-mist/40 border border-mist px-3 py-2 rounded-full">
             <Clock className="w-3.5 h-3.5" />
             {time.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
           </span>
-          <span className="flex items-center gap-1.5 text-[11px] font-bold text-steel bg-steel/10 border border-steel/20 px-3 py-2 rounded-full">
+          {/* ✅ chip System Online: card putih ber-border steel */}
+          <span className="flex items-center gap-1.5 text-[11px] font-bold text-steel bg-white border border-steel/30 shadow-sm px-3 py-2 rounded-full">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-steel opacity-40" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-steel" />
@@ -129,6 +132,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
         </div>
       ) : (
         <>
+          {/* ── STATS CARDS — icon chip navy solid ── */}
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 shrink-0">
             {stats.map((s) => (
               <button
@@ -137,8 +141,8 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                 className="bg-white border border-mist/60 rounded-[24px] p-4 md:p-5 min-h-[130px] text-left transition-all hover:border-steel/40 hover:-translate-y-0.5 hover:shadow-md group flex flex-col justify-between"
               >
                 <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-[10px] bg-shell flex items-center justify-center group-hover:bg-steel/10 transition-colors">
-                    <s.icon className="w-5 h-5 text-navy/60 group-hover:text-steel transition-colors" />
+                  <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
+                    <s.icon className="w-4 h-4 text-white" />
                   </div>
                   <ChevronRight className="w-4 h-4 text-navy/20 group-hover:text-steel group-hover:translate-x-0.5 transition-all" />
                 </div>
@@ -156,8 +160,9 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
             <div className="lg:col-span-3 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col overflow-hidden min-h-[380px] lg:min-h-0">
               <div className="flex items-center justify-between px-4 md:px-5 pt-4 pb-3 shrink-0">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-steel/15 flex items-center justify-center">
-                    <BookMarked className="w-3.5 h-3.5 text-steel" />
+                  {/* ✅ chip navy solid + icon putih */}
+                  <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center">
+                    <BookMarked className="w-3.5 h-3.5 text-white" />
                   </div>
                   <p className="text-[13px] font-bold uppercase tracking-widest text-navy/70">
                     Kelas Terdaftar
@@ -174,8 +179,9 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
               <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 min-h-0">
                 {superClasses.length === 0 ? (
                   <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
-                    <div className="w-14 h-14 rounded-[10px] bg-shell flex items-center justify-center mb-3">
-                      <BookMarked className="w-6 h-6 text-navy/30" />
+                    {/* ✅ empty state: navy solid + icon putih */}
+                    <div className="w-14 h-14 rounded-[10px] bg-navy flex items-center justify-center mb-3">
+                      <BookMarked className="w-6 h-6 text-white" />
                     </div>
                     <p className="text-sm font-bold text-navy mb-1">Belum ada kelas</p>
                     <p className="text-xs text-navy/50 max-w-xs">
@@ -187,10 +193,11 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                     <button
                       key={c.id}
                       onClick={() => onNavigate('super-classes')}
-                      className="p-3 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 hover:bg-shell/50 transition-all shrink-0 text-left group"
+                      className="p-3 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 hover:bg-mist/30 transition-all shrink-0 text-left group"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
+                        {/* ✅ avatar kelas: navy solid */}
+                        <div className="w-10 h-10 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md shadow-navy/20">
                           {getInitials(c.name)}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -200,7 +207,8 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                           </p>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <span className="text-[10px] font-bold bg-shell border border-mist text-navy/70 px-2 py-1 rounded-full tabular-nums">
+                          {/* ✅ badge jumlah siswa: solid steel */}
+                          <span className="text-[10px] font-bold bg-steel text-white shadow-sm shadow-steel/30 px-2.5 py-1 rounded-full tabular-nums">
                             {c.totalStudents} siswa
                           </span>
                           <ChevronRight className="w-4 h-4 text-navy/20 group-hover:text-steel group-hover:translate-x-0.5 transition-all" />
@@ -215,11 +223,12 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
             {/* ── RIGHT ── */}
             <div className="lg:col-span-2 flex flex-col gap-3 md:gap-4 min-h-0">
 
+              {/* Card Distribusi Pengguna navy */}
               <div className="bg-navy rounded-[24px] p-5 shrink-0 relative overflow-hidden shadow-lg shadow-navy/20">
                 <div className="relative z-10">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-[10px] bg-white/15 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
                         <Users className="w-4 h-4 text-white" />
                       </div>
                       <p className="text-[11px] font-bold uppercase tracking-widest text-white/60">
@@ -263,11 +272,14 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                 </div>
               </div>
 
+              {/* ── Quick stats — card putih + icon chip navy solid ── */}
               <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 shrink-0">
                 <div className="grid grid-cols-3 gap-2">
                   {quickStats.map((q) => (
-                    <div key={q.label} className="bg-shell border border-mist rounded-[24px] px-3 py-2.5 flex items-center gap-2.5">
-                      <q.icon className="w-4 h-4 text-navy/50 shrink-0" />
+                    <div key={q.label} className="bg-white border border-mist/60 shadow-sm rounded-2xl px-3 py-2.5 flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center shrink-0">
+                        <q.icon className="w-4 h-4 text-white" />
+                      </div>
                       <div className="min-w-0">
                         <p className="text-lg font-bold text-navy tabular-nums leading-none">{q.value}</p>
                         <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide mt-1 truncate">{q.label}</p>
@@ -277,16 +289,21 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                 </div>
               </div>
 
+              {/* ── Card Perlu Perhatian ── */}
               <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 flex-1 flex flex-col min-h-[180px]">
                 <div className="flex items-center justify-between mb-3 shrink-0">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-mist flex items-center justify-center">
-                      <AlertCircle className="w-3.5 h-3.5 text-navy" />
+                    {/* ✅ chip navy solid + icon putih */}
+                    <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center">
+                      <AlertCircle className="w-3.5 h-3.5 text-white" />
                     </div>
                     <p className="text-[13px] font-bold text-navy">Perlu Perhatian</p>
                   </div>
+                  {/* ✅ badge item: solid steel / card putih */}
                   <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full tabular-nums ${
-                    attention.length > 0 ? 'bg-steel/10 text-steel' : 'bg-shell text-navy/40'
+                    attention.length > 0
+                      ? 'bg-steel text-white shadow-sm shadow-steel/30'
+                      : 'bg-white text-navy/70 border border-mist/60 shadow-sm'
                   }`}>
                     {attention.length} item
                   </span>
@@ -295,8 +312,9 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                 <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2 min-h-0 pr-1">
                   {attention.length === 0 ? (
                     <div className="flex-1 flex flex-col items-center justify-center py-6 text-center">
-                      <div className="w-12 h-12 rounded-[10px] bg-steel/10 flex items-center justify-center mb-3">
-                        <CheckCircle2 className="w-5 h-5 text-steel" />
+                      {/* ✅ empty state: navy solid + icon putih */}
+                      <div className="w-12 h-12 rounded-[10px] bg-navy flex items-center justify-center mb-3">
+                        <CheckCircle2 className="w-5 h-5 text-white" />
                       </div>
                       <p className="text-xs font-bold text-navy">Semua data lengkap</p>
                       <p className="text-[11px] text-navy/50 mt-0.5">Tidak ada item yang perlu ditindaklanjuti</p>
@@ -306,13 +324,12 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                       <button
                         key={a.key}
                         onClick={() => onNavigate(a.page)}
-                        className="p-2.5 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 transition-all shrink-0 text-left group"
+                        className="p-2.5 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 hover:bg-mist/30 transition-all shrink-0 text-left group"
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                            a.tint === 'amber' ? 'bg-steel/10 text-steel' : 'bg-shell text-navy/50'
-                          }`}>
-                            <a.icon className="w-4 h-4" />
+                          {/* ✅ icon chip navy solid */}
+                          <div className="w-9 h-9 rounded-lg bg-navy flex items-center justify-center shrink-0 shadow-md shadow-navy/20">
+                            <a.icon className="w-4 h-4 text-white" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-[13px] font-bold text-navy truncate">{a.title}</p>
