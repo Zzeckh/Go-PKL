@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Users, GraduationCap, ShieldCheck, Search, Trash2, ToggleLeft, ToggleRight,
-  Loader2
+  Loader2, X, Briefcase
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -27,7 +27,7 @@ export const SuperUsers: React.FC = () => {
     { key: 'all', label: 'Semua', icon: Users },
     { key: 'student', label: 'Siswa', icon: GraduationCap },
     { key: 'teacher', label: 'Guru', icon: Users },
-    { key: 'mentor', label: 'Mentor', icon: Users },
+    { key: 'mentor', label: 'Mentor', icon: Briefcase },
     { key: 'hubin', label: 'Hubin', icon: ShieldCheck },
   ];
 
@@ -48,7 +48,8 @@ export const SuperUsers: React.FC = () => {
       </div>
 
       <div className="shrink-0 space-y-3">
-        <div className="bg-shell p-1 rounded-[24px] flex gap-1 overflow-x-auto">
+        {/* ✅ Filter pills: track mist/40, aktif steel solid */}
+        <div className="bg-mist/40 p-1 rounded-[24px] flex gap-1 overflow-x-auto">
           {roles.map(r => {
             const Icon = r.icon;
             const active = roleFilter === r.key;
@@ -56,8 +57,8 @@ export const SuperUsers: React.FC = () => {
               <button
                 key={r.key}
                 onClick={() => setRoleFilter(r.key)}
-                className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                  active ? 'bg-white text-navy shadow-sm' : 'text-navy/60 hover:text-navy'
+                className={`px-3 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  active ? 'bg-steel text-white shadow' : 'text-navy/60 hover:text-navy'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" /> {r.label}
@@ -65,6 +66,7 @@ export const SuperUsers: React.FC = () => {
             );
           })}
         </div>
+        {/* ✅ Search bar: mist/40 + clear button */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-navy/40" />
           <input
@@ -72,8 +74,16 @@ export const SuperUsers: React.FC = () => {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Cari nama atau email..."
-            className="w-full bg-white border border-mist/60 rounded-[24px] pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel transition-all"
+            className="w-full bg-mist/40 border border-mist rounded-[24px] pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
           />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-navy/10 hover:bg-navy/20 flex items-center justify-center transition-colors"
+            >
+              <X className="w-3 h-3 text-navy/60" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -89,15 +99,21 @@ export const SuperUsers: React.FC = () => {
           ) : (
             <div className="space-y-2">
               {superUsers.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-sm text-navy/50">Tidak ada user ditemukan.</p>
+                /* ✅ Empty state: navy solid + icon putih */
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <div className="w-14 h-14 rounded-[10px] bg-navy flex items-center justify-center mb-3">
+                    <Users className="w-6 h-6 text-white" />
+                  </div>
+                  <p className="text-sm font-bold text-navy mb-1">User tidak ditemukan</p>
+                  <p className="text-xs text-navy/50 max-w-xs">
+                    {search ? `Tidak ada user yang cocok dengan "${search}"` : 'Belum ada user pada filter ini.'}
+                  </p>
                 </div>
               ) : (
                 superUsers.map(u => (
-                  <div key={u.id} className="p-3 rounded-[24px] border border-mist/60 bg-white flex items-center gap-3">
-                    <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
-                      u.role === 'mentor' || u.role === 'hubin' ? 'bg-steel text-white' : 'bg-navy text-white'
-                    }`}>
+                  <div key={u.id} className="p-3 rounded-[24px] border border-mist/60 bg-white flex items-center gap-3 hover:border-steel/30 hover:shadow-sm transition-all">
+                    {/* ✅ Avatar kotak navy solid (semua role) */}
+                    <div className="w-11 h-11 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md shadow-navy/20">
                       {getInitials(u.name)}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -105,19 +121,22 @@ export const SuperUsers: React.FC = () => {
                       <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
                         {u.email} · {u.class || '-'}
                       </p>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          u.isActive ? 'bg-steel/15 text-steel' : 'bg-navy/10 text-navy'
+                      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                        {/* ✅ Badge status: solid */}
+                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
+                          u.isActive ? 'bg-steel text-white shadow-sm shadow-steel/30' : 'bg-navy text-white'
                         }`}>
                           {u.isActive ? 'Aktif' : 'Nonaktif'}
                         </span>
-                        <span className="text-[10px] font-bold bg-shell text-navy/60 px-2 py-0.5 rounded-full uppercase">
+                        {/* ✅ Badge role: card putih ber-border */}
+                        <span className="text-[10px] font-bold bg-white text-navy/70 border border-mist/60 shadow-sm px-2.5 py-1 rounded-full uppercase">
                           {u.role.replace('_', ' ')}
                         </span>
                       </div>
                     </div>
                     {u.role !== 'super_admin' && (
                       <div className="flex items-center gap-1.5 shrink-0">
+                        {/* ✅ Select role: card putih ber-border */}
                         <select
                           value={u.role}
                           onChange={(e) => {
@@ -127,27 +146,33 @@ export const SuperUsers: React.FC = () => {
                             }
                           }}
                           title="Ubah role"
-                          className="h-9 bg-shell border border-mist rounded-lg px-2 text-xs font-bold text-navy outline-none focus:border-steel cursor-pointer capitalize"
+                          className="h-9 bg-white border border-mist/60 shadow-sm rounded-lg px-2 text-xs font-bold text-navy outline-none focus:border-steel cursor-pointer capitalize"
                         >
                           <option value="student">Siswa</option>
                           <option value="teacher">Guru</option>
                           <option value="mentor">Mentor</option>
                           <option value="hubin">Hubin</option>
                         </select>
+                        {/* ✅ Button hapus: card putih + hover red */}
                         <button
                           onClick={() => {
                             if (confirm(`Hapus pengguna "${u.name}"? Tindakan ini tidak dapat dibatalkan.`)) {
                               deleteUser(u.id).catch((err: any) => alert(err?.data?.error || err?.message || 'Gagal menghapus user.'));
                             }
                           }}
-                          className="w-9 h-9 rounded-lg bg-navy/5 text-navy/60 hover:bg-navy/10 flex items-center justify-center transition-colors"
+                          className="w-9 h-9 rounded-lg bg-white border border-mist/60 text-navy/50 hover:bg-red-50 hover:border-red-200 hover:text-red-500 flex items-center justify-center transition-colors"
                           title="Hapus user"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
+                        {/* ✅ Button toggle: card putih ber-border */}
                         <button
                           onClick={() => toggleUser(u.id)}
-                          className="w-9 h-9 rounded-lg bg-shell hover:bg-mist flex items-center justify-center text-navy/70 transition-colors"
+                          className={`w-9 h-9 rounded-lg border flex items-center justify-center transition-colors ${
+                            u.isActive
+                              ? 'bg-white border-mist/60 text-steel hover:bg-mist/30'
+                              : 'bg-white border-mist/60 text-navy/50 hover:bg-mist/30'
+                          }`}
                           title={u.isActive ? 'Nonaktifkan' : 'Aktifkan'}
                         >
                           {u.isActive ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
