@@ -7,6 +7,7 @@ const getInitials = (name: string) =>
 
 /* ══════════════════════════════════════════════════════
    VERIFIKASI LOGBOOK SISWA (MENTOR)
+   ✅ Filter steel solid, badge solid, chip navy
    ══════════════════════════════════════════════════════ */
 export const MentorLogbook: React.FC = () => {
   const { logEntries, updateLogStatus } = useApp();
@@ -31,10 +32,11 @@ export const MentorLogbook: React.FC = () => {
   const statusLabel = (s: string) =>
     s === 'approved' ? 'Disetujui' : s === 'revision' ? 'Revisi' : 'Menunggu';
 
+  /* ✅ Badge status SOLID — tanpa tint transparan */
   const statusPill = (s: string) =>
-    s === 'approved' ? 'bg-steel/15 text-steel'
-    : s === 'revision' ? 'bg-navy/10 text-navy'
-    : 'bg-steel/10 text-steel';
+    s === 'approved' ? 'bg-steel text-white shadow-sm shadow-steel/30'
+    : s === 'revision' ? 'bg-navy text-white'
+    : 'bg-white text-navy/70 border border-mist/60 shadow-sm';
 
   const tabs = [
     { key: 'all' as const, label: 'Semua', count: logEntries.length },
@@ -45,6 +47,7 @@ export const MentorLogbook: React.FC = () => {
 
   return (
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
+      {/* ── HEADER  */}
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
           <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[10px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
@@ -57,24 +60,27 @@ export const MentorLogbook: React.FC = () => {
             </p>
           </div>
         </div>
-        <span className="hidden sm:flex items-center gap-1.5 text-[11px] font-bold text-steel bg-steel/10 border border-steel/20 px-3 py-2 rounded-full">
+        {/* ✅ chip pending: card putih ber-border steel */}
+        <span className="hidden sm:flex items-center gap-1.5 text-[11px] font-bold text-steel bg-white border border-steel/30 shadow-sm px-3 py-2 rounded-full">
           <Clock className="w-3.5 h-3.5" /> {pendingCount} menunggu
         </span>
       </div>
 
+      {/* ── FILTER + SEARCH ─ */}
       <div className="shrink-0 space-y-3">
-        <div className="bg-shell p-1 rounded-[24px] flex gap-1 overflow-x-auto">
+        {/* ✅ track mist/40, aktif = steel solid + teks putih */}
+        <div className="bg-mist/40 p-1 rounded-[24px] flex gap-1 overflow-x-auto">
           {tabs.map(t => (
             <button
               key={t.key}
               onClick={() => setFilter(t.key)}
-              className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                filter === t.key ? 'bg-white text-navy shadow-sm' : 'text-navy/60 hover:text-navy'
+              className={`px-3 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                filter === t.key ? 'bg-steel text-white shadow' : 'text-navy/60 hover:text-navy'
               }`}
             >
               {t.label}
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                filter === t.key ? 'bg-steel/15 text-steel' : 'bg-mist text-navy/50'
+              <span className={`text-[10px] font-bold tabular-nums ${
+                filter === t.key ? 'text-white/80' : 'text-navy/40'
               }`}>{t.count}</span>
             </button>
           ))}
@@ -86,17 +92,27 @@ export const MentorLogbook: React.FC = () => {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Cari judul logbook..."
-            className="w-full bg-white border border-mist/60 rounded-[24px] pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel transition-all"
+            className="w-full bg-mist/40 border border-mist rounded-[24px] pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
           />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-navy/10 hover:bg-navy/20 flex items-center justify-center transition-colors"
+            >
+              <X className="w-3 h-3 text-navy/60" />
+            </button>
+          )}
         </div>
       </div>
 
+      {/* ── LIST LOGBOOK ── */}
       <div className="flex-1 bg-white rounded-[24px] border border-mist/60 shadow-sm overflow-hidden flex flex-col min-h-0">
         <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5">
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-14 h-14 rounded-[10px] bg-shell flex items-center justify-center mb-3">
-                <BookOpen className="w-6 h-6 text-navy/30" />
+              {/* ✅ empty state: navy solid + icon putih */}
+              <div className="w-14 h-14 rounded-[10px] bg-navy flex items-center justify-center mb-3">
+                <BookOpen className="w-6 h-6 text-white" />
               </div>
               <p className="text-sm font-bold text-navy mb-1">Tidak ada logbook</p>
               <p className="text-xs text-navy/50">Belum ada jurnal yang cocok dengan filter ini.</p>
@@ -106,19 +122,21 @@ export const MentorLogbook: React.FC = () => {
               {filtered.map(log => (
                 <div key={log.id} className="p-3.5 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 transition-all">
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
+                    <div className="w-10 h-10 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md shadow-navy/20">
                       {log.userName ? getInitials(log.userName) : getInitials(log.title.split(' ')[0] || '?')}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <p className="text-sm font-bold text-navy truncate">{log.title}</p>
+                        {/* ✅ badge status SOLID */}
                         <span className={`flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 ${statusPill(log.status)}`}>
                           {statusLabel(log.status)}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                         {log.userName && (
-                          <span className="text-[11px] font-bold text-navy/70 bg-navy/10 px-2 py-0.5 rounded-md flex items-center gap-1">
+                          /* ✅ chip nama siswa: navy solid + teks putih */
+                          <span className="text-[11px] font-bold text-white bg-navy px-2 py-0.5 rounded-md flex items-center gap-1">
                             <User className="w-3 h-3" />{log.userName}
                           </span>
                         )}
