@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { X, Award, Search, GraduationCap, Activity, Building, BookOpen } from 'lucide-react';
+import { X, Award, Search, GraduationCap, Activity, Building } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 const getInitials = (name: string) =>
@@ -169,25 +169,14 @@ export const MentorPenilaian: React.FC = () => {
                     <span className="text-[10px] font-bold text-navy/50 tabular-nums w-8 text-right">{student.kehadiran || 0}%</span>
                   </div>
 
-                  {/* ── nilai DUDI + sekolah ── */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="flex items-center gap-2.5 bg-white border border-mist/60 shadow-sm rounded-2xl p-2.5">
-                      <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center shrink-0">
-                        <Building className="w-3.5 h-3.5 text-white" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[9px] font-bold uppercase text-navy/50">Nilai Industri</p>
-                        <p className="text-sm font-bold text-navy tabular-nums leading-tight">{student.nilaiDUDI || '0'}</p>
-                      </div>
+                  {/* ── nilai industri (full width) ── */}
+                  <div className="flex items-center gap-2.5 bg-white border border-mist/60 shadow-sm rounded-2xl p-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center shrink-0">
+                      <Building className="w-3.5 h-3.5 text-white" />
                     </div>
-                    <div className="flex items-center gap-2.5 bg-white border border-mist/60 shadow-sm rounded-2xl p-2.5">
-                      <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center shrink-0">
-                        <BookOpen className="w-3.5 h-3.5 text-white" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[9px] font-bold uppercase text-navy/50">Nilai Sekolah</p>
-                        <p className="text-sm font-bold text-navy tabular-nums leading-tight">{student.nilaiGuru || '0'}</p>
-                      </div>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-bold uppercase text-navy/50">Nilai Industri (DUDI)</p>
+                      <p className="text-sm font-bold text-navy tabular-nums leading-tight">{student.nilaiDUDI || '0'}</p>
                     </div>
                   </div>
 
