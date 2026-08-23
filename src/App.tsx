@@ -9,7 +9,10 @@ import { Maps } from './components/Maps';
 import { Profile } from './components/Profile';
 import { Absensi } from './components/Absensi';
 import { TeacherDashboard } from './components/TeacherDashboard';
-import { TeacherMonitoring, TeacherPerizinan, TeacherRekap } from './components/TeacherPages';
+import { TeacherMonitoring } from './components/TeacherMonitoring';
+import { TeacherKehadiran } from './components/TeacherKehadiran';
+import { TeacherPerizinan } from './components/TeacherPerizinan';
+import { TeacherRekap } from './components/TeacherRekap';
 import { MentorAttendance, MentorLogbook, MentorRoster } from './components/MentorPages';
 import { HubinDashboard } from './components/HubinDashboard';
 import { HubinData } from './components/HubinPages';
@@ -193,7 +196,10 @@ export default function App() {
           {activePage === 'monitoring' && userRole === 'teacher' && (
             <TeacherMonitoring />
           )}
-          {activePage === 'attendance' && (userRole === 'teacher' || userRole === 'mentor') && (
+          {activePage === 'attendance' && userRole === 'teacher' && (
+            <TeacherKehadiran />
+          )}
+          {activePage === 'attendance' && userRole === 'mentor' && (
             <MentorAttendance />
           )}
           {activePage === 'roster' && userRole === 'mentor' && (
