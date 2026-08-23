@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Search, CheckCircle2,
-  Users, Clock, Activity, ChevronRight, BookOpen, User, X
+  Users, Clock, Activity, ChevronRight, BookOpen, X
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -190,6 +190,11 @@ export const TeacherMonitoring: React.FC = () => {
   );
 };
 
+/* ══════════════════════════════════════════════════════
+   MODAL DETAIL SISWA
+   ✅ Logbook TIDAK ditampilkan di card detail —
+      modal fokus ke statistik + riwayat kehadiran siswa
+   ══════════════════════════════════════════════════════ */
 const MonitoringDetailModal: React.FC<{
   siswa: any;
   logs: any[];
@@ -198,13 +203,8 @@ const MonitoringDetailModal: React.FC<{
   onClose: () => void;
 }> = ({ siswa, logs, attendances, perizinanList, onClose }) => {
   const siswaLogs = logs.filter(l => l.userId === siswa.id);
-
-  const statusLabel = (s: string) =>
-    s === 'approved' ? 'Disetujui' : s === 'revision' ? 'Revisi' : 'Menunggu';
-  const statusPill = (s: string) =>
-    s === 'approved' ? 'bg-steel text-white shadow-sm shadow-steel/30'
-    : s === 'revision' ? 'bg-navy text-white'
-    : 'bg-white text-navy/70 border border-mist/60 shadow-sm';
+  /* ✅ riwayat kehadiran difilter per siswa */
+  const siswaAttendances = attendances.filter(a => a.userId === siswa.id);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy/50 backdrop-blur-md">
@@ -225,6 +225,7 @@ const MonitoringDetailModal: React.FC<{
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-4">
+          {/* ── Stats ringkas ── */}
           <div className="grid grid-cols-2 gap-2">
             <div className="flex items-center gap-3 bg-white border border-mist/60 shadow-sm rounded-2xl p-3">
               <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center shrink-0">
@@ -232,7 +233,7 @@ const MonitoringDetailModal: React.FC<{
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase text-navy/50">Hadir</p>
-                <p className="text-sm font-bold text-navy">{attendances.filter(a => a.userId === siswa.id && a.status === 'Hadir').length}</p>
+                <p className="text-sm font-bold text-navy">{siswaAttendances.filter(a => a.status === 'Hadir').length}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 bg-white border border-mist/60 shadow-sm rounded-2xl p-3">
@@ -255,50 +256,16 @@ const MonitoringDetailModal: React.FC<{
             </div>
           </div>
 
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-navy/40 mb-2 flex items-center gap-1.5">
-              <BookOpen className="w-3.5 h-3.5" /> Logbook
-            </p>
-            {siswaLogs.length === 0 ? (
-              <p className="text-xs text-navy/50 bg-mist/30 border border-mist/60 rounded-[24px] p-3">Belum ada logbook.</p>
-            ) : (
-              <div className="space-y-2">
-                {siswaLogs.map(log => (
-                  <div key={log.id} className="p-3 rounded-[24px] border border-mist/60 bg-white">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-xs font-bold text-navy flex-1 min-w-0">{log.title}</p>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${statusPill(log.status)}`}>
-                        {statusLabel(log.status)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                      {log.userName && (
-                        <span className="text-[10px] font-bold text-white bg-navy px-2 py-0.5 rounded-md flex items-center gap-1">
-                          <User className="w-3 h-3" />{log.userName}
-                        </span>
-                      )}
-                      <span className="text-[11px] font-semibold text-navy/50">
-                        {log.date} · {log.hours} jam
-                      </span>
-                    </div>
-                    {log.description && (
-                      <p className="text-[11px] font-medium text-navy/70 mt-1.5 leading-relaxed">{log.description}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
+          {/* ── Riwayat Kehadiran (hanya milik siswa ini) ── */}
           <div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-navy/40 mb-2 flex items-center gap-1.5">
               <Activity className="w-3.5 h-3.5" /> Riwayat Kehadiran
             </p>
-            {attendances.length === 0 ? (
+            {siswaAttendances.length === 0 ? (
               <p className="text-xs text-navy/50 bg-mist/30 border border-mist/60 rounded-[24px] p-3">Belum ada data absensi.</p>
             ) : (
               <div className="space-y-1.5">
-                {attendances.slice(0, 6).map((a, i) => (
+                {siswaAttendances.slice(0, 8).map((a, i) => (
                   <div key={i} className="flex items-center justify-between p-2.5 rounded-[24px] bg-mist/30 border border-mist/60">
                     <span className="text-xs font-bold text-navy">{a.date}</span>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
