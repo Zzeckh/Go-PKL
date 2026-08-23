@@ -10,7 +10,7 @@ interface TeacherDashboardProps {
 }
 
 export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ userName, schoolName, onNavigate }) => {
-  const { siswaList, perusahaanList, attendances } = useApp();
+  const { siswaList, perusahaanList, perizinanList } = useApp();
 
   const [time, setTime] = useState(new Date());
 
@@ -21,6 +21,9 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ userName, sc
 
   /* ── Tahun akademik aktif ── */
   const activeYear = siswaList.find(s => s.academicYear && s.academicYear !== '-')?.academicYear || '2025/2026';
+
+  /* ── Perizinan menunggu verifikasi (data benar untuk guru) ── */
+  const pendingPermissions = perizinanList.filter(p => p.status === 'pending').length;
 
   /* ── Perusahaan dari siswa yang dibimbing ── */
   const companyMap = new Map<string, { students: string[] }>();
@@ -48,7 +51,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ userName, sc
     { icon: Users, label: 'Total Bimbingan', value: siswaList.length, page: 'monitoring' as ActivePage },
     { icon: Building, label: 'Perusahaan Mitra', value: perusahaanList.length, page: 'monitoring' as ActivePage },
     { icon: Activity, label: 'Kehadiran Rata-rata', value: `${avgAttendance}%`, page: 'monitoring' as ActivePage },
-    { icon: FileCheck, label: 'Verifikasi Perizinan', value: attendances.length, page: 'perizinan' as ActivePage },
+    { icon: FileCheck, label: 'Verifikasi Perizinan', value: pendingPermissions, page: 'perizinan' as ActivePage },
   ];
 
   return (
@@ -70,18 +73,20 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ userName, sc
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="hidden md:flex items-center gap-1.5 text-[11px] font-bold text-navy/60 bg-shell border border-mist px-3 py-2 rounded-full">
+          {/* ✅ chip tanggal: bg mist/40 (seperti search bar Logbook) */}
+          <span className="hidden md:flex items-center gap-1.5 text-[11px] font-bold text-navy/60 bg-mist/40 border border-mist px-3 py-2 rounded-full">
             <Clock className="w-3.5 h-3.5" />
             {time.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
           </span>
-          <span className="hidden sm:flex items-center gap-1.5 text-[11px] font-bold text-steel bg-steel/10 border border-steel/20 px-3 py-2 rounded-full">
+          {/* ✅ chip TA: card putih ber-border steel */}
+          <span className="hidden sm:flex items-center gap-1.5 text-[11px] font-bold text-steel bg-white border border-steel/30 shadow-sm px-3 py-2 rounded-full">
             <Calendar className="w-3.5 h-3.5" />
             TA {activeYear}
           </span>
         </div>
       </div>
 
-      {/* ── STATS CARDS ── */}
+      {/* ── STATS CARDS — icon chip navy solid + icon putih ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
         {stats.map((s) => (
           <button
@@ -90,8 +95,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ userName, sc
             className="bg-white border border-mist/60 rounded-[24px] p-5 text-left transition-all hover:border-steel/40 hover:-translate-y-0.5 hover:shadow-md group flex flex-col justify-between min-h-[140px]"
           >
             <div className="flex items-center justify-between">
-              <div className="w-10 h-10 rounded-[10px] bg-shell flex items-center justify-center group-hover:bg-steel/10 transition-colors">
-                <s.icon className="w-5 h-5 text-navy/60 group-hover:text-steel transition-colors" />
+              <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
+                <s.icon className="w-4 h-4 text-white" />
               </div>
               <ChevronRight className="w-4 h-4 text-navy/20 group-hover:text-steel group-hover:translate-x-0.5 transition-all" />
             </div>
@@ -110,8 +115,9 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ userName, sc
         <div className="lg:col-span-3 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col overflow-hidden min-h-[380px] lg:min-h-0">
           <div className="flex items-center justify-between px-4 md:px-5 pt-4 pb-3 shrink-0">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-steel/15 flex items-center justify-center">
-                <Building className="w-3.5 h-3.5 text-steel" />
+              {/* ✅ chip navy solid + icon putih */}
+              <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center">
+                <Building className="w-3.5 h-3.5 text-white" />
               </div>
               <p className="text-[13px] font-bold uppercase tracking-widest text-navy/70">
                 Distribusi Anak Bimbingan
@@ -128,8 +134,9 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ userName, sc
           <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 min-h-0">
             {myCompanies.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-14 h-14 rounded-[10px] bg-shell flex items-center justify-center mb-3">
-                  <Building className="w-6 h-6 text-navy/30" />
+                {/* ✅ empty state: navy solid + icon putih */}
+                <div className="w-14 h-14 rounded-[10px] bg-navy flex items-center justify-center mb-3">
+                  <Building className="w-6 h-6 text-white" />
                 </div>
                 <p className="text-sm font-bold text-navy mb-1">Belum ada distribusi</p>
                 <p className="text-xs text-navy/50 max-w-xs">
@@ -140,11 +147,12 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ userName, sc
               myCompanies.map((company) => (
                 <div
                   key={company.id}
-                  className="p-3 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 hover:bg-shell/50 transition-all shrink-0 text-left group"
+                  className="p-3 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 hover:bg-mist/30 transition-all shrink-0 text-left group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-[10px] bg-steel/10 flex items-center justify-center shrink-0 group-hover:bg-steel/20 transition-colors">
-                      <Building className="w-5 h-5 text-steel" />
+                    {/* ✅ icon item: navy solid + icon putih */}
+                    <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center shrink-0">
+                      <Building className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-navy truncate">{company.name}</p>
@@ -153,7 +161,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ userName, sc
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-steel/10 text-steel tabular-nums">
+                      {/* ✅ badge kehadiran: SOLID steel */}
+                      <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-steel text-white shadow-sm shadow-steel/30 tabular-nums">
                         {company.attendance}% hadir
                       </span>
                       <ChevronRight className="w-4 h-4 text-navy/20 group-hover:text-steel group-hover:translate-x-0.5 transition-all" />
@@ -171,7 +180,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ userName, sc
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-[10px] bg-white/15 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
                     <Users className="w-4 h-4 text-white" />
                   </div>
                   <p className="text-[11px] font-bold uppercase tracking-widest text-white/60">
@@ -202,8 +211,9 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ userName, sc
           {/* ── Card Catatan Guru ── */}
           <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm flex-1 flex flex-col min-h-[220px]">
             <div className="flex items-center gap-2 p-5 pb-3 shrink-0">
-              <div className="w-8 h-8 rounded-lg bg-mist/70 flex items-center justify-center">
-                <BookOpen className="w-4 h-4 text-navy" />
+              {/* ✅ chip navy solid + icon putih */}
+              <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
+                <BookOpen className="w-4 h-4 text-white" />
               </div>
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-widest text-navy/60 leading-none">Catatan</p>
@@ -211,7 +221,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ userName, sc
               </div>
             </div>
             <div className="flex-1 px-5 pb-5 min-h-0">
-              <div className="w-full h-full overflow-y-auto custom-scrollbar text-[13px] font-medium text-navy/70 whitespace-pre-line leading-relaxed bg-shell/60 border border-mist/60 rounded-[24px] p-3">
+              <div className="w-full h-full overflow-y-auto custom-scrollbar text-[13px] font-medium text-navy/70 whitespace-pre-line leading-relaxed bg-mist/30 border border-mist/60 rounded-[24px] p-3">
                 - Kunjungan ke perusahaan mitra minggu ini
                 - Verifikasi laporan PKL anak bimbingan
                 - Update rekap kehadiran bulanan
