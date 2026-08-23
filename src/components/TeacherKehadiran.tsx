@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, ChevronRight, Activity, GraduationCap, Calendar, AlertCircle, X, Building } from 'lucide-react';
+import { Search, ChevronRight, Activity, GraduationCap, Calendar, AlertCircle, X, Building, Clock } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 const getInitials = (name: string) =>
@@ -33,6 +33,7 @@ export const TeacherKehadiran: React.FC = () => {
 
   return (
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
+      {/* ── HEADER ── */}
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
           <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[10px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
@@ -47,11 +48,12 @@ export const TeacherKehadiran: React.FC = () => {
         </div>
       </div>
 
+      {/* ── STATS — icon chip navy solid + icon putih ── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 shrink-0">
         {stats.map((s) => (
           <div key={s.label} className="bg-white border border-mist/60 rounded-[24px] p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center shrink-0">
-              <s.icon className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center shrink-0">
+              <s.icon className="w-4 h-4 text-white" />
             </div>
             <div className="min-w-0">
               <p className="text-2xl font-bold text-navy tabular-nums leading-none">{s.value}</p>
@@ -61,6 +63,7 @@ export const TeacherKehadiran: React.FC = () => {
         ))}
       </div>
 
+      {/* ── SEARCH BAR ── */}
       <div className="shrink-0 relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-navy/40" />
         <input
@@ -68,7 +71,7 @@ export const TeacherKehadiran: React.FC = () => {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Cari nama atau perusahaan..."
-          className="w-full bg-white border border-mist/60 rounded-[24px] pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel transition-all"
+          className="w-full bg-mist/40 border border-mist rounded-[24px] pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
         />
         {search && (
           <button
@@ -80,6 +83,7 @@ export const TeacherKehadiran: React.FC = () => {
         )}
       </div>
 
+      {/* ── LIST SISWA ── */}
       <div className="flex-1 bg-white rounded-[24px] border border-mist/60 shadow-sm overflow-hidden flex flex-col min-h-0">
         <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5">
           {filtered.length === 0 ? (
@@ -95,31 +99,57 @@ export const TeacherKehadiran: React.FC = () => {
               {filtered.map(s => {
                 const hadirCount = attendances.filter(a => a.userId === s.id && a.status === 'Hadir').length;
                 const izinCount = perizinanList.filter(p => p.userId === s.id && p.status === 'approved').length;
+                const pct = s.kehadiran || 0;
+
                 return (
                   <button
                     key={s.id}
                     onClick={() => setSelectedStudent(s)}
-                    className="w-full p-3 rounded-[24px] border border-mist/60 bg-white flex items-center gap-3 hover:border-steel/30 transition-all text-left group"
+                    className="w-full p-4 rounded-[24px] border border-mist/60 bg-white flex items-center gap-4 hover:border-steel/30 hover:shadow-sm transition-all text-left group"
                   >
-                    <div className="w-11 h-11 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
+                    {/* ✅ avatar kotak navy */}
+                    <div className="w-11 h-11 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md shadow-navy/20">
                       {getInitials(s.name)}
                     </div>
+
+                    {/* ── info utama ── */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-bold text-navy truncate">{s.name}</p>
-                      <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
-                        {s.kelas || '-'} · {s.perusahaan || '-'}
-                      </p>
-                      <div className="mt-2 flex items-center gap-2">
-                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-steel text-white shadow-sm shadow-steel/30 tabular-nums">
-                          Hadir {hadirCount}
-                        </span>
-                        {izinCount > 0 && (
-                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white text-navy/70 border border-mist/60 shadow-sm tabular-nums">
-                            Izin {izinCount}
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[13px] font-bold text-navy truncate">{s.name}</p>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-steel text-white shadow-sm shadow-steel/30 tabular-nums">
+                            Hadir {hadirCount}
                           </span>
-                        )}
+                          {izinCount > 0 && (
+                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white text-navy/70 border border-mist/60 shadow-sm tabular-nums">
+                              Izin {izinCount}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[11px] font-semibold text-navy/50 truncate">
+                          {s.kelas || '-'}
+                        </span>
+                        <span className="w-1 h-1 rounded-full bg-navy/20 shrink-0" />
+                        <span className="text-[11px] font-semibold text-navy/50 truncate">
+                          {s.perusahaan || '-'}
+                        </span>
+                      </div>
+
+                      {/* ── progress bar kehadiran ── */}
+                      <div className="flex items-center gap-2.5 mt-2.5">
+                        <div className="flex-1 h-1.5 bg-mist/60 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-steel rounded-full transition-all"
+                            style={{ width: `${Math.min(pct, 100)}%` }}
+                          />
+                        </div>
+                        <span className="text-[10px] font-bold text-navy/50 tabular-nums w-8 text-right">{pct}%</span>
                       </div>
                     </div>
+
                     <ChevronRight className="w-4 h-4 text-navy/20 group-hover:text-steel group-hover:translate-x-0.5 transition-all shrink-0" />
                   </button>
                 );
@@ -130,73 +160,122 @@ export const TeacherKehadiran: React.FC = () => {
       </div>
 
       {selectedStudent && (
-        <TeacherKehadiranDetailModal student={selectedStudent} attendances={attendances} perizinanList={perizinanList} onClose={() => setSelectedStudent(null)} />
+        <TeacherKehadiranDetailModal
+          student={selectedStudent}
+          attendances={attendances}
+          perizinanList={perizinanList}
+          onClose={() => setSelectedStudent(null)}
+        />
       )}
     </div>
   );
 };
 
+/* ══════════════════════════════════════════════════════
+   MODAL DETAIL KEHADIRAN SISWA
+   ✅ riwayat difilter per siswa, badge solid
+   ══════════════════════════════════════════════════════ */
 const TeacherKehadiranDetailModal: React.FC<{
   student: any;
   attendances: any[];
   perizinanList: any[];
   onClose: () => void;
 }> = ({ student, attendances, perizinanList, onClose }) => {
+  const studentAttendances = attendances.filter(a => a.userId === student.id);
+  const hadirCount = studentAttendances.filter(a => a.status === 'Hadir').length;
+  const izinCount = perizinanList.filter(p => p.userId === student.id && p.status === 'approved').length;
+  const pct = student.kehadiran || 0;
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy/50 backdrop-blur-md">
-      <div className="bg-white rounded-[24px] max-w-md w-full shadow-2xl border border-mist/60 overflow-hidden">
-        <div className="p-5 border-b border-mist/60 flex items-center justify-between">
+      <div className="bg-white rounded-[24px] max-w-md w-full shadow-2xl border border-mist/60 overflow-hidden flex flex-col max-h-[92vh]">
+        {/* ── Header ── */}
+        <div className="p-5 border-b border-mist/60 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm">
+            <div className="w-11 h-11 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm shadow-md shadow-navy/20">
               {getInitials(student.name)}
             </div>
-            <div>
-              <h3 className="text-lg font-bold text-navy leading-tight">{student.name}</h3>
+            <div className="min-w-0">
+              <h3 className="text-lg font-bold text-navy leading-tight truncate">{student.name}</h3>
               <p className="text-[11px] font-semibold text-navy/50">{student.kelas || '-'}</p>
             </div>
           </div>
-          <button onClick={onClose} className="w-9 h-9 rounded-[10px] bg-mist/60 hover:bg-mist flex items-center justify-center">
+          <button onClick={onClose} className="w-9 h-9 rounded-[10px] bg-mist/60 hover:bg-mist flex items-center justify-center shrink-0">
             <X className="w-4 h-4 text-navy/60" />
           </button>
         </div>
-        <div className="p-5 space-y-3">
-          <div className="flex items-center gap-3 bg-mist/30 border border-mist/60 rounded-[24px] p-3">
-            <Building className="w-4 h-4 text-navy/50 shrink-0" />
+
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-4">
+          {/* ── Tempat Magang ── */}
+          <div className="flex items-center gap-3 bg-mist/30 border border-mist/60 rounded-2xl p-3">
+            <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center shrink-0">
+              <Building className="w-4 h-4 text-white" />
+            </div>
             <div className="min-w-0">
               <p className="text-[10px] font-bold uppercase text-navy/50">Tempat Magang</p>
               <p className="text-sm font-bold text-navy truncate">{student.perusahaan || '-'}</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex items-center gap-3 bg-white border border-mist/60 shadow-sm rounded-2xl p-3">
-              <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center shrink-0">
+
+          {/* ── Stats ── */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="bg-white border border-mist/60 shadow-sm rounded-2xl p-3 flex flex-col items-center text-center">
+              <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center mb-1.5">
                 <Activity className="w-4 h-4 text-white" />
               </div>
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase text-navy/50">Hadir</p>
-                <p className="text-sm font-bold text-navy">{attendances.filter(a => a.userId === student.id && a.status === 'Hadir').length}</p>
-              </div>
+              <p className="text-lg font-bold text-navy tabular-nums leading-none">{hadirCount}</p>
+              <p className="text-[9px] font-bold text-navy/50 uppercase tracking-wide mt-1">Hadir</p>
             </div>
-            <div className="flex items-center gap-3 bg-white border border-mist/60 shadow-sm rounded-2xl p-3">
-              <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center shrink-0">
+            <div className="bg-white border border-mist/60 shadow-sm rounded-2xl p-3 flex flex-col items-center text-center">
+              <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center mb-1.5">
                 <AlertCircle className="w-4 h-4 text-white" />
               </div>
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase text-navy/50">Izin / Sakit</p>
-                <p className="text-sm font-bold text-navy">{perizinanList.filter(p => p.userId === student.id && p.status === 'approved').length}</p>
+              <p className="text-lg font-bold text-navy tabular-nums leading-none">{izinCount}</p>
+              <p className="text-[9px] font-bold text-navy/50 uppercase tracking-wide mt-1">Izin</p>
+            </div>
+            <div className="bg-white border border-mist/60 shadow-sm rounded-2xl p-3 flex flex-col items-center text-center">
+              <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center mb-1.5">
+                <GraduationCap className="w-4 h-4 text-white" />
               </div>
+              <p className="text-lg font-bold text-navy tabular-nums leading-none">{pct}%</p>
+              <p className="text-[9px] font-bold text-navy/50 uppercase tracking-wide mt-1">Persentase</p>
             </div>
           </div>
-          <div className="w-full overflow-y-auto custom-scrollbar text-[13px] font-medium text-navy/70 leading-relaxed bg-mist/30 border border-mist/60 rounded-[24px] p-3 max-h-40">
-            <p className="text-[10px] font-bold uppercase text-navy/50 mb-2">Riwayat Absensi Terakhir</p>
-            {attendances.length === 0 ? (
-              <p className="text-xs text-navy/50">Belum ada data absensi.</p>
+
+          {/* ── Progress visual ── */}
+          <div className="bg-mist/30 border border-mist/60 rounded-2xl p-3">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10px] font-bold uppercase text-navy/50">Tingkat Kehadiran</p>
+              <span className="text-[11px] font-bold text-navy tabular-nums">{pct}%</span>
+            </div>
+            <div className="h-2 bg-mist/60 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-steel rounded-full transition-all"
+                style={{ width: `${Math.min(pct, 100)}%` }}
+              />
+            </div>
+          </div>
+
+          {/* ── Riwayat Absensi ── */}
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-navy/40 mb-2 flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5" /> Riwayat Absensi Terakhir
+            </p>
+            {studentAttendances.length === 0 ? (
+              <p className="text-xs text-navy/50 bg-mist/30 border border-mist/60 rounded-2xl p-3">Belum ada data absensi.</p>
             ) : (
-              <ul className="space-y-1">
-                {attendances.slice(0, 5).map((a, i) => (
-                  <li key={i} className="text-xs text-navy/70">• {a.date} — {a.status}</li>
+              <div className="space-y-1.5">
+                {studentAttendances.slice(0, 8).map((a, i) => (
+                  <div key={i} className="flex items-center justify-between p-2.5 rounded-2xl bg-mist/30 border border-mist/60">
+                    <span className="text-xs font-bold text-navy">{a.date}</span>
+                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
+                      a.status === 'Hadir'
+                        ? 'bg-steel text-white shadow-sm shadow-steel/30'
+                        : 'bg-white text-navy/70 border border-mist/60 shadow-sm'
+                    }`}>{a.status}</span>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
           </div>
         </div>
