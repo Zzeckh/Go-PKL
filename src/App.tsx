@@ -13,7 +13,10 @@ import { TeacherMonitoring } from './components/TeacherMonitoring';
 import { TeacherKehadiran } from './components/TeacherKehadiran';
 import { TeacherPerizinan } from './components/TeacherPerizinan';
 import { TeacherRekap } from './components/TeacherRekap';
-import { MentorAttendance, MentorLogbook, MentorRoster } from './components/MentorPages';
+import { MentorLogbook } from './components/MentorLogbook';
+import { MentorKehadiran } from './components/MentorKehadiran';
+import { MentorPenilaian } from './components/MentorPenilaian';
+import { MentorPerizinan } from './components/MentorPerizinan';
 import { HubinDashboard } from './components/HubinDashboard';
 import { HubinData } from './components/HubinPages';
 import { HubinPemetaan } from './components/HubinPemetaan';
@@ -200,13 +203,16 @@ export default function App() {
             <TeacherKehadiran />
           )}
           {activePage === 'attendance' && userRole === 'mentor' && (
-            <MentorAttendance />
+            <MentorKehadiran />
           )}
           {activePage === 'roster' && userRole === 'mentor' && (
-            <MentorRoster />
+            <MentorPenilaian />
           )}
-          {activePage === 'perizinan' && (userRole === 'teacher' || userRole === 'mentor') && (
+          {activePage === 'perizinan' && userRole === 'teacher' && (
             <TeacherPerizinan />
+          )}
+          {activePage === 'perizinan' && userRole === 'mentor' && (
+            <MentorPerizinan />
           )}
           {activePage === 'perizinan' && userRole === 'intern' && (
             <StudentPerizinan />
