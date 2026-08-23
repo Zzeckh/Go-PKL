@@ -18,9 +18,11 @@ import { MentorKehadiran } from './components/MentorKehadiran';
 import { MentorPenilaian } from './components/MentorPenilaian';
 import { MentorPerizinan } from './components/MentorPerizinan';
 import { HubinDashboard } from './components/HubinDashboard';
-import { HubinData } from './components/HubinPages';
+import { HubinData } from './components/HubinKelolaData';
 import { HubinPemetaan } from './components/HubinPemetaan';
-import { SuperAdminDashboard, SuperClasses, SuperUsers } from './components/SuperAdminPages';
+import { SuperAdminDashboard } from './components/SuperAdminDashboard';
+import { SuperClasses } from './components/SuperAdminClasses';
+import { SuperUsers } from './components/SuperAdminUsers';
 import { SuperCompanies } from './components/SuperAdminCompanies';
 import { StudentPerizinan } from './components/StudentPerizinan';
 
