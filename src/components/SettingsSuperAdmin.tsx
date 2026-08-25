@@ -1,258 +1,469 @@
 import React, { useState } from 'react';
 import {
-  Palette, Monitor, Sun, Moon, Eye, EyeOff,
-  Lock, AlertTriangle, Trash2, Check, Shield, KeyRound,
-  Smartphone
+  Palette, Monitor, Eye, EyeOff, Lock, AlertTriangle, Trash2,
+  Check, Shield, KeyRound, Smartphone, Search, RotateCcw, User,
+  Bell, Sparkles, Users, BookMarked, LifeBuoy
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
-export const SettingsSuperAdmin: React.FC = () => {
-  useApp();
+type TabKey = 'account' | 'appearance' | 'security' | 'danger';
 
+/* ══════════════════════════════════════════════════════
+   SETTINGS SUPER ADMIN (LAYOUT HEADBAR)
+   Navigasi horizontal di atas, bukan sidebar
+   ══════════════════════════════════════════════════════ */
+export const SettingsSuperAdmin: React.FC = () => {
+  const { userName, superClasses, superUsers } = useApp();
+
+  const [activeTab, setActiveTab] = useState<TabKey>('account');
+  const [search, setSearch] = useState('');
+
+  /* ── Appearance state ── */
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [compactMode, setCompactMode] = useState(false);
+  const [reduceAnim, setReduceAnim] = useState(false);
+  const [pushNotif, setPushNotif] = useState(true);
+
+  /* ── Snapshot untuk Discard / Save ── */
+  const [snapshot, setSnapshot] = useState({ theme: 'light' as 'light' | 'dark', compactMode: false, reduceAnim: false, pushNotif: true });
+  const [savedFlash, setSavedFlash] = useState(false);
+
+  /* ── Security state ── */
   const [showPassword, setShowPassword] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ current: '', newPass: '', confirm: '' });
   const [deleteConfirm, setDeleteConfirm] = useState('');
-  const [saved, setSaved] = useState(false);
+
+  const applyTheme = (t: 'light' | 'dark') => {
+    if (t === 'dark') document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+  };
 
   const handleThemeToggle = (t: 'light' | 'dark') => {
     setTheme(t);
-    if (t === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    applyTheme(t);
+  };
+
+  const dirty =
+    theme !== snapshot.theme ||
+    compactMode !== snapshot.compactMode ||
+    reduceAnim !== snapshot.reduceAnim ||
+    pushNotif !== snapshot.pushNotif;
+
+  const handleSaveChanges = () => {
+    setSnapshot({ theme, compactMode, reduceAnim, pushNotif });
+    setSavedFlash(true);
+    setTimeout(() => setSavedFlash(false), 2000);
+  };
+
+  const handleDiscard = () => {
+    setTheme(snapshot.theme);
+    applyTheme(snapshot.theme);
+    setCompactMode(snapshot.compactMode);
+    setReduceAnim(snapshot.reduceAnim);
+    setPushNotif(snapshot.pushNotif);
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPasswordForm({ ...passwordForm, [e.target.name]: e.target.value });
   };
 
-  const handleSaveAppearance = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const tabs: { key: TabKey; label: string; icon: React.ElementType }[] = [
+    { key: 'account', label: 'Account', icon: User },
+    { key: 'appearance', label: 'Appearance', icon: Palette },
+    { key: 'security', label: 'Privacy & Security', icon: Shield },
+    { key: 'danger', label: 'Danger Zone', icon: AlertTriangle },
+  ];
+
+  /* ── Search: lompat ke tab yang cocok ── */
+  const handleSearch = (q: string) => {
+    setSearch(q);
+    if (!q) return;
+    const match = tabs.find(t => t.label.toLowerCase().includes(q.toLowerCase()));
+    if (match) setActiveTab(match.key);
   };
 
   const themes = [
-    { id: 'light' as const, label: 'Terang', icon: Sun, color: 'bg-white border-mist' },
-    { id: 'dark' as const, label: 'Gelap', icon: Moon, color: 'bg-navy border-navy' },
+    { id: 'light' as const, label: 'Terang', gradient: 'bg-gradient-to-br from-white to-mist', text: 'text-navy' },
+    { id: 'dark' as const, label: 'Gelap', gradient: 'bg-gradient-to-br from-navy to-black', text: 'text-white' },
   ];
 
   return (
     <div className="h-full w-full flex flex-col gap-4 overflow-y-auto custom-scrollbar p-4 md:p-6">
-      {/* ── Appearance ── */}
-      <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-5 md:p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-[10px] bg-steel/10 flex items-center justify-center">
-            <Palette className="w-5 h-5 text-steel" />
-          </div>
-          <div>
-            <h2 className="text-sm font-bold text-navy">Appearance</h2>
-            <p className="text-[10px] text-navy/50 font-medium">Sesuaikan tampilan aplikasi</p>
-          </div>
+
+      {/* ── HEADER: role + save actions ── */}
+      <div className="shrink-0 bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 md:p-5 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        {/* ✅ Hanya role yang ditampilkan */}
+        <div className="flex items-center gap-2 min-w-0">
+          <h2 className="text-sm md:text-base font-bold text-navy uppercase tracking-wide truncate">
+            Super Admin
+          </h2>
         </div>
-
-        {/* Profile Theme */}
-        <div className="mb-6">
-          <p className="text-[10px] font-bold text-navy/50 uppercase tracking-widest mb-3">Profile Theme</p>
-          <div className="flex gap-3">
-            {themes.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => handleThemeToggle(t.id)}
-                className={`flex items-center gap-3 px-5 py-3 rounded-[16px] border-2 transition-all ${
-                  theme === t.id
-                    ? 'border-steel bg-steel/5 shadow-sm'
-                    : 'border-mist/60 hover:border-mist hover:bg-shell'
-                }`}
-              >
-                <div className={`w-8 h-8 rounded-[8px] flex items-center justify-center ${
-                  t.id === 'dark' ? 'bg-navy' : 'bg-white border border-mist'
-                }`}>
-                  <t.icon className={`w-4 h-4 ${t.id === 'dark' ? 'text-white' : 'text-navy'}`} />
-                </div>
-                <span className="text-xs font-bold text-navy">{t.label}</span>
-                {theme === t.id && <Check className="w-4 h-4 text-steel ml-auto" />}
-              </button>
-            ))}
-          </div>
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          <span className={`flex items-center gap-1.5 text-[11px] font-bold px-3 py-2 rounded-full border ${
+            dirty
+              ? 'bg-[#FBF3E2] text-[#9A6B15] border-[#F0E1C0]'
+              : 'bg-white text-navy/60 border-mist/60 shadow-sm'
+          }`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${dirty ? 'bg-[#9A6B15]' : 'bg-steel'}`} />
+            {savedFlash ? 'Perubahan tersimpan!' : dirty ? 'Perubahan belum disimpan' : 'Semua perubahan tersimpan'}
+          </span>
+          <button
+            onClick={handleDiscard}
+            disabled={!dirty}
+            className="flex items-center gap-1.5 text-[11px] font-bold bg-white border border-mist/60 text-navy px-3 py-2 rounded-full hover:bg-mist/30 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <RotateCcw className="w-3.5 h-3.5" /> Discard
+          </button>
+          <button
+            onClick={handleSaveChanges}
+            disabled={!dirty}
+            className="flex items-center gap-1.5 text-[11px] font-bold bg-navy text-white px-4 py-2 rounded-full hover:bg-navy/90 transition-colors shadow-md shadow-navy/20 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Check className="w-3.5 h-3.5" /> Save Changes
+          </button>
         </div>
-
-        {/* Display Options */}
-        <div>
-          <p className="text-[10px] font-bold text-navy/50 uppercase tracking-widest mb-3">Display Options</p>
-          <div className="flex flex-col gap-3">
-            <button
-              onClick={() => setCompactMode(!compactMode)}
-              className={`flex items-center justify-between px-5 py-4 rounded-[16px] border transition-all ${
-                compactMode ? 'border-steel bg-steel/5' : 'border-mist/60 hover:bg-shell'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-[8px] bg-shell flex items-center justify-center">
-                  <Monitor className="w-4 h-4 text-navy/60" />
-                </div>
-                <div className="text-left">
-                  <p className="text-xs font-bold text-navy">Mode Kompak</p>
-                  <p className="text-[10px] text-navy/50">Padding lebih kecil untuk tampilan lebih padat</p>
-                </div>
-              </div>
-              <div className={`w-10 h-6 rounded-full transition-all ${compactMode ? 'bg-steel' : 'bg-mist'} relative`}>
-                <div className={`w-4 h-4 rounded-full bg-white shadow-sm absolute top-1 transition-all ${compactMode ? 'left-5' : 'left-1'}`} />
-              </div>
-            </button>
-
-            <button
-              className="flex items-center justify-between px-5 py-4 rounded-[16px] border border-mist/60 hover:bg-shell transition-all"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-[8px] bg-shell flex items-center justify-center">
-                  <Eye className="w-4 h-4 text-navy/60" />
-                </div>
-                <div className="text-left">
-                  <p className="text-xs font-bold text-navy">Notifikasi Push</p>
-                  <p className="text-[10px] text-navy/50">Terima notifikasi sistem</p>
-                </div>
-              </div>
-              <div className="w-10 h-6 rounded-full bg-steel relative">
-                <div className="w-4 h-4 rounded-full bg-white shadow-sm absolute top-1 left-5" />
-              </div>
-            </button>
-          </div>
-        </div>
-
-        <button
-          onClick={handleSaveAppearance}
-          className="mt-6 w-full sm:w-auto px-6 py-3 bg-steel text-white rounded-[16px] text-xs font-bold hover:bg-steel/90 transition-colors shadow-sm flex items-center justify-center gap-2"
-        >
-          {saved ? <><Check className="w-4 h-4" /> Tersimpan!</> : 'Simpan Pengaturan'}
-        </button>
       </div>
 
-      {/* ── Security ── */}
-      <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-5 md:p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-[10px] bg-navy/10 flex items-center justify-center">
-            <Shield className="w-5 h-5 text-navy" />
+      {/* ── HEADBAR NAV + search ── */}
+      <div className="shrink-0 flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
+        <div className="flex-1 bg-mist/40 p-1 rounded-[24px] flex gap-1 overflow-x-auto">
+          {tabs.map(t => {
+            const Icon = t.icon;
+            const active = activeTab === t.key;
+            return (
+              <button
+                key={t.key}
+                onClick={() => setActiveTab(t.key)}
+                className={`flex-1 min-w-[130px] px-3 py-2.5 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
+                  active ? 'bg-steel text-white shadow' : 'text-navy/60 hover:text-navy'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" /> {t.label}
+              </button>
+            );
+          })}
+        </div>
+        <div className="relative lg:w-64 shrink-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-navy/40" />
+          <input
+            type="text"
+            value={search}
+            onChange={e => handleSearch(e.target.value)}
+            placeholder="Search settings..."
+            className="w-full bg-mist/40 border border-mist rounded-[24px] pl-10 pr-4 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
+          />
+        </div>
+      </div>
+
+      {/* ══════════ TAB: ACCOUNT ══════════ */}
+      {activeTab === 'account' && (
+        <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-5 md:p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center shadow-md shadow-navy/20">
+              <User className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-navy">Account</h2>
+              <p className="text-[10px] text-navy/50 font-medium">Profil & informasi akun</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-sm font-bold text-navy">Security</h2>
-            <p className="text-[10px] text-navy/50 font-medium">Kelola keamanan akun Anda</p>
+
+          {/* Profile row */}
+          <div className="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-[16px] border border-mist/60 bg-mist/30 mb-4">
+            <div className="w-16 h-16 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-xl shrink-0 shadow-md shadow-navy/20">
+              {(userName || '?').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+            </div>
+            <div className="flex-1 min-w-0 text-center sm:text-left">
+              <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
+                <p className="text-base font-bold text-navy truncate">{userName || 'Super Admin'}</p>
+                <span className="text-[10px] font-bold bg-steel text-white shadow-sm shadow-steel/30 px-2.5 py-1 rounded-full uppercase">
+                  Super Admin
+                </span>
+              </div>
+              <p className="text-[11px] font-semibold text-navy/50 mt-1 truncate">
+                Akses penuh seluruh sistem Go-PKL
+              </p>
+            </div>
+          </div>
+
+          {/* Info cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="flex items-center gap-3 bg-white border border-mist/60 shadow-sm rounded-2xl p-3">
+              <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center shrink-0">
+                <BookMarked className="w-4 h-4 text-white" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">Total Kelas</p>
+                <p className="text-sm font-bold text-navy tabular-nums">{superClasses.length} kelas</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 bg-white border border-mist/60 shadow-sm rounded-2xl p-3">
+              <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center shrink-0">
+                <Users className="w-4 h-4 text-white" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">Total Pengguna</p>
+                <p className="text-sm font-bold text-navy tabular-nums">{superUsers.length} user</p>
+              </div>
+            </div>
           </div>
         </div>
+      )}
 
-        <div className="bg-shell rounded-[16px] border border-mist p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <KeyRound className="w-4 h-4 text-navy/60" />
-            <p className="text-xs font-bold text-navy">Ubah Password</p>
-          </div>
-          <div className="flex flex-col gap-3">
-            <div>
-              <label className="text-[10px] font-bold text-navy/50 uppercase tracking-wide mb-1 block">Password Saat Ini</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="current"
-                  value={passwordForm.current}
-                  onChange={handlePasswordChange}
-                  className="w-full px-4 py-3 bg-white border border-mist rounded-[12px] text-xs font-bold text-navy outline-none focus:border-steel transition-colors pr-10"
-                  placeholder="Masukkan password saat ini"
-                />
+      {/* ══════════ TAB: APPEARANCE ══════════ */}
+      {activeTab === 'appearance' && (
+        <div className="flex flex-col gap-4">
+          {/* Profile Theme */}
+          <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-5 md:p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center shadow-md shadow-navy/20">
+                <Palette className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-navy">Profile Theme</h2>
+                <p className="text-[10px] text-navy/50 font-medium">Theme tersimpan otomatis & ter-apply di semua halaman</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {themes.map(t => (
                 <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-navy/40 hover:text-navy transition-colors"
+                  key={t.id}
+                  onClick={() => handleThemeToggle(t.id)}
+                  className={`relative h-40 rounded-[16px] border-2 overflow-hidden transition-all text-left ${t.gradient} ${
+                    theme === t.id ? 'border-steel ring-2 ring-steel/30 shadow-md' : 'border-mist/60 hover:border-mist'
+                  }`}
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {theme === t.id && (
+                    <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-steel text-white flex items-center justify-center shadow-sm">
+                      <Check className="w-3.5 h-3.5" />
+                    </div>
+                  )}
+                  <span className={`absolute bottom-3 left-3 text-xs font-bold ${t.text}`}>{t.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Display Options */}
+          <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-5 md:p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center shadow-md shadow-navy/20">
+                <Monitor className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-navy">Display Options</h2>
+                <p className="text-[10px] text-navy/50 font-medium">Atur kenyamanan tampilan dashboard</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              {/* Compact */}
+              <div className="flex items-center justify-between px-4 py-4 rounded-[16px] border border-mist/60 hover:bg-mist/30 transition-all">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center shrink-0">
+                    <Monitor className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-xs font-bold text-navy">Mode Kompak</p>
+                    <p className="text-[10px] text-navy/50">Spacing lebih rapat, konten lebih banyak di layar</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setCompactMode(!compactMode)}
+                  className={`w-11 h-6 rounded-full transition-all relative shrink-0 ${compactMode ? 'bg-steel' : 'bg-mist'}`}
+                >
+                  <div className={`w-4 h-4 rounded-full bg-white shadow-sm absolute top-1 transition-all ${compactMode ? 'left-6' : 'left-1'}`} />
+                </button>
+              </div>
+
+              {/* Reduce animations */}
+              <div className="flex items-center justify-between px-4 py-4 rounded-[16px] border border-mist/60 hover:bg-mist/30 transition-all">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center shrink-0">
+                    <Sparkles className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-xs font-bold text-navy">Kurangi Animasi</p>
+                    <p className="text-[10px] text-navy/50">Minimalkan motion di seluruh dashboard</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setReduceAnim(!reduceAnim)}
+                  className={`w-11 h-6 rounded-full transition-all relative shrink-0 ${reduceAnim ? 'bg-steel' : 'bg-mist'}`}
+                >
+                  <div className={`w-4 h-4 rounded-full bg-white shadow-sm absolute top-1 transition-all ${reduceAnim ? 'left-6' : 'left-1'}`} />
+                </button>
+              </div>
+
+              {/* Push notif — deskripsi khusus super admin */}
+              <div className="flex items-center justify-between px-4 py-4 rounded-[16px] border border-mist/60 hover:bg-mist/30 transition-all">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center shrink-0">
+                    <Bell className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-xs font-bold text-navy">Notifikasi Push</p>
+                    <p className="text-[10px] text-navy/50">Terima notifikasi sistem</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setPushNotif(!pushNotif)}
+                  className={`w-11 h-6 rounded-full transition-all relative shrink-0 ${pushNotif ? 'bg-steel' : 'bg-mist'}`}
+                >
+                  <div className={`w-4 h-4 rounded-full bg-white shadow-sm absolute top-1 transition-all ${pushNotif ? 'left-6' : 'left-1'}`} />
                 </button>
               </div>
             </div>
-            <div>
-              <label className="text-[10px] font-bold text-navy/50 uppercase tracking-wide mb-1 block">Password Baru</label>
-              <input
-                type="password"
-                name="newPass"
-                value={passwordForm.newPass}
-                onChange={handlePasswordChange}
-                className="w-full px-4 py-3 bg-white border border-mist rounded-[12px] text-xs font-bold text-navy outline-none focus:border-steel transition-colors"
-                placeholder="Masukkan password baru"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] font-bold text-navy/50 uppercase tracking-wide mb-1 block">Konfirmasi Password Baru</label>
-              <input
-                type="password"
-                name="confirm"
-                value={passwordForm.confirm}
-                onChange={handlePasswordChange}
-                className="w-full px-4 py-3 bg-white border border-mist rounded-[12px] text-xs font-bold text-navy outline-none focus:border-steel transition-colors"
-                placeholder="Ulangi password baru"
-              />
-            </div>
-            <button className="mt-2 w-full sm:w-auto px-6 py-3 bg-navy text-white rounded-[16px] text-xs font-bold hover:bg-navy/90 transition-colors shadow-sm flex items-center justify-center gap-2">
-              <Lock className="w-4 h-4" /> Update Password
-            </button>
           </div>
         </div>
+      )}
 
-        <div className="mt-4 bg-shell rounded-[16px] border border-mist p-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-[8px] bg-white flex items-center justify-center shadow-sm">
-                <Smartphone className="w-4 h-4 text-navy/60" />
+      {/* ══════════ TAB: PRIVACY & SECURITY ══════════ */}
+      {activeTab === 'security' && (
+        <div className="flex flex-col gap-4">
+          {/* Change Password */}
+          <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-5 md:p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center shadow-md shadow-navy/20">
+                <KeyRound className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-xs font-bold text-navy">Sesi Aktif</p>
-                <p className="text-[10px] text-navy/50">1 perangkat aktif saat ini</p>
+                <h2 className="text-sm font-bold text-navy">Ubah Password</h2>
+                <p className="text-[10px] text-navy/50 font-medium">Pastikan password baru minimal 6 karakter</p>
               </div>
             </div>
-            <button className="px-4 py-2 bg-white border border-mist rounded-[12px] text-[10px] font-bold text-navy hover:bg-mist transition-colors shadow-sm">
-              Keluar Semua
-            </button>
+
+            <div className="flex flex-col gap-3">
+              <div>
+                <label className="text-[10px] font-bold text-navy/50 uppercase tracking-wide mb-1 block">Password Saat Ini</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    name="current"
+                    value={passwordForm.current}
+                    onChange={handlePasswordChange}
+                    className="w-full px-4 py-3 bg-mist/30 border border-mist rounded-[16px] text-xs font-bold text-navy outline-none focus:border-steel focus:bg-white transition-all pr-10 placeholder:text-navy/40"
+                    placeholder="Masukkan password saat ini"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-navy/40 hover:text-navy transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-navy/50 uppercase tracking-wide mb-1 block">Password Baru</label>
+                <input
+                  type="password"
+                  name="newPass"
+                  value={passwordForm.newPass}
+                  onChange={handlePasswordChange}
+                  className="w-full px-4 py-3 bg-mist/30 border border-mist rounded-[16px] text-xs font-bold text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
+                  placeholder="Masukkan password baru"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-navy/50 uppercase tracking-wide mb-1 block">Konfirmasi Password Baru</label>
+                <input
+                  type="password"
+                  name="confirm"
+                  value={passwordForm.confirm}
+                  onChange={handlePasswordChange}
+                  className="w-full px-4 py-3 bg-mist/30 border border-mist rounded-[16px] text-xs font-bold text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
+                  placeholder="Ulangi password baru"
+                />
+              </div>
+              <button className="mt-2 w-full sm:w-auto px-6 py-3 bg-navy text-white rounded-[16px] text-xs font-bold hover:bg-navy/90 transition-colors shadow-md shadow-navy/20 flex items-center justify-center gap-2">
+                <Lock className="w-4 h-4" /> Update Password
+              </button>
+            </div>
+          </div>
+
+          {/* Sessions */}
+          <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center shrink-0">
+                  <Smartphone className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-navy">Sesi Aktif</p>
+                  <p className="text-[10px] text-navy/50">1 perangkat aktif saat ini</p>
+                </div>
+              </div>
+              <button className="px-4 py-2 bg-white border border-mist/60 rounded-[12px] text-[10px] font-bold text-navy hover:bg-mist/30 transition-colors shadow-sm">
+                Keluar Semua
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* ── Danger Zone ── */}
-      <div className="bg-white rounded-[24px] border-2 border-red-200 shadow-sm p-5 md:p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-[10px] bg-red-50 flex items-center justify-center">
-            <AlertTriangle className="w-5 h-5 text-red-500" />
+      {/* ══════════ TAB: DANGER ZONE ══════════ */}
+      {activeTab === 'danger' && (
+        <div className="bg-white rounded-[24px] border-2 border-red-200 shadow-sm p-5 md:p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-[10px] bg-red-50 flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 text-red-500" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-red-600">Danger Zone</h2>
+              <p className="text-[10px] text-red-400 font-medium">Tindakan yang tidak dapat dibatalkan</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-sm font-bold text-red-600">Danger Zone</h2>
-            <p className="text-[10px] text-red-400 font-medium">Tindakan yang tidak dapat dibatalkan</p>
+
+          <div className="bg-red-50 rounded-[16px] border border-red-200 p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <Trash2 className="w-5 h-5 text-red-500" />
+              <p className="text-xs font-bold text-red-600">Hapus Akun Super Admin</p>
+            </div>
+            <p className="text-[10px] text-red-500/80 mb-4">
+              Sebagai Super Admin, menghapus akun ini akan menghilangkan akses seluruh sistem.
+              Pastikan sudah ada admin lain yang menggantikan. Tindakan ini tidak dapat dibatalkan.
+            </p>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <input
+                type="text"
+                value={deleteConfirm}
+                onChange={(e) => setDeleteConfirm(e.target.value)}
+                className="flex-1 px-4 py-3 bg-white border border-red-200 rounded-[12px] text-xs font-bold text-navy outline-none focus:border-red-400 transition-colors"
+                placeholder='Ketik "HAPUS" untuk konfirmasi'
+              />
+              <button
+                disabled={deleteConfirm !== 'HAPUS'}
+                className={`px-6 py-3 rounded-[16px] text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                  deleteConfirm === 'HAPUS'
+                    ? 'bg-red-500 text-white hover:bg-red-600 shadow-sm'
+                    : 'bg-red-100 text-red-300 cursor-not-allowed'
+                }`}
+              >
+                <Trash2 className="w-4 h-4" /> Hapus Akun
+              </button>
+            </div>
           </div>
         </div>
+      )}
 
-        <div className="bg-red-50 rounded-[16px] border border-red-200 p-5">
-          <div className="flex items-center gap-3 mb-3">
-            <Trash2 className="w-5 h-5 text-red-500" />
-            <p className="text-xs font-bold text-red-600">Hapus Akun Super Admin</p>
+      {/* ── SUPPORT CARD ── */}
+      <div className="bg-navy rounded-[24px] p-5 relative overflow-hidden shadow-lg shadow-navy/20 shrink-0">
+        <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-2xl pointer-events-none" />
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="w-10 h-10 rounded-[10px] bg-white/15 flex items-center justify-center shrink-0">
+            <LifeBuoy className="w-5 h-5 text-white" />
           </div>
-          <p className="text-[10px] text-red-500/80 mb-4">
-            ⚠️ Sebagai Super Admin, menghapus akun ini akan menghilangkan akses seluruh sistem. Pastikan sudah ada admin lain yang menggantikan. Tindakan ini tidak dapat dibatalkan.
-          </p>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <input
-              type="text"
-              value={deleteConfirm}
-              onChange={(e) => setDeleteConfirm(e.target.value)}
-              className="flex-1 px-4 py-3 bg-white border border-red-200 rounded-[12px] text-xs font-bold text-navy outline-none focus:border-red-400 transition-colors"
-              placeholder='Ketik "HAPUS" untuk konfirmasi'
-            />
-            <button
-              disabled={deleteConfirm !== 'HAPUS'}
-              className={`px-6 py-3 rounded-[16px] text-xs font-bold transition-all flex items-center justify-center gap-2 ${
-                deleteConfirm === 'HAPUS'
-                  ? 'bg-red-500 text-white hover:bg-red-600 shadow-sm'
-                  : 'bg-red-100 text-red-300 cursor-not-allowed'
-              }`}
-            >
-              <Trash2 className="w-4 h-4" /> Hapus Akun
-            </button>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-white">Butuh bantuan?</p>
+            <p className="text-[11px] font-semibold text-white/60 mt-0.5">
+              Tim support Go-PKL membalas dalam 24 jam.
+            </p>
           </div>
+          <button className="shrink-0 px-5 py-2.5 bg-white text-navy rounded-[16px] text-xs font-bold hover:bg-mist transition-colors">
+            Contact Support
+          </button>
         </div>
       </div>
     </div>
