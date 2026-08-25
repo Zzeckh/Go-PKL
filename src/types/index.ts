@@ -3,6 +3,7 @@ export type ActivePage =
   | 'logbook' 
   | 'maps' 
   | 'profile' 
+  | 'settings'
   | 'absensi' 
   | 'attendance' 
   | 'roster' 

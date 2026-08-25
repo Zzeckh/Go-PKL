@@ -2,7 +2,7 @@ import React from 'react';
 import { 
   LayoutDashboard, BookOpen, MapPin, LogOut, PanelLeftClose, PanelLeftOpen, 
   Camera, Activity, FileCheck, DownloadCloud, Package,
-  School, Users, ShieldCheck, Building2, Award
+  School, Users, ShieldCheck, Building2, Award, Settings as SettingsIcon
 } from 'lucide-react';
 import { ActivePage, UserRole } from '../types';
 
@@ -33,6 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'super-classes',    icon: School,          label: 'Kelola Kelas' },
         { id: 'super-users',      icon: Users,           label: 'Kelola Pengguna' },
         { id: 'super-companies',  icon: Building2,       label: 'Kelola Perusahaan' },
+        { id: 'settings',         icon: SettingsIcon,    label: 'Settings' },
       ];
     }
     if (userRole === 'hubin') {
@@ -40,6 +41,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
         { id: 'data',      icon: Package,         label: 'Kelola Data' },
         { id: 'pemetaan',  icon: MapPin,          label: 'Pemetaan' },
+        { id: 'settings',  icon: SettingsIcon,    label: 'Settings' },
       ];
     }
     if (userRole === 'mentor') {
@@ -48,7 +50,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'logbook',    icon: BookOpen,        label: 'Logbook' },
         { id: 'attendance', icon: Camera,          label: 'Kehadiran' },
         { id: 'roster',     icon: Award,           label: 'Penilaian' },
-        { id: 'perizinan',  icon: FileCheck,       label: 'Perizinan' }
+        { id: 'perizinan',  icon: FileCheck,       label: 'Perizinan' },
+        { id: 'settings',   icon: SettingsIcon,    label: 'Settings' }
       ];
     }
     if (userRole === 'teacher') {
@@ -57,7 +60,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'monitoring', icon: Activity,        label: 'Monitoring' },
         { id: 'attendance', icon: Camera,          label: 'Kehadiran' },
         { id: 'perizinan',  icon: FileCheck,       label: 'Perizinan' },
-        { id: 'rekap',      icon: DownloadCloud,   label: 'Rekap' }
+        { id: 'rekap',      icon: DownloadCloud,   label: 'Rekap' },
+        { id: 'settings',   icon: SettingsIcon,    label: 'Settings' }
       ];
     }
     return [
@@ -65,7 +69,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       { id: 'absensi',   icon: Camera,          label: 'Absensi' },
       { id: 'logbook',   icon: BookOpen,        label: 'Logbook' },
       { id: 'maps',      icon: MapPin,          label: 'Maps' },
-      { id: 'perizinan', icon: FileCheck,       label: 'Perizinan' }
+      { id: 'perizinan', icon: FileCheck,       label: 'Perizinan' },
+      { id: 'settings',  icon: SettingsIcon,    label: 'Settings' }
     ];
   };
 

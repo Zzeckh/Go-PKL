@@ -25,6 +25,7 @@ import { SuperClasses } from './components/SuperAdminClasses';
 import { SuperUsers } from './components/SuperAdminUsers';
 import { SuperCompanies } from './components/SuperAdminCompanies';
 import { StudentPerizinan } from './components/StudentPerizinan';
+import { Settings } from './components/Settings';
 
 export default function App() {
   const {
@@ -188,6 +189,9 @@ export default function App() {
           )}
           {activePage === 'profile' && (
             <Profile userRole={userRole} />
+          )}
+          {activePage === 'settings' && (
+            <Settings userRole={userRole} />
           )}
           {activePage === 'absensi' && userRole === 'intern' && (
             <Absensi 
