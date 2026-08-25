@@ -12,7 +12,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ progress, textInde
     <div className="flex-1 flex flex-col items-center justify-center h-full w-full bg-white/40 backdrop-blur-xl animate-in fade-in rounded-[24px] relative overflow-hidden">
       
       {/* Conceptual Background Map Grid */}
-      <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(var(--color-steel, #4478AE) 2px, transparent 2px)', backgroundSize: '30px 30px' }} />
+      <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(var(--color-steel, #152A42) 2px, transparent 2px)', backgroundSize: '30px 30px' }} />
 
       <div className="max-w-lg w-full p-8 flex flex-col items-center z-10">
         

@@ -292,7 +292,7 @@ const CompanyFormModal: React.FC<{
     }
     if (!circleRef.current) {
       circleRef.current = L.circle(latlng, {
-        radius, color: '#4478AE', weight: 2, fillColor: '#4478AE', fillOpacity: 0.1, dashArray: '4 4',
+        radius, color: '#152A42', weight: 2, fillColor: '#152A42', fillOpacity: 0.1, dashArray: '4 4',
       }).addTo(map);
     } else {
       circleRef.current.setLatLng(latlng);

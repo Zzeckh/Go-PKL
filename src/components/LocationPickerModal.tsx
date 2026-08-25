@@ -131,9 +131,9 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
     if (!circleRef.current) {
       circleRef.current = L.circle(latlng, {
         radius,
-        color: '#4478AE',
+        color: '#152A42',
         weight: 2,
-        fillColor: '#4478AE',
+        fillColor: '#152A42',
         fillOpacity: 0.1,
         dashArray: '4 4',
       }).addTo(map);

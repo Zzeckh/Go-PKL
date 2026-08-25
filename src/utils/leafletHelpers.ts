@@ -20,7 +20,7 @@ export const STREET_TILE = {
 
 /* ── Warna brand (sinkron dengan design system) ── */
 const NAVY = '#152A42';
-const STEEL = '#4A7A8C';
+const STEEL = '#152A42';
 
 /* ══════════════════════════════════════════════════════
    CUSTOM MARKER (divIcon — tanpa asset icon default)

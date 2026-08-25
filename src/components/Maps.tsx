@@ -179,9 +179,9 @@ export const Maps: React.FC<MapsProps> = () => {
       if (!companyCirclesRef.current.has(c.id)) {
         const circle = L.circle(latlng, {
           radius: c.radiusMeters ?? 500,
-          color: '#4478AE',
+          color: '#152A42',
           weight: 2,
-          fillColor: '#4478AE',
+          fillColor: '#152A42',
           fillOpacity: 0.08,
           dashArray: '4 4',
         }).addTo(map);
@@ -222,7 +222,7 @@ export const Maps: React.FC<MapsProps> = () => {
     ];
     if (!polylineRef.current) {
       polylineRef.current = L.polyline(latlngs, {
-        color: '#4478AE',
+        color: '#152A42',
         weight: 2,
         dashArray: '6 8',
         opacity: 0.8,
