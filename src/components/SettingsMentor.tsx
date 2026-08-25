@@ -83,8 +83,8 @@ export const SettingsMentor: React.FC = () => {
   };
 
   const themes = [
-    { id: 'light' as const, label: 'Terang', gradient: 'bg-gradient-to-br from-white to-mist', text: 'text-navy' },
-    { id: 'dark' as const, label: 'Gelap', gradient: 'bg-gradient-to-br from-navy to-black', text: 'text-white' },
+    { id: 'light' as const, label: 'Terang', gradientStyle: { background: 'linear-gradient(to bottom right, #ffffff, #DADEE8)' }, text: 'text-navy' },
+    { id: 'dark' as const, label: 'Gelap', gradientStyle: { background: 'linear-gradient(to bottom right, #152A42, #000000)' }, text: 'text-white' },
   ];
 
   return (
@@ -230,9 +230,10 @@ export const SettingsMentor: React.FC = () => {
                 <button
                   key={t.id}
                   onClick={() => handleThemeToggle(t.id)}
-                  className={`relative h-40 rounded-[16px] border-2 overflow-hidden transition-all text-left ${t.gradient} ${
+                  className={`relative h-40 rounded-[16px] border-2 overflow-hidden transition-all text-left ${
                     theme === t.id ? 'border-steel ring-2 ring-steel/30 shadow-md' : 'border-mist/60 hover:border-mist'
                   }`}
+                  style={t.gradientStyle}
                 >
                   {theme === t.id && (
                     <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-steel text-white flex items-center justify-center shadow-sm">
