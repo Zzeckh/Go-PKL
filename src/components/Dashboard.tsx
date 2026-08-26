@@ -232,7 +232,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
           <div className="w-full h-1.5 bg-mist/60 rounded-full overflow-hidden mt-2">
             <div 
-              className="h-full bg-steel rounded-full transition-all duration-1000 ease-out" 
+              className="h-full bg-white rounded-full transition-all duration-1000 ease-out" 
               style={{ width: `${pct}%` }} 
             />
           </div>
@@ -410,7 +410,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="mt-3 pt-3 border-t border-mist/60 shrink-0">
             <div className="w-full h-1.5 bg-mist/60 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-steel rounded-full transition-all duration-700" 
+                className="h-full bg-white rounded-full transition-all duration-700" 
                 style={{ width: `${todos.length ? (done / todos.length) * 100 : 0}%` }} 
               />
             </div>

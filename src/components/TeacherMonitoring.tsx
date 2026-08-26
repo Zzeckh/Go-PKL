@@ -151,7 +151,7 @@ export const TeacherMonitoring: React.FC = () => {
                         <div className="flex items-center gap-2.5 mt-2.5">
                           <div className="flex-1 h-1.5 bg-mist/60 rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-steel rounded-full transition-all"
+                              className="h-full bg-white rounded-full transition-all"
                               style={{ width: `${Math.min(pct, 100)}%` }}
                             />
                           </div>

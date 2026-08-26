@@ -252,7 +252,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                         </div>
                         <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-steel rounded-full transition-all duration-700"
+                            className="h-full bg-white rounded-full transition-all duration-700"
                             style={{ width: `${totalUsers ? Math.round((r.value / totalUsers) * 100) : 0}%` }}
                           />
                         </div>

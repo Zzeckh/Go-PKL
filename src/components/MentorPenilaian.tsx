@@ -162,7 +162,7 @@ export const MentorPenilaian: React.FC = () => {
                     <span className="text-[10px] font-bold text-navy/50 uppercase tracking-wide shrink-0">Hadir</span>
                     <div className="flex-1 h-1.5 bg-mist/60 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-steel rounded-full transition-all"
+                        className="h-full bg-white rounded-full transition-all"
                         style={{ width: `${Math.min(student.kehadiran || 0, 100)}%` }}
                       />
                     </div>
