@@ -33,7 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'super-classes',    icon: School,          label: 'Kelola Kelas' },
         { id: 'super-users',      icon: Users,           label: 'Kelola Pengguna' },
         { id: 'super-companies',  icon: Building2,       label: 'Kelola Perusahaan' },
-        { id: 'settings',         icon: SettingsIcon,    label: 'Settings' },
+        { id: 'settings',         icon: SettingsIcon,    label: 'Pengaturan' },
       ];
     }
     if (userRole === 'hubin') {
@@ -41,7 +41,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
         { id: 'data',      icon: Package,         label: 'Kelola Data' },
         { id: 'pemetaan',  icon: MapPin,          label: 'Pemetaan' },
-        { id: 'settings',  icon: SettingsIcon,    label: 'Settings' },
+        { id: 'settings',  icon: SettingsIcon,    label: 'Pengaturan' },
       ];
     }
     if (userRole === 'mentor') {
@@ -51,7 +51,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'attendance', icon: Camera,          label: 'Kehadiran' },
         { id: 'roster',     icon: Award,           label: 'Penilaian' },
         { id: 'perizinan',  icon: FileCheck,       label: 'Perizinan' },
-        { id: 'settings',   icon: SettingsIcon,    label: 'Settings' }
+        { id: 'settings',   icon: SettingsIcon,    label: 'Pengaturan' }
       ];
     }
     if (userRole === 'teacher') {
@@ -61,16 +61,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'attendance', icon: Camera,          label: 'Kehadiran' },
         { id: 'perizinan',  icon: FileCheck,       label: 'Perizinan' },
         { id: 'rekap',      icon: DownloadCloud,   label: 'Rekap' },
-        { id: 'settings',   icon: SettingsIcon,    label: 'Settings' }
+        { id: 'settings',   icon: SettingsIcon,    label: 'Pengaturan' }
       ];
     }
     return [
-      { id: 'dashboard', icon: LayoutDashboard, label: 'Home' },
+      { id: 'dashboard', icon: LayoutDashboard, label: 'Beranda' },
       { id: 'absensi',   icon: Camera,          label: 'Absensi' },
       { id: 'logbook',   icon: BookOpen,        label: 'Logbook' },
-      { id: 'maps',      icon: MapPin,          label: 'Maps' },
+      { id: 'maps',      icon: MapPin,          label: 'Peta' },
       { id: 'perizinan', icon: FileCheck,       label: 'Perizinan' },
-      { id: 'settings',  icon: SettingsIcon,    label: 'Settings' }
+      { id: 'settings',  icon: SettingsIcon,    label: 'Pengaturan' }
     ];
   };
 
@@ -195,7 +195,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {collapsed ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
             </div>
             <span className={`overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] whitespace-nowrap ${collapsed ? 'max-w-0 opacity-0' : 'max-w-[160px] opacity-100'}`}>
-              Collapse
+              Tutup Panel
             </span>
           </button>
         </div>

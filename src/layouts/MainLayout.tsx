@@ -28,8 +28,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       case 'logbook':          return 'Logbook PKL';
       case 'absensi':          return 'Absensi Harian';
       case 'maps':             return 'Lokasi & Maps';
-      case 'profile':          return 'Profile';
-      case 'settings':         return 'Settings';
+      case 'profile':          return 'Profil';
+      case 'settings':         return 'Pengaturan';
       case 'monitoring':       return 'Monitoring PKL';
       case 'attendance':       return 'Kehadiran Siswa';
       case 'roster':           return 'Penilaian Siswa';

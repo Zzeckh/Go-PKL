@@ -33,7 +33,7 @@ export const Header: React.FC<HeaderProps> = ({ title, onLogout, userName, onPro
           <Search className="w-4 h-4 text-steel shrink-0" />
           <input
             type="text"
-            placeholder="Search activities..."
+            placeholder="Cari aktivitas..."
             className="bg-transparent focus:outline-none w-full text-navy placeholder:text-navy/40"
           />
         </div>
@@ -41,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({ title, onLogout, userName, onPro
         <button 
           onClick={toggleTheme}
           className="w-10 h-10 rounded-full bg-white/60 border border-mist flex items-center justify-center text-navy/60 hover:bg-mist hover:text-navy transition-all shadow-sm"
-          aria-label="Toggle theme"
+          aria-label="Ganti tema"
         >
           {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
@@ -49,7 +49,7 @@ export const Header: React.FC<HeaderProps> = ({ title, onLogout, userName, onPro
         <button
           onClick={onProfileClick}
           className="md:hidden w-10 h-10 rounded-full bg-navy text-white flex items-center justify-center font-bold text-sm shadow-md shadow-steel/40 hover:opacity-90 transition-all"
-          aria-label="Profile"
+          aria-label="Profil"
         >
           {userName ? userName.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
         </button>
@@ -59,7 +59,7 @@ export const Header: React.FC<HeaderProps> = ({ title, onLogout, userName, onPro
           className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 border border-mist text-navy/60 hover:bg-navy hover:text-white hover:border-navy transition-all shadow-sm text-sm font-medium"
         >
           <LogOut className="w-4 h-4" />
-          <span>Logout</span>
+          <span>Keluar</span>
         </button>
       </div>
     </header>

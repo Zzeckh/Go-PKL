@@ -112,10 +112,10 @@ export const SettingsSuperAdmin: React.FC = () => {
   };
 
   const tabs: { key: TabKey; label: string; icon: React.ElementType }[] = [
-    { key: 'account', label: 'Account', icon: User },
-    { key: 'appearance', label: 'Appearance', icon: Palette },
-    { key: 'security', label: 'Privacy & Security', icon: Shield },
-    { key: 'danger', label: 'Danger Zone', icon: AlertTriangle },
+    { key: 'account', label: 'Akun', icon: User },
+    { key: 'appearance', label: 'Tampilan', icon: Palette },
+    { key: 'security', label: 'Privasi & Keamanan', icon: Shield },
+    { key: 'danger', label: 'Zona Bahaya', icon: AlertTriangle },
   ];
 
   /* ── Search: lompat ke tab yang cocok ── */
@@ -193,7 +193,7 @@ export const SettingsSuperAdmin: React.FC = () => {
             type="text"
             value={search}
             onChange={e => handleSearch(e.target.value)}
-            placeholder="Search settings..."
+            placeholder="Cari pengaturan..."
             className="w-full bg-mist/40 border border-mist rounded-[24px] pl-10 pr-4 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
           />
         </div>
@@ -207,7 +207,7 @@ export const SettingsSuperAdmin: React.FC = () => {
               <User className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-navy">Account</h2>
+              <h2 className="text-sm font-bold text-navy">Akun</h2>
               <p className="text-[10px] text-navy/50 font-medium">Profil & informasi akun</p>
             </div>
           </div>
@@ -264,7 +264,7 @@ export const SettingsSuperAdmin: React.FC = () => {
                 <Palette className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-sm font-bold text-navy">Profile Theme</h2>
+                <h2 className="text-sm font-bold text-navy">Tema Profil</h2>
                 <p className="text-[10px] text-navy/50 font-medium">Theme tersimpan otomatis & ter-apply di semua halaman</p>
               </div>
             </div>
@@ -297,7 +297,7 @@ export const SettingsSuperAdmin: React.FC = () => {
                 <Monitor className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-sm font-bold text-navy">Display Options</h2>
+                <h2 className="text-sm font-bold text-navy">Opsi Tampilan</h2>
                 <p className="text-[10px] text-navy/50 font-medium">Atur kenyamanan tampilan dashboard</p>
               </div>
             </div>
@@ -433,7 +433,7 @@ export const SettingsSuperAdmin: React.FC = () => {
                 disabled={passwordLoading}
                 className="mt-2 w-full sm:w-auto px-6 py-3 bg-navy text-white rounded-[16px] text-xs font-bold hover:bg-navy/90 transition-colors shadow-md shadow-navy/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {passwordLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />} {passwordLoading ? 'Menyimpan...' : 'Update Password'}
+                {passwordLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />} {passwordLoading ? 'Menyimpan...' : 'Perbarui Password'}
               </button>
             </div>
           </div>

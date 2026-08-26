@@ -334,12 +334,12 @@ const AuthForm = ({
           Go
         </div>
         <h2 className="text-3xl font-extrabold text-navy tracking-tight">
-          {isLogin ? 'Welcome back' : 'Create an account'}
+          {isLogin ? 'Selamat Datang Kembali' : 'Buat Akun Baru'}
         </h2>
         <p className="text-sm text-navy/60 mt-2 font-medium">
           {isLogin
-            ? 'Enter your credentials to access your dashboard'
-            : 'Register using your official school/company email'}
+            ? 'Masukkan kredensial Anda untuk mengakses dashboard'
+            : 'Daftar menggunakan email resmi sekolah/perusahaan'}
         </p>
       </div>
 
@@ -353,7 +353,7 @@ const AuthForm = ({
           <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-bottom-2">
             <div>
               <label className="block text-xs uppercase tracking-wider font-bold text-navy/60 mb-1.5">
-                Full Name
+                Nama Lengkap
               </label>
               <input
                 value={name}
@@ -389,9 +389,8 @@ const AuthForm = ({
           </div>
         )}
 
-        <div>
-          <label className="block text-xs uppercase tracking-wider font-bold text-navy/60 mb-1.5">
-            Email address
+        <div>              <label className="block text-xs uppercase tracking-wider font-bold text-navy/60 mb-1.5">
+            Alamat Email
           </label>
           <input
             value={email}
@@ -410,7 +409,7 @@ const AuthForm = ({
             </label>
             {isLogin && (
               <a href="#" className="text-xs font-bold text-steel hover:text-steel/70 underline transition-colors">
-                Forgot password?
+                Lupa kata sandi?
               </a>
             )}
           </div>
@@ -442,20 +441,20 @@ const AuthForm = ({
             <Loader2 className="w-5 h-5 animate-spin" />
           ) : (
             <>
-              <span>{isLogin ? 'Sign In' : 'Create Account'}</span>
+              <span>{isLogin ? 'Masuk' : 'Buat Akun'}</span>
               <ArrowRight className="w-4 h-4" />
             </>
           )}
         </button>
 
         <p className="text-center text-xs text-navy/60 pt-4 font-medium">
-          {isLogin ? "Don't have an account? " : 'Already have an account? '}
+          {isLogin ? 'Belum punya akun? ' : 'Sudah punya akun? '}
           <button
             type="button"
             onClick={onSwitch}
             className="font-extrabold text-steel hover:text-steel/70 underline transition-colors"
           >
-            {isLogin ? 'Sign up' : 'Sign in'}
+            {isLogin ? 'Daftar' : 'Masuk'}
           </button>
         </p>
       </form>
@@ -482,10 +481,10 @@ const MobileForm = ({
         </div>
         <div>
           <div className="font-extrabold text-navy text-xl tracking-tight leading-tight">
-            {isLogin ? 'Welcome back' : 'Create account'}
+            {isLogin ? 'Selamat Datang Kembali' : 'Buat Akun'}
           </div>
           <div className="text-xs text-navy/60 font-medium">
-            {isLogin ? 'Sign in to your Go-PKL portal' : 'Register with your institution email'}
+            {isLogin ? 'Masuk ke portal Go-PKL Anda' : 'Daftar dengan email institusi Anda'}
           </div>
         </div>
       </div>
@@ -500,7 +499,7 @@ const MobileForm = ({
           <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2">
             <div>
               <label className="block text-xs uppercase tracking-wider font-bold text-navy/50 mb-1.5">
-                Full Name
+                Nama Lengkap
               </label>
               <input
                 value={name}
@@ -557,7 +556,7 @@ const MobileForm = ({
             </label>
             {isLogin && (
               <a href="#" className="text-xs font-bold text-steel underline transition-colors">
-                Forgot?
+                Lupa?
               </a>
             )}
           </div>
@@ -589,20 +588,20 @@ const MobileForm = ({
             <Loader2 className="w-5 h-5 animate-spin" />
           ) : (
             <>
-              <span>{isLogin ? 'Sign In' : 'Create Account'}</span>
+              <span>{isLogin ? 'Masuk' : 'Buat Akun'}</span>
               <ArrowRight className="w-4 h-4" />
             </>
           )}
         </button>
 
         <p className="text-center text-sm text-navy/60 pt-2 font-medium pb-8">
-          {isLogin ? "Don't have an account? " : 'Already have an account? '}
+          {isLogin ? 'Belum punya akun? ' : 'Sudah punya akun? '}
           <button
             type="button"
             onClick={onSwitch}
             className="font-extrabold text-steel underline"
           >
-            {isLogin ? 'Sign up' : 'Sign in'}
+            {isLogin ? 'Daftar' : 'Masuk'}
           </button>
         </p>
       </form>
@@ -615,12 +614,12 @@ const DecorativeGraphic = ({ mode }: { mode: 'login' | 'register' }) => (
     <div className="relative z-10 space-y-4">
       <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-white border border-white/20 shadow-sm">
         <Sparkles className="w-3.5 h-3.5 text-white" />
-        {mode === 'login' ? 'Integrated PKL Portal' : 'Secure Registration'}
+        {mode === 'login' ? 'Portal PKL Terintegrasi' : 'Pendaftaran Aman'}
       </div>
       <h3 className="text-4xl font-extrabold text-white tracking-tight leading-tight max-w-sm">
         {mode === 'login'
-          ? 'Manage your internship activities in one place.'
-          : 'Start your professional journey with Go-PKL.'}
+          ? 'Kelola aktivitas PKL Anda dalam satu tempat.'
+          : 'Mulai perjalanan profesional Anda dengan Go-PKL.'}
       </h3>
     </div>
 
@@ -633,19 +632,19 @@ const DecorativeGraphic = ({ mode }: { mode: 'login' | 'register' }) => (
                 <MapPin className="w-5 h-5 text-white" />
               </div>
               <div>
-                <div className="text-sm font-bold text-white">Geofence Check-in</div>
+                <div className="text-sm font-bold text-white">Check-in Geofence</div>
                 <div className="text-xs text-white/70">Tokopedia Tower</div>
               </div>
             </div>
             <div className="flex items-center gap-2 text-xs font-bold text-white">
-              <CheckCircle2 className="w-4 h-4" /> Validated location
+              <CheckCircle2 className="w-4 h-4" /> Lokasi terverifikasi
             </div>
           </div>
           <div className="bg-white/15 backdrop-blur-md p-4 rounded-[24px] border border-white/20 shadow-xl">
             <div className="flex justify-between items-center mb-3">
-              <div className="text-sm font-bold text-white">Daily Logbook</div>
+              <div className="text-sm font-bold text-white">Logbook Harian</div>
               <span className="text-[10px] bg-white/20 text-white px-2.5 py-1 rounded-full font-bold">
-                Approved
+                Disetujui
               </span>
             </div>
             <div className="h-2 bg-white/10 rounded-full w-3/4 mb-2"></div>
@@ -660,8 +659,8 @@ const DecorativeGraphic = ({ mode }: { mode: 'login' | 'register' }) => (
                 <Users className="w-5 h-5 text-white" />
               </div>
               <div>
-                <div className="text-sm font-bold text-white">Mentorship Pairing</div>
-                <div className="text-xs text-white/70">Connect with industry experts</div>
+                <div className="text-sm font-bold text-white">Pemagangan Mentoring</div>
+                <div className="text-xs text-white/70">Terhubung dengan ahli industri</div>
               </div>
             </div>
             <div className="flex items-center -space-x-2">
@@ -682,16 +681,16 @@ const DecorativeGraphic = ({ mode }: { mode: 'login' | 'register' }) => (
             <div className="flex justify-between items-center mb-3">
               <div className="flex items-center gap-2">
                 <LineChart className="w-4 h-4 text-white/80" />
-                <div className="text-sm font-bold text-white">Skill Progress</div>
+                <div className="text-sm font-bold text-white">Progres Keahlian</div>
               </div>
               <span className="text-[10px] bg-white/20 text-white px-2.5 py-1 rounded-full font-bold">
-                Level Up
+                Naik Level
               </span>
             </div>
             <div className="w-full bg-white/10 rounded-full h-1.5 mb-1">
               <div className="bg-white h-1.5 rounded-full" style={{ width: '75%' }}></div>
             </div>
-            <div className="text-[9px] text-white/70 text-right">75% to Next Milestone</div>
+            <div className="text-[9px] text-white/70 text-right">75% menuju Pencapaian Berikutnya</div>
           </div>
         </>
       )}

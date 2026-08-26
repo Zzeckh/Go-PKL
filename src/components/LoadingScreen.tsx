@@ -30,8 +30,8 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ progress, textInde
 
         <div className="w-full space-y-6 text-center bg-white/60 backdrop-blur-md p-6 rounded-[24px] border border-white shadow-sm">
           <div className="space-y-1">
-             <h2 className="text-2xl font-bold text-black/80 tracking-tight">Crextio System Boot</h2>
-             <p className="text-[10px] font-bold text-black/50 uppercase tracking-widest">Initialization Phase</p>
+             <h2 className="text-2xl font-bold text-black/80 tracking-tight">Sistem Go-PKL Dimulai</h2>
+             <p className="text-[10px] font-bold text-black/50 uppercase tracking-widest">Fase Inisialisasi</p>
           </div>
           
           <div className="space-y-3 w-full mt-4">

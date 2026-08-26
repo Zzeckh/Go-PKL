@@ -64,10 +64,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   /* ── Tasks ── */
   const [todos, setTodos] = useState([
-    { id: 1, text: 'Interview Session', done: true },
-    { id: 2, text: 'Team Meeting', done: true },
-    { id: 3, text: 'Project Update', done: false },
-    { id: 4, text: 'Discuss Q3 Goals', done: false },
+    { id: 1, text: 'Sesi Wawancara', done: true },
+    { id: 2, text: 'Rapat Tim', done: true },
+    { id: 3, text: 'Pembaruan Proyek', done: false },
+    { id: 4, text: 'Diskusi Tujuan Q3', done: false },
   ]);
   const [editing, setEditing] = useState(false);
   const [newTodo, setNewTodo] = useState('');
@@ -327,7 +327,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-widest text-navy/60 leading-none">Onboarding</p>
-                <p className="text-sm font-bold text-navy leading-tight mt-0.5">Tasks</p>
+                <p className="text-sm font-bold text-navy leading-tight mt-0.5">Tugas</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -340,7 +340,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               )}
               <button
                 onClick={() => setEditing(!editing)}
-                title={editing ? 'Selesai edit' : 'Edit tasks'}
+                title={editing ? 'Selesai edit' : 'Edit tugas'}
                 className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${editing ? 'bg-steel text-white shadow-md shadow-steel/30' : 'bg-mist/60 text-navy/60 hover:bg-mist'}`}
               >
                 {editing ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
