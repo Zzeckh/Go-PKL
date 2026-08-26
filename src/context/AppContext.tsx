@@ -121,6 +121,8 @@ interface AppContextType {
   addCompany: (data: Partial<PerusahaanItem>) => Promise<any>;
   updateCompany: (id: number, data: Partial<PerusahaanItem>) => Promise<any>;
   deleteCompany: (id: number) => Promise<any>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  deleteAccount: (password: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -499,6 +501,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return res;
   };
 
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    await api.post('/api/auth/change-password', { currentPassword, newPassword });
+  };
+
+  const deleteAccount = async (password: string) => {
+    await api.post('/api/auth/delete-account', { password });
+    logout();
+  };
+
   const refreshData = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -756,6 +767,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         loadSuperStats, loadSuperClasses, createClass, deleteClass, loadClassStudents,
         loadSuperUsers, toggleUser, deleteUser, updateUserRole,
         loadCompanies, addCompany, updateCompany, deleteCompany,
+        changePassword, deleteAccount,
       }}
     >
       {children}

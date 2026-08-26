@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import {
   Palette, Monitor, Eye, EyeOff, Lock, AlertTriangle, Trash2,
-  Check, Shield, KeyRound, Smartphone, Search, RotateCcw, User,
-  Bell, Sparkles, Building2, Users, LifeBuoy
+  Check, Shield, KeyRound, Search, RotateCcw, User,
+  Bell, Sparkles, Building2, Users, LifeBuoy, Loader2
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -13,7 +13,7 @@ type TabKey = 'account' | 'appearance' | 'security' | 'danger';
    Navigasi horizontal di atas, bukan sidebar
    ══════════════════════════════════════════════════════ */
 export const SettingsMentor: React.FC = () => {
-  const { userName, userCompanyName, siswaList } = useApp();
+  const { userName, userCompanyName, siswaList, changePassword, deleteAccount } = useApp();
 
   const [activeTab, setActiveTab] = useState<TabKey>('account');
   const [search, setSearch] = useState('');
@@ -31,7 +31,12 @@ export const SettingsMentor: React.FC = () => {
   /* ── Security state ── */
   const [showPassword, setShowPassword] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ current: '', newPass: '', confirm: '' });
+  const [passwordMsg, setPasswordMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [passwordLoading, setPasswordLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteMsg, setDeleteMsg] = useState<{ type: 'error'; text: string } | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const applyTheme = (t: 'light' | 'dark') => {
     if (t === 'dark') document.documentElement.classList.add('dark');
@@ -65,6 +70,45 @@ export const SettingsMentor: React.FC = () => {
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPasswordForm({ ...passwordForm, [e.target.name]: e.target.value });
+  };
+
+  const handlePasswordSubmit = async () => {
+    setPasswordMsg(null);
+    if (!passwordForm.current || !passwordForm.newPass || !passwordForm.confirm) {
+      setPasswordMsg({ type: 'error', text: 'Semua field wajib diisi' });
+      return;
+    }
+    if (passwordForm.newPass.length < 6) {
+      setPasswordMsg({ type: 'error', text: 'Password baru minimal 6 karakter' });
+      return;
+    }
+    if (passwordForm.newPass !== passwordForm.confirm) {
+      setPasswordMsg({ type: 'error', text: 'Konfirmasi password tidak cocok' });
+      return;
+    }
+    setPasswordLoading(true);
+    try {
+      await changePassword(passwordForm.current, passwordForm.newPass);
+      setPasswordMsg({ type: 'success', text: 'Password berhasil diubah!' });
+      setPasswordForm({ current: '', newPass: '', confirm: '' });
+    } catch (err: any) {
+      setPasswordMsg({ type: 'error', text: err?.message || 'Gagal mengubah password' });
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleteMsg(null);
+    if (deleteConfirm !== 'HAPUS' || !deletePassword) return;
+    setDeleteLoading(true);
+    try {
+      await deleteAccount(deletePassword);
+    } catch (err: any) {
+      setDeleteMsg({ type: 'error', text: err?.message || 'Gagal menghapus akun' });
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   const tabs: { key: TabKey; label: string; icon: React.ElementType }[] = [
@@ -335,6 +379,12 @@ export const SettingsMentor: React.FC = () => {
               </div>
             </div>
 
+            {passwordMsg && (
+              <div className={`mb-4 px-4 py-3 rounded-[12px] text-xs font-bold ${passwordMsg.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                {passwordMsg.text}
+              </div>
+            )}
+
             <div className="flex flex-col gap-3">
               <div>
                 <label className="text-[10px] font-bold text-navy/50 uppercase tracking-wide mb-1 block">Password Saat Ini</label>
@@ -378,26 +428,12 @@ export const SettingsMentor: React.FC = () => {
                   placeholder="Ulangi password baru"
                 />
               </div>
-              <button className="mt-2 w-full sm:w-auto px-6 py-3 bg-navy text-white rounded-[16px] text-xs font-bold hover:bg-navy/90 transition-colors shadow-md shadow-navy/20 flex items-center justify-center gap-2">
-                <Lock className="w-4 h-4" /> Update Password
-              </button>
-            </div>
-          </div>
-
-          {/* Sessions */}
-          <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center shrink-0">
-                  <Smartphone className="w-4 h-4 text-white" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-navy">Sesi Aktif</p>
-                  <p className="text-[10px] text-navy/50">1 perangkat aktif saat ini</p>
-                </div>
-              </div>
-              <button className="px-4 py-2 bg-white border border-mist/60 rounded-[12px] text-[10px] font-bold text-navy hover:bg-mist/30 transition-colors shadow-sm">
-                Keluar Semua
+              <button
+                onClick={handlePasswordSubmit}
+                disabled={passwordLoading}
+                className="mt-2 w-full sm:w-auto px-6 py-3 bg-navy text-white rounded-[16px] text-xs font-bold hover:bg-navy/90 transition-colors shadow-md shadow-navy/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {passwordLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />} {passwordLoading ? 'Menyimpan...' : 'Update Password'}
               </button>
             </div>
           </div>
@@ -425,25 +461,46 @@ export const SettingsMentor: React.FC = () => {
             <p className="text-[10px] text-red-500/80 mb-4">
               Setelah akun Anda dihapus, semua data bimbingan dan penilaian akan hilang secara permanen. Tindakan ini tidak dapat dibatalkan.
             </p>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <input
-                type="text"
-                value={deleteConfirm}
-                onChange={(e) => setDeleteConfirm(e.target.value)}
-                className="flex-1 px-4 py-3 bg-white border border-red-200 rounded-[12px] text-xs font-bold text-navy outline-none focus:border-red-400 transition-colors"
-                placeholder='Ketik "HAPUS" untuk konfirmasi'
-              />
-              <button
-                disabled={deleteConfirm !== 'HAPUS'}
-                className={`px-6 py-3 rounded-[16px] text-xs font-bold transition-all flex items-center justify-center gap-2 ${
-                  deleteConfirm === 'HAPUS'
-                    ? 'bg-red-500 text-white hover:bg-red-600 shadow-sm'
-                    : 'bg-red-100 text-red-300 cursor-not-allowed'
-                }`}
-              >
-                <Trash2 className="w-4 h-4" /> Hapus Akun
-              </button>
+
+            {deleteMsg && (
+              <div className="mb-4 px-4 py-3 rounded-[12px] text-xs font-bold bg-red-100 text-red-700 border border-red-200">
+                {deleteMsg.text}
+              </div>
+            )}
+
+            <div className="flex flex-col gap-3">
+              <div>
+                <label className="text-[10px] font-bold text-red-500 uppercase tracking-wide mb-1 block">Password</label>
+                <input
+                  type="password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  className="w-full px-4 py-3 bg-white border border-red-200 rounded-[12px] text-xs font-bold text-navy outline-none focus:border-red-400 transition-colors placeholder:text-navy/40"
+                  placeholder="Masukkan password untuk konfirmasi"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-red-500 uppercase tracking-wide mb-1 block">Ketik HAPUS</label>
+                <input
+                  type="text"
+                  value={deleteConfirm}
+                  onChange={(e) => setDeleteConfirm(e.target.value)}
+                  className="w-full px-4 py-3 bg-white border border-red-200 rounded-[12px] text-xs font-bold text-navy outline-none focus:border-red-400 transition-colors"
+                  placeholder='Ketik "HAPUS" untuk konfirmasi'
+                />
+              </div>
             </div>
+            <button
+              disabled={deleteConfirm !== 'HAPUS' || !deletePassword || deleteLoading}
+              onClick={handleDeleteAccount}
+              className={`mt-4 w-full px-6 py-3 rounded-[16px] text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                deleteConfirm === 'HAPUS' && deletePassword && !deleteLoading
+                  ? 'bg-red-500 text-white hover:bg-red-600 shadow-sm'
+                  : 'bg-red-100 text-red-300 cursor-not-allowed'
+              }`}
+            >
+              {deleteLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} {deleteLoading ? 'Menghapus...' : 'Hapus Akun'}
+            </button>
           </div>
         </div>
       )}
