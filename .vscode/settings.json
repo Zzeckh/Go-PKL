@@ -1,0 +1,5 @@
+{
+  "css.customData": ["./src/css-custom-data.json"],
+  "scss.customData": ["./src/css-custom-data.json"],
+  "less.customData": ["./src/css-custom-data.json"]
+}
