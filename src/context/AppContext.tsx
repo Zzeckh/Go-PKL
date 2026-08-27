@@ -117,6 +117,7 @@ interface AppContextType {
   toggleUser: (id: number) => Promise<any>;
   deleteUser: (id: number) => Promise<any>;
   updateUserRole: (id: number, role: string) => Promise<any>;
+  resetPassword: (id: number) => Promise<{ id: number; name: string; newPassword: string }>;
   loadCompanies: () => Promise<boolean>;
   addCompany: (data: Partial<PerusahaanItem>) => Promise<any>;
   updateCompany: (id: number, data: Partial<PerusahaanItem>) => Promise<any>;
@@ -455,6 +456,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return res;
   };
 
+  const resetPassword = async (id: number) => {
+    const res = await api.post(`/api/super-admin/users/${id}/reset-password`) as { id: number; name: string; newPassword: string };
+    return res;
+  };
+
   const loadCompanies = useCallback(async (): Promise<boolean> => {
     if (!localStorage.getItem('pkl_token')) return false;
     try {
@@ -765,7 +771,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         createPermission, submitEvaluation, addSiswa, addPerusahaan, updateSiswaMapping, updateCompanyLocation,
         login, register, logout, refreshData,
         loadSuperStats, loadSuperClasses, createClass, deleteClass, loadClassStudents,
-        loadSuperUsers, toggleUser, deleteUser, updateUserRole,
+        loadSuperUsers, toggleUser, deleteUser, updateUserRole, resetPassword,
         loadCompanies, addCompany, updateCompany, deleteCompany,
         changePassword, deleteAccount,
       }}
