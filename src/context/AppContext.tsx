@@ -38,6 +38,7 @@ export interface MentorItem {
 export interface PerizinanItem {
   id: number;
   name: string;
+  userId?: number;
   company: string;
   date: string;
   type: 'Sakit' | 'Izin';
@@ -94,6 +95,7 @@ interface AppContextType {
   superUsers: any[];
   addLogEntry: (entry: Omit<LogEntry, 'id' | 'date' | 'status'>) => Promise<void>;
   updateLogStatus: (id: string, status: 'approved' | 'rejected' | 'revision', feedback?: string) => Promise<void>;
+  updateLogEntry: (id: string, data: { title: string; description: string; hours: number; category: string }) => Promise<void>;
   checkInAttendance: (imageUrl?: string, latitude?: number, longitude?: number) => Promise<void>;
   updatePerizinanStatus: (id: number, status: 'approved' | 'rejected', rejectReason?: string) => Promise<void>;
   createPermission: (data: { type: string; reason: string; date: string; file?: File | null; attachmentUrl?: string }) => Promise<any>;
@@ -119,6 +121,8 @@ interface AppContextType {
   addCompany: (data: Partial<PerusahaanItem>) => Promise<any>;
   updateCompany: (id: number, data: Partial<PerusahaanItem>) => Promise<any>;
   deleteCompany: (id: number) => Promise<any>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  deleteAccount: (password: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -216,8 +220,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const loadLogEntries = async () => {
     try {
       startLoading('logbook');
-      const response = await api.get('/api/logbook') as { data: any[] };
-      const mapped = response.data.map((item: any): LogEntry => ({
+      const response = await api.get('/api/logbook') as any[];
+      const mapped = response.map((item: any): LogEntry => ({
         id: `LOG-${item.id}`,
         date: formatDate(item.date),
         title: item.activityTitle,
@@ -226,6 +230,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         category: item.category || 'PKL Activity',
         status: item.status === 'approved' ? 'approved' : item.status === 'rejected' ? 'revision' : 'pending',
         feedback: item.feedback,
+        userId: item.user?.id,
+        userName: item.user?.name,
+        userClass: item.user?.class?.name,
       }));
       setLogEntries(mapped);
     } catch (error: any) {
@@ -250,6 +257,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           : item.status === 'izin' ? 'Izin'
           : item.status === 'alpha' ? 'Alpha'
           : 'Sakit',
+        userId: item.user?.id || item.userId,
       }));
       setAttendances(mapped);
     } catch (error: any) {
@@ -332,6 +340,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const mapped = response.map((p: any): PerizinanItem => ({
         id: p.id,
         name: p.user?.name || 'Unknown',
+        userId: p.user?.id || p.userId,
         company: '-',
         date: formatDate(p.date),
         type: p.type === 'sakit' ? 'Sakit' : 'Izin',
@@ -492,6 +501,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return res;
   };
 
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    await api.post('/api/auth/change-password', { currentPassword, newPassword });
+  };
+
+  const deleteAccount = async (password: string) => {
+    await api.post('/api/auth/delete-account', { password });
+    logout();
+  };
+
   const refreshData = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -615,6 +633,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const updateLogEntry = async (id: string, data: { title: string; description: string; hours: number; category: string }) => {
+    try {
+      const logId = parseInt(id.replace('LOG-', ''));
+      await api.put(`/api/logbook/${logId}`, {
+        activity_title: data.title,
+        description: data.description,
+        hours: data.hours,
+        category: data.category,
+      });
+      await loadLogEntries();
+    } catch (error: any) {
+      throw new Error(error.message || 'Gagal update logbook');
+    }
+  };
+
   const checkInAttendance = async (_imageUrl?: string, latitude?: number, longitude?: number) => {
     try {
       await api.post('/api/absensi', {
@@ -728,12 +761,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isLoading, loadingResources,        siswaList, guruList, mentorList, perusahaanList,
         logEntries, attendances, perizinanList, mapLocations,
         superStats, superClasses, superUsers,
-        addLogEntry, updateLogStatus, checkInAttendance, updatePerizinanStatus,
+        addLogEntry, updateLogStatus, updateLogEntry, checkInAttendance, updatePerizinanStatus,
         createPermission, submitEvaluation, addSiswa, addPerusahaan, updateSiswaMapping, updateCompanyLocation,
         login, register, logout, refreshData,
         loadSuperStats, loadSuperClasses, createClass, deleteClass, loadClassStudents,
         loadSuperUsers, toggleUser, deleteUser, updateUserRole,
         loadCompanies, addCompany, updateCompany, deleteCompany,
+        changePassword, deleteAccount,
       }}
     >
       {children}

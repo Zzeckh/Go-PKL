@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { 
   Edit2, Check, Play, Pause, Square, Bell, MapPin, Clock, 
   BookOpen, UserCheck, Zap, CheckCircle2, ArrowRight, 
-  Target, Calendar, ChevronRight, Plus, X
+  Target, Calendar, ChevronRight, Plus, X, ShieldCheck, ShieldAlert
 } from 'lucide-react';
 import { LogEntry, AttendanceRecord } from '../types';
+import { useApp } from '../context/AppContext';
 
 interface DashboardProps {
   userName: string;
@@ -13,6 +14,7 @@ interface DashboardProps {
   onOpenLogbookModal: () => void;
   onCheckIn: () => void;
   onGoToProfile: () => void;
+  onNavigate?: (page: string) => void;
 }
 
 /* ── Indikator "Mode Edit" dengan dot pulse ── */
@@ -29,9 +31,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
   attendances, 
   onOpenLogbookModal,
   onCheckIn,
-  onGoToProfile 
+  onGoToProfile,
+  onNavigate
 }) => {
   const totalHadir = attendances.filter(a => a.status === 'Hadir').length;
+  const { perizinanList } = useApp();
+  const totalIzin = perizinanList.filter(p => p.status === 'approved').length;
+  const hasIzin = totalIzin > 0;
   const totalDays = 90;
   const pct = Math.min(100, Math.round((totalHadir / totalDays) * 100));
 
@@ -58,10 +64,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   /* ── Tasks ── */
   const [todos, setTodos] = useState([
-    { id: 1, text: 'Interview Session', done: true },
-    { id: 2, text: 'Team Meeting', done: true },
-    { id: 3, text: 'Project Update', done: false },
-    { id: 4, text: 'Discuss Q3 Goals', done: false },
+    { id: 1, text: 'Sesi Wawancara', done: true },
+    { id: 2, text: 'Rapat Tim', done: true },
+    { id: 3, text: 'Pembaruan Proyek', done: false },
+    { id: 4, text: 'Diskusi Tujuan Q3', done: false },
   ]);
   const [editing, setEditing] = useState(false);
   const [newTodo, setNewTodo] = useState('');
@@ -82,11 +88,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [editNotes, setEditNotes] = useState(false);
 
   const notifications = [
-    { id: 1, title: 'Logbook Disetujui', time: '10 menit yang lalu', unread: true },
-    { id: 2, title: 'Jadwal Meeting Pembimbing', time: '1 jam yang lalu', unread: true },
-    { id: 3, title: 'Pengumuman Libur Nasional', time: 'Kemarin', unread: false },
-    { id: 4, title: 'Tugas Baru: UI Design', time: 'Kemarin', unread: false },
-  ];
+    ...recentLogs.filter(log => log.status === 'approved' || log.status === 'revision').map((log) => ({
+      id: Number(log.id.replace('LOG-', '')),
+      title: log.status === 'approved' ? `Logbook Disetujui: ${log.title}` : `Logbook Revisi: ${log.title}`,
+      time: log.date,
+      unread: log.status === 'revision',
+      type: 'logbook' as const,
+    })),
+    ...perizinanList.filter(p => p.status === 'approved' || p.status === 'rejected').map((p) => ({
+      id: p.id + 10000,
+      title: p.status === 'approved' ? `Izin Disetujui: ${p.type} ${p.date}` : `Izin Ditolak: ${p.type} ${p.date}`,
+      time: p.date,
+      unread: p.status === 'rejected',
+      type: 'perizinan' as const,
+    })),
+  ].slice(0, 5);
 
   const getInitials = (name: string) => {
     if (!name) return 'U';
@@ -105,17 +121,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const checkedInToday = attendances.some(a => a.date === today);
 
   const todayIdx = (new Date().getDay() + 6) % 7;
-  const weekData = Array.from({ length: 7 }, (_, i) => {
+  const weekDates = Array.from({ length: 7 }, (_, i) => {
     const target = new Date();
     target.setDate(target.getDate() - (todayIdx - i));
-    const key = target.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    return target;
+  });
+  const weekData = weekDates.map((d) => {
+    const key = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     return attendances.some(a => a.date === key && a.status === 'Hadir') ? 1 : 0;
+  });
+  const weekLabels = weekDates.map(d => {
+    const day = d.getDate();
+    const month = d.getMonth() + 1;
+    return `${day}/${month}`;
   });
 
   const statusStyle = (s: string) =>
-    s === 'approved' ? 'bg-steel/15 text-steel'
+    s === 'approved' ? 'bg-steel text-white shadow-sm shadow-steel/30'
     : s === 'revision' ? 'bg-navy text-white'
-    : 'bg-mist text-navy/70';
+    : 'bg-white text-navy/70 border border-mist/60 shadow-sm';
   const statusLabel = (s: string) =>
     s === 'approved' ? 'Disetujui' : s === 'revision' ? 'Revisi' : 'Menunggu';
 
@@ -127,7 +151,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="flex items-center gap-3 min-w-0">
           <button 
             onClick={onGoToProfile}
-            className="w-12 h-12 rounded-2xl bg-navy text-white flex items-center justify-center font-bold text-lg shadow-md shadow-steel/40 shrink-0 hover:scale-105 transition-transform"
+            className="w-12 h-12 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-lg shadow-md shadow-steel/40 shrink-0 hover:scale-105 transition-transform"
           >
             {getInitials(userName)}
           </button>
@@ -170,9 +194,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
           <div className="relative z-10 flex items-center gap-3">
             <button
-              onClick={onCheckIn}
+              onClick={() => {
+                if (!checkedInToday) {
+                  onNavigate ? onNavigate('absensi') : onCheckIn();
+                }
+              }}
               disabled={checkedInToday}
-              className="flex-1 bg-white text-navy font-bold py-3.5 px-5 rounded-2xl flex items-center justify-center gap-2 hover:bg-shell transition-all shadow-lg shadow-navy/30 disabled:opacity-60 disabled:cursor-not-allowed group"
+              className="flex-1 bg-white text-navy font-bold py-3.5 px-5 rounded-[24px] flex items-center justify-center gap-2 hover:bg-shell transition-all shadow-lg shadow-navy/30 disabled:opacity-60 disabled:cursor-not-allowed group"
             >
               <Zap className="w-4 h-4 fill-current" />
               <span>{checkedInToday ? 'Sudah Absen' : 'Absen Sekarang'}</span>
@@ -180,7 +208,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </button>
             <button 
               onClick={onOpenLogbookModal}
-              className="w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-2xl flex items-center justify-center transition-all border border-white/20 shrink-0"
+              className="w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-[10px] flex items-center justify-center transition-all border border-white/20 shrink-0"
               title="Buka Logbook"
             >
               <BookOpen className="w-5 h-5" />
@@ -191,8 +219,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* 📊 Attendance */}
         <div className="c2 bg-white rounded-[24px] border border-mist/60 shadow-sm p-5 h-[210px] flex flex-col">
           <div className="flex items-center justify-between shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-mist/70 flex items-center justify-center">
-              <UserCheck className="w-5 h-5 text-steel" />
+            <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
+              <UserCheck className="w-4 h-4 text-white" />
             </div>
             <span className="text-xs font-bold text-navy/40 uppercase tracking-wider">Kehadiran</span>
           </div>
@@ -204,10 +232,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
           <div className="w-full h-1.5 bg-mist/60 rounded-full overflow-hidden mt-2">
             <div 
-              className="h-full bg-steel rounded-full transition-all duration-1000 ease-out" 
+              className="h-full bg-white rounded-full transition-all duration-1000 ease-out" 
               style={{ width: `${pct}%` }} 
             />
           </div>
+          {hasIzin && (
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#9CA3AF]" />
+              <span className="text-[10px] font-bold text-navy/40">{totalIzin} hari izin</span>
+            </div>
+          )}
 
           <div className="mt-auto pt-3">
             <div className="flex items-end gap-1 h-8">
@@ -220,8 +254,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
               ))}
             </div>
             <div className="flex gap-1 mt-1">
-              {['S', 'S', 'R', 'K', 'J', 'S', 'M'].map((d, i) => (
-                <span key={i} className={`flex-1 text-center text-[10px] font-bold ${i === todayIdx ? 'text-steel' : 'text-navy/30'}`}>
+              {weekLabels.map((d, i) => (
+                <span key={i} className={`flex-1 text-center text-[8px] md:text-[9px] font-bold ${i === todayIdx ? 'text-steel' : 'text-navy/30'}`}>
                   {d}
                 </span>
               ))}
@@ -284,7 +318,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* ── ROW 2 ── */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-4 flex-1 min-h-[260px]">
         
-        {/* ✓ Tasks — dengan Mode Edit + Indikator */}
+        {/* ✓ Tasks */}
         <div className={`c4 bg-white rounded-[24px] border shadow-sm p-5 flex flex-col min-h-0 transition-all ${editing ? 'border-steel/40 ring-2 ring-steel/20' : 'border-mist/60'}`}>
           <div className="flex items-center justify-between mb-4 shrink-0">
             <div className="flex items-center gap-2">
@@ -293,7 +327,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-widest text-navy/60 leading-none">Onboarding</p>
-                <p className="text-sm font-bold text-navy leading-tight mt-0.5">Tasks</p>
+                <p className="text-sm font-bold text-navy leading-tight mt-0.5">Tugas</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -306,7 +340,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               )}
               <button
                 onClick={() => setEditing(!editing)}
-                title={editing ? 'Selesai edit' : 'Edit tasks'}
+                title={editing ? 'Selesai edit' : 'Edit tugas'}
                 className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${editing ? 'bg-steel text-white shadow-md shadow-steel/30' : 'bg-mist/60 text-navy/60 hover:bg-mist'}`}
               >
                 {editing ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
@@ -331,7 +365,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <button
                       onClick={() => deleteTodo(todo.id)}
                       title="Hapus task"
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-navy/40 hover:bg-rose-50 hover:text-rose-600 transition-colors shrink-0"
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-navy/40 hover:bg-navy/5 hover:text-navy/70 transition-colors shrink-0"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -341,7 +375,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     onClick={() => setTodos(todos.map((t, idx) => idx === i ? { ...t, done: !t.done } : t))}
                     className="flex items-center gap-2.5 w-full text-left group min-w-0"
                   >
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 border-2 transition-all ${todo.done ? 'bg-steel border-steel' : 'border-navy/20 group-hover:border-steel/60'}`}>
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 border-2 transition-all ${todo.done ? 'bg-navy border-navy' : 'border-navy/20 group-hover:border-navy/60'}`}>
                       {todo.done && <Check className="w-3 h-3 text-white" />}
                     </div>
                     <span className={`text-sm font-semibold leading-tight transition-all truncate ${todo.done ? 'line-through text-navy/40' : 'text-navy'}`}>
@@ -352,7 +386,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
             ))}
 
-            {/* Input tambah task (hanya saat edit) */}
             {editing && (
               <div className="flex items-center gap-2 pt-1 shrink-0">
                 <input
@@ -377,7 +410,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="mt-3 pt-3 border-t border-mist/60 shrink-0">
             <div className="w-full h-1.5 bg-mist/60 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-steel rounded-full transition-all duration-700" 
+                className="h-full bg-white rounded-full transition-all duration-700" 
                 style={{ width: `${todos.length ? (done / todos.length) * 100 : 0}%` }} 
               />
             </div>
@@ -414,10 +447,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {notifications.map((notif) => (
                 <div 
                   key={notif.id} 
-                  className="flex gap-3 p-3 rounded-2xl hover:bg-white/60 transition-colors cursor-pointer group"
+                  className="flex gap-3 p-3 rounded-[24px] hover:bg-white/60 transition-colors cursor-pointer group"
                 >
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${notif.unread ? 'bg-steel text-white' : 'bg-mist/60 text-navy/40'}`}>
-                    {notif.unread ? <Bell className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+                  {/* ✅ FIX: kotak rounded-lg w-8 h-8 (seragam dengan semua chip ikon) */}
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${notif.unread ? 'bg-steel text-white' : 'bg-navy text-white'}`}>
+                    {notif.unread ? (
+                      (notif as any).type === 'perizinan' ? <ShieldAlert className="w-4 h-4" /> : <Bell className="w-4 h-4" />
+                    ) : (
+                      (notif as any).type === 'perizinan' ? <ShieldCheck className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0 flex flex-col justify-center">
                     <div className="flex items-center justify-between gap-2">
@@ -443,12 +481,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
 
-        {/* 📝 Notes — dengan Mode Edit + Indikator */}
+        {/* 📝 Notes */}
         <div className={`c5 bg-white/70 backdrop-blur-xl rounded-[24px] border shadow-sm flex flex-col min-h-0 transition-all ${editNotes ? 'border-steel/40 ring-2 ring-steel/20' : 'border-white'}`}>
           <div className="flex items-center justify-between p-5 pb-3 shrink-0">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-mist/70 flex items-center justify-center">
-                <BookOpen className="w-4 h-4 text-navy" />
+              <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
+                <BookOpen className="w-4 h-4 text-white" />
               </div>
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-widest text-navy/60 leading-none">Catatan</p>
@@ -460,7 +498,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <button
                 onClick={() => setEditNotes(!editNotes)}
                 title={editNotes ? 'Simpan catatan' : 'Edit catatan'}
-                className={`w-8 h-8 rounded-xl flex items-center justify-center border transition-all ${editNotes ? 'bg-navy text-white border-navy shadow-md shadow-navy/30' : 'bg-white text-navy/60 border-mist hover:border-steel hover:text-steel'}`}
+                className={`w-8 h-8 rounded-[10px] flex items-center justify-center border transition-all ${editNotes ? 'bg-navy text-white border-navy shadow-md shadow-navy/30' : 'bg-white text-navy/60 border-mist hover:border-steel hover:text-steel'}`}
               >
                 {editNotes ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
               </button>
@@ -473,7 +511,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
                 autoFocus
-                className="w-full flex-1 min-h-[120px] text-sm font-medium text-navy bg-white/60 border border-mist focus:border-steel rounded-xl p-3 outline-none resize-none leading-relaxed placeholder:text-navy/40 transition-all"
+                className="w-full flex-1 min-h-[120px] text-sm font-medium text-navy bg-white/60 border border-mist focus:border-steel rounded-[24px] p-3 outline-none resize-none leading-relaxed placeholder:text-navy/40 transition-all"
                 placeholder="Ketik catatanmu..."
               />
             ) : (
@@ -481,7 +519,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 {notes || <span className="text-navy/40 italic text-xs">Belum ada catatan.</span>}
               </div>
             )}
-            {/* Footer indikator karakter saat edit */}
             {editNotes && (
               <div className="flex items-center justify-between pt-2 shrink-0">
                 <span className="text-[11px] font-semibold text-navy/40">
@@ -500,8 +537,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="c5 shrink-0 bg-white/70 backdrop-blur-xl rounded-[24px] border border-white shadow-sm">
         <div className="flex items-center justify-between p-5 pb-3">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-steel/15 flex items-center justify-center">
-              <BookOpen className="w-4 h-4 text-steel" />
+            <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
+              <BookOpen className="w-4 h-4 text-white" />
             </div>
             <div>
               <p className="text-[11px] font-bold uppercase tracking-widest text-navy/60 leading-none">Logbook</p>
@@ -522,7 +559,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <div key={log.id} className="py-3 md:py-2 md:px-5 md:first:pl-0 md:last:pr-0 flex flex-col gap-1.5">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-navy/40">{log.date}</span>
-                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${statusStyle(log.status)}`}>
+                  <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${statusStyle(log.status)}`}>
                     {statusLabel(log.status)}
                   </span>
                 </div>

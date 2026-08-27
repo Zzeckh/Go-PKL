@@ -3,6 +3,7 @@ export type ActivePage =
   | 'logbook' 
   | 'maps' 
   | 'profile' 
+  | 'settings'
   | 'absensi' 
   | 'attendance' 
   | 'roster' 
@@ -30,6 +31,9 @@ export interface LogEntry {
   status: 'approved' | 'pending' | 'revision';
   feedback?: string;
   attachmentName?: string;
+  userId?: number;
+  userName?: string;
+  userClass?: string;
 }
 
 export interface PKLMapLocation {
@@ -49,6 +53,7 @@ export interface AttendanceRecord {
   date: string;
   checkInTime: string;
   status: 'Hadir' | 'Izin' | 'Sakit' | 'Alpha';
+  userId?: number;
 }
 
 export interface ActivityRecord {

@@ -17,7 +17,7 @@ interface SearchableOption {
 }
 
 /* ══════════════════════════════════════════════════════
-   SEARCHABLE SELECT — pengganti dropdown untuk data banyak
+   SEARCHABLE SELECT
    ══════════════════════════════════════════════════════ */
 interface SearchableSelectProps {
   label: string;
@@ -37,7 +37,6 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Tutup saat klik di luar
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -49,7 +48,6 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  // Auto-focus input saat buka
   useEffect(() => {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 50);
@@ -74,10 +72,10 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold outline-none transition-all ${
+        className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-[24px] text-sm font-semibold outline-none transition-all ${
           open
             ? 'bg-white border-2 border-steel text-navy'
-            : 'bg-[#F1F4F8] border border-mist text-navy hover:border-steel/50'
+            : 'bg-mist/30 border border-mist text-navy hover:border-steel/50'
         }`}
       >
         <span className={`truncate ${selected ? 'text-navy' : 'text-navy/40'}`}>
@@ -87,8 +85,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
       </button>
 
       {open && (
-        <div className="absolute z-30 left-0 right-0 mt-1.5 bg-white border border-mist rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-          {/* Search input */}
+        <div className="absolute z-30 left-0 right-0 mt-1.5 bg-white border border-mist rounded-[24px] shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
           <div className="p-2 border-b border-mist">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-navy/40" />
@@ -98,12 +95,11 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder="Cari..."
-                className="w-full bg-[#F1F4F8] border border-transparent rounded-lg pl-8 pr-3 py-2 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
+                className="w-full bg-mist/30 border border-transparent rounded-lg pl-8 pr-3 py-2 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
               />
             </div>
           </div>
 
-          {/* Options list */}
           <div className="overflow-y-auto custom-scrollbar max-h-60 p-1">
             {filtered.length === 0 ? (
               <div className="py-6 text-center">
@@ -123,29 +119,28 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
                     }}
                     className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center justify-between gap-2 ${
                       isSelected
-                        ? 'bg-steel/10 text-steel'
-                        : 'text-navy hover:bg-[#F1F4F8]'
+                        ? 'bg-steel text-white'
+                        : 'text-navy hover:bg-mist/30'
                     }`}
                   >
                     <div className="min-w-0 flex-1">
-                      <p className={`text-sm font-bold truncate ${isSelected ? 'text-steel' : 'text-navy'}`}>
+                      <p className={`text-sm font-bold truncate ${isSelected ? 'text-white' : 'text-navy'}`}>
                         {opt.label}
                       </p>
                       {opt.sublabel && (
-                        <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
+                        <p className={`text-[11px] font-semibold truncate mt-0.5 ${isSelected ? 'text-white/80' : 'text-navy/50'}`}>
                           {opt.sublabel}
                         </p>
                       )}
                     </div>
-                    {isSelected && <CheckCircle2 className="w-4 h-4 text-steel shrink-0" />}
+                    {isSelected && <CheckCircle2 className="w-4 h-4 text-white shrink-0" />}
                   </button>
                 );
               })
             )}
           </div>
 
-          {/* Footer info */}
-          <div className="px-3 py-1.5 border-t border-mist bg-[#F1F4F8]/50">
+          <div className="px-3 py-1.5 border-t border-mist bg-mist/40">
             <p className="text-[10px] font-bold text-navy/40 tabular-nums">
               {filtered.length} dari {options.length} data
             </p>
@@ -172,7 +167,6 @@ export const HubinPemetaan: React.FC = () => {
   const [formGuruId, setFormGuruId] = useState<number | string>('');
   const [formMentorId, setFormMentorId] = useState<number | string>('');
 
-  /* ── Helpers ── */
   const matchLocation = (company?: string) => {
     if (!company || company === '-') return undefined;
     const q = normalize(company);
@@ -184,7 +178,6 @@ export const HubinPemetaan: React.FC = () => {
   const isMapped = (s: SiswaItem) =>
     !!(s.perusahaan && s.perusahaan !== '-' && matchLocation(s.perusahaan));
 
-  /* ── Derived data ── */
   const filteredSiswa = useMemo(() => {
     return siswaList.filter(s => {
       const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -203,26 +196,16 @@ export const HubinPemetaan: React.FC = () => {
   const unmappedCount = siswaList.length - mappedCount;
   const activeYear = siswaList.find(s => s.academicYear && s.academicYear !== '-')?.academicYear || '2025/2026';
 
-  /* ── Options untuk SearchableSelect ── */
   const companyOptions: SearchableOption[] = mapLocations.map(loc => ({
-    id: loc.id,
-    label: loc.name,
-    sublabel: loc.address,
+    id: loc.id, label: loc.name, sublabel: loc.address,
   }));
-
   const guruOptions: SearchableOption[] = guruList.map(g => ({
-    id: g.id,
-    label: g.name,
-    sublabel: g.subject || 'Guru Pembimbing',
+    id: g.id, label: g.name, sublabel: g.subject || 'Guru Pembimbing',
   }));
-
   const mentorOptions: SearchableOption[] = mentorList.map(m => ({
-    id: m.id,
-    label: m.name,
-    sublabel: m.perusahaan || 'Mentor Industri',
+    id: m.id, label: m.name, sublabel: m.perusahaan || 'Mentor Industri',
   }));
 
-  /* ── Actions ── */
   const handleSelectSiswa = (s: SiswaItem) => {
     setSelectedSiswaId(s.id);
     setEditing(false);
@@ -235,10 +218,7 @@ export const HubinPemetaan: React.FC = () => {
     setFormMentorId(mentor?.id ?? '');
   };
 
-  const handleEdit = () => {
-    setEditing(true);
-    setJustSaved(false);
-  };
+  const handleEdit = () => { setEditing(true); setJustSaved(false); };
 
   const handleSave = async () => {
     if (!selectedSiswa) return;
@@ -272,44 +252,43 @@ export const HubinPemetaan: React.FC = () => {
   const stats = [
     { icon: GraduationCap, label: 'Total Siswa', value: siswaList.length },
     { icon: Building2, label: 'Perusahaan Mitra', value: mapLocations.length },
-    { icon: CheckCircle2, label: 'Sudah Terpetakan', value: mappedCount, color: unmappedCount > 0 ? 'text-[#9A6B15]' : 'text-steel' },
+    { icon: CheckCircle2, label: 'Sudah Terpetakan', value: mappedCount },
   ];
 
   return (
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
 
-      {/* ── HEADER ── */}
+      {/* ── HEADER ─ */}
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-2xl flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[10px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <Compass className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div className="min-w-0">
-            <h2 className="font-bold text-lg md:text-xl text-navy leading-tight truncate">
-              Pemetaan Sebaran PKL
-            </h2>
+            <h2 className="font-bold text-lg md:text-xl text-navy leading-tight truncate">Pemetaan Sebaran PKL</h2>
             <p className="text-[13px] text-navy/60 font-semibold mt-0.5 truncate">
               Atur penempatan siswa ke perusahaan, guru & mentor pembimbing
             </p>
           </div>
         </div>
         <div className="hidden sm:flex items-center gap-2 shrink-0">
-          <span className="flex items-center gap-1.5 text-[11px] font-bold text-steel bg-steel/10 border border-steel/20 px-3 py-2 rounded-full">
+          {/* ✅ chip TA: card putih ber-border steel */}
+          <span className="flex items-center gap-1.5 text-[11px] font-bold text-steel bg-white border border-steel/30 shadow-sm px-3 py-2 rounded-full">
             <Calendar className="w-3.5 h-3.5" />
             TA {activeYear}
           </span>
         </div>
       </div>
 
-      {/* ── STATS CARDS ── */}
+      {/* ── STATS CARDS — icon chip navy solid ── */}
       <div className="grid grid-cols-3 gap-3 shrink-0">
         {stats.map((s) => (
           <div
             key={s.label}
             className="bg-white border border-mist/60 rounded-[24px] p-4 md:p-5 min-h-[100px] flex flex-col justify-between"
           >
-            <div className="w-10 h-10 rounded-xl bg-[#F1F4F8] flex items-center justify-center">
-              <s.icon className={`w-5 h-5 ${'color' in s ? (s as any).color : 'text-navy'}`} />
+            <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
+              <s.icon className="w-4 h-4 text-white" />
             </div>
             <div>
               <p className="text-3xl font-bold text-navy tabular-nums leading-none">{s.value}</p>
@@ -319,7 +298,7 @@ export const HubinPemetaan: React.FC = () => {
         ))}
       </div>
 
-      {/* ── MAIN GRID (3 + 2) ── */}
+      {/* ── MAIN GRID ── */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-4 min-h-0">
 
         {/* ══ LEFT: Daftar Siswa ══ */}
@@ -327,8 +306,9 @@ export const HubinPemetaan: React.FC = () => {
           <div className="px-4 md:px-5 pt-4 pb-3 shrink-0 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-steel/15 flex items-center justify-center">
-                  <GraduationCap className="w-3.5 h-3.5 text-steel" />
+                {/* ✅ chip navy solid */}
+                <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center">
+                  <GraduationCap className="w-3.5 h-3.5 text-white" />
                 </div>
                 <p className="text-[13px] font-bold uppercase tracking-widest text-navy/70">
                   Daftar Siswa PKL
@@ -339,7 +319,7 @@ export const HubinPemetaan: React.FC = () => {
               </span>
             </div>
 
-            {/* Search */}
+            {/* ✅ search: mist/40 */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-navy/40" />
               <input
@@ -347,7 +327,7 @@ export const HubinPemetaan: React.FC = () => {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Cari nama siswa atau kelas..."
-                className="w-full bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
+                className="w-full bg-mist/40 border border-mist rounded-[24px] pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
               />
               {search && (
                 <button
@@ -359,8 +339,8 @@ export const HubinPemetaan: React.FC = () => {
               )}
             </div>
 
-            {/* Filter pills */}
-            <div className="bg-[#F1F4F8] p-1 rounded-xl flex gap-1">
+            {/* ✅ filter pills: track mist/40, aktif steel solid */}
+            <div className="bg-mist/40 p-1 rounded-[24px] flex gap-1">
               {([
                 { key: 'all', label: 'Semua', count: siswaList.length },
                 { key: 'mapped', label: 'Terpetakan', count: mappedCount },
@@ -369,13 +349,13 @@ export const HubinPemetaan: React.FC = () => {
                 <button
                   key={f.key}
                   onClick={() => setFilter(f.key)}
-                  className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                    filter === f.key ? 'bg-white text-navy shadow-sm' : 'text-navy/60 hover:text-navy'
+                  className={`flex-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    filter === f.key ? 'bg-steel text-white shadow' : 'text-navy/60 hover:text-navy'
                   }`}
                 >
                   <Filter className="w-3 h-3" />
                   {f.label}
-                  <span className={`text-[10px] tabular-nums ${filter === f.key ? 'text-steel' : 'text-navy/40'}`}>
+                  <span className={`text-[10px] tabular-nums ${filter === f.key ? 'text-white/80' : 'text-navy/40'}`}>
                     {f.count}
                   </span>
                 </button>
@@ -386,8 +366,9 @@ export const HubinPemetaan: React.FC = () => {
           <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 min-h-0">
             {filteredSiswa.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-14 h-14 rounded-2xl bg-[#F1F4F8] flex items-center justify-center mb-3">
-                  <Search className="w-6 h-6 text-navy/30" />
+                {/* ✅ empty state: navy solid + icon putih */}
+                <div className="w-14 h-14 rounded-[10px] bg-navy flex items-center justify-center mb-3">
+                  <Search className="w-6 h-6 text-white" />
                 </div>
                 <p className="text-sm font-bold text-navy mb-1">Siswa tidak ditemukan</p>
                 <p className="text-xs text-navy/50 max-w-xs">
@@ -402,15 +383,14 @@ export const HubinPemetaan: React.FC = () => {
                   <button
                     key={s.id}
                     onClick={() => handleSelectSiswa(s)}
-                    className={`p-3 rounded-xl border transition-all shrink-0 text-left group flex items-center gap-3 ${
+                    className={`p-3 rounded-[24px] border transition-all shrink-0 text-left group flex items-center gap-3 ${
                       isSelected
-                        ? 'bg-steel/10 border-steel/30 shadow-sm'
-                        : 'bg-white border-mist/60 hover:border-steel/30 hover:bg-[#F1F4F8]/50'
+                        ? 'bg-steel/5 border-steel/30 shadow-sm'
+                        : 'bg-white border-mist/60 hover:border-steel/30 hover:bg-mist/30'
                     }`}
                   >
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
-                      isSelected ? 'bg-steel text-white' : 'bg-navy text-white'
-                    }`}>
+                    {/* ✅ avatar kotak navy solid (seragam, bahkan saat selected) */}
+                    <div className="w-10 h-10 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-md shadow-navy/20">
                       {s.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -419,7 +399,8 @@ export const HubinPemetaan: React.FC = () => {
                           {s.name}
                         </p>
                         {s.kelas && s.kelas !== '-' && (
-                          <span className="text-[10px] font-bold text-navy/60 bg-[#F1F4F8] border border-[#E2E8F0] px-2 py-0.5 rounded-md shrink-0">
+                          /* ✅ chip kelas: card putih ber-border */
+                          <span className="text-[10px] font-bold text-steel bg-white border border-steel/30 px-2 py-0.5 rounded-md shadow-sm shrink-0">
                             {s.kelas}
                           </span>
                         )}
@@ -428,8 +409,11 @@ export const HubinPemetaan: React.FC = () => {
                         {mapped ? s.perusahaan : 'Belum dipetakan'}
                       </p>
                     </div>
+                    {/* ✅ badge Terpetakan/Belum: solid */}
                     <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 ${
-                      mapped ? 'bg-steel/10 text-steel' : 'bg-[#FBF3E2] text-[#9A6B15]'
+                      mapped
+                        ? 'bg-steel text-white shadow-sm shadow-steel/30'
+                        : 'bg-white text-navy/70 border border-mist/60 shadow-sm'
                     }`}>
                       {mapped ? '✓ Terpetakan' : 'Belum'}
                     </span>
@@ -446,16 +430,17 @@ export const HubinPemetaan: React.FC = () => {
 
           {!selectedSiswa ? (
             <div className="flex-1 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col items-center justify-center p-8 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-steel/10 flex items-center justify-center mb-4">
-                <Map className="w-7 h-7 text-steel" />
+              {/* ✅ empty state: navy solid + icon putih */}
+              <div className="w-16 h-16 rounded-[10px] bg-navy flex items-center justify-center mb-4">
+                <Map className="w-7 h-7 text-white" />
               </div>
               <h3 className="text-base font-bold text-navy mb-1">Pilih Siswa untuk Memetakan</h3>
               <p className="text-sm text-navy/60 max-w-xs leading-relaxed">
                 Klik salah satu siswa di daftar kiri untuk melihat dan mengatur tempat PKL, guru, serta mentor pembimbingnya.
               </p>
 
-              <div className="mt-6 w-full max-w-xs h-32 relative rounded-xl border border-navy/10 overflow-hidden">
-                <div className="absolute inset-0 bg-[#EDF1F7]">
+              <div className="mt-6 w-full max-w-xs h-32 relative rounded-[24px] border border-navy/10 overflow-hidden">
+                <div className="absolute inset-0 bg-mist/30">
                   <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                     <rect x="36" y="8" width="26" height="22" rx="2" fill="#E7EBF2" />
                     <rect x="8" y="40" width="22" height="22" rx="2" fill="#E7EBF2" />
@@ -485,25 +470,25 @@ export const HubinPemetaan: React.FC = () => {
             </div>
           ) : (
             <>
-              {/* Card identitas */}
+              {/* Card identitas navy */}
               <div className="bg-navy rounded-[24px] p-5 shrink-0 relative overflow-hidden shadow-lg shadow-navy/20">
                 <div className="relative z-10">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
                         <GraduationCap className="w-4 h-4 text-white" />
                       </div>
                       <p className="text-[11px] font-bold uppercase tracking-widest text-white/60">Siswa Terpilih</p>
                     </div>
                     {justSaved && (
-                      <span className="flex items-center gap-1.5 text-[11px] font-bold bg-steel text-white px-2.5 py-1 rounded-full animate-in fade-in">
+                      <span className="flex items-center gap-1.5 text-[11px] font-bold bg-steel text-white shadow-sm shadow-steel/30 px-2.5 py-1 rounded-full animate-in fade-in">
                         <CheckCircle2 className="w-3 h-3" /> Tersimpan
                       </span>
                     )}
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-white/15 border border-white/10 flex items-center justify-center font-bold text-sm text-white shrink-0">
+                    <div className="w-12 h-12 rounded-[10px] bg-white/15 border border-white/10 flex items-center justify-center font-bold text-sm text-white shrink-0">
                       {selectedSiswa.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
                     </div>
                     <div className="min-w-0">
@@ -529,8 +514,9 @@ export const HubinPemetaan: React.FC = () => {
               <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm flex-1 flex flex-col overflow-hidden min-h-0">
                 <div className="flex items-center justify-between px-4 md:px-5 pt-4 pb-3 shrink-0 border-b border-mist/60">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-steel/15 flex items-center justify-center">
-                      <MapPin className="w-3.5 h-3.5 text-steel" />
+                    {/* ✅ chip navy solid */}
+                    <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center">
+                      <MapPin className="w-3.5 h-3.5 text-white" />
                     </div>
                     <p className="text-[13px] font-bold text-navy">
                       {editing ? 'Edit Pemetaan' : 'Detail Pemetaan'}
@@ -556,12 +542,11 @@ export const HubinPemetaan: React.FC = () => {
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5 min-h-0">
                   {!editing ? (
                     <div className="space-y-3">
-                      <div className={`p-3 rounded-xl border ${selectedLoc ? 'border-steel/30 bg-steel/5' : 'border-mist/60 bg-[#F1F4F8]/50'}`}>
+                      {/* Tempat PKL — icon chip navy solid */}
+                      <div className={`p-3 rounded-[24px] border ${selectedLoc ? 'border-steel/30 bg-steel/5' : 'border-mist/60 bg-white'}`}>
                         <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                            selectedLoc ? 'bg-steel text-white' : 'bg-[#F1F4F8] text-navy/50'
-                          }`}>
-                            <Building2 className="w-4 h-4" />
+                          <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center shrink-0 shadow-md shadow-navy/20">
+                            <Building2 className="w-4 h-4 text-white" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">Tempat PKL</p>
@@ -573,13 +558,14 @@ export const HubinPemetaan: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className={`p-3 rounded-xl border ${
-  selectedSiswa.guruPembimbing && selectedSiswa.guruPembimbing !== '-' ? 'border-steel/30 bg-steel/5' : 'border-mist/60 bg-white'
-}`}>
-  <div className="flex items-center gap-3">
-    <div className="w-10 h-10 rounded-xl bg-navy flex items-center justify-center shrink-0">
-      <Users className="w-4 h-4 text-white" />
-    </div>
+                      {/* Guru Pembimbing — icon chip navy solid + badge navy */}
+                      <div className={`p-3 rounded-[24px] border ${
+                        selectedSiswa.guruPembimbing && selectedSiswa.guruPembimbing !== '-' ? 'border-mist/60 bg-white' : 'border-mist/60 bg-white'
+                      }`}>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center shrink-0 shadow-md shadow-navy/20">
+                            <Users className="w-4 h-4 text-white" />
+                          </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">Guru Pembimbing</p>
                             <p className="text-sm font-bold text-navy truncate mt-0.5">
@@ -592,9 +578,12 @@ export const HubinPemetaan: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className={`p-3 rounded-xl border ${selectedSiswa.mentor && selectedSiswa.mentor !== '-' ? 'border-steel/30 bg-steel/5' : 'border-mist/60 bg-[#F1F4F8]/50'}`}>
+                      {/* ✅ Mentor Industri — icon chip navy solid + badge navy (bukan steel) */}
+                      <div className={`p-3 rounded-[24px] border ${
+                        selectedSiswa.mentor && selectedSiswa.mentor !== '-' ? 'border-mist/60 bg-white' : 'border-mist/60 bg-white'
+                      }`}>
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-steel flex items-center justify-center shrink-0">
+                          <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center shrink-0 shadow-md shadow-navy/20">
                             <Briefcase className="w-4 h-4 text-white" />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -603,13 +592,14 @@ export const HubinPemetaan: React.FC = () => {
                               {selectedSiswa.mentor && selectedSiswa.mentor !== '-' ? selectedSiswa.mentor : 'Belum ditentukan'}
                             </p>
                           </div>
-                          <span className="text-[10px] font-bold bg-steel text-white px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+                          <span className="text-[10px] font-bold bg-navy text-white px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
                             <Briefcase className="w-3 h-3" /> MENTOR
                           </span>
                         </div>
                       </div>
 
-                      <div className="p-3 bg-[#F1F4F8] border border-[#E2E8F0] rounded-xl flex items-start gap-2">
+                      {/* ✅ Info box: mist/30 */}
+                      <div className="p-3 bg-mist/30 border border-mist/60 rounded-[24px] flex items-start gap-2">
                         <ShieldCheck className="w-4 h-4 text-steel shrink-0 mt-0.5" />
                         <p className="text-[11px] font-medium text-navy/70 leading-relaxed">
                           Pemetaan ini menentukan tempat siswa melaksanakan PKL beserta guru dan mentor yang akan membimbing selama periode akademik.
@@ -627,7 +617,6 @@ export const HubinPemetaan: React.FC = () => {
                         placeholder="— Pilih Tempat PKL —"
                         emptyText="Belum ada perusahaan. Tambah di halaman Data Perusahaan."
                       />
-
                       <SearchableSelect
                         label="Guru Pembimbing"
                         icon={Users}
@@ -637,7 +626,6 @@ export const HubinPemetaan: React.FC = () => {
                         placeholder="— Pilih Guru Pembimbing —"
                         emptyText="Belum ada guru pembimbing."
                       />
-
                       <SearchableSelect
                         label="Mentor Industri"
                         icon={Briefcase}
@@ -648,7 +636,8 @@ export const HubinPemetaan: React.FC = () => {
                         emptyText="Belum ada mentor industri."
                       />
 
-                      <div className="p-3 bg-steel/5 border border-steel/20 rounded-xl flex items-start gap-2">
+                      {/* ✅ Info box edit: mist/30 */}
+                      <div className="p-3 bg-mist/30 border border-mist/60 rounded-[24px] flex items-start gap-2">
                         <Plus className="w-4 h-4 text-steel shrink-0 mt-0.5" />
                         <p className="text-[11px] font-medium text-navy/70 leading-relaxed">
                           Data perusahaan, guru, dan mentor dikelola terpisah. Tambah data baru di halaman Data Siswa atau Data Pembimbing.
@@ -662,13 +651,13 @@ export const HubinPemetaan: React.FC = () => {
                   <div className="p-4 md:p-5 pt-3 border-t border-mist/60 flex gap-2 shrink-0">
                     <button
                       onClick={handleCancel}
-                      className="flex-1 flex items-center justify-center gap-1.5 bg-mist/60 text-navy/70 font-bold text-sm py-3 rounded-xl hover:bg-mist transition-colors"
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-mist/60 text-navy/70 font-bold text-sm py-3 rounded-[24px] hover:bg-mist transition-colors"
                     >
                       <X className="w-4 h-4" /> Batal
                     </button>
                     <button
                       onClick={handleSave}
-                      className="flex-1 flex items-center justify-center gap-1.5 bg-steel text-white font-bold text-sm py-3 rounded-xl hover:bg-steel/90 hover:-translate-y-0.5 shadow-lg shadow-steel/25 transition-all"
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-steel text-white font-bold text-sm py-3 rounded-[24px] hover:bg-steel/90 hover:-translate-y-0.5 shadow-lg shadow-steel/25 transition-all"
                     >
                       <Save className="w-4 h-4" /> Simpan
                     </button>

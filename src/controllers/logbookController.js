@@ -71,7 +71,7 @@ export const createLogbook = async (req, res, next) => {
 export const updateLogbook = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
-    const { status, feedback } = req.body;
+    const { status, feedback, activity_title, description, hours, category } = req.body;
     const { id: reviewerId, role } = req.user;
 
     const logbook = await prisma.logbook.findUnique({
@@ -83,6 +83,31 @@ export const updateLogbook = async (req, res, next) => {
 
     if (!logbook) {
       return res.status(404).json({ error: 'Logbook tidak ditemukan' });
+    }
+
+    // Student can update content if status is revision
+    if (role === 'student') {
+      if (logbook.userId !== reviewerId) {
+        return res.status(403).json({ error: 'Tidak berhak mengubah logbook ini' });
+      }
+      if (logbook.status !== 'rejected') {
+        return res.status(400).json({ error: 'Hanya logbook dengan status revisi yang dapat diedit' });
+      }
+      const updated = await prisma.logbook.update({
+        where: { id },
+        data: {
+          activityTitle: activity_title || logbook.activityTitle,
+          description: description || logbook.description,
+          hours: hours || logbook.hours,
+          category: category || logbook.category,
+          status: 'pending',
+          feedback: null,
+        },
+        include: {
+          user: { select: { name: true } },
+        },
+      });
+      return res.json(updated);
     }
 
     let allowed = false;

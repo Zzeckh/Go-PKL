@@ -101,18 +101,18 @@ const ErrorBanner = ({
 }) => {
   const Icon = error.icon;
   return (
-    <div className="animate-in fade-in slide-in-from-top-2 duration-300 bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-start gap-3 shadow-sm">
-      <div className="w-9 h-9 rounded-lg bg-rose-100 flex items-center justify-center shrink-0">
-        <Icon className="w-4.5 h-4.5 text-rose-600" />
+    <div className="animate-in fade-in slide-in-from-top-2 duration-300 bg-navy/5 border border-navy/15 rounded-[24px] p-4 flex items-start gap-3 shadow-sm">
+      <div className="w-9 h-9 rounded-lg bg-navy/10 flex items-center justify-center shrink-0">
+        <Icon className="w-4.5 h-4.5 text-navy/70" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold text-rose-900 leading-tight">{error.title}</p>
-        <p className="text-xs text-rose-700 mt-1 leading-relaxed">{error.message}</p>
+        <p className="text-sm font-bold text-navy leading-tight">{error.title}</p>
+        <p className="text-xs text-navy/70 mt-1 leading-relaxed">{error.message}</p>
       </div>
       <button
         type="button"
         onClick={onClose}
-        className="w-7 h-7 rounded-lg hover:bg-rose-100 flex items-center justify-center text-rose-600 hover:text-rose-800 transition-colors shrink-0"
+        className="w-7 h-7 rounded-lg hover:bg-navy/10 flex items-center justify-center text-navy/60 hover:text-navy transition-colors shrink-0"
         aria-label="Tutup"
       >
         <X className="w-4 h-4" />
@@ -330,16 +330,16 @@ const AuthForm = ({
   return (
     <div className="space-y-5">
       <div>
-        <div className="w-12 h-12 bg-navy text-white rounded-2xl flex items-center justify-center font-bold text-xl mb-6 shadow-lg border border-steel/20">
+        <div className="w-12 h-12 bg-navy text-white rounded-[10px] flex items-center justify-center font-bold text-xl mb-6 shadow-lg border border-steel/20">
           Go
         </div>
         <h2 className="text-3xl font-extrabold text-navy tracking-tight">
-          {isLogin ? 'Welcome back' : 'Create an account'}
+          {isLogin ? 'Selamat Datang Kembali' : 'Buat Akun Baru'}
         </h2>
         <p className="text-sm text-navy/60 mt-2 font-medium">
           {isLogin
-            ? 'Enter your credentials to access your dashboard'
-            : 'Register using your official school/company email'}
+            ? 'Masukkan kredensial Anda untuk mengakses dashboard'
+            : 'Daftar menggunakan email resmi sekolah/perusahaan'}
         </p>
       </div>
 
@@ -353,14 +353,14 @@ const AuthForm = ({
           <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-bottom-2">
             <div>
               <label className="block text-xs uppercase tracking-wider font-bold text-navy/60 mb-1.5">
-                Full Name
+                Nama Lengkap
               </label>
               <input
                 value={name}
                 onChange={(e) => { setName(e.target.value); clearError(); }}
                 type="text"
                 placeholder="John Doe"
-                className="w-full bg-white/90 border border-mist shadow-sm rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-steel/30 focus:border-steel outline-none transition-all placeholder:text-navy/40 text-navy"
+                className="w-full bg-white/90 border border-mist shadow-sm rounded-[24px] px-4 py-2.5 text-sm focus:ring-2 focus:ring-steel/30 focus:border-steel outline-none transition-all placeholder:text-navy/40 text-navy"
                 required
               />
             </div>
@@ -372,7 +372,7 @@ const AuthForm = ({
                 <select
                   value={classId}
                   onChange={(e) => { setClassId(e.target.value ? Number(e.target.value) : ''); clearError(); }}
-                  className="w-full bg-white/90 border border-mist shadow-sm rounded-xl px-4 py-2.5 text-sm pr-10 focus:ring-2 focus:ring-steel/30 focus:border-steel outline-none transition-all text-navy appearance-none"
+                  className="w-full bg-white/90 border border-mist shadow-sm rounded-[24px] px-4 py-2.5 text-sm pr-10 focus:ring-2 focus:ring-steel/30 focus:border-steel outline-none transition-all text-navy appearance-none"
                   required
                   disabled={classesLoading}
                 >
@@ -389,16 +389,15 @@ const AuthForm = ({
           </div>
         )}
 
-        <div>
-          <label className="block text-xs uppercase tracking-wider font-bold text-navy/60 mb-1.5">
-            Email address
+        <div>              <label className="block text-xs uppercase tracking-wider font-bold text-navy/60 mb-1.5">
+            Alamat Email
           </label>
           <input
             value={email}
             onChange={(e) => { setEmail(e.target.value); clearError(); }}
             type="email"
             placeholder="you@example.com"
-            className="w-full bg-white/90 border border-mist shadow-sm rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-steel/30 focus:border-steel outline-none transition-all placeholder:text-navy/40 text-navy"
+            className="w-full bg-white/90 border border-mist shadow-sm rounded-[24px] px-4 py-2.5 text-sm focus:ring-2 focus:ring-steel/30 focus:border-steel outline-none transition-all placeholder:text-navy/40 text-navy"
             required
           />
         </div>
@@ -410,7 +409,7 @@ const AuthForm = ({
             </label>
             {isLogin && (
               <a href="#" className="text-xs font-bold text-steel hover:text-steel/70 underline transition-colors">
-                Forgot password?
+                Lupa kata sandi?
               </a>
             )}
           </div>
@@ -419,7 +418,7 @@ const AuthForm = ({
               value={password}
               onChange={(e) => { setPassword(e.target.value); clearError(); }}
               type={showPassword ? 'text' : 'password'}
-              className="w-full bg-white/90 border border-mist shadow-sm rounded-xl px-4 py-2.5 text-sm pr-10 focus:ring-2 focus:ring-steel/30 focus:border-steel outline-none transition-all placeholder:text-navy/40 text-navy"
+              className="w-full bg-white/90 border border-mist shadow-sm rounded-[24px] px-4 py-2.5 text-sm pr-10 focus:ring-2 focus:ring-steel/30 focus:border-steel outline-none transition-all placeholder:text-navy/40 text-navy"
               placeholder="••••••••"
               required
             />
@@ -436,26 +435,26 @@ const AuthForm = ({
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-navy text-white py-3 rounded-xl font-bold text-sm shadow-xl shadow-navy/20 hover:shadow-navy/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+          className="w-full bg-navy text-white py-3 rounded-[24px] font-bold text-sm shadow-xl shadow-navy/20 hover:shadow-navy/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0"
         >
           {isLoading ? (
             <Loader2 className="w-5 h-5 animate-spin" />
           ) : (
             <>
-              <span>{isLogin ? 'Sign In' : 'Create Account'}</span>
+              <span>{isLogin ? 'Masuk' : 'Buat Akun'}</span>
               <ArrowRight className="w-4 h-4" />
             </>
           )}
         </button>
 
         <p className="text-center text-xs text-navy/60 pt-4 font-medium">
-          {isLogin ? "Don't have an account? " : 'Already have an account? '}
+          {isLogin ? 'Belum punya akun? ' : 'Sudah punya akun? '}
           <button
             type="button"
             onClick={onSwitch}
             className="font-extrabold text-steel hover:text-steel/70 underline transition-colors"
           >
-            {isLogin ? 'Sign up' : 'Sign in'}
+            {isLogin ? 'Daftar' : 'Masuk'}
           </button>
         </p>
       </form>
@@ -477,15 +476,15 @@ const MobileForm = ({
   return (
     <div className="space-y-5 w-full">
       <div className="flex items-center gap-3 mb-2 pt-4">
-        <div className="w-10 h-10 bg-navy text-white rounded-2xl flex items-center justify-center font-bold text-lg shadow-lg border border-steel/20 shrink-0">
+        <div className="w-10 h-10 bg-navy text-white rounded-[10px] flex items-center justify-center font-bold text-lg shadow-lg border border-steel/20 shrink-0">
           Go
         </div>
         <div>
           <div className="font-extrabold text-navy text-xl tracking-tight leading-tight">
-            {isLogin ? 'Welcome back' : 'Create account'}
+            {isLogin ? 'Selamat Datang Kembali' : 'Buat Akun'}
           </div>
           <div className="text-xs text-navy/60 font-medium">
-            {isLogin ? 'Sign in to your Go-PKL portal' : 'Register with your institution email'}
+            {isLogin ? 'Masuk ke portal Go-PKL Anda' : 'Daftar dengan email institusi Anda'}
           </div>
         </div>
       </div>
@@ -500,14 +499,14 @@ const MobileForm = ({
           <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2">
             <div>
               <label className="block text-xs uppercase tracking-wider font-bold text-navy/50 mb-1.5">
-                Full Name
+                Nama Lengkap
               </label>
               <input
                 value={name}
                 onChange={(e) => { setName(e.target.value); clearError(); }}
                 type="text"
                 placeholder="John Doe"
-                className="w-full bg-white/90 border border-mist shadow-sm rounded-2xl px-4 py-3.5 text-sm focus:ring-2 focus:ring-steel/30 outline-none transition-all placeholder:text-navy/30 text-navy"
+                className="w-full bg-white/90 border border-mist shadow-sm rounded-[24px] px-4 py-3.5 text-sm focus:ring-2 focus:ring-steel/30 outline-none transition-all placeholder:text-navy/30 text-navy"
                 required
               />
             </div>
@@ -519,7 +518,7 @@ const MobileForm = ({
                 <select
                   value={classId}
                   onChange={(e) => { setClassId(e.target.value ? Number(e.target.value) : ''); clearError(); }}
-                  className="w-full bg-white/90 border border-mist shadow-sm rounded-2xl px-4 py-3.5 text-sm pr-12 focus:ring-2 focus:ring-steel/30 outline-none transition-all text-navy appearance-none"
+                  className="w-full bg-white/90 border border-mist shadow-sm rounded-[24px] px-4 py-3.5 text-sm pr-12 focus:ring-2 focus:ring-steel/30 outline-none transition-all text-navy appearance-none"
                   required
                   disabled={classesLoading}
                 >
@@ -545,7 +544,7 @@ const MobileForm = ({
             onChange={(e) => { setEmail(e.target.value); clearError(); }}
             type="email"
             placeholder="you@example.com"
-            className="w-full bg-white/90 border border-mist shadow-sm rounded-2xl px-4 py-3.5 text-sm focus:ring-2 focus:ring-steel/30 outline-none transition-all placeholder:text-navy/30 text-navy"
+            className="w-full bg-white/90 border border-mist shadow-sm rounded-[24px] px-4 py-3.5 text-sm focus:ring-2 focus:ring-steel/30 outline-none transition-all placeholder:text-navy/30 text-navy"
             required
           />
         </div>
@@ -557,7 +556,7 @@ const MobileForm = ({
             </label>
             {isLogin && (
               <a href="#" className="text-xs font-bold text-steel underline transition-colors">
-                Forgot?
+                Lupa?
               </a>
             )}
           </div>
@@ -567,7 +566,7 @@ const MobileForm = ({
               onChange={(e) => { setPassword(e.target.value); clearError(); }}
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
-              className="w-full bg-white/90 border border-mist shadow-sm rounded-2xl px-4 py-3.5 text-sm pr-12 focus:ring-2 focus:ring-steel/30 outline-none transition-all text-navy"
+              className="w-full bg-white/90 border border-mist shadow-sm rounded-[24px] px-4 py-3.5 text-sm pr-12 focus:ring-2 focus:ring-steel/30 outline-none transition-all text-navy"
               required
             />
             <button
@@ -583,26 +582,26 @@ const MobileForm = ({
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-navy text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-navy/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-70 disabled:cursor-not-allowed"
+          className="w-full bg-navy text-white py-4 rounded-[24px] font-bold text-sm shadow-xl shadow-navy/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <Loader2 className="w-5 h-5 animate-spin" />
           ) : (
             <>
-              <span>{isLogin ? 'Sign In' : 'Create Account'}</span>
+              <span>{isLogin ? 'Masuk' : 'Buat Akun'}</span>
               <ArrowRight className="w-4 h-4" />
             </>
           )}
         </button>
 
         <p className="text-center text-sm text-navy/60 pt-2 font-medium pb-8">
-          {isLogin ? "Don't have an account? " : 'Already have an account? '}
+          {isLogin ? 'Belum punya akun? ' : 'Sudah punya akun? '}
           <button
             type="button"
             onClick={onSwitch}
             className="font-extrabold text-steel underline"
           >
-            {isLogin ? 'Sign up' : 'Sign in'}
+            {isLogin ? 'Daftar' : 'Masuk'}
           </button>
         </p>
       </form>
@@ -615,37 +614,37 @@ const DecorativeGraphic = ({ mode }: { mode: 'login' | 'register' }) => (
     <div className="relative z-10 space-y-4">
       <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-white border border-white/20 shadow-sm">
         <Sparkles className="w-3.5 h-3.5 text-white" />
-        {mode === 'login' ? 'Integrated PKL Portal' : 'Secure Registration'}
+        {mode === 'login' ? 'Portal PKL Terintegrasi' : 'Pendaftaran Aman'}
       </div>
       <h3 className="text-4xl font-extrabold text-white tracking-tight leading-tight max-w-sm">
         {mode === 'login'
-          ? 'Manage your internship activities in one place.'
-          : 'Start your professional journey with Go-PKL.'}
+          ? 'Kelola aktivitas PKL Anda dalam satu tempat.'
+          : 'Mulai perjalanan profesional Anda dengan Go-PKL.'}
       </h3>
     </div>
 
     <div className="relative z-10 w-full max-w-sm self-end space-y-3">
       {mode === 'login' ? (
         <>
-          <div className="bg-white/15 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-xl">
+          <div className="bg-white/15 backdrop-blur-md p-4 rounded-[24px] border border-white/20 shadow-xl">
             <div className="flex items-center gap-3 border-b border-white/20 pb-3 mb-3">
               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
                 <MapPin className="w-5 h-5 text-white" />
               </div>
               <div>
-                <div className="text-sm font-bold text-white">Geofence Check-in</div>
+                <div className="text-sm font-bold text-white">Check-in Geofence</div>
                 <div className="text-xs text-white/70">Tokopedia Tower</div>
               </div>
             </div>
             <div className="flex items-center gap-2 text-xs font-bold text-white">
-              <CheckCircle2 className="w-4 h-4" /> Validated location
+              <CheckCircle2 className="w-4 h-4" /> Lokasi terverifikasi
             </div>
           </div>
-          <div className="bg-white/15 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-xl">
+          <div className="bg-white/15 backdrop-blur-md p-4 rounded-[24px] border border-white/20 shadow-xl">
             <div className="flex justify-between items-center mb-3">
-              <div className="text-sm font-bold text-white">Daily Logbook</div>
+              <div className="text-sm font-bold text-white">Logbook Harian</div>
               <span className="text-[10px] bg-white/20 text-white px-2.5 py-1 rounded-full font-bold">
-                Approved
+                Disetujui
               </span>
             </div>
             <div className="h-2 bg-white/10 rounded-full w-3/4 mb-2"></div>
@@ -654,14 +653,14 @@ const DecorativeGraphic = ({ mode }: { mode: 'login' | 'register' }) => (
         </>
       ) : (
         <>
-          <div className="bg-white/15 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-xl">
+          <div className="bg-white/15 backdrop-blur-md p-4 rounded-[24px] border border-white/20 shadow-xl">
             <div className="flex items-center gap-3 border-b border-white/20 pb-3 mb-3">
               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
                 <Users className="w-5 h-5 text-white" />
               </div>
               <div>
-                <div className="text-sm font-bold text-white">Mentorship Pairing</div>
-                <div className="text-xs text-white/70">Connect with industry experts</div>
+                <div className="text-sm font-bold text-white">Pemagangan Mentoring</div>
+                <div className="text-xs text-white/70">Terhubung dengan ahli industri</div>
               </div>
             </div>
             <div className="flex items-center -space-x-2">
@@ -678,20 +677,20 @@ const DecorativeGraphic = ({ mode }: { mode: 'login' | 'register' }) => (
               </div>
             </div>
           </div>
-          <div className="bg-white/15 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-xl">
+          <div className="bg-white/15 backdrop-blur-md p-4 rounded-[24px] border border-white/20 shadow-xl">
             <div className="flex justify-between items-center mb-3">
               <div className="flex items-center gap-2">
                 <LineChart className="w-4 h-4 text-white/80" />
-                <div className="text-sm font-bold text-white">Skill Progress</div>
+                <div className="text-sm font-bold text-white">Progres Keahlian</div>
               </div>
               <span className="text-[10px] bg-white/20 text-white px-2.5 py-1 rounded-full font-bold">
-                Level Up
+                Naik Level
               </span>
             </div>
             <div className="w-full bg-white/10 rounded-full h-1.5 mb-1">
               <div className="bg-white h-1.5 rounded-full" style={{ width: '75%' }}></div>
             </div>
-            <div className="text-[9px] text-white/70 text-right">75% to Next Milestone</div>
+            <div className="text-[9px] text-white/70 text-right">75% menuju Pencapaian Berikutnya</div>
           </div>
         </>
       )}

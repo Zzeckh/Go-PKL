@@ -9,14 +9,23 @@ import { Maps } from './components/Maps';
 import { Profile } from './components/Profile';
 import { Absensi } from './components/Absensi';
 import { TeacherDashboard } from './components/TeacherDashboard';
-import { TeacherMonitoring, TeacherPerizinan, TeacherRekap } from './components/TeacherPages';
-import { MentorAttendance, MentorLogbook, MentorRoster } from './components/MentorPages';
+import { TeacherMonitoring } from './components/TeacherMonitoring';
+import { TeacherKehadiran } from './components/TeacherKehadiran';
+import { TeacherPerizinan } from './components/TeacherPerizinan';
+import { TeacherRekap } from './components/TeacherRekap';
+import { MentorLogbook } from './components/MentorLogbook';
+import { MentorKehadiran } from './components/MentorKehadiran';
+import { MentorPenilaian } from './components/MentorPenilaian';
+import { MentorPerizinan } from './components/MentorPerizinan';
 import { HubinDashboard } from './components/HubinDashboard';
-import { HubinData } from './components/HubinPages';
+import { HubinData } from './components/HubinKelolaData';
 import { HubinPemetaan } from './components/HubinPemetaan';
-import { SuperAdminDashboard, SuperClasses, SuperUsers } from './components/SuperAdminPages';
+import { SuperAdminDashboard } from './components/SuperAdminDashboard';
+import { SuperClasses } from './components/SuperAdminClasses';
+import { SuperUsers } from './components/SuperAdminUsers';
 import { SuperCompanies } from './components/SuperAdminCompanies';
 import { StudentPerizinan } from './components/StudentPerizinan';
+import { Settings } from './components/Settings';
 
 export default function App() {
   const {
@@ -33,7 +42,6 @@ export default function App() {
     userCompanyLocation,
     logEntries,
     attendances,
-    mapLocations,
     addLogEntry,
     checkInAttendance,
     login,
@@ -134,6 +142,7 @@ export default function App() {
               onOpenLogbookModal={openLogbookModal}
               onCheckIn={checkInAttendance}
               onGoToProfile={() => setActivePage('profile')}
+              onNavigate={(page) => setActivePage(page as any)}
             />
           )}
 
@@ -172,17 +181,17 @@ export default function App() {
               onAddLog={addLogEntry} 
               isModalOpen={isJournalModalOpen}
               setIsModalOpen={setIsJournalModalOpen}
+              userRole={userRole}
             />
           )}
           {activePage === 'maps' && (
-            <Maps 
-              locations={mapLocations} 
-              attendances={attendances} 
-              onCheckIn={checkInAttendance} 
-            />
+            <Maps />
           )}
           {activePage === 'profile' && (
             <Profile userRole={userRole} />
+          )}
+          {activePage === 'settings' && (
+            <Settings userRole={userRole} />
           )}
           {activePage === 'absensi' && userRole === 'intern' && (
             <Absensi 
@@ -193,17 +202,23 @@ export default function App() {
               hasCheckedIn={attendances.some(a => a.date === new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }))} 
             />
           )}
-          {activePage === 'monitoring' && (userRole === 'teacher' || userRole === 'mentor') && (
+          {activePage === 'monitoring' && userRole === 'teacher' && (
             <TeacherMonitoring />
           )}
-          {activePage === 'attendance' && (userRole === 'teacher' || userRole === 'mentor') && (
-            <MentorAttendance />
+          {activePage === 'attendance' && userRole === 'teacher' && (
+            <TeacherKehadiran />
+          )}
+          {activePage === 'attendance' && userRole === 'mentor' && (
+            <MentorKehadiran />
           )}
           {activePage === 'roster' && userRole === 'mentor' && (
-            <MentorRoster />
+            <MentorPenilaian />
           )}
-          {activePage === 'perizinan' && (userRole === 'teacher' || userRole === 'mentor') && (
+          {activePage === 'perizinan' && userRole === 'teacher' && (
             <TeacherPerizinan />
+          )}
+          {activePage === 'perizinan' && userRole === 'mentor' && (
+            <MentorPerizinan />
           )}
           {activePage === 'perizinan' && userRole === 'intern' && (
             <StudentPerizinan />
