@@ -99,7 +99,8 @@ interface AppContextType {
   checkInAttendance: (imageUrl?: string, latitude?: number, longitude?: number) => Promise<void>;
   updatePerizinanStatus: (id: number, status: 'approved' | 'rejected', rejectReason?: string) => Promise<void>;
   createPermission: (data: { type: string; reason: string; date: string; file?: File | null; attachmentUrl?: string }) => Promise<any>;
-  submitEvaluation: (siswaId: number, nilaiDUDI: number, nilaiGuru: number) => Promise<void>;
+  submitEvaluation: (siswaId: number, nilaiDUDI: number, nilaiGuru: number, period: string) => Promise<void>;
+  submitGuruGrade: (siswaId: number, nilaiGuru: number, period: string) => Promise<void>;
   addSiswa: (newSiswa: Omit<SiswaItem, 'id' | 'kehadiran' | 'logs' | 'nilaiDUDI' | 'nilaiGuru' | 'finalNilai' | 'berkasPct'>) => Promise<void>;
   addPerusahaan: (data: { name: string; address: string; quota: number; mentor: string }) => Promise<void>;
   updateSiswaMapping: (siswaId: number, data: { perusahaan: string; guruPembimbing: string; mentor: string; companyId?: number | string; teacherId?: number | string; mentorName?: string }) => Promise<void>;
@@ -695,15 +696,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const submitEvaluation = async (siswaId: number, nilaiDUDI: number, nilaiGuru: number) => {
+  const submitEvaluation = async (siswaId: number, nilaiDUDI: number, nilaiGuru: number, period: string) => {
     try {
       await Promise.all([
-        api.post('/api/evaluations', { studentId: siswaId, score: nilaiDUDI, type: 'dudi' }),
-        api.post('/api/evaluations', { studentId: siswaId, score: nilaiGuru, type: 'guru' }),
+        api.post('/api/evaluations', { studentId: siswaId, score: nilaiDUDI, type: 'dudi', period }),
+        api.post('/api/evaluations', { studentId: siswaId, score: nilaiGuru, type: 'guru', period }),
       ]);
       await loadSiswa();
     } catch (error: any) {
       throw new Error(error.message || 'Gagal submit evaluasi');
+    }
+  };
+
+  const submitGuruGrade = async (siswaId: number, nilaiGuru: number, period: string) => {
+    try {
+      await api.post('/api/evaluations', { studentId: siswaId, score: nilaiGuru, type: 'guru', period });
+      await loadSiswa();
+    } catch (error: any) {
+      throw new Error(error.message || 'Gagal submit nilai guru');
     }
   };
 
@@ -768,7 +778,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         logEntries, attendances, perizinanList, mapLocations,
         superStats, superClasses, superUsers,
         addLogEntry, updateLogStatus, updateLogEntry, checkInAttendance, updatePerizinanStatus,
-        createPermission, submitEvaluation, addSiswa, addPerusahaan, updateSiswaMapping, updateCompanyLocation,
+        createPermission, submitEvaluation, submitGuruGrade, addSiswa, addPerusahaan, updateSiswaMapping, updateCompanyLocation,
         login, register, logout, refreshData,
         loadSuperStats, loadSuperClasses, createClass, deleteClass, loadClassStudents,
         loadSuperUsers, toggleUser, deleteUser, updateUserRole, resetPassword,

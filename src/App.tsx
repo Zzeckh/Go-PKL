@@ -12,7 +12,7 @@ import { TeacherDashboard } from './components/TeacherDashboard';
 import { TeacherMonitoring } from './components/TeacherMonitoring';
 import { TeacherKehadiran } from './components/TeacherKehadiran';
 import { TeacherPerizinan } from './components/TeacherPerizinan';
-import { TeacherRekap } from './components/TeacherRekap';
+import { TeacherPenilaian } from './components/TeacherPenilaian';
 import { MentorLogbook } from './components/MentorLogbook';
 import { MentorKehadiran } from './components/MentorKehadiran';
 import { MentorPenilaian } from './components/MentorPenilaian';
@@ -214,6 +214,9 @@ export default function App() {
           {activePage === 'roster' && userRole === 'mentor' && (
             <MentorPenilaian />
           )}
+          {activePage === 'roster' && userRole === 'teacher' && (
+            <TeacherPenilaian />
+          )}
           {activePage === 'perizinan' && userRole === 'teacher' && (
             <TeacherPerizinan />
           )}
@@ -222,9 +225,6 @@ export default function App() {
           )}
           {activePage === 'perizinan' && userRole === 'intern' && (
             <StudentPerizinan />
-          )}
-          {activePage === 'rekap' && userRole === 'teacher' && (
-            <TeacherRekap />
           )}
           {activePage === 'pemetaan' && userRole === 'hubin' && (
             <HubinPemetaan />

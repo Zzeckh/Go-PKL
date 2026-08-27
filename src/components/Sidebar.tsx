@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   LayoutDashboard, BookOpen, MapPin, LogOut, PanelLeftClose, PanelLeftOpen, 
-  Camera, Activity, FileCheck, DownloadCloud, Package,
+  Camera, Activity, FileCheck, Package,
   School, Users, ShieldCheck, Building2, Award, Settings as SettingsIcon
 } from 'lucide-react';
 import { ActivePage, UserRole } from '../types';
@@ -60,7 +60,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'monitoring', icon: Activity,        label: 'Monitoring' },
         { id: 'attendance', icon: Camera,          label: 'Kehadiran' },
         { id: 'perizinan',  icon: FileCheck,       label: 'Perizinan' },
-        { id: 'rekap',      icon: DownloadCloud,   label: 'Rekap' },
+        { id: 'roster',     icon: Award,           label: 'Penilaian' },
         { id: 'settings',   icon: SettingsIcon,    label: 'Pengaturan' }
       ];
     }

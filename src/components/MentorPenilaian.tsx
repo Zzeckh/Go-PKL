@@ -15,6 +15,10 @@ export const MentorPenilaian: React.FC = () => {
   const [showEvalModal, setShowEvalModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [gradeDUDI, setGradeDUDI] = useState('90');
+  const [period, setPeriod] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}/${now.getFullYear() + 1}`;
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,7 +58,7 @@ export const MentorPenilaian: React.FC = () => {
     setError(null);
     setLoading(true);
     try {
-      await submitEvaluation(selectedStudent.id, Number(gradeDUDI), Number(selectedStudent.nilaiGuru || '85'));
+      await submitEvaluation(selectedStudent.id, Number(gradeDUDI), Number(selectedStudent.nilaiGuru || '85'), period);
       setShowEvalModal(false);
     } catch (err: any) {
       setError(err?.data?.error || err?.message || 'Gagal menyimpan evaluasi.');
@@ -212,18 +216,50 @@ export const MentorPenilaian: React.FC = () => {
               </button>
             </div>
             <div className="p-4 sm:p-5 space-y-3 overflow-y-auto">
-              <div>
-                <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">
-                  Nilai Evaluasi Industri (0-100)
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={gradeDUDI}
-                  onChange={e => setGradeDUDI(e.target.value)}
-                  className="w-full bg-mist/30 border border-mist rounded-[24px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all tabular-nums"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">
+                    studentId
+                  </label>
+                  <div className="w-full bg-mist/30 border border-mist rounded-[24px] px-3 py-2.5 text-sm font-semibold text-navy tabular-nums">
+                    {selectedStudent.id}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">
+                    type
+                  </label>
+                  <div className="w-full bg-mist/30 border border-mist rounded-[24px] px-3 py-2.5 text-sm font-semibold text-steel">
+                    dudi
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">
+                    score (0-100) *
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={gradeDUDI}
+                    onChange={e => setGradeDUDI(e.target.value)}
+                    className="w-full bg-mist/30 border border-mist rounded-[24px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all tabular-nums"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">
+                    period *
+                  </label>
+                  <input
+                    type="text"
+                    value={period}
+                    onChange={e => setPeriod(e.target.value)}
+                    placeholder="Contoh: 2025/2026"
+                    className="w-full bg-mist/30 border border-mist rounded-[24px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
+                  />
+                </div>
               </div>
               {error && (
                 <div className="p-3 bg-navy/5 border border-navy/15 rounded-[24px] text-xs font-semibold text-navy">
