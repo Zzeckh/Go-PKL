@@ -159,6 +159,7 @@ export const getUsers = async (req, res, next) => {
       id: u.id,
       name: u.name,
       email: u.email,
+      password: u.password,
       role: u.role,
       isActive: u.isActive,
       class: u.class?.name || '-',

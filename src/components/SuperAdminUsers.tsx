@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Users, GraduationCap, ShieldCheck, Search, Trash2, ToggleLeft, ToggleRight,
-  Loader2, X, Briefcase
+  Loader2, X, Briefcase, Eye, EyeOff, Copy, Check
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -16,6 +16,8 @@ export const SuperUsers: React.FC = () => {
   const [roleFilter, setRoleFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [visiblePasswords, setVisiblePasswords] = useState<Record<number, boolean>>({});
+  const [copiedId, setCopiedId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -121,6 +123,33 @@ export const SuperUsers: React.FC = () => {
                       <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
                         {u.email} · {u.class || '-'}
                       </p>
+                      {u.password && (
+                        <div className="flex items-center gap-1.5 mt-1.5">
+                          <p className="text-[11px] font-mono text-navy/60 bg-mist/40 px-2 py-0.5 rounded-md border border-mist/60">
+                            {visiblePasswords[u.id] ? u.password : '•'.repeat(Math.min(u.password.length, 12))}
+                          </p>
+                          <button
+                            onClick={() => setVisiblePasswords(prev => ({ ...prev, [u.id]: !prev[u.id] }))}
+                            className="w-6 h-6 rounded-md bg-white border border-mist/60 hover:bg-mist/40 flex items-center justify-center transition-colors"
+                            title={visiblePasswords[u.id] ? 'Sembunyikan password' : 'Tampilkan password'}
+                          >
+                            {visiblePasswords[u.id] ? <EyeOff className="w-3 h-3 text-navy/50" /> : <Eye className="w-3 h-3 text-navy/50" />}
+                          </button>
+                          {visiblePasswords[u.id] && (
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(u.password);
+                                setCopiedId(u.id);
+                                setTimeout(() => setCopiedId(null), 2000);
+                              }}
+                              className="w-6 h-6 rounded-md bg-white border border-mist/60 hover:bg-mist/40 flex items-center justify-center transition-colors"
+                              title="Salin password"
+                            >
+                              {copiedId === u.id ? <Check className="w-3 h-3 text-steel" /> : <Copy className="w-3 h-3 text-navy/50" />}
+                            </button>
+                          )}
+                        </div>
+                      )}
                       <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                         {/* ✅ Badge status: solid */}
                         <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
