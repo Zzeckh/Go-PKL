@@ -212,8 +212,8 @@ export const SuperUsers: React.FC = () => {
       </div>
       {/* ✅ Reset Password Modal */}
       {resetModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-[24px] p-6 w-full max-w-sm shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-3 sm:p-4">
+          <div className="bg-white rounded-t-[24px] sm:rounded-[24px] p-4 sm:p-6 w-full max-w-sm shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-navy text-base">Password Baru</h3>
               <button onClick={() => setResetModal(null)} className="w-7 h-7 rounded-full bg-mist/40 hover:bg-mist flex items-center justify-center transition-colors">

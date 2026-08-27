@@ -319,7 +319,7 @@ export const Maps: React.FC<MapsProps> = () => {
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-4 min-h-0">
 
         {/* ══ LEFT: MAP (Leaflet asli) ══ */}
-        <div className="lg:col-span-3 bg-white rounded-[24px] border border-mist/60 shadow-sm overflow-hidden flex flex-col min-h-[380px] lg:min-h-0">
+        <div className="lg:col-span-3 bg-white rounded-[24px] border border-mist/60 shadow-sm overflow-hidden flex flex-col min-h-[300px] sm:min-h-[380px] lg:min-h-0">
           <div className="flex items-center justify-between px-4 md:px-5 pt-4 pb-3 shrink-0">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center">
@@ -394,7 +394,7 @@ export const Maps: React.FC<MapsProps> = () => {
             </button>
 
             {/* ── Legend ── */}
-            <div className="absolute right-3 top-3 z-[500] bg-white/95 backdrop-blur-sm border border-mist rounded-[24px] p-2.5 shadow-lg flex flex-col gap-1.5 text-[10px] font-bold">
+            <div className="absolute right-3 top-3 z-[500] bg-white/95 backdrop-blur-sm border border-mist rounded-[24px] p-2.5 shadow-lg hidden sm:flex flex-col gap-1.5 text-[10px] font-bold">
               <div className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full bg-navy border-2 border-white shadow" />
                 <span className="text-navy/70">Lokasi Kamu</span>

@@ -195,9 +195,9 @@ export const MentorPenilaian: React.FC = () => {
 
       {/* ── MODAL EVALUASI ─ */}
       {showEvalModal && selectedStudent && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy/50 backdrop-blur-md">
-          <div className="bg-white rounded-[24px] max-w-md w-full shadow-2xl border border-mist/60">
-            <div className="p-5 border-b border-mist/60 flex items-center justify-between">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 sm:p-4 bg-navy/50 backdrop-blur-md">
+          <div className="bg-white rounded-t-[24px] sm:rounded-[24px] max-w-md w-full shadow-2xl border border-mist/60 overflow-hidden">
+            <div className="p-4 sm:p-5 border-b border-mist/60 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center">
                   <Award className="w-4 h-4 text-white" />
@@ -211,7 +211,7 @@ export const MentorPenilaian: React.FC = () => {
                 <X className="w-4 h-4 text-navy/60" />
               </button>
             </div>
-            <div className="p-5 space-y-3">
+            <div className="p-4 sm:p-5 space-y-3 overflow-y-auto">
               <div>
                 <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">
                   Nilai Evaluasi Industri (0-100)

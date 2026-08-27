@@ -599,9 +599,9 @@ interface DetailModalProps {
 const DetailModal: React.FC<DetailModalProps> = ({
   onClose, avatarBg, avatarContent, title, subtitle, badge, children
 }) => (
-  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy/50 backdrop-blur-md animate-in fade-in duration-200">
-    <div className="bg-white rounded-[24px] max-w-2xl w-full max-h-[85vh] shadow-2xl flex flex-col overflow-hidden border border-mist/60">
-      <div className="bg-navy p-5 flex items-center justify-between shrink-0">
+  <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 sm:p-4 bg-navy/50 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="bg-white rounded-t-[24px] sm:rounded-[24px] max-w-2xl w-full max-h-[90vh] shadow-2xl flex flex-col overflow-hidden border border-mist/60">
+      <div className="bg-navy p-4 sm:p-5 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <div className={`w-12 h-12 rounded-[10px] ${avatarBg === 'bg-navy' ? 'bg-white/15 text-white' : 'bg-white text-steel'} flex items-center justify-center shrink-0`}>
             {typeof avatarContent === 'string' ? (
@@ -627,7 +627,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
           <X className="w-4 h-4" />
         </button>
       </div>
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-5">
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-5">
         {children}
       </div>
     </div>
@@ -745,9 +745,9 @@ const AddDataModal: React.FC<AddDataModalProps> = ({ onClose, activeTab, addSisw
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy/50 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-white rounded-[24px] max-w-2xl w-full max-h-[85vh] shadow-2xl flex flex-col overflow-hidden border border-mist/60">
-        <div className="p-5 border-b border-mist/60 shrink-0">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 sm:p-6 bg-navy/50 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="bg-white rounded-t-[24px] sm:rounded-[24px] max-w-2xl w-full max-h-[90vh] shadow-2xl flex flex-col overflow-hidden border border-mist/60">
+        <div className="p-4 sm:p-5 border-b border-mist/60 shrink-0">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center">
@@ -786,7 +786,7 @@ const AddDataModal: React.FC<AddDataModalProps> = ({ onClose, activeTab, addSisw
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-3">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-5 space-y-3">
 
           {formTab === 'siswa' && (
             <>
@@ -831,7 +831,7 @@ const AddDataModal: React.FC<AddDataModalProps> = ({ onClose, activeTab, addSisw
           )}
         </form>
 
-        <div className="p-5 pt-3 border-t border-mist/60 flex gap-2 shrink-0">
+        <div className="p-4 sm:p-5 pt-3 border-t border-mist/60 flex gap-2 shrink-0">
           <button onClick={onClose} type="button" className="flex-1 bg-mist/60 text-navy/70 font-bold text-sm py-3 rounded-[24px] hover:bg-mist transition-colors">
             Batal
           </button>

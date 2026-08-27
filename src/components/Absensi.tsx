@@ -191,7 +191,7 @@ export const Absensi: React.FC<AbsensiProps> = ({
   if (checkedIn) {
     return (
       <div className="h-full w-full flex items-center justify-center animate-in fade-in duration-500 p-4">
-        <div className="bg-white rounded-[24px] border border-mist/60 shadow-xl max-w-sm w-full flex flex-col items-center text-center p-8">
+        <div className="bg-white rounded-[24px] border border-mist/60 shadow-xl max-w-sm w-full flex flex-col items-center text-center p-6 sm:p-8">
           <div className="w-20 h-20 bg-navy text-white rounded-[10px] flex items-center justify-center mb-6 shadow-lg shadow-navy/30">
             <CheckCircle2 className="w-10 h-10" />
           </div>

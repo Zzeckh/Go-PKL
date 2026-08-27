@@ -197,9 +197,9 @@ const AddClassModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy/50 backdrop-blur-md">
-      <div className="bg-white rounded-[24px] max-w-md w-full shadow-2xl border border-mist/60">
-        <div className="p-5 border-b border-mist/60 flex items-center justify-between">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 sm:p-4 bg-navy/50 backdrop-blur-md">
+      <div className="bg-white rounded-t-[24px] sm:rounded-[24px] max-w-md w-full shadow-2xl border border-mist/60 max-h-[90vh] flex flex-col overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-mist/60 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center">
               <BookMarked className="w-4 h-4 text-white" />
@@ -210,7 +210,7 @@ const AddClassModal: React.FC<{
             <X className="w-4 h-4 text-navy/60" />
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="p-5 space-y-3">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-3 overflow-y-auto flex-1">
           <div>
             <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">
               Nama Kelas *
@@ -266,9 +266,9 @@ const ClassDetailModal: React.FC<{
   const students = detail.students || [];
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy/50 backdrop-blur-md">
-      <div className="bg-white rounded-[24px] max-w-2xl w-full shadow-2xl border border-mist/60 flex flex-col max-h-[90vh]">
-        <div className="p-5 border-b border-mist/60 flex items-center justify-between shrink-0">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 sm:p-4 bg-navy/50 backdrop-blur-md">
+      <div className="bg-white rounded-t-[24px] sm:rounded-[24px] max-w-2xl w-full shadow-2xl border border-mist/60 flex flex-col max-h-[90vh] overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-mist/60 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center shrink-0">
               <BookMarked className="w-4 h-4 text-white" />

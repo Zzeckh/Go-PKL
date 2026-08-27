@@ -52,6 +52,10 @@
     --app-outer: #000000;
   }
 
+  html, body {
+    overflow-x: clip;
+  }
+
   body {
     font-family: var(--font-sans);
     background-color: var(--app-outer);
@@ -115,3 +119,7 @@
 .c3 { animation: card-up 420ms 180ms cubic-bezier(0.22,1,0.36,1) both; }
 .c4 { animation: card-up 420ms 240ms cubic-bezier(0.22,1,0.36,1) both; }
 .c5 { animation: card-up 420ms 300ms cubic-bezier(0.22,1,0.36,1) both; }
+
+/* ─── Hide scrollbar utility ─── */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

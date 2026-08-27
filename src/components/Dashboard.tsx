@@ -160,7 +160,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <h1 className="text-xl md:text-2xl font-bold text-navy leading-tight truncate">{userName || 'User'}</h1>
           </div>
         </div>
-        <div className="flex items-center gap-2 bg-white/70 backdrop-blur-sm border border-white rounded-full px-4 py-2 shadow-sm shrink-0">
+        <div className="hidden sm:flex items-center gap-2 bg-white/70 backdrop-blur-sm border border-white rounded-full px-4 py-2 shadow-sm shrink-0">
           <Calendar className="w-4 h-4 text-steel" />
           <span className="text-xs md:text-sm font-bold text-navy/80 tabular-nums">
             {time.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })}
@@ -172,7 +172,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-4 shrink-0">
         
         {/* ⭐ HERO CTA */}
-        <div className="lg:col-span-2 c1 bg-navy text-white rounded-[24px] p-6 relative overflow-hidden h-[210px] flex flex-col justify-between shadow-xl shadow-steel/30 border border-white/10">
+        <div className="lg:col-span-2 c1 bg-navy text-white rounded-[24px] p-4 sm:p-6 relative overflow-hidden min-h-[200px] sm:h-[210px] flex flex-col justify-between shadow-xl shadow-steel/30 border border-white/10">
           <div className="absolute -top-16 -right-16 w-48 h-48 bg-white/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-white/5 rounded-full blur-3xl pointer-events-none" />
           
@@ -183,7 +183,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 {checkedInToday ? 'Sudah Absen Hari Ini' : 'Siap Untuk Absen'}
               </span>
             </div>
-            <h2 className="text-2xl md:text-3xl font-bold leading-tight">
+            <h2 className="text-lg sm:text-2xl md:text-3xl font-bold leading-tight">
               {checkedInToday ? 'Kerja Bagus! 👋' : 'Saatnya Absen!'}
             </h2>
             <p className="text-sm text-white/70 mt-1 flex items-center gap-1.5">
@@ -217,7 +217,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* 📊 Attendance */}
-        <div className="c2 bg-white rounded-[24px] border border-mist/60 shadow-sm p-5 h-[210px] flex flex-col">
+        <div className="c2 bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 sm:p-5 min-h-[180px] sm:h-[210px] flex flex-col">
           <div className="flex items-center justify-between shrink-0">
             <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
               <UserCheck className="w-4 h-4 text-white" />
@@ -226,7 +226,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           <div className="flex items-baseline gap-1 mt-2">
-            <span className="text-3xl font-light text-navy tabular-nums tracking-tight">{totalHadir}</span>
+            <span className="text-2xl sm:text-3xl font-light text-navy tabular-nums tracking-tight">{totalHadir}</span>
             <span className="text-sm font-semibold text-navy/50">/ {totalDays}</span>
             <span className="ml-auto text-sm font-bold text-steel">{pct}%</span>
           </div>
@@ -264,7 +264,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* 🕐 Clock */}
-        <div className="c3 bg-white/70 backdrop-blur-xl rounded-[24px] border border-white shadow-sm p-4 h-[210px] flex flex-col">
+        <div className="c3 bg-white/70 backdrop-blur-xl rounded-[24px] border border-white shadow-sm p-3 sm:p-4 min-h-[180px] sm:h-[210px] flex flex-col">
           <div className="flex gap-1 bg-mist/60 p-1 rounded-full mb-2">
             <button 
               onClick={() => setMode('clock')} 

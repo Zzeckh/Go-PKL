@@ -226,9 +226,9 @@ const MonitoringDetailModal: React.FC<{
   const siswaAttendances = attendances.filter(a => a.userId === siswa.id);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy/50 backdrop-blur-md">
-      <div className="bg-white rounded-[24px] max-w-lg w-full shadow-2xl border border-mist/60 overflow-hidden flex flex-col max-h-[92vh]">
-        <div className="p-5 border-b border-mist/60 flex items-center justify-between shrink-0">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 sm:p-4 bg-navy/50 backdrop-blur-md">
+      <div className="bg-white rounded-t-[24px] sm:rounded-[24px] max-w-lg w-full shadow-2xl border border-mist/60 overflow-hidden flex flex-col max-h-[92vh]">
+        <div className="p-4 sm:p-5 border-b border-mist/60 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm">
               {getInitials(siswa.name)}
@@ -243,7 +243,7 @@ const MonitoringDetailModal: React.FC<{
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-4">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-5 space-y-4">
           {/* ── Stats ringkas ── */}
           <div className="grid grid-cols-2 gap-2">
             <div className="flex items-center gap-3 bg-white border border-mist/60 shadow-sm rounded-2xl p-3">
