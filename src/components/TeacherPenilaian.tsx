@@ -174,22 +174,43 @@ export const TeacherPenilaian: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* ── nilai DUDI (mentor) — read-only ── */}
-                    <div className="flex items-center gap-2.5 bg-mist/30 border border-mist/60 rounded-2xl p-2.5">
-                      <div className="w-7 h-7 rounded-lg bg-steel flex items-center justify-center shrink-0">
-                        <Building className="w-3.5 h-3.5 text-white" />
+                    {/* ── nilai Mentor & Guru berdampingan ── */}
+                    <div className="grid grid-cols-2 gap-2">
+                      {/* Nilai Mentor (DUDI) */}
+                      <div className="flex items-center gap-2 bg-mist/30 border border-mist/60 rounded-2xl p-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-steel flex items-center justify-center shrink-0">
+                          <Building className="w-3.5 h-3.5 text-white" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[9px] font-bold uppercase text-navy/50">Mentor</p>
+                          <p className="text-sm font-bold text-navy tabular-nums leading-tight">
+                            {hasMentorGrade ? student.nilaiDUDI : <span className="text-navy/30">—</span>}
+                          </p>
+                        </div>
+                        {hasMentorGrade && (
+                          <span className="text-[10px] font-bold bg-steel text-white shadow-sm shadow-steel/30 px-2 py-0.5 rounded-full tabular-nums shrink-0">
+                            ✓
+                          </span>
+                        )}
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[9px] font-bold uppercase text-navy/50">Nilai Mentor (DUDI)</p>
-                        <p className="text-sm font-bold text-navy tabular-nums leading-tight">
-                          {hasMentorGrade ? student.nilaiDUDI : <span className="text-navy/30">Belum dinilai</span>}
-                        </p>
+
+                      {/* Nilai Guru */}
+                      <div className="flex items-center gap-2 bg-mist/30 border border-mist/60 rounded-2xl p-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center shrink-0">
+                          <GraduationCap className="w-3.5 h-3.5 text-white" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[9px] font-bold uppercase text-navy/50">Guru</p>
+                          <p className="text-sm font-bold text-navy tabular-nums leading-tight">
+                            {hasGuruGrade ? student.nilaiGuru : <span className="text-navy/30">—</span>}
+                          </p>
+                        </div>
+                        {hasGuruGrade && (
+                          <span className="text-[10px] font-bold bg-navy text-white shadow-sm shadow-navy/30 px-2 py-0.5 rounded-full tabular-nums shrink-0">
+                            ✓
+                          </span>
+                        )}
                       </div>
-                      {hasMentorGrade && (
-                        <span className="text-[10px] font-bold bg-steel text-white shadow-sm shadow-steel/30 px-2 py-0.5 rounded-full tabular-nums shrink-0">
-                          ✓
-                        </span>
-                      )}
                     </div>
 
                     {/* ── progress kehadiran ── */}

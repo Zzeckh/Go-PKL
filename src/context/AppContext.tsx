@@ -273,22 +273,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       startLoading('siswa');
       const response = await api.get('/api/users?role=student') as any[];
-      const mapped = response.map((u: any): SiswaItem => ({
-        id: u.id,
-        name: u.name,
-        kelas: u.class?.name || '-',
-        academicYear: u.academicYear || '-',
-        perusahaan: u.company?.name || '-',
-        guruPembimbing: u.teacher?.name || '-',
-        mentor: u.company?.mentor?.name || '-',
-        kehadiran: u._count?.absensis || 0,
-        logs: u._count?.logbooks || 0,
-        nilaiDUDI: '0',
-        nilaiGuru: '0',
-        finalNilai: '0',
-        berkasPct: 0,
-        img: '',
-      }));
+      const mapped = response.map((u: any): SiswaItem => {
+        const evals = u.evalAsStudent || [];
+        const dudiEval = evals.find((e: any) => e.type === 'dudi');
+        const guruEval = evals.find((e: any) => e.type === 'guru');
+        const nilaiDUDI = dudiEval ? String(dudiEval.score) : '0';
+        const nilaiGuru = guruEval ? String(guruEval.score) : '0';
+        const d = dudiEval ? dudiEval.score : 0;
+        const g = guruEval ? guruEval.score : 0;
+        const finalNilai = d && g ? String(Math.round((d + g) / 2)) : String(g || d || 0);
+        return {
+          id: u.id,
+          name: u.name,
+          kelas: u.class?.name || '-',
+          academicYear: u.academicYear || '-',
+          perusahaan: u.company?.name || '-',
+          guruPembimbing: u.teacher?.name || '-',
+          mentor: u.company?.mentor?.name || '-',
+          kehadiran: u._count?.absensis || 0,
+          logs: u._count?.logbooks || 0,
+          nilaiDUDI,
+          nilaiGuru,
+          finalNilai,
+          berkasPct: 0,
+          img: '',
+        };
+      });
       setSiswaList(mapped);
     } catch (error: any) {
       console.warn('Gagal mengambil siswa:', error?.message);
