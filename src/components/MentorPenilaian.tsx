@@ -15,6 +15,10 @@ export const MentorPenilaian: React.FC = () => {
   const [showEvalModal, setShowEvalModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [gradeDUDI, setGradeDUDI] = useState('90');
+  const [period, setPeriod] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}/${now.getFullYear() + 1}`;
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,7 +58,7 @@ export const MentorPenilaian: React.FC = () => {
     setError(null);
     setLoading(true);
     try {
-      await submitEvaluation(selectedStudent.id, Number(gradeDUDI), Number(selectedStudent.nilaiGuru || '85'));
+      await submitEvaluation(selectedStudent.id, Number(gradeDUDI), Number(selectedStudent.nilaiGuru || '85'), period);
       setShowEvalModal(false);
     } catch (err: any) {
       setError(err?.data?.error || err?.message || 'Gagal menyimpan evaluasi.');
@@ -195,9 +199,9 @@ export const MentorPenilaian: React.FC = () => {
 
       {/* ── MODAL EVALUASI ─ */}
       {showEvalModal && selectedStudent && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy/50 backdrop-blur-md">
-          <div className="bg-white rounded-[24px] max-w-md w-full shadow-2xl border border-mist/60">
-            <div className="p-5 border-b border-mist/60 flex items-center justify-between">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 sm:p-4 bg-navy/50 backdrop-blur-md">
+          <div className="bg-white rounded-t-[24px] sm:rounded-[24px] max-w-md w-full shadow-2xl border border-mist/60 overflow-hidden">
+            <div className="p-4 sm:p-5 border-b border-mist/60 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center">
                   <Award className="w-4 h-4 text-white" />
@@ -211,19 +215,51 @@ export const MentorPenilaian: React.FC = () => {
                 <X className="w-4 h-4 text-navy/60" />
               </button>
             </div>
-            <div className="p-5 space-y-3">
-              <div>
-                <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">
-                  Nilai Evaluasi Industri (0-100)
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={gradeDUDI}
-                  onChange={e => setGradeDUDI(e.target.value)}
-                  className="w-full bg-mist/30 border border-mist rounded-[24px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all tabular-nums"
-                />
+            <div className="p-4 sm:p-5 space-y-3 overflow-y-auto">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">
+                    studentId
+                  </label>
+                  <div className="w-full bg-mist/30 border border-mist rounded-[24px] px-3 py-2.5 text-sm font-semibold text-navy tabular-nums">
+                    {selectedStudent.id}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">
+                    type
+                  </label>
+                  <div className="w-full bg-mist/30 border border-mist rounded-[24px] px-3 py-2.5 text-sm font-semibold text-steel">
+                    dudi
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">
+                    score (0-100) *
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={gradeDUDI}
+                    onChange={e => setGradeDUDI(e.target.value)}
+                    className="w-full bg-mist/30 border border-mist rounded-[24px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all tabular-nums"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">
+                    period *
+                  </label>
+                  <input
+                    type="text"
+                    value={period}
+                    onChange={e => setPeriod(e.target.value)}
+                    placeholder="Contoh: 2025/2026"
+                    className="w-full bg-mist/30 border border-mist rounded-[24px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
+                  />
+                </div>
               </div>
               {error && (
                 <div className="p-3 bg-navy/5 border border-navy/15 rounded-[24px] text-xs font-semibold text-navy">

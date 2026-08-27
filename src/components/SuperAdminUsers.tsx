@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Users, GraduationCap, ShieldCheck, Search, Trash2, ToggleLeft, ToggleRight,
-  Loader2, X, Briefcase
+  Loader2, X, Briefcase, KeyRound, Copy, Check
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -12,10 +12,13 @@ const getInitials = (name: string) =>
    KELOLA PENGGUNA
    ══════════════════════════════════════════════════════ */
 export const SuperUsers: React.FC = () => {
-  const { superUsers, loadSuperUsers, toggleUser, deleteUser, updateUserRole, isAuthenticated } = useApp();
+  const { superUsers, loadSuperUsers, toggleUser, deleteUser, updateUserRole, resetPassword, isAuthenticated } = useApp();
   const [roleFilter, setRoleFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [resetModal, setResetModal] = useState<{ userId: number; userName: string; newPassword: string } | null>(null);
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [resettingId, setResettingId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -121,6 +124,7 @@ export const SuperUsers: React.FC = () => {
                       <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
                         {u.email} · {u.class || '-'}
                       </p>
+
                       <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                         {/* ✅ Badge status: solid */}
                         <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
@@ -153,6 +157,26 @@ export const SuperUsers: React.FC = () => {
                           <option value="mentor">Mentor</option>
                           <option value="hubin">Hubin</option>
                         </select>
+                        {/* ✅ Button reset password */}
+                        <button
+                          onClick={async () => {
+                            if (!confirm(`Reset password "${u.name}"? Password baru akan ditampilkan setelah proses selesai.`)) return;
+                            setResettingId(u.id);
+                            try {
+                              const res = await resetPassword(u.id);
+                              setResetModal({ userId: res.id, userName: res.name, newPassword: res.newPassword });
+                            } catch (err: any) {
+                              alert(err?.data?.error || err?.message || 'Gagal mereset password.');
+                            } finally {
+                              setResettingId(null);
+                            }
+                          }}
+                          className="w-9 h-9 rounded-lg bg-white border border-mist/60 text-navy/50 hover:bg-amber-50 hover:border-amber-200 hover:text-amber-600 flex items-center justify-center transition-colors"
+                          title="Reset password"
+                          disabled={resettingId === u.id}
+                        >
+                          {resettingId === u.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
+                        </button>
                         {/* ✅ Button hapus: card putih + hover red */}
                         <button
                           onClick={() => {
@@ -186,6 +210,45 @@ export const SuperUsers: React.FC = () => {
           )}
         </div>
       </div>
+      {/* ✅ Reset Password Modal */}
+      {resetModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-3 sm:p-4">
+          <div className="bg-white rounded-t-[24px] sm:rounded-[24px] p-4 sm:p-6 w-full max-w-sm shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-navy text-base">Password Baru</h3>
+              <button onClick={() => setResetModal(null)} className="w-7 h-7 rounded-full bg-mist/40 hover:bg-mist flex items-center justify-center transition-colors">
+                <X className="w-4 h-4 text-navy/60" />
+              </button>
+            </div>
+            <div className="bg-mist/40 border border-mist/60 rounded-2xl p-4 mb-4">
+              <p className="text-xs font-semibold text-navy/50 mb-1">Password baru untuk <span className="text-navy font-bold">{resetModal.userName}</span>:</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-mono font-bold text-navy bg-white border border-mist/60 rounded-xl px-3 py-2 flex-1 select-all">
+                  {resetModal.newPassword}
+                </p>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(resetModal.newPassword);
+                    setCopiedId(-1);
+                    setTimeout(() => setCopiedId(null), 2000);
+                  }}
+                  className="w-9 h-9 rounded-xl bg-white border border-mist/60 hover:bg-mist/40 flex items-center justify-center transition-colors shrink-0"
+                  title="Salin password"
+                >
+                  {copiedId === -1 ? <Check className="w-4 h-4 text-steel" /> : <Copy className="w-4 h-4 text-navy/50" />}
+                </button>
+              </div>
+              <p className="text-[10px] text-navy/40 font-semibold mt-2">⚠️ Catat password ini. Super admin tidak bisa melihatnya lagi setelah ditutup.</p>
+            </div>
+            <button
+              onClick={() => setResetModal(null)}
+              className="w-full py-2.5 bg-navy text-white text-sm font-bold rounded-2xl hover:bg-steel transition-colors"
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

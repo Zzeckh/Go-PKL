@@ -99,7 +99,8 @@ interface AppContextType {
   checkInAttendance: (imageUrl?: string, latitude?: number, longitude?: number) => Promise<void>;
   updatePerizinanStatus: (id: number, status: 'approved' | 'rejected', rejectReason?: string) => Promise<void>;
   createPermission: (data: { type: string; reason: string; date: string; file?: File | null; attachmentUrl?: string }) => Promise<any>;
-  submitEvaluation: (siswaId: number, nilaiDUDI: number, nilaiGuru: number) => Promise<void>;
+  submitEvaluation: (siswaId: number, nilaiDUDI: number, nilaiGuru: number, period: string) => Promise<void>;
+  submitGuruGrade: (siswaId: number, nilaiGuru: number, period: string) => Promise<void>;
   addSiswa: (newSiswa: Omit<SiswaItem, 'id' | 'kehadiran' | 'logs' | 'nilaiDUDI' | 'nilaiGuru' | 'finalNilai' | 'berkasPct'>) => Promise<void>;
   addPerusahaan: (data: { name: string; address: string; quota: number; mentor: string }) => Promise<void>;
   updateSiswaMapping: (siswaId: number, data: { perusahaan: string; guruPembimbing: string; mentor: string; companyId?: number | string; teacherId?: number | string; mentorName?: string }) => Promise<void>;
@@ -117,6 +118,7 @@ interface AppContextType {
   toggleUser: (id: number) => Promise<any>;
   deleteUser: (id: number) => Promise<any>;
   updateUserRole: (id: number, role: string) => Promise<any>;
+  resetPassword: (id: number) => Promise<{ id: number; name: string; newPassword: string }>;
   loadCompanies: () => Promise<boolean>;
   addCompany: (data: Partial<PerusahaanItem>) => Promise<any>;
   updateCompany: (id: number, data: Partial<PerusahaanItem>) => Promise<any>;
@@ -271,22 +273,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       startLoading('siswa');
       const response = await api.get('/api/users?role=student') as any[];
-      const mapped = response.map((u: any): SiswaItem => ({
-        id: u.id,
-        name: u.name,
-        kelas: u.class?.name || '-',
-        academicYear: u.academicYear || '-',
-        perusahaan: u.company?.name || '-',
-        guruPembimbing: u.teacher?.name || '-',
-        mentor: u.company?.mentor?.name || '-',
-        kehadiran: u._count?.absensis || 0,
-        logs: u._count?.logbooks || 0,
-        nilaiDUDI: '0',
-        nilaiGuru: '0',
-        finalNilai: '0',
-        berkasPct: 0,
-        img: '',
-      }));
+      const mapped = response.map((u: any): SiswaItem => {
+        const evals = u.evalAsStudent || [];
+        const dudiEval = evals.find((e: any) => e.type === 'dudi');
+        const guruEval = evals.find((e: any) => e.type === 'guru');
+        const nilaiDUDI = dudiEval ? String(dudiEval.score) : '0';
+        const nilaiGuru = guruEval ? String(guruEval.score) : '0';
+        const d = dudiEval ? dudiEval.score : 0;
+        const g = guruEval ? guruEval.score : 0;
+        const finalNilai = d && g ? String(Math.round((d + g) / 2)) : String(g || d || 0);
+        return {
+          id: u.id,
+          name: u.name,
+          kelas: u.class?.name || '-',
+          academicYear: u.academicYear || '-',
+          perusahaan: u.company?.name || '-',
+          guruPembimbing: u.teacher?.name || '-',
+          mentor: u.company?.mentor?.name || '-',
+          kehadiran: u._count?.absensis || 0,
+          logs: u._count?.logbooks || 0,
+          nilaiDUDI,
+          nilaiGuru,
+          finalNilai,
+          berkasPct: 0,
+          img: '',
+        };
+      });
       setSiswaList(mapped);
     } catch (error: any) {
       console.warn('Gagal mengambil siswa:', error?.message);
@@ -452,6 +464,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateUserRole = async (id: number, role: string) => {
     const res = await api.patch(`/api/super-admin/users/${id}/role`, { role });
     await loadSuperUsers();
+    return res;
+  };
+
+  const resetPassword = async (id: number) => {
+    const res = await api.post(`/api/super-admin/users/${id}/reset-password`) as { id: number; name: string; newPassword: string };
     return res;
   };
 
@@ -689,15 +706,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const submitEvaluation = async (siswaId: number, nilaiDUDI: number, nilaiGuru: number) => {
+  const submitEvaluation = async (siswaId: number, nilaiDUDI: number, nilaiGuru: number, period: string) => {
     try {
       await Promise.all([
-        api.post('/api/evaluations', { studentId: siswaId, score: nilaiDUDI, type: 'dudi' }),
-        api.post('/api/evaluations', { studentId: siswaId, score: nilaiGuru, type: 'guru' }),
+        api.post('/api/evaluations', { studentId: siswaId, score: nilaiDUDI, type: 'dudi', period }),
+        api.post('/api/evaluations', { studentId: siswaId, score: nilaiGuru, type: 'guru', period }),
       ]);
       await loadSiswa();
     } catch (error: any) {
       throw new Error(error.message || 'Gagal submit evaluasi');
+    }
+  };
+
+  const submitGuruGrade = async (siswaId: number, nilaiGuru: number, period: string) => {
+    try {
+      await api.post('/api/evaluations', { studentId: siswaId, score: nilaiGuru, type: 'guru', period });
+      await loadSiswa();
+    } catch (error: any) {
+      throw new Error(error.message || 'Gagal submit nilai guru');
     }
   };
 
@@ -762,10 +788,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         logEntries, attendances, perizinanList, mapLocations,
         superStats, superClasses, superUsers,
         addLogEntry, updateLogStatus, updateLogEntry, checkInAttendance, updatePerizinanStatus,
-        createPermission, submitEvaluation, addSiswa, addPerusahaan, updateSiswaMapping, updateCompanyLocation,
+        createPermission, submitEvaluation, submitGuruGrade, addSiswa, addPerusahaan, updateSiswaMapping, updateCompanyLocation,
         login, register, logout, refreshData,
         loadSuperStats, loadSuperClasses, createClass, deleteClass, loadClassStudents,
-        loadSuperUsers, toggleUser, deleteUser, updateUserRole,
+        loadSuperUsers, toggleUser, deleteUser, updateUserRole, resetPassword,
         loadCompanies, addCompany, updateCompany, deleteCompany,
         changePassword, deleteAccount,
       }}

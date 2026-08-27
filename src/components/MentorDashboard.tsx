@@ -239,9 +239,9 @@ export const MentorDashboard: React.FC<MentorDashboardProps> = ({ userName, comp
 
       {/* ── MODAL REVISI ── */}
       {revisionLogId && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy/40 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-white rounded-[24px] max-w-md w-full shadow-2xl border border-mist/60 overflow-hidden">
-            <div className="p-5 border-b border-mist/60 flex items-center justify-between">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 sm:p-4 bg-navy/40 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white rounded-t-[24px] sm:rounded-[24px] max-w-md w-full shadow-2xl border border-mist/60 overflow-hidden">
+            <div className="p-4 sm:p-5 border-b border-mist/60 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center">
                   <MessageSquare className="w-4 h-4 text-white" />
@@ -259,7 +259,7 @@ export const MentorDashboard: React.FC<MentorDashboardProps> = ({ userName, comp
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="p-5">
+            <div className="p-4 sm:p-5 overflow-y-auto">
               <div className="flex items-start gap-2 bg-navy/5 border border-navy/10 rounded-[24px] p-3 mb-4">
                 <AlertCircle className="w-4 h-4 text-navy shrink-0 mt-0.5" />
                 <p className="text-[11px] font-medium text-navy/80 leading-relaxed">

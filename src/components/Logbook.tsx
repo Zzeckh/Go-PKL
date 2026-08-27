@@ -458,9 +458,9 @@ export const Logbook: React.FC<LogbookProps> = ({
 
       {/* ── EDIT MODAL ── */}
       {editingLog && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy/40 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-white rounded-[24px] max-w-2xl w-full max-h-[85vh] shadow-2xl flex flex-col overflow-hidden border border-mist/60">
-            <div className="p-5 md:p-6 border-b border-mist/60 shrink-0">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 sm:p-6 bg-navy/40 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white rounded-t-[24px] sm:rounded-[24px] max-w-2xl w-full max-h-[90vh] shadow-2xl flex flex-col overflow-hidden border border-mist/60">
+            <div className="p-4 sm:p-6 border-b border-mist/60 shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center">
@@ -596,9 +596,9 @@ export const Logbook: React.FC<LogbookProps> = ({
 
       {/* ── MODAL TAMBAH ── */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy/40 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-white rounded-[24px] max-w-2xl w-full max-h-[85vh] shadow-2xl flex flex-col overflow-hidden border border-mist/60">
-            <div className="p-5 md:p-6 border-b border-mist/60 shrink-0">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 sm:p-6 bg-navy/40 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white rounded-t-[24px] sm:rounded-[24px] max-w-2xl w-full max-h-[90vh] shadow-2xl flex flex-col overflow-hidden border border-mist/60">
+            <div className="p-4 sm:p-6 border-b border-mist/60 shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center">

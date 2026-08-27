@@ -1,4 +1,5 @@
 import prisma from '../config/db.js';
+import bcrypt from 'bcryptjs';
 
 /* ── Stats global ── */
 export const getStats = async (req, res, next) => {
@@ -226,6 +227,26 @@ export const updateUserRole = async (req, res, next) => {
 
     const updated = await prisma.user.update({ where: { id }, data: { role } });
     res.json({ id: updated.id, role: updated.role });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/* ── POST /api/super-admin/users/:id/reset-password ── */
+export const resetPassword = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id);
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return res.status(404).json({ error: 'User tidak ditemukan.' });
+    if (user.role === 'super_admin') {
+      return res.status(403).json({ error: 'Tidak dapat mereset password super admin.' });
+    }
+
+    const newPassword = Math.random().toString(36).slice(-8);
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({ where: { id }, data: { password: hashed } });
+
+    res.json({ id: user.id, name: user.name, newPassword });
   } catch (error) {
     next(error);
   }

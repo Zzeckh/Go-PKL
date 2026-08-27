@@ -3,7 +3,7 @@ import { authenticate, requireRole } from '../middleware/authMiddleware.js';
 import {
   getStats,
   getClasses, createClass, deleteClass, getClassStudents,
-  getUsers, toggleUser, deleteUser, updateUserRole,
+  getUsers, toggleUser, deleteUser, updateUserRole, resetPassword,
 } from '../controllers/superAdminController.js';
 
 const router = Router();
@@ -19,5 +19,6 @@ router.get('/users', getUsers);
 router.patch('/users/:id/toggle', toggleUser);
 router.patch('/users/:id/role', updateUserRole);
 router.delete('/users/:id', deleteUser);
+router.post('/users/:id/reset-password', resetPassword);
 
 export default router;

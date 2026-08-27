@@ -187,10 +187,10 @@ const TeacherKehadiranDetailModal: React.FC<{
   const pct = student.kehadiran || 0;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy/50 backdrop-blur-md">
-      <div className="bg-white rounded-[24px] max-w-md w-full shadow-2xl border border-mist/60 overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 sm:p-4 bg-navy/50 backdrop-blur-md">
+      <div className="bg-white rounded-t-[24px] sm:rounded-[24px] max-w-md w-full shadow-2xl border border-mist/60 overflow-hidden flex flex-col max-h-[92vh]">
         {/* ── Header ── */}
-        <div className="p-5 border-b border-mist/60 flex items-center justify-between shrink-0">
+        <div className="p-4 sm:p-5 border-b border-mist/60 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm shadow-md shadow-navy/20">
               {getInitials(student.name)}
@@ -205,7 +205,7 @@ const TeacherKehadiranDetailModal: React.FC<{
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-4">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-5 space-y-4">
           {/* ── Tempat Magang ── */}
           <div className="flex items-center gap-3 bg-mist/30 border border-mist/60 rounded-2xl p-3">
             <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center shrink-0">

@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   LayoutDashboard, BookOpen, MapPin, LogOut, PanelLeftClose, PanelLeftOpen, 
-  Camera, Activity, FileCheck, DownloadCloud, Package,
+  Camera, Activity, FileCheck, Package,
   School, Users, ShieldCheck, Building2, Award, Settings as SettingsIcon
 } from 'lucide-react';
 import { ActivePage, UserRole } from '../types';
@@ -60,7 +60,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'monitoring', icon: Activity,        label: 'Monitoring' },
         { id: 'attendance', icon: Camera,          label: 'Kehadiran' },
         { id: 'perizinan',  icon: FileCheck,       label: 'Perizinan' },
-        { id: 'rekap',      icon: DownloadCloud,   label: 'Rekap' },
+        { id: 'roster',     icon: Award,           label: 'Penilaian' },
         { id: 'settings',   icon: SettingsIcon,    label: 'Pengaturan' }
       ];
     }
@@ -89,14 +89,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <>
       {/* ── MOBILE BOTTOM NAVIGATION ── */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-t border-mist px-2 pb-2 shadow-[0_-4px_20px_rgba(21,42,66,0.08)] flex justify-around items-center h-16 sm:h-20">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-t border-mist px-1 sm:px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(21,42,66,0.08)] flex justify-around items-center h-16 sm:h-18">
         {menuItems.map(item => {
           const isActive = activePage === item.id;
           return (
             <button
               key={item.id}
               onClick={() => setActivePage(item.id as ActivePage)}
-              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-all duration-200 relative ${
+              className={`flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 py-1 transition-all duration-200 relative ${
                 isActive ? 'text-steel' : 'text-navy/40'
               }`}
             >
@@ -104,7 +104,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <span className="absolute top-0 w-8 h-1 bg-steel rounded-b-full" />
               )}
               <item.icon className={`w-5 h-5 sm:w-6 sm:h-6 transition-transform duration-200 ${isActive ? 'scale-110' : ''}`} />
-              <span className={`text-[10px] sm:text-xs font-bold transition-all ${isActive ? 'opacity-100' : 'opacity-70'}`}>
+              <span className={`text-[9px] sm:text-[10px] font-bold transition-all truncate max-w-full ${isActive ? 'opacity-100' : 'opacity-70'}`}>
                 {item.label}
               </span>
             </button>

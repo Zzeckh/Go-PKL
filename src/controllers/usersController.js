@@ -28,6 +28,10 @@ export const getUsers = async (req, res, next) => {
         class: { select: { id: true, name: true, major: true } },
         teacher: { select: { id: true, name: true } },
         company: { select: { id: true, name: true, mentor: { select: { name: true } } } },
+        evalAsStudent: {
+          select: { type: true, score: true, period: true },
+          orderBy: { createdAt: 'desc' },
+        },
         _count: {
           select: {
             absensis: true,

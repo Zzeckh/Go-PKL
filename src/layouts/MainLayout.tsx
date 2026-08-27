@@ -61,7 +61,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         userRole={userRole}
       />
       
-      <main className="flex-1 flex flex-col gap-2 md:gap-3 overflow-hidden pb-20 md:pb-0">
+      <main className="flex-1 flex flex-col gap-2 md:gap-3 overflow-hidden pb-[max(5rem,calc(5rem+env(safe-area-inset-bottom)))] md:pb-0">
         <Header 
           title={getPageTitle()} 
           onLogout={onLogout}
