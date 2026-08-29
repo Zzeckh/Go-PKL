@@ -212,7 +212,7 @@ export const Absensi: React.FC<AbsensiProps> = ({
   }
 
   return (
-    <div className="h-full w-full flex flex-col gap-3 md:gap-4 animate-in fade-in duration-500 overflow-hidden">
+    <div className="h-full w-full flex flex-col gap-3 md:gap-4 animate-in fade-in duration-500 overflow-y-auto custom-scrollbar">
       <canvas ref={canvasRef} className="hidden" />
 
       {/* ── HEADER ─ */}
@@ -239,7 +239,7 @@ export const Absensi: React.FC<AbsensiProps> = ({
       </div>
 
       {/* ── MAIN GRID ── */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-4 min-h-0">
+      <div className="lg:flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-4 lg:min-h-0">
         
         {/* ══ LEFT: CAMERA PREVIEW ══ */}
         <div className="lg:col-span-3 bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 md:p-5 flex flex-col relative overflow-hidden min-h-[320px] lg:min-h-0">
@@ -348,7 +348,7 @@ export const Absensi: React.FC<AbsensiProps> = ({
         </div>
 
         {/* ══ RIGHT: LOCATION + ACTIONS + RIWAYAT ══ */}
-        <div className="lg:col-span-2 flex flex-col gap-3 md:gap-4 min-h-0">
+        <div className="lg:col-span-2 flex flex-col gap-3 md:gap-4 lg:min-h-0">
           
           {/* Location Card */}
           <div className="bg-navy rounded-[24px] p-5 shrink-0 relative overflow-hidden shadow-lg shadow-navy/20">
@@ -516,7 +516,7 @@ export const Absensi: React.FC<AbsensiProps> = ({
           </div>
 
           {/* ── RIWAYAT KEHADIRAN ── */}
-          <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 flex-1 flex flex-col min-h-[180px]">
+          <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 lg:flex-1 flex flex-col min-h-[180px]">
             <div className="flex items-center justify-between mb-3 shrink-0">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center">
@@ -527,7 +527,7 @@ export const Absensi: React.FC<AbsensiProps> = ({
               <span className="text-[11px] font-bold text-navy/40 tabular-nums">{attendances.length} catatan</span>
             </div>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2 min-h-0 pr-1">
+            <div className="lg:flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2 lg:min-h-0 max-h-64 lg:max-h-none pr-1">
               {attendances.slice(0, 7).map((a) => (
                 <div key={a.id} className="flex items-center gap-3 p-2.5 rounded-[24px] bg-mist/30 border border-mist/50 shrink-0">
                   {/* ✅ FIX: icon item riwayat — semua navy solid + icon putih (seragam dengan chip lain) */}

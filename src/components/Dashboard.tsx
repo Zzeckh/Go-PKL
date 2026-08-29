@@ -316,10 +316,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       {/* ── ROW 2 ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-4 flex-1 min-h-[260px]">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-4 lg:flex-1 lg:min-h-[260px]">
         
         {/* ✓ Tasks */}
-        <div className={`c4 bg-white rounded-[24px] border shadow-sm p-5 flex flex-col min-h-0 transition-all ${editing ? 'border-steel/40 ring-2 ring-steel/20' : 'border-mist/60'}`}>
+        <div className={`c4 bg-white rounded-[24px] border shadow-sm p-5 flex flex-col lg:min-h-0 transition-all ${editing ? 'border-steel/40 ring-2 ring-steel/20' : 'border-mist/60'}`}>
           <div className="flex items-center justify-between mb-4 shrink-0">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
@@ -348,7 +348,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col gap-2.5 overflow-y-auto custom-scrollbar min-h-0">
+          <div className="lg:flex-1 flex flex-col gap-2.5 overflow-y-auto custom-scrollbar lg:min-h-0 max-h-56 lg:max-h-none">
             {todos.map((todo, i) => (
               <div key={todo.id} className="flex items-center gap-2 min-h-0 group/item">
                 {editing ? (
@@ -421,7 +421,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* 🔔 Notifications */}
-        <div className="lg:col-span-2 c5 bg-white/70 backdrop-blur-xl rounded-[24px] border border-white shadow-sm flex flex-col min-h-0">
+        <div className="lg:col-span-2 c5 bg-white/70 backdrop-blur-xl rounded-[24px] border border-white shadow-sm flex flex-col lg:min-h-0">
           <div className="flex items-center justify-between p-5 pb-3 shrink-0">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center relative">
@@ -442,8 +442,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </button>
           </div>
 
-          <div className="flex-1 px-3 pb-3 min-h-0 overflow-hidden flex flex-col">
-            <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-1 p-1">
+          <div className="lg:flex-1 px-3 pb-3 lg:min-h-0 overflow-hidden flex flex-col">
+            <div className="lg:flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-1 p-1 max-h-56 lg:max-h-none">
               {notifications.map((notif) => (
                 <div 
                   key={notif.id} 
@@ -482,7 +482,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* 📝 Notes */}
-        <div className={`c5 bg-white/70 backdrop-blur-xl rounded-[24px] border shadow-sm flex flex-col min-h-0 transition-all ${editNotes ? 'border-steel/40 ring-2 ring-steel/20' : 'border-white'}`}>
+        <div className={`c5 bg-white/70 backdrop-blur-xl rounded-[24px] border shadow-sm flex flex-col lg:min-h-0 transition-all ${editNotes ? 'border-steel/40 ring-2 ring-steel/20' : 'border-white'}`}>
           <div className="flex items-center justify-between p-5 pb-3 shrink-0">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
@@ -505,17 +505,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
           
-          <div className="flex-1 px-5 pb-4 min-h-0 flex flex-col">
+          <div className="lg:flex-1 px-5 pb-4 lg:min-h-0 flex flex-col">
             {editNotes ? (
               <textarea
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
                 autoFocus
-                className="w-full flex-1 min-h-[120px] text-sm font-medium text-navy bg-white/60 border border-mist focus:border-steel rounded-[24px] p-3 outline-none resize-none leading-relaxed placeholder:text-navy/40 transition-all"
+                className="w-full lg:flex-1 min-h-[120px] max-h-56 lg:max-h-none text-sm font-medium text-navy bg-white/60 border border-mist focus:border-steel rounded-[24px] p-3 outline-none resize-none leading-relaxed placeholder:text-navy/40 transition-all"
                 placeholder="Ketik catatanmu..."
               />
             ) : (
-              <div className="w-full flex-1 min-h-[120px] overflow-y-auto custom-scrollbar text-sm font-medium text-navy/80 whitespace-pre-line leading-relaxed">
+              <div className="w-full lg:flex-1 min-h-[120px] max-h-56 lg:max-h-none overflow-y-auto custom-scrollbar text-sm font-medium text-navy/80 whitespace-pre-line leading-relaxed">
                 {notes || <span className="text-navy/40 italic text-xs">Belum ada catatan.</span>}
               </div>
             )}

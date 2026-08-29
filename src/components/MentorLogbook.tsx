@@ -46,7 +46,7 @@ export const MentorLogbook: React.FC = () => {
   ];
 
   return (
-    <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
+    <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-y-auto custom-scrollbar">
       {/* ── HEADER  */}
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
@@ -106,8 +106,8 @@ export const MentorLogbook: React.FC = () => {
       </div>
 
       {/* ── LIST LOGBOOK ── */}
-      <div className="flex-1 bg-white rounded-[24px] border border-mist/60 shadow-sm overflow-hidden flex flex-col min-h-0">
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5">
+      <div className="lg:flex-1 bg-white rounded-[24px] border border-mist/60 shadow-sm overflow-hidden flex flex-col lg:min-h-0">
+        <div className="lg:flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5 max-h-[65vh] lg:max-h-none">
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               {/* ✅ empty state: navy solid + icon putih */}

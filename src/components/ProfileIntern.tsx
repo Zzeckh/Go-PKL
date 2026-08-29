@@ -134,7 +134,7 @@ export const ProfileIntern: React.FC = () => {
       </div>
 
       {/* ── Details Grid ── */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-0">
+      <div className="lg:flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 lg:min-h-0">
         {/* Contact */}
         <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col p-5 overflow-hidden hover:shadow-md transition-all duration-300">
           <p className="text-xs font-bold uppercase tracking-widest text-navy/50 mb-4 shrink-0">Informasi Kontak</p>
@@ -172,7 +172,7 @@ export const ProfileIntern: React.FC = () => {
             <p className="text-xs font-bold uppercase tracking-widest text-navy/50">Detail Penempatan PKL</p>
             <span className="text-[10px] font-bold bg-steel text-white px-3 py-1.5 rounded-full">50% selesai</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1 min-h-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:flex-1 lg:min-h-0">
             <div className="bg-navy rounded-[24px] p-5 flex flex-col justify-between relative overflow-hidden">
               <div className="absolute top-0 right-0 w-24 h-24 bg-steel/20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4" />
               <div className="relative z-10">

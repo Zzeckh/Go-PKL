@@ -56,6 +56,15 @@ export const Header: React.FC<HeaderProps> = ({ title, onLogout, userName, onPro
 
         <button
           onClick={onLogout}
+          className="w-10 h-10 md:hidden rounded-full bg-white/60 border border-mist flex items-center justify-center text-navy/60 hover:bg-navy hover:text-white hover:border-navy transition-all shadow-sm"
+          aria-label="Keluar"
+          title="Keluar"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
+
+        <button
+          onClick={onLogout}
           className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 border border-mist text-navy/60 hover:bg-navy hover:text-white hover:border-navy transition-all shadow-sm text-sm font-medium"
         >
           <LogOut className="w-4 h-4" />

@@ -292,7 +292,7 @@ export const Maps: React.FC<MapsProps> = () => {
   }
 
   return (
-    <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
+    <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-y-auto custom-scrollbar">
 
       {/* ── HEADER ─ */}
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
@@ -316,7 +316,7 @@ export const Maps: React.FC<MapsProps> = () => {
       </div>
 
       {/* ── MAIN GRID ── */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-4 min-h-0">
+      <div className="lg:flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-4 lg:min-h-0">
 
         {/* ══ LEFT: MAP (Leaflet asli) ══ */}
         <div className="lg:col-span-3 bg-white rounded-[24px] border border-mist/60 shadow-sm overflow-hidden flex flex-col min-h-[300px] sm:min-h-[380px] lg:min-h-0">
@@ -412,7 +412,7 @@ export const Maps: React.FC<MapsProps> = () => {
         </div>
 
         {/* ══ RIGHT: STACKED CARDS ══ */}
-        <div className="lg:col-span-2 flex flex-col gap-3 md:gap-4 min-h-0">
+        <div className="lg:col-span-2 flex flex-col gap-3 md:gap-4 lg:min-h-0">
 
           {/* ── Card navy: Lokasi Aktif ── */}
           {selected && (
@@ -526,7 +526,7 @@ export const Maps: React.FC<MapsProps> = () => {
           )}
 
           {/* ── Card putih: PEMBIMBING — flex-1, item meregang rata menutup space ── */}
-          <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 flex-1 flex flex-col min-h-0">
+          <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 lg:flex-1 flex flex-col lg:min-h-0">
             {selected ? (
               <>
                 <div className="flex items-center justify-between mb-3 shrink-0">
@@ -539,7 +539,7 @@ export const Maps: React.FC<MapsProps> = () => {
                   <span className="text-[11px] font-bold text-navy/40 tabular-nums">2 orang</span>
                 </div>
 
-                <div className="flex-1 flex flex-col gap-2.5 min-h-0">
+                <div className="lg:flex-1 flex flex-col gap-2.5 lg:min-h-0">
                   <div className="flex-1 flex items-center p-3.5 rounded-[24px] border border-mist/60 bg-mist/30 min-h-[88px]">
                     <div className="flex items-center gap-3 w-full">
                       <div className="w-11 h-11 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md shadow-navy/20">

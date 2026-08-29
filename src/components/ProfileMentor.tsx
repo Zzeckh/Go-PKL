@@ -124,7 +124,7 @@ export const ProfileMentor: React.FC = () => {
       </div>
 
       {/* ── Details Grid ── */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-0">
+      <div className="lg:flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 lg:min-h-0">
         {/* Contact */}
         <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col p-5 overflow-hidden hover:shadow-md transition-all duration-300">
           <p className="text-xs font-bold uppercase tracking-widest text-navy/50 mb-4 shrink-0">Informasi Kontak</p>
@@ -161,7 +161,7 @@ export const ProfileMentor: React.FC = () => {
           <div className="flex items-center justify-between mb-4 shrink-0">
             <p className="text-xs font-bold uppercase tracking-widest text-navy/50">Detail Penugasan</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1 min-h-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:flex-1 lg:min-h-0">
             <div className="bg-navy rounded-[24px] p-5 flex flex-col relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-steel/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
               <div className="relative z-10 flex-1">

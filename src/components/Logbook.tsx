@@ -148,7 +148,7 @@ export const Logbook: React.FC<LogbookProps> = ({
   });
 
   return (
-    <div className="h-full w-full flex flex-col gap-3 md:gap-4">
+    <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-y-auto custom-scrollbar">
 
       {/* ── HEADER + STATS ── */}
       <div className="shrink-0 bg-white rounded-[24px] border border-mist/60 shadow-sm p-5">
@@ -276,7 +276,7 @@ export const Logbook: React.FC<LogbookProps> = ({
       </div>
 
       {/* ── LOG LIST ── */}
-      <div className="flex-1 bg-white rounded-[24px] border border-mist/60 shadow-sm overflow-hidden flex flex-col min-h-0">
+      <div className="lg:flex-1 bg-white rounded-[24px] border border-mist/60 shadow-sm overflow-hidden flex flex-col lg:min-h-0">
         {isLoading && logs.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center py-10">
             <Loader2 className="w-8 h-8 text-steel animate-spin mb-3" />
@@ -336,7 +336,7 @@ export const Logbook: React.FC<LogbookProps> = ({
             )}
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 flex flex-col gap-2.5">
+          <div className="lg:flex-1 overflow-y-auto custom-scrollbar p-4 flex flex-col gap-2.5 max-h-[65vh] lg:max-h-none">
             {filtered.map((log) => {
               const config = statusConfig[log.status as keyof typeof statusConfig] || statusConfig.pending;
               const StatusIcon = config.icon;

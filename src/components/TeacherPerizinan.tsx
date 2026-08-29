@@ -32,7 +32,7 @@ export const TeacherPerizinan: React.FC = () => {
     .sort((a, b) => (a.status === 'pending' ? 0 : 1) - (b.status === 'pending' ? 0 : 1));
 
   return (
-    <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
+    <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-y-auto custom-scrollbar">
       {/* ── HEADER ─ */}
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
@@ -87,8 +87,8 @@ export const TeacherPerizinan: React.FC = () => {
       </div>
 
       {/* ── LIST PENGAJUAN ── */}
-      <div className="flex-1 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col overflow-hidden min-h-0">
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5 grid grid-cols-1 lg:grid-cols-2 gap-3 content-start">
+      <div className="lg:flex-1 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col overflow-hidden lg:min-h-0">
+        <div className="lg:flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5 grid grid-cols-1 lg:grid-cols-2 gap-3 content-start max-h-[65vh] lg:max-h-none">
           {perizinanList.length === 0 ? (
             <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
               <div className="w-14 h-14 rounded-[10px] bg-navy flex items-center justify-center mb-3">

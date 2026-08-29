@@ -72,7 +72,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
   ].slice(0, 5);
 
   return (
-    <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
+    <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-y-auto custom-scrollbar">
 
       {/* ── HEADER ── */}
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
@@ -154,7 +154,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
             ))}
           </div>
 
-          <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-4 min-h-0">
+          <div className="lg:flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-4 lg:min-h-0">
 
             {/* ── LEFT: Daftar Kelas ── */}
             <div className="lg:col-span-3 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col overflow-hidden min-h-[380px] lg:min-h-0">
@@ -176,7 +176,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 min-h-0">
+              <div className="lg:flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 lg:min-h-0 max-h-[50vh] lg:max-h-none">
                 {superClasses.length === 0 ? (
                   <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
                     {/* ✅ empty state: navy solid + icon putih */}
@@ -221,7 +221,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
             </div>
 
             {/* ── RIGHT ── */}
-            <div className="lg:col-span-2 flex flex-col gap-3 md:gap-4 min-h-0">
+            <div className="lg:col-span-2 flex flex-col gap-3 md:gap-4 lg:min-h-0">
 
               {/* Card Distribusi Pengguna navy */}
               <div className="bg-navy rounded-[24px] p-5 shrink-0 relative overflow-hidden shadow-lg shadow-navy/20">
@@ -290,7 +290,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
               </div>
 
               {/* ── Card Perlu Perhatian ── */}
-              <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 flex-1 flex flex-col min-h-[180px]">
+              <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 lg:flex-1 flex flex-col min-h-[180px]">
                 <div className="flex items-center justify-between mb-3 shrink-0">
                   <div className="flex items-center gap-2">
                     {/* ✅ chip navy solid + icon putih */}
@@ -309,7 +309,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
                   </span>
                 </div>
 
-                <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2 min-h-0 pr-1">
+                <div className="lg:flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2 lg:min-h-0 max-h-64 lg:max-h-none pr-1">
                   {attention.length === 0 ? (
                     <div className="flex-1 flex flex-col items-center justify-center py-6 text-center">
                       {/* ✅ empty state: navy solid + icon putih */}

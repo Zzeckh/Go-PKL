@@ -70,7 +70,7 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({ schoolName, onNa
   ];
 
   return (
-    <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
+    <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-y-auto custom-scrollbar">
 
       {/* ── HEADER ─ */}
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
@@ -124,7 +124,7 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({ schoolName, onNa
       </div>
 
       {/* ── MAIN GRID (3 + 2) ── */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-4 min-h-0">
+      <div className="lg:flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-4 lg:min-h-0">
 
         {/* ══ LEFT: List Perusahaan Mitra ══ */}
         <div className="lg:col-span-3 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col overflow-hidden min-h-[380px] lg:min-h-0">
@@ -148,7 +148,7 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({ schoolName, onNa
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 min-h-0">
+          <div className="lg:flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 lg:min-h-0 max-h-[50vh] lg:max-h-none">
             {perusahaanList.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
                 {/* ✅ empty state: navy solid + icon putih */}
@@ -205,7 +205,7 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({ schoolName, onNa
         </div>
 
         {/* ══ RIGHT: Clock + Notes ══ */}
-        <div className="lg:col-span-2 flex flex-col gap-3 min-h-0">
+        <div className="lg:col-span-2 flex flex-col gap-3 lg:min-h-0">
 
           {/* ── Card Jam / Stopwatch ── */}
           <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 shrink-0">
@@ -259,7 +259,7 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({ schoolName, onNa
           </div>
 
           {/* ── Card Notes (edit mode, flex-1) ── */}
-          <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col min-h-[220px] flex-1">
+          <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col min-h-[220px] lg:flex-1">
             <div className="flex items-center justify-between p-5 pb-3 shrink-0">
               <div className="flex items-center gap-2">
                 {/* ✅ chip navy solid + icon putih */}
@@ -288,17 +288,17 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({ schoolName, onNa
               </div>
             </div>
             
-            <div className="flex-1 px-5 pb-5 min-h-0 flex flex-col">
+            <div className="lg:flex-1 px-5 pb-5 lg:min-h-0 flex flex-col">
               {editNotes ? (
                 <textarea
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
                   autoFocus
-                  className="w-full flex-1 min-h-[120px] text-sm font-medium text-navy bg-mist/30 border border-mist focus:border-steel rounded-[24px] p-3 outline-none resize-none leading-relaxed placeholder:text-navy/40 transition-all"
+                  className="w-full lg:flex-1 min-h-[120px] max-h-56 lg:max-h-none text-sm font-medium text-navy bg-mist/30 border border-mist focus:border-steel rounded-[24px] p-3 outline-none resize-none leading-relaxed placeholder:text-navy/40 transition-all"
                   placeholder="Ketik catatan koordinasi..."
                 />
               ) : (
-                <div className="w-full flex-1 min-h-[120px] overflow-y-auto custom-scrollbar text-sm font-medium text-navy/80 whitespace-pre-line leading-relaxed">
+                <div className="w-full lg:flex-1 min-h-[120px] max-h-56 lg:max-h-none overflow-y-auto custom-scrollbar text-sm font-medium text-navy/80 whitespace-pre-line leading-relaxed">
                   {notes || <span className="text-navy/40 italic text-xs">Belum ada catatan.</span>}
                 </div>
               )}

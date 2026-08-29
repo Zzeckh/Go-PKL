@@ -88,7 +88,7 @@ export const HubinData: React.FC = () => {
     siswaList.filter(s => s.mentor === mentorName || s.perusahaan.toLowerCase() === companyName.toLowerCase());
 
   return (
-    <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
+    <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-y-auto custom-scrollbar">
 
       {/* ── HEADER ─ */}
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
@@ -135,7 +135,7 @@ export const HubinData: React.FC = () => {
       </div>
 
       {/* ── MAIN CARD ── */}
-      <div className="flex-1 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col overflow-hidden min-h-0">
+      <div className="lg:flex-1 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col overflow-hidden lg:min-h-0">
         <div className="px-4 md:px-5 pt-4 pb-3 shrink-0 space-y-3 border-b border-mist/60">
           <div className="bg-mist/40 p-1 rounded-[24px] flex items-center gap-1 overflow-x-auto">
             <span className="text-[10px] font-bold text-navy/40 uppercase tracking-widest px-2 shrink-0">Dalam</span>
@@ -201,7 +201,7 @@ export const HubinData: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5">
+        <div className="lg:flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5 max-h-[65vh] lg:max-h-none">
           
           {/* ── TAB: SISWA ── */}
           {activeTab === 'siswa' && (

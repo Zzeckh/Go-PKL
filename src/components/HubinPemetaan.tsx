@@ -256,7 +256,7 @@ export const HubinPemetaan: React.FC = () => {
   ];
 
   return (
-    <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
+    <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-y-auto custom-scrollbar">
 
       {/* ── HEADER ─ */}
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
@@ -299,10 +299,10 @@ export const HubinPemetaan: React.FC = () => {
       </div>
 
       {/* ── MAIN GRID ── */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-4 min-h-0">
+      <div className="lg:flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-4 lg:min-h-0">
 
         {/* ══ LEFT: Daftar Siswa ══ */}
-        <div className="lg:col-span-3 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col overflow-hidden min-h-0">
+        <div className="lg:col-span-3 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col overflow-hidden lg:min-h-0">
           <div className="px-4 md:px-5 pt-4 pb-3 shrink-0 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -363,7 +363,7 @@ export const HubinPemetaan: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 min-h-0">
+          <div className="lg:flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 lg:min-h-0 max-h-[50vh] lg:max-h-none">
             {filteredSiswa.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
                 {/* ✅ empty state: navy solid + icon putih */}
@@ -426,7 +426,7 @@ export const HubinPemetaan: React.FC = () => {
         </div>
 
         {/* ══ RIGHT: Detail + Form ══ */}
-        <div className="lg:col-span-2 flex flex-col gap-3 min-h-0">
+        <div className="lg:col-span-2 flex flex-col gap-3 lg:min-h-0">
 
           {!selectedSiswa ? (
             <div className="flex-1 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col items-center justify-center p-8 text-center">
@@ -511,7 +511,7 @@ export const HubinPemetaan: React.FC = () => {
               </div>
 
               {/* Card form */}
-              <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm flex-1 flex flex-col overflow-hidden min-h-0">
+              <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm lg:flex-1 flex flex-col overflow-hidden lg:min-h-0">
                 <div className="flex items-center justify-between px-4 md:px-5 pt-4 pb-3 shrink-0 border-b border-mist/60">
                   <div className="flex items-center gap-2">
                     {/* ✅ chip navy solid */}
@@ -539,7 +539,7 @@ export const HubinPemetaan: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5 min-h-0">
+                <div className="lg:flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5 lg:min-h-0 max-h-[50vh] lg:max-h-none">
                   {!editing ? (
                     <div className="space-y-3">
                       {/* Tempat PKL — icon chip navy solid */}

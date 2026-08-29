@@ -55,7 +55,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ userName, sc
   ];
 
   return (
-    <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-hidden">
+    <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-y-auto custom-scrollbar">
 
       {/* ── HEADER ── */}
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
@@ -109,7 +109,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ userName, sc
       </div>
 
       {/* ── MAIN GRID (3 + 2) ── */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-4 min-h-0">
+      <div className="lg:flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-4 lg:min-h-0">
 
         {/* ══ LEFT: Rekapitulasi Distribusi Siswa ══ */}
         <div className="lg:col-span-3 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col overflow-hidden min-h-[380px] lg:min-h-0">
@@ -131,7 +131,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ userName, sc
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 min-h-0">
+          <div className="lg:flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 lg:min-h-0 max-h-[50vh] lg:max-h-none">
             {myCompanies.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
                 {/* ✅ empty state: navy solid + icon putih */}
@@ -175,7 +175,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ userName, sc
         </div>
 
         {/* ══ RIGHT: Catatan + Informasi ══ */}
-        <div className="lg:col-span-2 flex flex-col gap-3 min-h-0">
+        <div className="lg:col-span-2 flex flex-col gap-3 lg:min-h-0">
           <div className="bg-navy rounded-[24px] p-5 shrink-0 relative overflow-hidden shadow-lg shadow-navy/20">
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-4">
@@ -209,7 +209,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ userName, sc
           </div>
 
           {/* ── Card Catatan Guru ── */}
-          <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm flex-1 flex flex-col min-h-[220px]">
+          <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm lg:flex-1 flex flex-col min-h-[220px]">
             <div className="flex items-center gap-2 p-5 pb-3 shrink-0">
               {/* ✅ chip navy solid + icon putih */}
               <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
@@ -220,8 +220,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ userName, sc
                 <p className="text-sm font-bold text-navy leading-tight mt-0.5">Catatan Guru</p>
               </div>
             </div>
-            <div className="flex-1 px-5 pb-5 min-h-0">
-              <div className="w-full h-full overflow-y-auto custom-scrollbar text-[13px] font-medium text-navy/70 whitespace-pre-line leading-relaxed bg-mist/30 border border-mist/60 rounded-[24px] p-3">
+            <div className="lg:flex-1 px-5 pb-5 lg:min-h-0">
+              <div className="w-full min-h-[120px] max-h-56 lg:max-h-none lg:h-full overflow-y-auto custom-scrollbar text-[13px] font-medium text-navy/70 whitespace-pre-line leading-relaxed bg-mist/30 border border-mist/60 rounded-[24px] p-3">
                 - Kunjungan ke perusahaan mitra minggu ini
                 - Verifikasi laporan PKL anak bimbingan
                 - Update rekap kehadiran bulanan
