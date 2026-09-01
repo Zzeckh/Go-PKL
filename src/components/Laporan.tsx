@@ -64,8 +64,7 @@ export const Laporan: React.FC = () => {
   const isTeacher = userRole === 'teacher';
   const isMentor = userRole === 'mentor';
   const isSuperAdmin = userRole === 'super_admin';
-  const isStudent =
-    userRole === 'student' || userRole === 'intern';
+  const isStudent = userRole === 'intern';
 
   const canViewAbsensi =
     isTeacher || isMentor || isSuperAdmin;

@@ -476,7 +476,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!localStorage.getItem('pkl_token')) return false;
     try {
       const res = await api.get('/api/companies') as { data: any[] };
-      setPerusahaanList(res.data);
+      const mapped = res.data.map((c: any): PerusahaanItem => ({
+        id: c.id,
+        name: c.name,
+        address: c.address || '-',
+        category: c.category || undefined,
+        quota: c.quota || 0,
+        filled: c.filled || 0,
+        mentor: c.mentor?.name || undefined,
+        latitude: c.latitude ?? null,
+        longitude: c.longitude ?? null,
+        radiusMeters: c.radiusMeters || 500,
+      }));
+      setPerusahaanList(mapped);
       return true;
     } catch (error: any) {
       console.warn('Gagal mengambil daftar perusahaan:', error?.message);
