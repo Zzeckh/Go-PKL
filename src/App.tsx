@@ -26,6 +26,7 @@ import { SuperUsers } from './components/SuperAdminUsers';
 import { SuperCompanies } from './components/SuperAdminCompanies';
 import { StudentPerizinan } from './components/StudentPerizinan';
 import { Settings } from './components/Settings';
+import { Laporan } from './components/Laporan';
 
 export default function App() {
   const {
@@ -231,6 +232,11 @@ export default function App() {
           )}
           {activePage === 'data' && userRole === 'hubin' && (
             <HubinData />
+          )}
+          {activePage === 'laporan' && (
+            userRole === 'hubin' || userRole === 'teacher' || userRole === 'mentor' || userRole === 'super_admin'
+          ) && (
+            <Laporan />
           )}
           {/* Legacy fallback */}
           {activePage === 'data-siswa' && userRole === 'hubin' && <HubinData />}

@@ -16,7 +16,8 @@ export type ActivePage =
   | 'data'
   | 'super-classes'
   | 'super-users'
-  | 'super-companies';
+  | 'super-companies'
+  | 'laporan';
 
 export type AuthMode = 'login' | 'register';
 export type UserRole = 'intern' | 'mentor' | 'teacher' | 'hubin' | 'super_admin'; // ← TAMBAH super_admin

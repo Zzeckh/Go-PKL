@@ -116,6 +116,46 @@ export const api = {
       throw new ApiError(500, 'Network error');
     }
   },
+
+  // Untuk endpoint yang mengembalikan file (mis. export PDF), bukan JSON.
+  // Melempar ApiError dengan pesan dari body JSON jika request gagal,
+  // atau memicu unduhan file di browser jika berhasil.
+  async download(path: string, fallbackFilename: string): Promise<void> {
+    const token = localStorage.getItem('pkl_token');
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    let response: Response;
+    try {
+      response = await fetch(`${API_BASE_URL}${path}`, { headers });
+    } catch {
+      throw new ApiError(500, 'Network error');
+    }
+
+    if (!response.ok) {
+      let data: any = {};
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
+      }
+      throw new ApiError(response.status, data.error || 'Gagal mengunduh file', data);
+    }
+
+    const disposition = response.headers.get('Content-Disposition') || '';
+    const match = disposition.match(/filename="?([^"]+)"?/);
+    const filename = match?.[1] || fallbackFilename;
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  },
 };
 
 // Hapus setLogoutCallback — tidak dipakai lagi

@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   LayoutDashboard, BookOpen, MapPin, LogOut, PanelLeftClose, PanelLeftOpen, 
-  Camera, Activity, FileCheck, Package,
+  Camera, Activity, FileCheck, Package, FileDown,
   School, Users, ShieldCheck, Building2, Award, Settings as SettingsIcon
 } from 'lucide-react';
 import { ActivePage, UserRole } from '../types';
@@ -33,6 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'super-classes',    icon: School,          label: 'Kelola Kelas' },
         { id: 'super-users',      icon: Users,           label: 'Kelola Pengguna' },
         { id: 'super-companies',  icon: Building2,       label: 'Kelola Perusahaan' },
+        { id: 'laporan',          icon: FileDown,        label: 'Laporan' },
         { id: 'settings',         icon: SettingsIcon,    label: 'Pengaturan' },
       ];
     }
@@ -41,6 +42,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
         { id: 'data',      icon: Package,         label: 'Kelola Data' },
         { id: 'pemetaan',  icon: MapPin,          label: 'Pemetaan' },
+        { id: 'laporan',   icon: FileDown,        label: 'Laporan' },
         { id: 'settings',  icon: SettingsIcon,    label: 'Pengaturan' },
       ];
     }
@@ -51,6 +53,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'attendance', icon: Camera,          label: 'Kehadiran' },
         { id: 'roster',     icon: Award,           label: 'Penilaian' },
         { id: 'perizinan',  icon: FileCheck,       label: 'Perizinan' },
+        { id: 'laporan',    icon: FileDown,        label: 'Laporan' },
         { id: 'settings',   icon: SettingsIcon,    label: 'Pengaturan' }
       ];
     }
@@ -61,6 +64,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'attendance', icon: Camera,          label: 'Kehadiran' },
         { id: 'perizinan',  icon: FileCheck,       label: 'Perizinan' },
         { id: 'roster',     icon: Award,           label: 'Penilaian' },
+        { id: 'laporan',    icon: FileDown,        label: 'Laporan' },
         { id: 'settings',   icon: SettingsIcon,    label: 'Pengaturan' }
       ];
     }
