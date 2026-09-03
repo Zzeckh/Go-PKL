@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { ActivePage } from '../types';
 import { useApp } from '../context/AppContext';
+import { DashboardCharts } from './DashboardCharts';
 
 interface HubinDashboardProps {
   userName?: string;
@@ -102,6 +103,7 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({ schoolName, onNa
       </div>
 
       {/* ── STATS CARDS — icon chip navy solid + icon putih ── */}
+      <DashboardCharts role="hubin" />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
         {stats.map((s) => (
           <button

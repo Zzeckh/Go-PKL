@@ -5,6 +5,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { DashboardCharts } from './DashboardCharts';
 
 const getInitials = (name: string) =>
   (name || '?').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -132,6 +133,7 @@ export const SuperAdminDashboard: React.FC<{ userName: string; onNavigate: (page
         </div>
       ) : (
         <>
+          <DashboardCharts role="super_admin" />
           {/* ── STATS CARDS — icon chip navy solid ── */}
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 shrink-0">
             {stats.map((s) => (

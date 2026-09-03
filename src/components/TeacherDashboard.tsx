@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, Building, FileCheck, ChevronRight, Activity, Clock, Calendar, BookOpen } from 'lucide-react';
 import { ActivePage } from '../types';
 import { useApp } from '../context/AppContext';
+import { DashboardCharts } from './DashboardCharts';
 
 interface TeacherDashboardProps {
   userName: string;
@@ -87,6 +88,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ userName, sc
       </div>
 
       {/* ── STATS CARDS — icon chip navy solid + icon putih ── */}
+      <DashboardCharts role="teacher" />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
         {stats.map((s) => (
           <button

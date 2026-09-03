@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, Building, FileCheck, ChevronRight, Activity, Clock, Calendar, BookOpen, CheckCircle2, MessageSquare, AlertCircle, X, Loader2 } from 'lucide-react';
 import { ActivePage } from '../types';
 import { useApp } from '../context/AppContext';
+import { DashboardCharts } from './DashboardCharts';
 
 interface MentorDashboardProps {
   userName: string;
@@ -77,6 +78,7 @@ export const MentorDashboard: React.FC<MentorDashboardProps> = ({ userName, comp
       </div>
 
       {/* ── STATS CARDS — icon chip navy solid + icon putih ── */}
+      <DashboardCharts role="mentor" />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
         {stats.map((s) => (
           <button

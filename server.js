@@ -18,6 +18,7 @@ import evaluationRoutes from './src/routes/evaluationRoutes.js';
 import companyRoutes from './src/routes/companyRoutes.js';
 import superAdminRoutes from './src/routes/superAdminRoutes.js';
 import reportRoutes from './src/routes/reportRoutes.js';
+import dashboardRoutes from './src/routes/dashboardRoutes.js';
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use('/api/evaluations', evaluationRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/super-admin', superAdminRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 /* ── 4. 404 handler ── */
 app.use((req, res) => {
