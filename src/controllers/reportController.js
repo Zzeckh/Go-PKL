@@ -88,11 +88,47 @@ export const exportAbsensiPdf = async (req, res) => {
       orderBy: [{ date: 'desc' }, { userId: 'asc' }],
     });
 
-    if (!data.length) {
+    const permissionWhere = {
+      ...buildUserScope(req, req.query, { nested: true }),
+      ...buildDateWhere(req.query, 'date'),
+      status: 'approved',
+    };
+    if (req.query.status === 'sakit') {
+      permissionWhere.type = 'sakit';
+    } else if (req.query.status === 'hadir' || req.query.status === 'alpha') {
+      permissionWhere.id = -1;
+    }
+
+    const permissions = await prisma.permission.findMany({
+      where: permissionWhere,
+      include: {
+        user: {
+          include: { class: true, teacher: true, company: { include: { mentor: true } } },
+        },
+      },
+      orderBy: [{ date: 'desc' }, { userId: 'asc' }],
+    });
+
+    const attendanceDates = new Set(data.map((item) => `${item.userId}-${formatDateID(item.date)}`));
+    const permissionRows = permissions
+      .filter((permission) => !attendanceDates.has(`${permission.userId}-${formatDateID(permission.date)}`))
+      .map((permission) => ({
+        id: `permission-${permission.id}`,
+        userId: permission.userId,
+        user: permission.user,
+        date: permission.date,
+        checkInTime: null,
+        status: permission.type,
+        latitude: null,
+        longitude: null,
+      }));
+    const finalData = [...data, ...permissionRows].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    if (!finalData.length) {
       return res.status(404).json({ error: 'Tidak ada data yang dapat diexport.' });
     }
 
-    const rows = data.map((a, idx) => {
+    const rows = finalData.map((a, idx) => {
       const id = studentIdentity(a.user);
       return {
         no: idx + 1,
@@ -126,9 +162,9 @@ export const exportAbsensiPdf = async (req, res) => {
       : 'Seluruh Periode';
 
     let filename = 'laporan-absensi.pdf';
-    const sameStudent = req.query.studentId && data.every((a) => a.userId === data[0].userId);
+    const sameStudent = req.query.studentId && finalData.every((a) => a.userId === finalData[0].userId);
     if (sameStudent) {
-      filename = `laporan-absensi-${safeFilename(data[0].user.name)}.pdf`;
+      filename = `laporan-absensi-${safeFilename(finalData[0].user.name)}.pdf`;
     }
 
     streamPdfReport(res, filename, {
@@ -297,5 +333,110 @@ export const exportPklPdf = async (req, res) => {
   } catch (error) {
     console.error('exportPklPdf error:', error);
     if (!res.headersSent) res.status(500).json({ error: 'Gagal membuat laporan PDF.' });
+  }
+};
+
+/* ================================================================
+   4. GET /api/reports/attendance — Rekap absensi JSON untuk preview
+   ================================================================ */
+export const getAttendanceReport = async (req, res) => {
+  try {
+    const attendanceWhere = {
+      ...buildUserScope(req, req.query, { nested: true }),
+      ...buildDateWhere(req.query, 'date'),
+    };
+    const status = VALID_ABSENSI_STATUS.includes(req.query.status) ? req.query.status : '';
+    if (status) attendanceWhere.status = status;
+
+    const absensi = await prisma.absensi.findMany({
+      where: attendanceWhere,
+      include: {
+        user: { include: { class: true, teacher: true, company: { include: { mentor: true } } } },
+      },
+      orderBy: [{ date: 'desc' }, { userId: 'asc' }],
+    });
+
+    const permissionWhere = {
+      ...buildUserScope(req, req.query, { nested: true }),
+      ...buildDateWhere(req.query, 'date'),
+      status: 'approved',
+    };
+    if (status === 'izin' || status === 'sakit') permissionWhere.type = status;
+    if (status === 'hadir' || status === 'alpha') permissionWhere.id = -1;
+
+    const permissions = await prisma.permission.findMany({
+      where: permissionWhere,
+      include: {
+        user: { include: { class: true, teacher: true, company: { include: { mentor: true } } } },
+      },
+      orderBy: [{ date: 'desc' }, { userId: 'asc' }],
+    });
+
+    const attendanceKeys = new Set(absensi.map(item => `${item.userId}-${formatDateID(item.date)}`));
+    const finalRows = [
+      ...absensi.map(item => ({
+        user: item.user,
+        userId: item.userId,
+        date: item.date,
+        status: item.status,
+        reason: '-',
+        checkIn: formatTimeID(item.checkInTime),
+      })),
+      ...permissions
+        .filter(item => !attendanceKeys.has(`${item.userId}-${formatDateID(item.date)}`))
+        .map(item => ({
+          user: item.user,
+          userId: item.userId,
+          date: item.date,
+          status: item.type,
+          reason: item.reason || '-',
+          checkIn: '-',
+        })),
+    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    const grouped = new Map();
+    finalRows.forEach(item => {
+      if (!grouped.has(item.userId)) grouped.set(item.userId, {
+        id: item.userId,
+        name: item.user.name,
+        username: item.user.email,
+        className: item.user.class?.name || '-',
+        companyName: item.user.company?.name || '-',
+        teacherName: item.user.teacher?.name || '-',
+        mentorName: item.user.company?.mentor?.name || '-',
+        hadir: 0,
+        izin: 0,
+        sakit: 0,
+        alpha: 0,
+        total: 0,
+        attendance: [],
+      });
+      const row = grouped.get(item.userId);
+      if (item.status === 'hadir') row.hadir += 1;
+      else if (item.status === 'izin') row.izin += 1;
+      else if (item.status === 'sakit') row.sakit += 1;
+      else if (item.status === 'alpha') row.alpha += 1;
+      row.total += 1;
+      row.attendance.push({ date: formatDateID(item.date), status: item.status, reason: item.reason, checkIn: item.checkIn });
+    });
+
+    const rows = [...grouped.values()].map(row => ({
+      ...row,
+      percentage: row.total ? Number(((row.hadir / row.total) * 100).toFixed(1)) : 0,
+    }));
+    res.json({
+      summary: {
+        totalStudents: rows.length,
+        hadir: rows.reduce((sum, row) => sum + row.hadir, 0),
+        izin: rows.reduce((sum, row) => sum + row.izin, 0),
+        sakit: rows.reduce((sum, row) => sum + row.sakit, 0),
+        alpha: rows.reduce((sum, row) => sum + row.alpha, 0),
+        total: finalRows.length,
+      },
+      rows,
+    });
+  } catch (error) {
+    console.error('getAttendanceReport error:', error);
+    if (!res.headersSent) res.status(500).json({ error: 'Gagal memuat rekap absensi.' });
   }
 };

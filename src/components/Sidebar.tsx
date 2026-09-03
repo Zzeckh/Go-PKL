@@ -74,6 +74,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       { id: 'logbook',   icon: BookOpen,        label: 'Logbook' },
       { id: 'maps',      icon: MapPin,          label: 'Peta' },
       { id: 'perizinan', icon: FileCheck,       label: 'Perizinan' },
+      { id: 'laporan',   icon: FileDown,        label: 'Laporan' },
       { id: 'settings',  icon: SettingsIcon,    label: 'Pengaturan' }
     ];
   };

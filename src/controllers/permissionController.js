@@ -2,6 +2,7 @@ import multer from 'multer';
 import path from 'node:path';
 import fs from 'node:fs';
 import prisma from '../config/db.js';
+import { parseDateOnly, sameDateRange } from '../utils/dateOnly.js';
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -85,6 +86,26 @@ export const createPermission = async (req, res, next) => {
       return res.status(400).json({ error: 'Bukti gambar wajib diunggah.' });
     }
 
+    const normalizedDate = parseDateOnly(date);
+    const dateRange = sameDateRange(normalizedDate);
+    if (!normalizedDate || !dateRange) {
+      return res.status(400).json({ error: 'Format tanggal tidak valid.' });
+    }
+
+    const existingAbsensi = await prisma.absensi.findFirst({
+      where: { userId, date: dateRange },
+    });
+    if (existingAbsensi) {
+      return res.status(400).json({ error: 'Anda sudah melakukan absensi pada tanggal tersebut, sehingga tidak dapat mengajukan izin.' });
+    }
+
+    const existingPermission = await prisma.permission.findFirst({
+      where: { userId, date: dateRange },
+    });
+    if (existingPermission) {
+      return res.status(400).json({ error: 'Pengajuan izin untuk tanggal tersebut sudah ada.' });
+    }
+
     const attachmentUrl = `/uploads/permissions/${req.file.filename}`;
 
     const permission = await prisma.permission.create({
@@ -93,7 +114,7 @@ export const createPermission = async (req, res, next) => {
         type,
         reason,
         attachmentUrl,
-        date: new Date(date),
+        date: normalizedDate,
         status: 'pending',
       },
       include: {
@@ -132,6 +153,15 @@ export const updatePermission = async (req, res, next) => {
 
     if (!allowed) {
       return res.status(403).json({ error: 'Tidak berhak mengubah permission ini' });
+    }
+
+    if (status === 'approved') {
+      const existingAbsensi = await prisma.absensi.findFirst({
+        where: { userId: permission.user.id, date: sameDateRange(permission.date) || permission.date },
+      });
+      if (existingAbsensi) {
+        return res.status(400).json({ error: 'Izin tidak dapat disetujui karena siswa sudah melakukan absensi pada tanggal tersebut.' });
+      }
     }
 
     const updated = await prisma.permission.update({

@@ -1,4 +1,5 @@
 import prisma from "../config/db.js";
+import { parseDateOnly, sameDateRange } from '../utils/dateOnly.js';
 
 const haversineMeters = (lat1, lon1, lat2, lon2) => {
   const R = 6371e3;
@@ -77,8 +78,8 @@ export const createAbsensi = async (req, res, next) => {
       }
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = parseDateOnly(req.body.date) || parseDateOnly(new Date());
+    const dateRange = sameDateRange(today);
 
     const existing = await prisma.absensi.findUnique({
       where: { userId_date: { userId, date: today } },
@@ -86,6 +87,13 @@ export const createAbsensi = async (req, res, next) => {
 
     if (existing) {
       return res.status(409).json({ error: "Sudah melakukan absensi hari ini" });
+    }
+
+    const approvedPermission = await prisma.permission.findFirst({
+      where: { userId, status: 'approved', date: dateRange || today },
+    });
+    if (approvedPermission) {
+      return res.status(400).json({ error: 'Absensi tidak dapat dilakukan karena izin Anda telah disetujui untuk tanggal tersebut.' });
     }
 
     const absensi = await prisma.absensi.create({

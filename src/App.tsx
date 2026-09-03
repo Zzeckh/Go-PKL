@@ -54,22 +54,36 @@ export default function App() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isJournalModalOpen, setIsJournalModalOpen] = useState(false);
 
-  // ✅ FIX BUG LOGOUT: reset authExiting setiap kali kembali ke login page
+  // FIX BUG LOGOUT:
+  // reset authExiting setiap kali kembali ke login page
   useEffect(() => {
     if (!isAuthenticated) {
       setAuthExiting(false);
     }
   }, [isAuthenticated]);
 
-  const handleAuthSubmit = async (payload: { name: string; email: string; password: string; institution?: string; classId?: number }) => {
+  const handleAuthSubmit = async (payload: {
+    name: string;
+    email: string;
+    password: string;
+    institution?: string;
+    classId?: number;
+  }) => {
     try {
       if (authMode === 'login') {
         await login(payload.email, payload.password);
       } else {
-        await register(payload.name, payload.email, payload.password, payload.institution, payload.classId);
+        await register(
+          payload.name,
+          payload.email,
+          payload.password,
+          payload.institution,
+          payload.classId
+        );
       }
 
       setAuthExiting(true);
+
       await new Promise((resolve) => setTimeout(resolve, 430));
     } catch (error) {
       throw error;
@@ -78,6 +92,7 @@ export default function App() {
 
   const handleLogout = () => {
     setIsLoggingOut(true);
+
     setTimeout(() => {
       logout();
       setIsLoggingOut(false);
@@ -93,11 +108,16 @@ export default function App() {
   /* ────────────────────────────────────────────
      AUTH SCREEN
   ──────────────────────────────────────────── */
+
   if (!isAuthenticated) {
     return (
       <div className="h-dvh w-full bg-app-outer p-3 sm:p-6 lg:p-8 flex items-center justify-center font-sans antialiased transition-colors duration-500 overflow-hidden">
         <div className="w-full max-w-7xl h-[calc(100svh-24px)] sm:h-[85vh] sm:min-h-[600px] sm:max-h-[900px] bg-app-bg-2 rounded-[24px] shadow-2xl border border-white/60 relative overflow-hidden flex flex-col transition-colors duration-500">
-          <div className={`flex-1 flex flex-col p-2 sm:p-4 ${authExiting ? 'page-exit' : 'page-enter'}`}>
+          <div
+            className={`flex-1 flex flex-col p-2 sm:p-4 ${
+              authExiting ? 'page-exit' : 'page-enter'
+            }`}
+          >
             <AuthScreen
               authMode={authMode}
               setAuthMode={setAuthMode}
@@ -112,9 +132,15 @@ export default function App() {
   /* ────────────────────────────────────────────
      MAIN APP
   ──────────────────────────────────────────── */
+
   return (
     <div className="h-dvh w-full bg-app-bg-2 font-sans antialiased transition-colors duration-500 overflow-hidden flex flex-col">
-      <div key="main" className={`flex-1 flex flex-col overflow-hidden ${isLoggingOut ? 'page-exit' : 'page-enter'}`}>
+      <div
+        key="main"
+        className={`flex-1 flex flex-col overflow-hidden ${
+          isLoggingOut ? 'page-exit' : 'page-enter'
+        }`}
+      >
         <MainLayout
           activePage={activePage}
           setActivePage={setActivePage}
@@ -123,22 +149,30 @@ export default function App() {
           userRole={userRole}
         >
           {/* ── SUPER ADMIN ── */}
+
           {activePage === 'dashboard' && userRole === 'super_admin' && (
-            <SuperAdminDashboard 
+            <SuperAdminDashboard
               userName={userName}
               onNavigate={(page) => setActivePage(page as any)}
             />
           )}
-          {activePage === 'super-classes' && userRole === 'super_admin' && <SuperClasses />}
-          {activePage === 'super-users' && userRole === 'super_admin' && <SuperUsers />}
-          {activePage === 'super-companies' && userRole === 'super_admin' && <SuperCompanies />}
+
+          {activePage === 'super-classes' &&
+            userRole === 'super_admin' && <SuperClasses />}
+
+          {activePage === 'super-users' &&
+            userRole === 'super_admin' && <SuperUsers />}
+
+          {activePage === 'super-companies' &&
+            userRole === 'super_admin' && <SuperCompanies />}
 
 
           {/* ── STUDENT (INTERN) ── */}
+
           {activePage === 'dashboard' && userRole === 'intern' && (
-            <Dashboard 
+            <Dashboard
               userName={userName}
-              recentLogs={logEntries} 
+              recentLogs={logEntries}
               attendances={attendances}
               onOpenLogbookModal={openLogbookModal}
               onCheckIn={checkInAttendance}
@@ -147,100 +181,153 @@ export default function App() {
             />
           )}
 
+
           {/* ── MENTOR ── */}
+
           {activePage === 'dashboard' && userRole === 'mentor' && (
-            <MentorDashboard 
+            <MentorDashboard
               userName={userName}
               companyName={userCompanyName || 'Perusahaan'}
               onNavigate={(page) => setActivePage(page)}
             />
           )}
 
+
           {/* ── TEACHER ── */}
+
           {activePage === 'dashboard' && userRole === 'teacher' && (
-            <TeacherDashboard 
+            <TeacherDashboard
               userName={userName}
               schoolName={schoolName}
               onNavigate={(page) => setActivePage(page)}
             />
           )}
+
 
           {/* ── HUBIN ── */}
+
           {activePage === 'dashboard' && userRole === 'hubin' && (
-            <HubinDashboard 
+            <HubinDashboard
               userName={userName}
               schoolName={schoolName}
               onNavigate={(page) => setActivePage(page)}
             />
           )}
 
+
           {/* ── SHARED PAGES ── */}
-          {activePage === 'logbook' && userRole === 'mentor' && <MentorLogbook />}
+
+          {activePage === 'logbook' && userRole === 'mentor' && (
+            <MentorLogbook />
+          )}
+
           {activePage === 'logbook' && userRole !== 'mentor' && (
-            <Logbook 
-              logs={logEntries} 
-              onAddLog={addLogEntry} 
+            <Logbook
+              logs={logEntries}
+              onAddLog={addLogEntry}
               isModalOpen={isJournalModalOpen}
               setIsModalOpen={setIsJournalModalOpen}
               userRole={userRole}
             />
           )}
+
           {activePage === 'maps' && (
             <Maps />
           )}
+
           {activePage === 'profile' && (
             <Profile userRole={userRole} />
           )}
+
           {activePage === 'settings' && (
             <Settings userRole={userRole} />
           )}
+
           {activePage === 'absensi' && userRole === 'intern' && (
-            <Absensi 
+            <Absensi
               companyName={userCompanyName}
               companyAddress={userCompanyAddress}
               companyLocation={userCompanyLocation}
               onCheckIn={checkInAttendance}
-              hasCheckedIn={attendances.some(a => a.date === new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }))} 
+              hasCheckedIn={attendances.some(
+                (a) =>
+                  a.date ===
+                  new Date().toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                  })
+              )}
             />
           )}
+
           {activePage === 'monitoring' && userRole === 'teacher' && (
             <TeacherMonitoring />
           )}
+
           {activePage === 'attendance' && userRole === 'teacher' && (
             <TeacherKehadiran />
           )}
+
           {activePage === 'attendance' && userRole === 'mentor' && (
             <MentorKehadiran />
           )}
+
           {activePage === 'roster' && userRole === 'mentor' && (
             <MentorPenilaian />
           )}
+
           {activePage === 'roster' && userRole === 'teacher' && (
             <TeacherPenilaian />
           )}
+
           {activePage === 'perizinan' && userRole === 'teacher' && (
             <TeacherPerizinan />
           )}
+
           {activePage === 'perizinan' && userRole === 'mentor' && (
             <MentorPerizinan />
           )}
+
           {activePage === 'perizinan' && userRole === 'intern' && (
             <StudentPerizinan />
           )}
+
           {activePage === 'pemetaan' && userRole === 'hubin' && (
             <HubinPemetaan />
           )}
+
           {activePage === 'data' && userRole === 'hubin' && (
             <HubinData />
           )}
+
+
+          {/* ── LAPORAN ── */}
+          {/* Siswa/intern sekarang juga bisa membuka halaman Laporan */}
+
           {activePage === 'laporan' && (
-            userRole === 'hubin' || userRole === 'teacher' || userRole === 'mentor' || userRole === 'super_admin'
+            userRole === 'intern' ||
+            userRole === 'hubin' ||
+            userRole === 'teacher' ||
+            userRole === 'mentor' ||
+            userRole === 'super_admin'
           ) && (
             <Laporan />
           )}
+
+
           {/* Legacy fallback */}
-          {activePage === 'data-siswa' && userRole === 'hubin' && <HubinData />}
-          {activePage === 'data-pembimbing' && userRole === 'hubin' && <HubinData />}
+
+          {activePage === 'data-siswa' &&
+            userRole === 'hubin' && (
+              <HubinData />
+            )}
+
+          {activePage === 'data-pembimbing' &&
+            userRole === 'hubin' && (
+              <HubinData />
+            )}
+
         </MainLayout>
       </div>
     </div>
