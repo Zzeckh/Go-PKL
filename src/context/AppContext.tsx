@@ -51,6 +51,8 @@ export interface PerusahaanItem {
   id: number;
   name: string;
   address: string;
+  city?: string;
+  country?: string;
   category?: string;
   quota: number;
   filled: number;
@@ -103,7 +105,17 @@ interface AppContextType {
   submitGuruGrade: (siswaId: number, nilaiGuru: number, period: string) => Promise<void>;
   addSiswa: (newSiswa: Omit<SiswaItem, 'id' | 'kehadiran' | 'logs' | 'nilaiDUDI' | 'nilaiGuru' | 'finalNilai' | 'berkasPct'>) => Promise<void>;
   addPerusahaan: (data: { name: string; address: string; quota: number; mentor: string }) => Promise<void>;
-  updateSiswaMapping: (siswaId: number, data: { perusahaan: string; guruPembimbing: string; mentor: string; companyId?: number | string; teacherId?: number | string; mentorName?: string }) => Promise<void>;
+  updateSiswaMapping: (
+    siswaId: number,
+    data: {
+      perusahaan: string;
+      guruPembimbing: string;
+      mentor: string;
+      companyId?: number | string;
+      teacherId?: number | string;
+      mentorName?: string;
+    }
+  ) => Promise<void>;
   updateCompanyLocation: (companyId: number, lat: number, lng: number, radius: number) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string, institution?: string, classId?: number) => Promise<void>;
@@ -131,19 +143,33 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const mapBackendRoleToUserRole = (role: string): UserRole => {
   switch (role) {
-    case 'student': return 'intern';
-    case 'teacher': return 'teacher';
-    case 'mentor': return 'mentor';
-    case 'hubin': return 'hubin';
-    case 'super_admin': return 'super_admin';
-    default: return 'intern';
+    case 'student':
+      return 'intern';
+    case 'teacher':
+      return 'teacher';
+    case 'mentor':
+      return 'mentor';
+    case 'hubin':
+      return 'hubin';
+    case 'super_admin':
+      return 'super_admin';
+    default:
+      return 'intern';
   }
 };
 
 const formatDate = (value: string) => {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -151,14 +177,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [userRole, setUserRole] = useState<UserRole>('intern');
   const [activePage, setActivePage] = useState<ActivePage>('dashboard');
+
   const [userName, setUserName] = useState('');
   const [userId, setUserId] = useState<number | null>(null);
+
   const [schoolName, setSchoolName] = useState('SMK Negeri 1 Nusantara');
+
   const [userCompanyName, setUserCompanyName] = useState('');
   const [userCompanyAddress, setUserCompanyAddress] = useState('');
-  const [userCompanyLocation, setUserCompanyLocation] = useState<{ lat: number; lng: number; radius: number } | null>(null);
+  const [userCompanyLocation, setUserCompanyLocation] = useState<{
+    lat: number;
+    lng: number;
+    radius: number;
+  } | null>(null);
 
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem('pkl_token'));
+  const [token, setToken] = useState<string | null>(() =>
+    localStorage.getItem('pkl_token')
+  );
 
   const [isLoading, setIsLoading] = useState(false);
   const [loadingResources, setLoadingResources] = useState<Set<string>>(new Set());
@@ -167,6 +202,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [guruList, setGuruList] = useState<GuruItem[]>([]);
   const [mentorList, setMentorList] = useState<MentorItem[]>([]);
   const [perusahaanList, setPerusahaanList] = useState<PerusahaanItem[]>([]);
+
   const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
   const [attendances, setAttendances] = useState<AttendanceRecord[]>([]);
   const [perizinanList, setPerizinanList] = useState<PerizinanItem[]>([]);
@@ -192,6 +228,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.removeItem('pkl_token');
     localStorage.removeItem('pkl_role');
     localStorage.removeItem('pkl_user_name');
+
     setToken(null);
     setUserId(null);
     setIsAuthenticated(false);
@@ -199,9 +236,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUserRole('intern');
     setUserName('');
     setSchoolName('SMK Negeri 1 Nusantara');
+
     setUserCompanyName('');
     setUserCompanyAddress('');
     setUserCompanyLocation(null);
+
     setSiswaList([]);
     setGuruList([]);
     setMentorList([]);
@@ -210,6 +249,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAttendances([]);
     setPerizinanList([]);
     setMapLocations([]);
+
     setSuperStats(null);
     setSuperClasses([]);
     setSuperUsers([]);
@@ -222,7 +262,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const loadLogEntries = async () => {
     try {
       startLoading('logbook');
+
       const response = await api.get('/api/logbook') as any[];
+
       const mapped = response.map((item: any): LogEntry => ({
         id: `LOG-${item.id}`,
         date: formatDate(item.date),
@@ -230,12 +272,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         description: item.description,
         hours: item.hours || 8,
         category: item.category || 'PKL Activity',
-        status: item.status === 'approved' ? 'approved' : item.status === 'rejected' ? 'revision' : 'pending',
+        status:
+          item.status === 'approved'
+            ? 'approved'
+            : item.status === 'rejected'
+              ? 'revision'
+              : 'pending',
         feedback: item.feedback,
         userId: item.user?.id,
         userName: item.user?.name,
         userClass: item.user?.class?.name,
       }));
+
       setLogEntries(mapped);
     } catch (error: any) {
       console.warn('Gagal mengambil logbook:', error?.message);
@@ -247,20 +295,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const loadAttendances = async () => {
     try {
       startLoading('absensi');
+
       const absensi = await api.get('/api/absensi') as any[];
+
       const mapped = absensi.map((item: any): AttendanceRecord => ({
         id: `ATT-${item.id}`,
         date: formatDate(item.date),
-        checkInTime: item.checkInTime 
-          ? new Date(item.checkInTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+        checkInTime: item.checkInTime
+          ? new Date(item.checkInTime).toLocaleTimeString('id-ID', {
+              hour: '2-digit',
+              minute: '2-digit',
+            })
           : '',
         status:
-          item.status === 'hadir' ? 'Hadir'
-          : item.status === 'izin' ? 'Izin'
-          : item.status === 'alpha' ? 'Alpha'
-          : 'Sakit',
+          item.status === 'hadir'
+            ? 'Hadir'
+            : item.status === 'izin'
+              ? 'Izin'
+              : item.status === 'alpha'
+                ? 'Alpha'
+                : 'Sakit',
         userId: item.user?.id || item.userId,
       }));
+
       setAttendances(mapped);
     } catch (error: any) {
       console.warn('Gagal mengambil absensi:', error?.message);
@@ -272,16 +329,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const loadSiswa = async () => {
     try {
       startLoading('siswa');
+
       const response = await api.get('/api/users?role=student') as any[];
+
       const mapped = response.map((u: any): SiswaItem => {
         const evals = u.evalAsStudent || [];
+
         const dudiEval = evals.find((e: any) => e.type === 'dudi');
         const guruEval = evals.find((e: any) => e.type === 'guru');
+
         const nilaiDUDI = dudiEval ? String(dudiEval.score) : '0';
         const nilaiGuru = guruEval ? String(guruEval.score) : '0';
+
         const d = dudiEval ? dudiEval.score : 0;
         const g = guruEval ? guruEval.score : 0;
-        const finalNilai = d && g ? String(Math.round((d + g) / 2)) : String(g || d || 0);
+
+        const finalNilai =
+          d && g
+            ? String(Math.round((d + g) / 2))
+            : String(g || d || 0);
+
         return {
           id: u.id,
           name: u.name,
@@ -299,6 +366,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           img: '',
         };
       });
+
       setSiswaList(mapped);
     } catch (error: any) {
       console.warn('Gagal mengambil siswa:', error?.message);
@@ -310,7 +378,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const loadGuru = async () => {
     try {
       startLoading('guru');
+
       const response = await api.get('/api/users?role=teacher') as any[];
+
       const mapped = response.map((u: any): GuruItem => ({
         id: u.id,
         name: u.name,
@@ -318,6 +388,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         totalSiswa: u._count?.students ?? 0,
         totalDUDI: 0,
       }));
+
       setGuruList(mapped);
     } catch (error: any) {
       console.warn('Gagal mengambil guru:', error?.message);
@@ -329,14 +400,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const loadMentor = async () => {
     try {
       startLoading('mentor');
+
       const response = await api.get('/api/users?role=mentor') as any[];
-      const mapped = response.map((u: any): MentorItem => ({
-        id: u.id,
-        name: u.name,
-        perusahaan: u.company?.name || '-',
-        role: 'Mentor',
-        totalSiswa: u._count?.students ?? 0,
-      }));
+
+      /*
+       * FIX:
+       * _count.students pada data mentor tidak merepresentasikan
+       * jumlah siswa PKL yang berada di perusahaan mentor tersebut.
+       *
+       * Karena siswa terhubung ke Company, dan Company memiliki mentor,
+       * kita hitung siswa berdasarkan:
+       *
+       * siswa.company.mentor.id === mentor.id
+       */
+      const studentsResponse = await api.get('/api/users?role=student') as any[];
+
+      const mapped = response.map((u: any): MentorItem => {
+        const totalSiswa = studentsResponse.filter(
+          (student: any) => student.company?.mentor?.id === u.id
+        ).length;
+
+        const perusahaanNames = Array.from(
+          new Set(
+            studentsResponse
+              .filter((student: any) => student.company?.mentor?.id === u.id)
+              .map((student: any) => student.company?.name)
+              .filter(Boolean)
+          )
+        );
+
+        return {
+          id: u.id,
+          name: u.name,
+          perusahaan:
+            u.company?.name ||
+            perusahaanNames.join(', ') ||
+            '-',
+          role: 'Mentor',
+          totalSiswa,
+        };
+      });
+
       setMentorList(mapped);
     } catch (error: any) {
       console.warn('Gagal mengambil mentor:', error?.message);
@@ -348,7 +452,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const loadPerizinan = async () => {
     try {
       startLoading('perizinan');
+
       const response = await api.get('/api/permissions') as any[];
+
       const mapped = response.map((p: any): PerizinanItem => ({
         id: p.id,
         name: p.user?.name || 'Unknown',
@@ -360,6 +466,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         attachment: p.attachmentUrl || '',
         status: p.status,
       }));
+
       setPerizinanList(mapped);
     } catch (error: any) {
       console.warn('Gagal mengambil perizinan:', error?.message);
@@ -371,11 +478,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const loadPerusahaan = async () => {
     try {
       startLoading('perusahaan');
+
       const response = await api.get('/api/companies') as { data: any[] };
+
       const mapped = response.data.map((c: any): PerusahaanItem => ({
         id: c.id,
         name: c.name,
         address: c.address || '-',
+        city: c.city || undefined,
+        country: c.country || undefined,
         category: c.category || undefined,
         quota: c.quota || 0,
         filled: c.filled || 0,
@@ -384,6 +495,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         longitude: c.longitude ?? null,
         radiusMeters: c.radiusMeters || 500,
       }));
+
       setPerusahaanList(mapped);
     } catch (error: any) {
       console.warn('Gagal mengambil perusahaan:', error?.message);
@@ -393,10 +505,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const loadSuperStats = useCallback(async (): Promise<boolean> => {
-    if (!localStorage.getItem('pkl_token')) return false;
+    if (!localStorage.getItem('pkl_token')) {
+      return false;
+    }
+
     try {
       const res = await api.get('/api/super-admin/stats') as any;
+
       setSuperStats(res);
+
       return true;
     } catch (error: any) {
       console.warn('Gagal mengambil super stats:', error?.message);
@@ -405,10 +522,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const loadSuperClasses = useCallback(async (): Promise<boolean> => {
-    if (!localStorage.getItem('pkl_token')) return false;
+    if (!localStorage.getItem('pkl_token')) {
+      return false;
+    }
+
     try {
       const res = await api.get('/api/super-admin/classes') as any[];
+
       setSuperClasses(res);
+
       return true;
     } catch (error: any) {
       console.warn('Gagal mengambil daftar kelas:', error?.message);
@@ -418,13 +540,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const createClass = async (data: { name: string; major?: string }) => {
     const res = await api.post('/api/super-admin/classes', data);
+
     await loadSuperClasses();
     await loadSuperStats();
+
     return res;
   };
 
   const deleteClass = async (id: number) => {
     await api.delete(`/api/super-admin/classes/${id}`);
+
     await loadSuperClasses();
     await loadSuperStats();
   };
@@ -433,49 +558,86 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return await api.get(`/api/super-admin/classes/${id}/students`) as any;
   };
 
-  const loadSuperUsers = useCallback(async (filters?: { role?: string; search?: string }): Promise<boolean> => {
-    if (!localStorage.getItem('pkl_token')) return false;
-    try {
-      const params = new URLSearchParams();
-      if (filters?.role && filters.role !== 'all') params.set('role', filters.role);
-      if (filters?.search) params.set('search', filters.search);
-      const res = await api.get(`/api/super-admin/users?${params.toString()}`) as any[];
-      setSuperUsers(res);
-      return true;
-    } catch (error: any) {
-      console.warn('Gagal mengambil daftar user:', error?.message);
-      return false;
-    }
-  }, []);
+  const loadSuperUsers = useCallback(
+    async (filters?: { role?: string; search?: string }): Promise<boolean> => {
+      if (!localStorage.getItem('pkl_token')) {
+        return false;
+      }
+
+      try {
+        const params = new URLSearchParams();
+
+        if (filters?.role && filters.role !== 'all') {
+          params.set('role', filters.role);
+        }
+
+        if (filters?.search) {
+          params.set('search', filters.search);
+        }
+
+        const res = await api.get(
+          `/api/super-admin/users?${params.toString()}`
+        ) as any[];
+
+        setSuperUsers(res);
+
+        return true;
+      } catch (error: any) {
+        console.warn('Gagal mengambil daftar user:', error?.message);
+        return false;
+      }
+    },
+    []
+  );
 
   const toggleUser = async (id: number) => {
     const res = await api.patch(`/api/super-admin/users/${id}/toggle`);
+
     await loadSuperUsers();
+
     return res;
   };
 
   const deleteUser = async (id: number) => {
     const res = await api.delete(`/api/super-admin/users/${id}`);
+
     await loadSuperUsers();
     await loadSuperStats();
+
     return res;
   };
 
   const updateUserRole = async (id: number, role: string) => {
-    const res = await api.patch(`/api/super-admin/users/${id}/role`, { role });
+    const res = await api.patch(
+      `/api/super-admin/users/${id}/role`,
+      { role }
+    );
+
     await loadSuperUsers();
+
     return res;
   };
 
   const resetPassword = async (id: number) => {
-    const res = await api.post(`/api/super-admin/users/${id}/reset-password`) as { id: number; name: string; newPassword: string };
+    const res = await api.post(
+      `/api/super-admin/users/${id}/reset-password`
+    ) as {
+      id: number;
+      name: string;
+      newPassword: string;
+    };
+
     return res;
   };
 
   const loadCompanies = useCallback(async (): Promise<boolean> => {
-    if (!localStorage.getItem('pkl_token')) return false;
+    if (!localStorage.getItem('pkl_token')) {
+      return false;
+    }
+
     try {
       const res = await api.get('/api/companies') as { data: any[] };
+
       const mapped = res.data.map((c: any): PerusahaanItem => ({
         id: c.id,
         name: c.name,
@@ -488,7 +650,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         longitude: c.longitude ?? null,
         radiusMeters: c.radiusMeters || 500,
       }));
+
       setPerusahaanList(mapped);
+
       return true;
     } catch (error: any) {
       console.warn('Gagal mengambil daftar perusahaan:', error?.message);
@@ -506,41 +670,66 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       longitude: data.longitude,
       radiusMeters: Number(data.radiusMeters) || 500,
     });
+
     await loadCompanies();
+
     return res;
   };
 
-  const updateCompany = async (id: number, data: Partial<PerusahaanItem>) => {
+  const updateCompany = async (
+    id: number,
+    data: Partial<PerusahaanItem>
+  ) => {
     const res = await api.patch(`/api/companies/${id}`, {
       name: data.name,
       address: data.address,
       category: data.category,
-      quota: data.quota !== undefined ? Number(data.quota) : undefined,
+      quota:
+        data.quota !== undefined
+          ? Number(data.quota)
+          : undefined,
       latitude: data.latitude,
       longitude: data.longitude,
-      radiusMeters: data.radiusMeters !== undefined ? Number(data.radiusMeters) : undefined,
+      radiusMeters:
+        data.radiusMeters !== undefined
+          ? Number(data.radiusMeters)
+          : undefined,
     });
+
     await loadCompanies();
+
     return res;
   };
 
   const deleteCompany = async (id: number) => {
     const res = await api.delete(`/api/companies/${id}/hard`);
+
     await loadCompanies();
+
     return res;
   };
 
-  const changePassword = async (currentPassword: string, newPassword: string) => {
-    await api.post('/api/auth/change-password', { currentPassword, newPassword });
+  const changePassword = async (
+    currentPassword: string,
+    newPassword: string
+  ) => {
+    await api.post('/api/auth/change-password', {
+      currentPassword,
+      newPassword,
+    });
   };
 
   const deleteAccount = async (password: string) => {
-    await api.post('/api/auth/delete-account', { password });
+    await api.post('/api/auth/delete-account', {
+      password,
+    });
+
     logout();
   };
 
   const refreshData = useCallback(async () => {
     setIsLoading(true);
+
     try {
       await Promise.all([
         loadLogEntries(),
@@ -558,26 +747,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const loadSession = async (overrideToken?: string) => {
     const tokenToUse = overrideToken || token;
-    if (!tokenToUse) return;
+
+    if (!tokenToUse) {
+      return;
+    }
 
     try {
       startLoading('session');
+
       const user = await api.get('/api/auth/me') as any;
+
       const mappedRole = mapBackendRoleToUserRole(user.role);
-      
+
       setUserName(user.name);
       setUserRole(mappedRole);
       setUserId(user.id);
+
       setUserCompanyName(user.companyName || '');
       setUserCompanyAddress(user.companyAddress || '');
       setUserCompanyLocation(user.companyLocation || null);
+
       setIsAuthenticated(true);
-      
+
       if (mappedRole !== 'super_admin') {
         await refreshData();
       }
     } catch (error: any) {
       console.error('Session load error:', error?.message);
+
       logout();
     } finally {
       stopLoading('session');
@@ -588,52 +785,93 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (token) {
       loadSession();
     }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const login = async (email: string, password: string) => {
     try {
-      const data = await api.post('/api/auth/login', { email, password }) as { token: string; user: any };
-      
+      const data = await api.post(
+        '/api/auth/login',
+        {
+          email,
+          password,
+        }
+      ) as {
+        token: string;
+        user: any;
+      };
+
       localStorage.setItem('pkl_token', data.token);
-      localStorage.setItem('pkl_role', mapBackendRoleToUserRole(data.user.role));
-      localStorage.setItem('pkl_user_name', data.user.name);
-      
+      localStorage.setItem(
+        'pkl_role',
+        mapBackendRoleToUserRole(data.user.role)
+      );
+      localStorage.setItem(
+        'pkl_user_name',
+        data.user.name
+      );
+
       await new Promise(resolve => setTimeout(resolve, 50));
+
       setToken(data.token);
     } catch (error: any) {
       throw new Error(error.message || 'Login gagal');
     }
   };
 
-  const register = async (name: string, email: string, password: string, _institution?: string, classId?: number) => {
+  const register = async (
+    name: string,
+    email: string,
+    password: string,
+    _institution?: string,
+    classId?: number
+  ) => {
     try {
-      const data = await api.post('/api/auth/register', {
-        name,
-        email,
-        password,
-        classId,
-      }) as { token: string; user: any };
-      
+      const data = await api.post(
+        '/api/auth/register',
+        {
+          name,
+          email,
+          password,
+          classId,
+        }
+      ) as {
+        token: string;
+        user: any;
+      };
+
       localStorage.setItem('pkl_token', data.token);
-      localStorage.setItem('pkl_role', mapBackendRoleToUserRole(data.user.role));
-      localStorage.setItem('pkl_user_name', data.user.name);
-      
+      localStorage.setItem(
+        'pkl_role',
+        mapBackendRoleToUserRole(data.user.role)
+      );
+      localStorage.setItem(
+        'pkl_user_name',
+        data.user.name
+      );
+
       await new Promise(resolve => setTimeout(resolve, 50));
+
       setToken(data.token);
     } catch (error: any) {
       throw new Error(error.message || 'Registrasi gagal');
     }
   };
 
-  const addLogEntry = async (newLog: Omit<LogEntry, 'id' | 'date' | 'status'>) => {
+  const addLogEntry = async (
+    newLog: Omit<LogEntry, 'id' | 'date' | 'status'>
+  ) => {
     try {
-      const created = await api.post('/api/logbook', {
-        activity_title: newLog.title,
-        description: newLog.description,
-        hours: newLog.hours,
-        category: newLog.category,
-      }) as any;
+      const created = await api.post(
+        '/api/logbook',
+        {
+          activity_title: newLog.title,
+          description: newLog.description,
+          hours: newLog.hours,
+          category: newLog.category,
+        }
+      ) as any;
 
       const entry: LogEntry = {
         id: `LOG-${created.id}`,
@@ -646,38 +884,78 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
 
       setLogEntries(prev => [entry, ...prev]);
+
       await loadLogEntries();
     } catch (error: any) {
-      throw new Error(error.message || 'Gagal membuat logbook');
+      throw new Error(
+        error.message || 'Gagal membuat logbook'
+      );
     }
   };
 
-  const updateLogStatus = async (id: string, status: 'approved' | 'rejected' | 'revision', feedback?: string) => {
+  const updateLogStatus = async (
+    id: string,
+    status: 'approved' | 'rejected' | 'revision',
+    feedback?: string
+  ) => {
     try {
-      const logId = parseInt(id.replace('LOG-', ''));
-      await api.put(`/api/logbook/${logId}`, { status, feedback });
+      const logId = parseInt(
+        id.replace('LOG-', '')
+      );
+
+      await api.put(
+        `/api/logbook/${logId}`,
+        {
+          status,
+          feedback,
+        }
+      );
+
       await loadLogEntries();
     } catch (error: any) {
-      throw new Error(error.message || 'Gagal update status logbook');
+      throw new Error(
+        error.message || 'Gagal update status logbook'
+      );
     }
   };
 
-  const updateLogEntry = async (id: string, data: { title: string; description: string; hours: number; category: string }) => {
+  const updateLogEntry = async (
+    id: string,
+    data: {
+      title: string;
+      description: string;
+      hours: number;
+      category: string;
+    }
+  ) => {
     try {
-      const logId = parseInt(id.replace('LOG-', ''));
-      await api.put(`/api/logbook/${logId}`, {
-        activity_title: data.title,
-        description: data.description,
-        hours: data.hours,
-        category: data.category,
-      });
+      const logId = parseInt(
+        id.replace('LOG-', '')
+      );
+
+      await api.put(
+        `/api/logbook/${logId}`,
+        {
+          activity_title: data.title,
+          description: data.description,
+          hours: data.hours,
+          category: data.category,
+        }
+      );
+
       await loadLogEntries();
     } catch (error: any) {
-      throw new Error(error.message || 'Gagal update logbook');
+      throw new Error(
+        error.message || 'Gagal update logbook'
+      );
     }
   };
 
-  const checkInAttendance = async (_imageUrl?: string, latitude?: number, longitude?: number) => {
+  const checkInAttendance = async (
+    _imageUrl?: string,
+    latitude?: number,
+    longitude?: number
+  ) => {
     try {
       await api.post('/api/absensi', {
         status: 'hadir',
@@ -685,127 +963,321 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         latitude,
         longitude,
       });
+
       await loadAttendances();
     } catch (error: any) {
-      throw new Error(error.message || 'Gagal melakukan absensi');
+      throw new Error(
+        error.message || 'Gagal melakukan absensi'
+      );
     }
   };
 
-  const updatePerizinanStatus = async (id: number, status: 'approved' | 'rejected', rejectReason?: string) => {
+  const updatePerizinanStatus = async (
+    id: number,
+    status: 'approved' | 'rejected',
+    rejectReason?: string
+  ) => {
     try {
-      await api.put(`/api/permissions/${id}`, { status, rejectReason });
+      await api.put(
+        `/api/permissions/${id}`,
+        {
+          status,
+          rejectReason,
+        }
+      );
+
       await loadPerizinan();
       await loadAttendances();
     } catch (error: any) {
-      throw new Error(error.message || 'Gagal update status perizinan');
+      throw new Error(
+        error.message || 'Gagal update status perizinan'
+      );
     }
   };
 
-  const createPermission = async (data: { type: string; reason: string; date: string; file?: File | null; attachmentUrl?: string }) => {
+  const createPermission = async (
+    data: {
+      type: string;
+      reason: string;
+      date: string;
+      file?: File | null;
+      attachmentUrl?: string;
+    }
+  ) => {
     try {
       const formData = new FormData();
+
       formData.append('type', data.type);
       formData.append('reason', data.reason);
       formData.append('date', data.date);
-      if (data.file) formData.append('file', data.file);
-      else if (data.attachmentUrl) formData.append('attachmentUrl', data.attachmentUrl);
 
-      const res = await api.upload('/api/permissions', formData);
+      if (data.file) {
+        formData.append('file', data.file);
+      } else if (data.attachmentUrl) {
+        formData.append(
+          'attachmentUrl',
+          data.attachmentUrl
+        );
+      }
+
+      const res = await api.upload(
+        '/api/permissions',
+        formData
+      );
+
       await loadPerizinan();
+
       return res;
     } catch (error: any) {
-      throw new Error(error.message || 'Gagal membuat perizinan');
+      throw new Error(
+        error.message || 'Gagal membuat perizinan'
+      );
     }
   };
 
-  const submitEvaluation = async (siswaId: number, nilaiDUDI: number, nilaiGuru: number, period: string) => {
+  const submitEvaluation = async (
+    siswaId: number,
+    nilaiDUDI: number,
+    nilaiGuru: number,
+    period: string
+  ) => {
     try {
       await Promise.all([
-        api.post('/api/evaluations', { studentId: siswaId, score: nilaiDUDI, type: 'dudi', period }),
-        api.post('/api/evaluations', { studentId: siswaId, score: nilaiGuru, type: 'guru', period }),
+        api.post('/api/evaluations', {
+          studentId: siswaId,
+          score: nilaiDUDI,
+          type: 'dudi',
+          period,
+        }),
+        api.post('/api/evaluations', {
+          studentId: siswaId,
+          score: nilaiGuru,
+          type: 'guru',
+          period,
+        }),
       ]);
+
       await loadSiswa();
     } catch (error: any) {
-      throw new Error(error.message || 'Gagal submit evaluasi');
+      throw new Error(
+        error.message || 'Gagal submit evaluasi'
+      );
     }
   };
 
-  const submitGuruGrade = async (siswaId: number, nilaiGuru: number, period: string) => {
+  const submitGuruGrade = async (
+    siswaId: number,
+    nilaiGuru: number,
+    period: string
+  ) => {
     try {
-      await api.post('/api/evaluations', { studentId: siswaId, score: nilaiGuru, type: 'guru', period });
-      await loadSiswa();
-    } catch (error: any) {
-      throw new Error(error.message || 'Gagal submit nilai guru');
-    }
-  };
-
-  const addSiswa = async (newSiswa: Omit<SiswaItem, 'id' | 'kehadiran' | 'logs' | 'nilaiDUDI' | 'nilaiGuru' | 'finalNilai' | 'berkasPct'>) => {
-    try {
-      await api.post('/api/auth/register', {
-        name: newSiswa.name,
-        email: `${newSiswa.name.toLowerCase().replace(/\s+/g, '.')}@gopkl.id`,
-        password: 'gopkl123',
+      await api.post('/api/evaluations', {
+        studentId: siswaId,
+        score: nilaiGuru,
+        type: 'guru',
+        period,
       });
+
       await loadSiswa();
     } catch (error: any) {
-      throw new Error(error.message || 'Gagal menambah siswa');
+      throw new Error(
+        error.message || 'Gagal submit nilai guru'
+      );
     }
   };
 
-  const addPerusahaan = async (data: { name: string; address: string; quota: number; mentor: string }) => {
+  const addSiswa = async (
+    newSiswa: Omit<
+      SiswaItem,
+      'id' |
+      'kehadiran' |
+      'logs' |
+      'nilaiDUDI' |
+      'nilaiGuru' |
+      'finalNilai' |
+      'berkasPct'
+    >
+  ) => {
     try {
-      await api.post('/api/companies', {
-        name: data.name,
-        address: data.address,
-        quota: data.quota,
-      });
+      await api.post(
+        '/api/auth/register',
+        {
+          name: newSiswa.name,
+          email: `${newSiswa.name
+            .toLowerCase()
+            .replace(/\s+/g, '.')}@gopkl.id`,
+          password: 'gopkl123',
+        }
+      );
+
+      await loadSiswa();
+    } catch (error: any) {
+      throw new Error(
+        error.message || 'Gagal menambah siswa'
+      );
+    }
+  };
+
+  const addPerusahaan = async (
+    data: {
+      name: string;
+      address: string;
+      quota: number;
+      mentor: string;
+    }
+  ) => {
+    try {
+      await api.post(
+        '/api/companies',
+        {
+          name: data.name,
+          address: data.address,
+          quota: data.quota,
+        }
+      );
+
       await loadPerusahaan();
     } catch (error: any) {
-      throw new Error(error.message || 'Gagal menambah perusahaan');
+      throw new Error(
+        error.message || 'Gagal menambah perusahaan'
+      );
     }
   };
 
-  const updateSiswaMapping = async (siswaId: number, data: { perusahaan: string; guruPembimbing: string; mentor: string; companyId?: number | string; teacherId?: number | string; mentorName?: string }) => {
+  const updateSiswaMapping = async (
+    siswaId: number,
+    data: {
+      perusahaan: string;
+      guruPembimbing: string;
+      mentor: string;
+      companyId?: number | string;
+      teacherId?: number | string;
+      mentorName?: string;
+    }
+  ) => {
     try {
-      await api.patch(`/api/users/${siswaId}`, {
-        companyId: data.companyId ? Number(data.companyId) : undefined,
-        teacherId: data.teacherId ? Number(data.teacherId) : undefined,
-        mentorName: data.mentorName,
-      });
+      await api.patch(
+        `/api/users/${siswaId}`,
+        {
+          companyId: data.companyId
+            ? Number(data.companyId)
+            : undefined,
+          teacherId: data.teacherId
+            ? Number(data.teacherId)
+            : undefined,
+          mentorName: data.mentorName,
+        }
+      );
+
       await loadSiswa();
-    } catch (error: any) {
-      throw new Error(error.message || 'Gagal update pemetaan siswa');
-    }
-  };
-
-  const updateCompanyLocation = async (companyId: number, lat: number, lng: number, radius: number) => {
-    try {
-      await api.patch(`/api/companies/${companyId}`, {
-        latitude: lat,
-        longitude: lng,
-        radiusMeters: radius,
-      });
+      await loadGuru();
+      await loadMentor();
       await loadPerusahaan();
     } catch (error: any) {
-      throw new Error(error.message || 'Gagal update lokasi perusahaan');
+      throw new Error(
+        error.message || 'Gagal update pemetaan siswa'
+      );
+    }
+  };
+
+  const updateCompanyLocation = async (
+    companyId: number,
+    lat: number,
+    lng: number,
+    radius: number
+  ) => {
+    try {
+      await api.patch(
+        `/api/companies/${companyId}`,
+        {
+          latitude: lat,
+          longitude: lng,
+          radiusMeters: radius,
+        }
+      );
+
+      await loadPerusahaan();
+    } catch (error: any) {
+      throw new Error(
+        error.message || 'Gagal update lokasi perusahaan'
+      );
     }
   };
 
   return (
     <AppContext.Provider
       value={{
-        isAuthenticated, authMode, setAuthMode, userRole, activePage, setActivePage,
-        userName, schoolName, userId, userCompanyName, userCompanyAddress, userCompanyLocation,
-        isLoading, loadingResources,        siswaList, guruList, mentorList, perusahaanList,
-        logEntries, attendances, perizinanList, mapLocations,
-        superStats, superClasses, superUsers,
-        addLogEntry, updateLogStatus, updateLogEntry, checkInAttendance, updatePerizinanStatus,
-        createPermission, submitEvaluation, submitGuruGrade, addSiswa, addPerusahaan, updateSiswaMapping, updateCompanyLocation,
-        login, register, logout, refreshData,
-        loadSuperStats, loadSuperClasses, createClass, deleteClass, loadClassStudents,
-        loadSuperUsers, toggleUser, deleteUser, updateUserRole, resetPassword,
-        loadCompanies, addCompany, updateCompany, deleteCompany,
-        changePassword, deleteAccount,
+        isAuthenticated,
+        authMode,
+        setAuthMode,
+        userRole,
+        activePage,
+        setActivePage,
+
+        userName,
+        schoolName,
+        userId,
+
+        userCompanyName,
+        userCompanyAddress,
+        userCompanyLocation,
+
+        isLoading,
+        loadingResources,
+
+        siswaList,
+        guruList,
+        mentorList,
+        perusahaanList,
+
+        logEntries,
+        attendances,
+        perizinanList,
+        mapLocations,
+
+        superStats,
+        superClasses,
+        superUsers,
+
+        addLogEntry,
+        updateLogStatus,
+        updateLogEntry,
+        checkInAttendance,
+        updatePerizinanStatus,
+
+        createPermission,
+        submitEvaluation,
+        submitGuruGrade,
+
+        addSiswa,
+        addPerusahaan,
+        updateSiswaMapping,
+        updateCompanyLocation,
+
+        login,
+        register,
+        logout,
+        refreshData,
+
+        loadSuperStats,
+        loadSuperClasses,
+        createClass,
+        deleteClass,
+        loadClassStudents,
+
+        loadSuperUsers,
+        toggleUser,
+        deleteUser,
+        updateUserRole,
+        resetPassword,
+
+        loadCompanies,
+        addCompany,
+        updateCompany,
+        deleteCompany,
+
+        changePassword,
+        deleteAccount,
       }}
     >
       {children}
@@ -815,8 +1287,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
 export const useApp = () => {
   const context = useContext(AppContext);
+
   if (!context) {
-    throw new Error('useApp must be used within an AppProvider');
+    throw new Error(
+      'useApp must be used within an AppProvider'
+    );
   }
+
   return context;
 };

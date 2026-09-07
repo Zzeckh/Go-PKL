@@ -56,6 +56,8 @@ model Company {
   id           Int      @id @default(autoincrement())
   name         String   @unique
   address      String
+  city         String?
+  country      String?
   phone        String?
   category     String?
   quota        Int      @default(0)
