@@ -55,7 +55,7 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 /* ── 6. Start ── */
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Go-PKL API running on http://localhost:${PORT}`);
   console.log(`   Mode: ${process.env.NODE_ENV || 'development'}`);
