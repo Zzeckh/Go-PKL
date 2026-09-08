@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Camera, CheckCircle2, MapPin, Loader2, Image as ImageIcon, RefreshCw, 
   AlertTriangle, Clock, ShieldCheck, ShieldAlert, Building2, 
-  ScanFace, Sun, History 
+  ScanFace, Sun, History, Calendar
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { AttendanceCalendarModal } from './AttendanceCalendarModal';
 
 interface CompanyLocation {
   lat: number;
@@ -18,9 +19,6 @@ interface AbsensiProps {
   companyLocation: CompanyLocation | null;
   onCheckIn: (imageUrl?: string, latitude?: number, longitude?: number) => Promise<void>;
   hasCheckedIn: boolean;
-  // Diisi backend (lihat GET /api/absensi/status) saat siswa punya izin
-  // pending/approved yang mengunci tanggal ini. null = tidak ada izin aktif.
-  permissionBlockStatus?: 'izin_pending' | 'izin_approved' | null;
 }
 
 const getDistanceInMeters = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -42,10 +40,10 @@ export const Absensi: React.FC<AbsensiProps> = ({
   companyAddress,
   companyLocation,
   onCheckIn, 
-  hasCheckedIn,
-  permissionBlockStatus = null,
+  hasCheckedIn 
 }) => {
-  const { attendances } = useApp();
+  const { attendances, userId, userName } = useApp();
+  const [showCalendar, setShowCalendar] = useState(false);
 
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -192,32 +190,6 @@ export const Absensi: React.FC<AbsensiProps> = ({
 
   const checkedIn = hasCheckedIn || justCheckedIn;
 
-  if (!checkedIn && permissionBlockStatus) {
-    const isPending = permissionBlockStatus === 'izin_pending';
-    return (
-      <div className="h-full w-full flex items-center justify-center animate-in fade-in duration-500 p-4">
-        <div className="bg-white rounded-[24px] border border-mist/60 shadow-xl max-w-sm w-full flex flex-col items-center text-center p-6 sm:p-8">
-          <div className="w-20 h-20 bg-navy text-white rounded-[10px] flex items-center justify-center mb-6 shadow-lg shadow-navy/30">
-            <ShieldAlert className="w-10 h-10" />
-          </div>
-          <h2 className="text-2xl font-bold text-navy mb-2">
-            {isPending ? 'Izin sedang diajukan' : 'Izin disetujui'}
-          </h2>
-          <p className="text-sm font-medium text-navy/60 leading-relaxed mb-2">
-            {isPending
-              ? 'Anda tidak dapat melakukan absensi hari ini karena masih memiliki pengajuan izin yang menunggu persetujuan.'
-              : 'Anda tidak dapat melakukan absensi hari ini karena izin Anda untuk tanggal ini sudah disetujui.'}
-          </p>
-          {isPending && (
-            <p className="text-xs font-semibold text-navy/50">
-              Buka halaman Perizinan untuk membatalkan (Hapus Izin) bila ingin melakukan absensi.
-            </p>
-          )}
-        </div>
-      </div>
-    );
-  }
-
   if (checkedIn) {
     return (
       <div className="h-full w-full flex items-center justify-center animate-in fade-in duration-500 p-4">
@@ -236,7 +208,22 @@ export const Absensi: React.FC<AbsensiProps> = ({
             <MapPin className="w-4 h-4 text-steel" />
             <span className="text-xs font-bold text-navy">{companyName} • Geofence Valid</span>
           </div>
+          <button
+            onClick={() => setShowCalendar(true)}
+            className="mt-4 w-full flex items-center justify-center gap-2 bg-navy text-white text-sm font-bold py-3 rounded-[24px] shadow-md shadow-navy/20 hover:bg-navy/90 transition-colors"
+          >
+            <Calendar className="w-4 h-4" />
+            Lihat Kalender Kehadiran
+          </button>
         </div>
+
+        {showCalendar && (
+          <AttendanceCalendarModal
+            userId={userId ?? undefined}
+            userName={userName}
+            onClose={() => setShowCalendar(false)}
+          />
+        )}
       </div>
     );
   }
@@ -554,7 +541,16 @@ export const Absensi: React.FC<AbsensiProps> = ({
                 </div>
                 <p className="text-[13px] font-bold text-navy">Riwayat Kehadiran</p>
               </div>
-              <span className="text-[11px] font-bold text-navy/40 tabular-nums">{attendances.length} catatan</span>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-[11px] font-bold text-navy/40 tabular-nums">{attendances.length} catatan</span>
+                <button
+                  onClick={() => setShowCalendar(true)}
+                  className="flex items-center gap-1.5 bg-navy text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-sm shadow-navy/20 hover:bg-navy/90 transition-colors"
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  Lihat Kalender Kehadiran
+                </button>
+              </div>
             </div>
 
             <div className="lg:flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2 lg:min-h-0 max-h-64 lg:max-h-none pr-1">
@@ -591,6 +587,14 @@ export const Absensi: React.FC<AbsensiProps> = ({
           </div>
         </div>
       </div>
+
+      {showCalendar && (
+        <AttendanceCalendarModal
+          userId={userId ?? undefined}
+          userName={userName}
+          onClose={() => setShowCalendar(false)}
+        />
+      )}
     </div>
   );
 };

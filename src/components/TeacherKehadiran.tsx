@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Search, ChevronRight, Activity, GraduationCap, Calendar, AlertCircle, X, Building, Clock } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { AttendanceCalendarModal } from './AttendanceCalendarModal';
 
 const getInitials = (name: string) =>
   (name || '?').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -185,6 +186,7 @@ const TeacherKehadiranDetailModal: React.FC<{
   const hadirCount = studentAttendances.filter(a => a.status === 'Hadir').length;
   const izinCount = perizinanList.filter(p => p.userId === student.id && p.status === 'approved').length;
   const pct = student.kehadiran || 0;
+  const [showCalendar, setShowCalendar] = useState(false);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 sm:p-4 bg-navy/50 backdrop-blur-md">
@@ -256,6 +258,15 @@ const TeacherKehadiranDetailModal: React.FC<{
             </div>
           </div>
 
+          {/* ── Kalender Kehadiran ── */}
+          <button
+            onClick={() => setShowCalendar(true)}
+            className="w-full flex items-center justify-center gap-2 bg-navy text-white text-sm font-bold py-3 rounded-[24px] shadow-md shadow-navy/20 hover:bg-navy/90 transition-colors"
+          >
+            <Calendar className="w-4 h-4" />
+            Lihat Kalender Kehadiran
+          </button>
+
           {/* ── Riwayat Absensi ── */}
           <div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-navy/40 mb-2 flex items-center gap-1.5">
@@ -280,6 +291,14 @@ const TeacherKehadiranDetailModal: React.FC<{
           </div>
         </div>
       </div>
+
+      {showCalendar && (
+        <AttendanceCalendarModal
+          userId={student.id}
+          userName={student.name}
+          onClose={() => setShowCalendar(false)}
+        />
+      )}
     </div>
   );
 };
