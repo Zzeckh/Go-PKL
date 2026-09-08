@@ -41,13 +41,24 @@ export const Maps: React.FC<MapsProps> = () => {
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [isLoadingGps, setIsLoadingGps] = useState(true);
 
-  const companiesWithCoords = useMemo(
-    () =>
-      perusahaanList.filter(
-        c => c.latitude != null && c.longitude != null && isValidCoord(c.latitude, c.longitude)
-      ),
-    [perusahaanList]
+  const { userRole } = useApp();
+
+const companiesWithCoords = useMemo(() => {
+  const validCompanies = perusahaanList.filter(
+    c =>
+      c.latitude != null &&
+      c.longitude != null &&
+      isValidCoord(c.latitude, c.longitude)
   );
+
+  // Kalau siswa, hanya tampilkan perusahaan tempat dia PKL
+  if (userRole === 'intern') {
+    return validCompanies.filter(c => c.name === userCompanyName);
+  }
+
+  // Guru, mentor, hubin, super admin tetap melihat semua perusahaan
+  return validCompanies;
+}, [perusahaanList, userRole, userCompanyName]);
 
   const userCompany = useMemo(
     () => perusahaanList.find(c => c.name === userCompanyName),
