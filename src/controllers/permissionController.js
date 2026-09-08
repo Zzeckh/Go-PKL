@@ -3,6 +3,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import prisma from '../config/db.js';
 import { parseDateOnly, sameDateRange } from '../utils/dateOnly.js';
+import { ACTIVE_PERMISSION_STATUSES } from '../services/attendanceStatusService.js';
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -96,14 +97,17 @@ export const createPermission = async (req, res, next) => {
       where: { userId, date: dateRange },
     });
     if (existingAbsensi) {
-      return res.status(400).json({ error: 'Anda sudah melakukan absensi pada tanggal tersebut, sehingga tidak dapat mengajukan izin.' });
+      return res.status(409).json({ error: 'Anda sudah melakukan absensi pada tanggal ini sehingga tidak dapat mengajukan izin.' });
     }
 
+    // Hanya izin yang masih AKTIF (pending/approved) yang dianggap duplicate.
+    // Izin yang sudah rejected tidak boleh menghalangi pengajuan izin baru
+    // untuk tanggal yang sama (KONDISI 4).
     const existingPermission = await prisma.permission.findFirst({
-      where: { userId, date: dateRange },
+      where: { userId, date: dateRange, status: { in: ACTIVE_PERMISSION_STATUSES } },
     });
     if (existingPermission) {
-      return res.status(400).json({ error: 'Pengajuan izin untuk tanggal tersebut sudah ada.' });
+      return res.status(409).json({ error: 'Anda sudah memiliki pengajuan izin untuk tanggal ini.' });
     }
 
     const attachmentUrl = `/uploads/permissions/${req.file.filename}`;
@@ -176,6 +180,49 @@ export const updatePermission = async (req, res, next) => {
     });
 
     res.json(updated);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// DELETE /api/permissions/:id
+// Aturan (lihat middleware/route: hanya role 'student' yang boleh lewat):
+// - Student hanya boleh menghapus permission miliknya sendiri.
+// - Hanya permission berstatus PENDING yang boleh dihapus.
+//   (APPROVED: secara default tidak boleh dihapus siswa sendiri;
+//    REJECTED: sudah tidak aktif, tidak ada gunanya dihapus lewat endpoint ini.)
+// - Setelah dihapus, tanggal otomatis kembali tersedia untuk absensi/izin baru
+//   karena validasi lain (createAbsensi/createPermission) selalu query ulang
+//   ke database — tidak ada absensi otomatis yang dibuat di sini.
+export const deletePermission = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (Number.isNaN(id)) {
+      return res.status(400).json({ error: 'ID permission tidak valid.' });
+    }
+
+    const { id: userId } = req.user;
+
+    const permission = await prisma.permission.findUnique({ where: { id } });
+    if (!permission) {
+      return res.status(404).json({ error: 'Permission tidak ditemukan.' });
+    }
+
+    if (permission.userId !== userId) {
+      return res.status(403).json({ error: 'Anda tidak berhak menghapus izin milik siswa lain.' });
+    }
+
+    if (permission.status !== 'pending') {
+      return res.status(400).json({
+        error: permission.status === 'approved'
+          ? 'Izin yang sudah disetujui tidak dapat dihapus.'
+          : 'Izin ini sudah tidak aktif dan tidak perlu dihapus.',
+      });
+    }
+
+    await prisma.permission.delete({ where: { id } });
+
+    res.json({ success: true, id });
   } catch (error) {
     next(error);
   }

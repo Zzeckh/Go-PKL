@@ -1,5 +1,6 @@
 import prisma from "../config/db.js";
-import { parseDateOnly, sameDateRange } from '../utils/dateOnly.js';
+import { parseDateOnly } from '../utils/dateOnly.js';
+import { getDailyAttendanceStatus } from '../services/attendanceStatusService.js';
 
 const haversineMeters = (lat1, lon1, lat2, lon2) => {
   const R = 6371e3;
@@ -79,21 +80,17 @@ export const createAbsensi = async (req, res, next) => {
     }
 
     const today = parseDateOnly(req.body.date) || parseDateOnly(new Date());
-    const dateRange = sameDateRange(today);
 
-    const existing = await prisma.absensi.findUnique({
-      where: { userId_date: { userId, date: today } },
-    });
+    const daily = await getDailyAttendanceStatus(userId, today);
 
-    if (existing) {
-      return res.status(409).json({ error: "Sudah melakukan absensi hari ini" });
+    if (daily.attendance) {
+      return res.status(409).json({ error: "Anda sudah melakukan absensi pada tanggal ini." });
     }
 
-    const approvedPermission = await prisma.permission.findFirst({
-      where: { userId, status: 'approved', date: dateRange || today },
-    });
-    if (approvedPermission) {
-      return res.status(400).json({ error: 'Absensi tidak dapat dilakukan karena izin Anda telah disetujui untuk tanggal tersebut.' });
+    if (!daily.canCheckIn) {
+      // Ada izin aktif (pending ATAU approved) yang mengunci tanggal ini —
+      // tidak perlu menunggu izin di-approve untuk memblokir absensi.
+      return res.status(409).json({ error: 'Anda sudah mengajukan izin untuk tanggal ini sehingga tidak dapat melakukan absensi.' });
     }
 
     const absensi = await prisma.absensi.create({
@@ -108,6 +105,31 @@ export const createAbsensi = async (req, res, next) => {
     });
 
     res.status(201).json(absensi);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET /api/absensi/status?date=YYYY-MM-DD (default: hari ini, Asia/Jakarta)
+// Sumber kebenaran untuk frontend: canCheckIn, canRequestPermission,
+// canDeletePermission, dan status ('belum_ada' | 'hadir' | 'izin_pending' |
+// 'izin_approved' | 'izin_rejected'). Frontend TIDAK boleh menghitung ulang
+// aturan ini sendiri (lihat getDailyAttendanceStatus di attendanceStatusService.js).
+export const getDailyStatus = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const dateInput = req.query.date ? String(req.query.date) : new Date();
+    const daily = await getDailyAttendanceStatus(userId, dateInput);
+
+    res.json({
+      date: daily.date.toISOString().slice(0, 10),
+      status: daily.status,
+      canCheckIn: daily.canCheckIn,
+      canRequestPermission: daily.canRequestPermission,
+      canDeletePermission: daily.canDeletePermission,
+      attendance: daily.attendance,
+      permission: daily.permission,
+    });
   } catch (error) {
     next(error);
   }

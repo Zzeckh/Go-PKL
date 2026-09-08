@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  FileCheck, Plus, X, Loader2, Calendar, CheckCircle2, AlertCircle, Hourglass, FileText
+  FileCheck, Plus, X, Loader2, Calendar, CheckCircle2, AlertCircle, Hourglass, FileText, Trash2
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -8,8 +8,22 @@ const getInitials = (name: string) =>
   (name || '?').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
 export const StudentPerizinan: React.FC = () => {
-  const { perizinanList, createPermission } = useApp();
+  const { perizinanList, createPermission, deletePermission } = useApp();
   const [showModal, setShowModal] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleDelete = async (id: number) => {
+    setDeleteError(null);
+    setDeletingId(id);
+    try {
+      await deletePermission(id);
+    } catch (err: any) {
+      setDeleteError(err?.data?.error || err?.message || 'Gagal menghapus izin.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const pending = perizinanList.filter(p => p.status === 'pending').length;
   const approved = perizinanList.filter(p => p.status === 'approved').length;
@@ -43,6 +57,12 @@ export const StudentPerizinan: React.FC = () => {
           <Plus className="w-4 h-4" /> Ajukan Izin
         </button>
       </div>
+
+      {deleteError && (
+        <div className="shrink-0 p-3 bg-navy/5 border border-navy/15 rounded-[24px] text-xs font-semibold text-navy">
+          {deleteError}
+        </div>
+      )}
 
       {/* ── STATS: icon chip navy solid + icon putih (seragam) ── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 shrink-0">
@@ -115,6 +135,21 @@ export const StudentPerizinan: React.FC = () => {
                         </span>
                       </div>
                     </div>
+                    {p.status === 'pending' && (
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(p.id)}
+                        disabled={deletingId === p.id}
+                        title="Hapus Izin"
+                        className="shrink-0 w-9 h-9 rounded-[10px] bg-mist/60 hover:bg-navy/10 flex items-center justify-center transition-colors disabled:opacity-50"
+                      >
+                        {deletingId === p.id ? (
+                          <Loader2 className="w-4 h-4 text-navy/60 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4 text-navy/60" />
+                        )}
+                      </button>
+                    )}
                   </div>
                 );
               })}

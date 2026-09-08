@@ -235,24 +235,20 @@ export const Laporan: React.FC = () => {
 
   const handleExportExcel = () => {
     if (!preview) return;
-    // PENTING: satu baris per siswa, PERSIS seperti tabel Preview di atas —
-    // jangan di-flatten ke per-tanggal, supaya jumlah baris Excel selalu
-    // sama dengan jumlah baris yang tampil di Preview.
-    const rows = preview.rows.map((student) => [
+    const rows = preview.rows.flatMap((student) => student.attendance.map((item) => [
       student.username,
       student.name,
       student.className,
       student.companyName,
       student.teacherName,
       student.mentorName,
-      student.hadir,
-      student.izin,
-      student.sakit,
-      student.total,
-      `${student.percentage}%`,
-    ]);
+      item.date,
+      item.status,
+      item.reason,
+      item.checkIn,
+    ]));
     const csv = [
-      ['NIS / Username', 'Nama Siswa', 'Kelas', 'Perusahaan', 'Guru Pembimbing', 'Mentor', 'Hadir', 'Izin', 'Sakit', 'Total', 'Persentase'],
+      ['NIS / Username', 'Nama Siswa', 'Kelas', 'Perusahaan', 'Guru Pembimbing', 'Mentor', 'Tanggal', 'Status', 'Keterangan', 'Check In'],
       ...rows,
     ].map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(',')).join('\r\n');
     const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8;' });
@@ -715,7 +711,7 @@ export const Laporan: React.FC = () => {
         )}
 
       </div>
-
+        
     </div>
   );
 };

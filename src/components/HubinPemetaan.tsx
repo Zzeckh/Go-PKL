@@ -2,10 +2,9 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   MapPin, Users, Briefcase, GraduationCap, Compass, Building2,
   Search, Pencil, Save, X, CheckCircle2, ShieldCheck, Map,
-  ChevronDown, Filter, Plus, Calendar, ChevronRight, Upload
+  ChevronDown, Filter, Plus, Calendar, ChevronRight
 } from 'lucide-react';
 import { useApp, SiswaItem } from '../context/AppContext';
-import { api } from '../utils/api';
 
 const normalize = (value: string) => value.toLowerCase().replace(/\s+/g, ' ').trim();
 
@@ -156,95 +155,17 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
    MAIN COMPONENT
    ══════════════════════════════════════════════════════ */
 export const HubinPemetaan: React.FC = () => {
-  const {
-  perusahaanList: mapLocations,
-  siswaList,
-  guruList,
-  mentorList,
-  updateSiswaMapping,
-  refreshData,
-} = useApp();
-  const [search, setSearch] = useState('');
-const [filter, setFilter] = useState<FilterType>('all');
+  const { perusahaanList: mapLocations, siswaList, guruList, mentorList, updateSiswaMapping } = useApp();
 
-const [selectedCountry, setSelectedCountry] = useState('');
-const [selectedCity, setSelectedCity] = useState('');
-const [importing, setImporting] = useState(false);
-const [importResult, setImportResult] = useState<{
-  total: number;
-  successCount: number;
-  errorCount: number;
-  errors: Array<{
-    row: number;
-    name?: string;
-    error: string;
-  }>;
-} | null>(null);
-const fileInputRef = useRef<HTMLInputElement>(null);
-const [selectedSiswaId, setSelectedSiswaId] = useState<number | null>(null);
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<FilterType>('all');
+  const [selectedSiswaId, setSelectedSiswaId] = useState<number | null>(null);
   const [editing, setEditing] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
 
   const [formCompanyId, setFormCompanyId] = useState<number | string>('');
   const [formGuruId, setFormGuruId] = useState<number | string>('');
   const [formMentorId, setFormMentorId] = useState<number | string>('');
-
-  const handleImportExcel = async (
-  event: React.ChangeEvent<HTMLInputElement>
-) => {
-  const file = event.target.files?.[0];
-
-  if (!file) return;
-
-  if (!file.name.toLowerCase().endsWith('.xlsx')) {
-    alert('Silakan pilih file Excel (.xlsx)');
-    event.target.value = '';
-    return;
-  }
-
-  setImporting(true);
-  setImportResult(null);
-
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const result = await api.upload<{
-      total: number;
-      successCount: number;
-      errorCount: number;
-      errors?: Array<{
-        row: number;
-        name?: string;
-        error: string;
-      }>;
-    }>('/api/companies/import', formData);
-
-    setImportResult({
-      total: result.total,
-      successCount: result.successCount,
-      errorCount: result.errorCount,
-      errors: result.errors || [],
-    });
-
-    await refreshData();
-
-    alert(
-      `Import selesai!\n\n` +
-      `Berhasil: ${result.successCount}\n` +
-      `Gagal: ${result.errorCount}`
-    );
-  } catch (error: any) {
-    alert(
-      error?.response?.data?.error ||
-      error?.message ||
-      'Gagal mengimport file Excel'
-    );
-  } finally {
-    setImporting(false);
-    event.target.value = '';
-  }
-};
 
   const matchLocation = (company?: string) => {
     if (!company || company === '-') return undefined;
@@ -257,64 +178,16 @@ const [selectedSiswaId, setSelectedSiswaId] = useState<number | null>(null);
   const isMapped = (s: SiswaItem) =>
     !!(s.perusahaan && s.perusahaan !== '-' && matchLocation(s.perusahaan));
 
-  const mappedLocations = siswaList
-  .map(s => matchLocation(s.perusahaan))
-  .filter(Boolean);
-
-  const countries = Array.from(
-    new Set(
-      mappedLocations
-        .map(loc => loc?.country)
-        .filter(Boolean)
-    )
-  );
-
-  const cities = Array.from(
-    new Set(
-      mappedLocations
-        .filter(loc => !selectedCountry || loc?.country === selectedCountry)
-        .map(loc => loc?.city)
-        .filter(Boolean)
-    )
-  );
-
   const filteredSiswa = useMemo(() => {
     return siswaList.filter(s => {
-      const matchSearch =
-        s.name.toLowerCase().includes(search.toLowerCase()) ||
-        s.kelas.toLowerCase().includes(search.toLowerCase());
-
+      const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) ||
+                          s.kelas.toLowerCase().includes(search.toLowerCase());
       if (!matchSearch) return false;
-
-      const mapped = isMapped(s);
-
-      if (filter === 'mapped' && !mapped) return false;
-      if (filter === 'unmapped' && mapped) return false;
-
-      if (selectedCountry || selectedCity) {
-        const loc = matchLocation(s.perusahaan);
-
-        if (!loc) return false;
-
-        if (selectedCountry && loc.country !== selectedCountry) {
-          return false;
-        }
-
-        if (selectedCity && loc.city !== selectedCity) {
-          return false;
-        }
-      }
-
-        return true;
-      });
-    }, [
-      siswaList,
-      search,
-      filter,
-      selectedCountry,
-      selectedCity,
-      mapLocations,
-    ]);
+      if (filter === 'mapped') return isMapped(s);
+      if (filter === 'unmapped') return !isMapped(s);
+      return true;
+    });
+  }, [siswaList, search, filter]);
 
   const selectedSiswa = siswaList.find(s => s.id === selectedSiswaId) || null;
   const selectedLoc = selectedSiswa ? matchLocation(selectedSiswa.perusahaan) : undefined;
@@ -407,65 +280,6 @@ const [selectedSiswaId, setSelectedSiswaId] = useState<number | null>(null);
         </div>
       </div>
 
-      {/* ── IMPORT PERUSAHAAN ── */}
-      <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 md:p-5 shrink-0">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[13px] font-bold text-navy">Import Data Perusahaan</p>
-            <p className="text-[11px] font-medium text-navy/50 mt-0.5">
-              Upload file Excel (.xlsx) untuk menambahkan perusahaan mitra beserta lokasi geofence.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".xlsx"
-              onChange={handleImportExcel}
-              className="hidden"
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={importing}
-              className="flex items-center justify-center gap-2 bg-navy text-white font-bold text-xs px-4 py-2.5 rounded-[18px] hover:bg-navy/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-            >
-              <Upload className="w-4 h-4" />
-              {importing ? 'Mengimpor...' : 'Import Excel'}
-            </button>
-          </div>
-        </div>
-
-        {importResult && (
-          <div className="mt-3 p-3 bg-mist/30 border border-mist/60 rounded-[18px]">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-bold text-navy">
-              <span>Total: {importResult.total}</span>
-              <span className="text-steel">Berhasil: {importResult.successCount}</span>
-              <span className={importResult.errorCount > 0 ? 'text-red-600' : 'text-navy/50'}>
-                Gagal: {importResult.errorCount}
-              </span>
-            </div>
-
-            {importResult.errors.length > 0 && (
-              <div className="mt-3 space-y-1.5">
-                <p className="text-[11px] font-bold text-navy">Baris yang gagal:</p>
-                <div className="max-h-40 overflow-y-auto custom-scrollbar space-y-1">
-                  {importResult.errors.map((item, index) => (
-                    <div
-                      key={`${item.row}-${index}`}
-                      className="text-[11px] font-medium text-navy/70 bg-white border border-mist/60 rounded-lg px-2.5 py-1.5"
-                    >
-                      Baris {item.row}{item.name ? ` — ${item.name}` : ''}: {item.error}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
       {/* ── STATS CARDS — icon chip navy solid ── */}
       <div className="grid grid-cols-3 gap-3 shrink-0">
         {stats.map((s) => (
@@ -547,50 +361,6 @@ const [selectedSiswaId, setSelectedSiswaId] = useState<number | null>(null);
                 </button>
               ))}
             </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[10px] font-bold text-navy/50 uppercase tracking-wide mb-1.5 block">
-                    Negara
-                  </label>
-
-                  <select
-                    value={selectedCountry}
-                    onChange={e => {
-                      setSelectedCountry(e.target.value);
-                      setSelectedCity('');
-                    }}
-                    className="w-full bg-mist/40 border border-mist rounded-[18px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
-                  >
-                    <option value="">Semua Negara</option>
-
-                    {countries.map(country => (
-                      <option key={country} value={country}>
-                        {country}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-bold text-navy/50 uppercase tracking-wide mb-1.5 block">
-                    Kota
-                  </label>
-
-                  <select
-                    value={selectedCity}
-                    onChange={e => setSelectedCity(e.target.value)}
-                    className="w-full bg-mist/40 border border-mist rounded-[18px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
-                  >
-                    <option value="">Semua Kota</option>
-
-                    {cities.map(city => (
-                      <option key={city} value={city}>
-                        {city}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
           </div>
 
           <div className="lg:flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 lg:min-h-0 max-h-[50vh] lg:max-h-none">

@@ -18,6 +18,9 @@ interface AbsensiProps {
   companyLocation: CompanyLocation | null;
   onCheckIn: (imageUrl?: string, latitude?: number, longitude?: number) => Promise<void>;
   hasCheckedIn: boolean;
+  // Diisi backend (lihat GET /api/absensi/status) saat siswa punya izin
+  // pending/approved yang mengunci tanggal ini. null = tidak ada izin aktif.
+  permissionBlockStatus?: 'izin_pending' | 'izin_approved' | null;
 }
 
 const getDistanceInMeters = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -39,7 +42,8 @@ export const Absensi: React.FC<AbsensiProps> = ({
   companyAddress,
   companyLocation,
   onCheckIn, 
-  hasCheckedIn 
+  hasCheckedIn,
+  permissionBlockStatus = null,
 }) => {
   const { attendances } = useApp();
 
@@ -187,6 +191,32 @@ export const Absensi: React.FC<AbsensiProps> = ({
   };
 
   const checkedIn = hasCheckedIn || justCheckedIn;
+
+  if (!checkedIn && permissionBlockStatus) {
+    const isPending = permissionBlockStatus === 'izin_pending';
+    return (
+      <div className="h-full w-full flex items-center justify-center animate-in fade-in duration-500 p-4">
+        <div className="bg-white rounded-[24px] border border-mist/60 shadow-xl max-w-sm w-full flex flex-col items-center text-center p-6 sm:p-8">
+          <div className="w-20 h-20 bg-navy text-white rounded-[10px] flex items-center justify-center mb-6 shadow-lg shadow-navy/30">
+            <ShieldAlert className="w-10 h-10" />
+          </div>
+          <h2 className="text-2xl font-bold text-navy mb-2">
+            {isPending ? 'Izin sedang diajukan' : 'Izin disetujui'}
+          </h2>
+          <p className="text-sm font-medium text-navy/60 leading-relaxed mb-2">
+            {isPending
+              ? 'Anda tidak dapat melakukan absensi hari ini karena masih memiliki pengajuan izin yang menunggu persetujuan.'
+              : 'Anda tidak dapat melakukan absensi hari ini karena izin Anda untuk tanggal ini sudah disetujui.'}
+          </p>
+          {isPending && (
+            <p className="text-xs font-semibold text-navy/50">
+              Buka halaman Perizinan untuk membatalkan (Hapus Izin) bila ingin melakukan absensi.
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   if (checkedIn) {
     return (
