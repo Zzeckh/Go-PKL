@@ -5,21 +5,39 @@ It supports five roles: Student, Teacher, Mentor, Hubin, and Super Admin,
 with GPS-based attendance, logbook verification, permission requests,
 company mapping with geofencing, and final grading.
 
+## Arsitektur Dua Layanan
+
+```
+┌─────────────────────────────┐        ┌──────────────────────────────┐
+│           VERCEL            │        │          SUPABASE            │
+│  Web statis (Vite build)    │  SQL   │  PostgreSQL (Prisma ORM)     │
+│  API serverless (/api/*)    │──────▶ │  - port 6543 (pooler, prod)  │
+│  Express app = api/index.js │        │  - port 5432 (session, dev)  │
+│                             │        │                              │
+│  Upload multipart ──────────┼──────▶ │  Storage bucket "uploads"    │
+└─────────────────────────────┘ upload └──────────────────────────────┘
+```
+
+Hanya ada **dua layanan** — tidak ada backend host lain (tanpa Koyeb/Render/ngrok):
+
+- **Vercel**: satu project melayani frontend statis DAN seluruh Express API
+  sebagai serverless function (`api/index.js`, di-rewrite dari `/api/*`).
+- **Supabase**: database PostgreSQL + file storage (lampiran perizinan).
+  Semua file di-upload ke bucket publik `uploads`, URL publik penuh yang
+  disimpan di database — disk serverless tidak dipakai (ephemeral).
+
 ## Tech Stack
 
 - Frontend: React, TypeScript, Vite, Tailwind CSS, Leaflet
-- Backend: Node.js, Express, JWT
-- Database: SQL via Prisma ORM
+- Backend: Node.js, Express, JWT (dijalankan sebagai Vercel function)
+- Database: PostgreSQL via Prisma ORM (Supabase)
+- Storage: Supabase Storage (bucket `uploads`)
 
 ## Prerequisites
 
-- Node.js 18 or newer
+- Node.js 20 or newer
 - npm or pnpm
-- A Supabase project (PostgreSQL). The `DATABASE_URL` in `.env` must point to
-  Supabase (session/direct connection, port 5432) as documented in `.env.example`.
-
-> Note: local MySQL via `docker-compose.yml` (and Laragon/XAMPP) is optional and
-> effectively retired — the backend now targets Supabase PostgreSQL.
+- A Supabase project (PostgreSQL + Storage)
 
 ## Installation
 
@@ -37,74 +55,79 @@ npm install
 # or: pnpm install
 ```
 
-3. Point the backend at your Supabase database (see `.env.example` for the
-   two supported URL forms). Local MySQL via `docker compose up -d` is no
-   longer required.
-
-4. Create a `.env` file in the project root.
+3. Create a `.env` file in the project root (see `.env.example`).
 
 ```env
+# Local dev: session/direct connection (port 5432) — wajib untuk prisma migrate
 DATABASE_URL="postgresql://postgres.REF:PASSWORD@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres"
 JWT_SECRET="replace-with-a-strong-secret"
-PORT=3000
+SUPABASE_URL="https://REF.supabase.co"
+SUPABASE_SERVICE_ROLE_KEY="service-role-secret-key"
 ```
 
-5. Generate the Prisma client, apply migrations, and load the seed data.
+4. Generate the Prisma client, apply migrations, create the Storage bucket, and seed.
 
 ```bash
 npx prisma generate
 npx prisma migrate dev
+# Bucket "uploads" + RLS policies (idempotent):
+npx prisma db execute --file prisma/sql/storage_bucket.sql --schema prisma/schema.prisma
 node prisma/seed.js
 ```
 
-6. Run the backend and frontend in two separate terminals.
+5. Run the backend and frontend in two separate terminals.
 
 ```bash
-# Terminal 1 (backend)
+# Terminal 1 (API) — hanya listen saat dijalankan langsung
 node server.js
 
-# Terminal 2 (frontend)
-npm run dev
+# Terminal 2 (web)
+npm run dev:frontend
 ```
 
-7. Open http://localhost:5173 in your browser.
+6. Open http://localhost:5173 in your browser.
 
-## Deploy ke Koyeb
+## Deploy ke Vercel
 
-Backend ini siap di-deploy ke [Koyeb](https://www.koyeb.com) (free tier, tanpa kartu kredit) tanpa perubahan kode.
-Repo sudah menyertakan `Procfile` (`web: node server.js`) dan pin versi Node via `.node-version`.
+### 1. Import Project
 
-### 1. Daftar & Hubungkan GitHub
+1. Push repo ini ke GitHub, lalu di [vercel.com](https://vercel.com) → **Add New → Project** → pilih repo.
+2. Framework preset terdeteksi otomatis (Vite). Build command `npm run build`,
+   output `dist` — biarkan default.
+3. Set env variables di **Settings → Environment Variables** (lihat tabel di bawah).
 
-1. Daftar di [app.koyeb.com](https://app.koyeb.com) dengan akun **GitHub** (free tier, tanpa kartu kredit).
-2. Install **Koyeb GitHub App** dan beri akses pada repo `Go-PKL`.
+### 2. Environment Variables (Vercel)
 
-### 2. Buat Web Service
-
-1. Dashboard Koyeb → **Create → Web Service** → pilih repo `Go-PKL`, branch `main`.
-2. Konfigurasi build:
-
-   - **Builder**: Buildpack (Nixpacks)
-   - **Build command**: `npm install && npx prisma generate`
-   - **Run command**: `node server.js` (atau biarkan Koyeb memakai `Procfile`)
-   - **Instance**: Free (nano)
-   - **Region**: Singapore bila tersedia, jika tidak pilih yang terdekat
-
-3. Koyeb otomatis menyuntikkan `PORT` — **jangan pernah set `PORT` manual**; `server.js` memakai `process.env.PORT || 3000`.
-
-### 3. Environment Variables (wajib diisi di dashboard Koyeb)
-
-JANGAN menyimpan secret di dalam repo. Tambahkan di **Services → Settings → Environment Variables**, salin dari `.env` lokal:
+JANGAN menyimpan secret di dalam repo. Semua secret di-set di dashboard Vercel:
 
 | Key | Value | Keterangan |
 | --- | --- | --- |
-| `DATABASE_URL` | `postgresql://postgres.[REF]:[PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres` | Supabase **direct/session**, port **5432** (lihat `.env.example`; password di-URL-encode). |
-| `JWT_SECRET` | placeholder: `change_this_secret` | Ganti dengan secret kuat dari `.env` lokal. |
-| `PORT` | (jangan diisi) | Otomatis dari Koyeb; mengisi manual dapat membuat service gagal bind. |
+| `DATABASE_URL` | `postgresql://postgres.[REF]:[PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1` | Supabase **TRANSACTION pooler**, port **6543** + `pgbouncer=true`. WAJIB untuk serverless — tanpa pooler koneksi Postgres habis. |
+| `JWT_SECRET` | placeholder: `change_this_secret` | Samakan dengan nilai yang dipakai mobile app agar token tetap valid. |
+| `SUPABASE_URL` | `https://[REF].supabase.co` | Project URL dari Supabase Dashboard → Settings → API. |
+| `SUPABASE_SERVICE_ROLE_KEY` | placeholder: `[SERVICE_ROLE_SECRET_KEY]` | service_role SECRET key — server-side only, JANGAN expose ke client. |
+
+> Catatan: TIDAK perlu `VITE_API_URL`/`VITE_API_BASE` di Vercel. Web production
+> otomatis memakai same-origin `/api`. Jangan set env apa pun yang berawalan
+> `VITE_API` di Vercel — fallback bawaan `src/utils/api.ts` sudah benar.
+
+> Migrasi database tetap dijalankan dari lokal memakai URL 5432 (session);
+> URL 6543 (transaction pooler) hanya untuk runtime Vercel.
+
+### 3. Storage Bucket
+
+Jalankan sekali per project Supabase (idempotent, aman diulang):
+
+```bash
+npx prisma db execute --file prisma/sql/storage_bucket.sql --schema prisma/schema.prisma
+```
+
+Atau tempel isi `prisma/sql/storage_bucket.sql` di Supabase Dashboard → SQL Editor.
+Verifikasi: Dashboard → Storage → bucket `uploads` bersifat **public**.
 
 ### 4. Verifikasi
 
-Buka `https://<app-slug>.koyeb.app/api/health` — harus mengembalikan JSON `200`:
+Buka `https://<vercel-domain>/api/health` — harus mengembalikan JSON `200`:
 
 ```json
 {"status":"ok","app":"Go-PKL API"}
@@ -112,20 +135,23 @@ Buka `https://<app-slug>.koyeb.app/api/health` — harus mengembalikan JSON `200
 
 ### 5. Redirect Client Setelah Deploy
 
-Setelah URL Koyeb aktif (mis. `https://<app-slug>.koyeb.app`):
+Setelah URL Vercel aktif (mis. `https://<vercel-domain>`):
 
-1. **Vercel**: set env `VITE_API_BASE` ke `https://<app-slug>.koyeb.app/api` lalu **redeploy** frontend.
-2. **Mobile (gopkl-student)**: update secret repo `VITE_API_BASE` ke `https://<app-slug>.koyeb.app/api` lalu **build ulang APK**.
-3. Hapus/ganti tunnel ngrok yang lama.
+1. **Web**: tidak perlu apa pun — same-origin `/api` sudah dipakai otomatis.
+2. **Mobile (gopkl-student)**: update secret repo `VITE_API_BASE` ke
+   `https://<vercel-domain>/api` lalu **build ulang APK**. (Nilai `VITE_API_BASE`
+   adalah secret berisi URL penuh.)
 
 ### 6. Catatan Free Tier
 
-- **Disk ephemeral**: file upload (mis. lampiran perizinan di `uploads/`) **hilang saat redeploy/restart**.
-  Jangan simpan data penting di disk — langkah lanjutan: migrasi ke **Supabase Storage**.
-- **Supabase free tier** dapat pause mingguan; aktifkan kembali dari dashboard Supabase bila API error koneksi.
-- Instance free Koyeb memiliki limit resource (nano); pantau usage di dashboard bila API terasa lambat.
-
-## Default Accounts
+- **Vercel Hobby**: max durasi function ~10s (default) — cukup untuk semua
+  route kecuali kemungkinan export PDF besar (`/api/reports/...`). Cold start
+  beberapa ratus ms sampai ~1s pada invocation pertama setelah idle.
+- **Supabase free tier**: project dapat **pause otomatis setelah ~1 minggu
+  tidak aktif**; aktifkan kembali dari dashboard Supabase bila API error
+  koneksi. Bandwidth/egress storage terbatas.
+- Serverless = disk ephemeral: **jangan** pernah menulis file ke disk; semua
+  upload wajib ke Supabase Storage (sudah diterapkan).
 
 ## Default Accounts
 
@@ -135,6 +161,9 @@ See `prisma/seed.js` for the email addresses and passwords.
 
 ## Notes
 
-- Permission attachments are stored in `uploads/permissions`.
+- Permission attachments are stored in **Supabase Storage** (bucket `uploads`,
+  path `permissions/<timestamp>-<filename>`); the database stores the full
+  public URL. Legacy rows with `/uploads/...` paths are deprecated test data —
+  re-seed or re-upload; the old disk route no longer exists.
 - Map and geofencing features require an internet connection
   (map tiles and address search).

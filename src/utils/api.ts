@@ -1,4 +1,14 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000';
+/**
+ * Base URL API.
+ *
+ * - Web production (Vercel): TANPA env → same-origin fallback `/api`,
+ *   di-serve function `api/index.js` di domain yang sama. Tidak perlu
+ *   env Vercel apa pun untuk API.
+ * - Web dev lokal (vite dev): set VITE_API_URL=http://localhost:3000.
+ * - Mobile (gopkl-student): VITE_API_BASE = URL penuh (mis.
+ *   https://<vercel-domain>/api) — hanya di-ganti lewat secret repo mobile.
+ */
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
 
 export const assetUrl = (path: string) => {
   if (!path) return '';

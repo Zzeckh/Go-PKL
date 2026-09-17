@@ -1,70 +1,29 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import fs from 'node:fs';
+/**
+ * Go-PKL API — LOCAL DEV ONLY.
+ *
+ * Konstruksi Express app pindah ke `app.js`. File ini hanya membungkusnya
+ * dengan HTTP listener; di Vercel, `api/index.js` yang menjadi entrypoint
+ * serverless — tidak ada listener di production.
+ */
+import app from './app.js';
+
+// "Run directly" check untuk ESM: jalankan listener HANYA saat file ini
+// dieksekusi langsung (`node server.js`), bukan saat di-import (Vercel).
+// Bandingkan path dari import.meta.url dengan argv[1] agar aman terhadap
+// symlink/perbedaan casing.
+import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
-dotenv.config();
+const invokedDirectly =
+  process.argv[1] &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 
-import { requestLogger } from './src/middleware/requestLogger.js';
-import { errorHandler } from './src/middleware/errorHandler.js';
-
-import authRoutes from './src/routes/authRoutes.js';
-import absensiRoutes from './src/routes/absensiRoutes.js';
-import logbookRoutes from './src/routes/logbookRoutes.js';
-import userRoutes from './src/routes/userRoutes.js';
-import staticRoutes from './src/routes/staticRoutes.js';
-import permissionRoutes from './src/routes/permissionRoutes.js';
-import evaluationRoutes from './src/routes/evaluationRoutes.js';
-import companyRoutes from './src/routes/companyRoutes.js';
-import superAdminRoutes from './src/routes/superAdminRoutes.js';
-import reportRoutes from './src/routes/reportRoutes.js';
-import dashboardRoutes from './src/routes/dashboardRoutes.js';
-
-const app = express();
-
-/* PaaS/cloud reverse proxy (TLS termination): honor X-Forwarded-* headers */
-app.set('trust proxy', 1);
-
-/* ── 1. Core middleware ── */
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
-app.use(requestLogger);
-
-/* ── 2. Static: uploaded files (PDF surat izin) ── */
-/* Cloud free tiers use an ephemeral disk: recreate upload dirs on every boot. */
-for (const dir of ['uploads', 'uploads/permissions']) {
-  fs.mkdirSync(path.resolve(dir), { recursive: true });
+if (invokedDirectly) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`🚀 Go-PKL API running on http://localhost:${PORT}`);
+    console.log(`   Mode: ${process.env.NODE_ENV || 'development'}`);
+  });
 }
-app.use('/uploads', express.static(path.resolve('uploads')));
 
-/* ── 3. Health check ── */
-app.get('/api/health', (req, res) => res.json({ status: 'ok', app: 'Go-PKL API' }));
-
-/* ── 4. Routes ── */
-app.use('/api/auth', authRoutes);
-app.use('/api/absensi', absensiRoutes);
-app.use('/api/logbook', logbookRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/static', staticRoutes);
-app.use('/api/permissions', permissionRoutes);
-app.use('/api/evaluations', evaluationRoutes);
-app.use('/api/companies', companyRoutes);
-app.use('/api/super-admin', superAdminRoutes);
-app.use('/api/reports', reportRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-
-/* ── 4. 404 handler ── */
-app.use((req, res) => {
-  res.status(404).json({ error: `Route tidak ditemukan: ${req.method} ${req.path}` });
-});
-
-/* ── 5. Central error handler (WAJIB di akhir) ── */
-app.use(errorHandler);
-
-/* ── 6. Start ── */
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Go-PKL API running on http://localhost:${PORT}`);
-  console.log(`   Mode: ${process.env.NODE_ENV || 'development'}`);
-});
+export default app;

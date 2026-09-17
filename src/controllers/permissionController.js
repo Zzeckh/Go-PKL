@@ -1,27 +1,13 @@
 import multer from 'multer';
-import path from 'node:path';
-import fs from 'node:fs';
 import prisma from '../config/db.js';
 import { parseDateOnly, sameDateRange } from '../utils/dateOnly.js';
 import { ACTIVE_PERMISSION_STATUSES } from '../services/attendanceStatusService.js';
+import { uploadToSupabase } from '../services/storageService.js';
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dir = path.resolve('uploads/permissions');
-    fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
-  },
-  filename: (req, file, cb) => {
-    const safeName = file.originalname
-      .toLowerCase()
-      .replace(/[^a-z0-9.\-_]/g, '-')
-      .slice(-40);
-    cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeName}`);
-  },
-});
-
+/* Serverless: disk ephemeral → pakai memoryStorage, lalu buffer di-upload
+ * ke Supabase Storage (bucket "uploads") di controller. */
 export const uploadPermissionFile = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowed = [
@@ -110,7 +96,13 @@ export const createPermission = async (req, res, next) => {
       return res.status(409).json({ error: 'Anda sudah memiliki pengajuan izin untuk tanggal ini.' });
     }
 
-    const attachmentUrl = `/uploads/permissions/${req.file.filename}`;
+    /* Disk → Supabase Storage: simpan FULL PUBLIC URL di database.
+     * (Baris lama dengan path `/uploads/...` adalah data lama/test — deprecated.) */
+    const attachmentUrl = await uploadToSupabase(req.file.buffer, {
+      category: 'permissions',
+      originalname: req.file.originalname,
+      contentType: req.file.mimetype,
+    });
 
     const permission = await prisma.permission.create({
       data: {
