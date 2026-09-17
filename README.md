@@ -69,53 +69,63 @@ npm run dev
 
 7. Open http://localhost:5173 in your browser.
 
-## Deploy ke Render
+## Deploy ke Koyeb
 
-Backend ini siap di-deploy ke Render (free tier) tanpa perubahan kode.
-Repo sudah menyertakan Blueprint `render.yaml` dan pin versi Node via `.node-version`.
+Backend ini siap di-deploy ke [Koyeb](https://www.koyeb.com) (free tier, tanpa kartu kredit) tanpa perubahan kode.
+Repo sudah menyertakan `Procfile` (`web: node server.js`) dan pin versi Node via `.node-version`.
 
-### 1. Buat Web Service
+### 1. Daftar & Hubungkan GitHub
 
-Cara termudah (Blueprint, otomatis membaca `render.yaml`):
+1. Daftar di [app.koyeb.com](https://app.koyeb.com) dengan akun **GitHub** (free tier, tanpa kartu kredit).
+2. Install **Koyeb GitHub App** dan beri akses pada repo `Go-PKL`.
 
-1. Login ke [dashboard.render.com](https://dashboard.render.com) → **New → Blueprint Instance** → pilih repo ini → **Apply**.
-2. Render akan otomatis memakai `buildCommand`, `startCommand`, dan `healthCheckPath` dari `render.yaml`.
+### 2. Buat Web Service
 
-Alternatif manual (**New → Web Service**), isi:
+1. Dashboard Koyeb → **Create → Web Service** → pilih repo `Go-PKL`, branch `main`.
+2. Konfigurasi build:
 
-- **Runtime**: Node
-- **Build Command**: `npm install && npx prisma generate`
-- **Start Command**: `node server.js`
-- **Health Check Path**: `/api/health`
-- **Region**: Singapore
+   - **Builder**: Buildpack (Nixpacks)
+   - **Build command**: `npm install && npx prisma generate`
+   - **Run command**: `node server.js` (atau biarkan Koyeb memakai `Procfile`)
+   - **Instance**: Free (nano)
+   - **Region**: Singapore bila tersedia, jika tidak pilih yang terdekat
 
-### 2. Environment Variables (wajib diisi manual di dashboard Render)
+3. Koyeb otomatis menyuntikkan `PORT` — **jangan pernah set `PORT` manual**; `server.js` memakai `process.env.PORT || 3000`.
 
-JANGAN menyimpan secret di `render.yaml`. Tambahkan di dashboard Render (**Environment**):
+### 3. Environment Variables (wajib diisi di dashboard Koyeb)
+
+JANGAN menyimpan secret di dalam repo. Tambahkan di **Services → Settings → Environment Variables**, salin dari `.env` lokal:
 
 | Key | Value | Keterangan |
 | --- | --- | --- |
 | `DATABASE_URL` | `postgresql://postgres.[REF]:[PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres` | Supabase **direct/session**, port **5432** (lihat `.env.example`; password di-URL-encode). |
-| `JWT_SECRET` | placeholder: `change_this_secret` | Ganti dengan secret kuat. |
-| `VITE_API_URL` | placeholder: `http://localhost:3000` | Hanya untuk build frontend lokal; di Render tidak dipakai backend. |
-| `PORT` | (tidak perlu) | Render menyuntikkan `PORT` otomatis; `server.js` memakai `process.env.PORT \|\| 3000`. |
+| `JWT_SECRET` | placeholder: `change_this_secret` | Ganti dengan secret kuat dari `.env` lokal. |
+| `PORT` | (jangan diisi) | Otomatis dari Koyeb; mengisi manual dapat membuat service gagal bind. |
 
-Semua key yang ada di `.env.example` harus terpenuhi di dashboard Render.
+### 4. Verifikasi
 
-### 3. Catatan Free Tier
+Buka `https://<app-slug>.koyeb.app/api/health` — harus mengembalikan JSON `200`:
 
-- **Spin-down**: service free tidur setelah 15 menit tanpa trafik; cold start pertama **30–60 detik**.
+```json
+{"status":"ok","app":"Go-PKL API"}
+```
+
+### 5. Redirect Client Setelah Deploy
+
+Setelah URL Koyeb aktif (mis. `https://<app-slug>.koyeb.app`):
+
+1. **Vercel**: set env `VITE_API_BASE` ke `https://<app-slug>.koyeb.app/api` lalu **redeploy** frontend.
+2. **Mobile (gopkl-student)**: update secret repo `VITE_API_BASE` ke `https://<app-slug>.koyeb.app/api` lalu **build ulang APK**.
+3. Hapus/ganti tunnel ngrok yang lama.
+
+### 6. Catatan Free Tier
+
 - **Disk ephemeral**: file upload (mis. lampiran perizinan di `uploads/`) **hilang saat redeploy/restart**.
   Jangan simpan data penting di disk — langkah lanjutan: migrasi ke **Supabase Storage**.
 - **Supabase free tier** dapat pause mingguan; aktifkan kembali dari dashboard Supabase bila API error koneksi.
+- Instance free Koyeb memiliki limit resource (nano); pantau usage di dashboard bila API terasa lambat.
 
-### 4. Redirect Client Setelah Deploy
-
-Setelah URL Render aktif (mis. `https://gopkl-api.onrender.com`):
-
-1. **Vercel**: set `VITE_API_BASE` ke `https://gopkl-api.onrender.com/api` lalu **redeploy** frontend.
-2. **Mobile (gopkl-student)**: update secret `VITE_API_BASE` ke `https://gopkl-api.onrender.com/api` lalu **build ulang APK**.
-3. Hapus/tiap ganti tunnel ngrok yang lama.
+## Default Accounts
 
 ## Default Accounts
 
