@@ -1,14 +1,17 @@
 /**
  * Base URL API.
  *
- * - Web production (Vercel): TANPA env → same-origin fallback `/api`,
- *   di-serve function `api/index.js` di domain yang sama. Tidak perlu
- *   env Vercel apa pun untuk API.
- * - Web dev lokal (vite dev): set VITE_API_URL=http://localhost:3000.
- * - Mobile (gopkl-student): VITE_API_BASE = URL penuh (mis.
- *   https://<vercel-domain>/api) — hanya di-ganti lewat secret repo mobile.
+ * - Web production (Vercel): TANPA env → same-origin fallback '' (kosong).
+ *   Path di caller sudah menyertakan '/api', jadi hasilnya '/api/auth/login'
+ *   → di-rewrite vercel.json ke function api/index.js.
+ * - Web dev lokal (vite dev): sama, fallback '' → '/api/auth/login' diproxy
+ *   vite.config ke localhost:3000.
+ * - Kalau benar-benar butuh absolute URL (mis. cross-origin): set env
+ *   VITE_API_URL = 'https://other-domain.com' (tanpa trailing /api).
+ * - Mobile (gopkl-student): repo terpisah, punya api.ts & secret sendiri;
+ *   tidak terpengaruh perubahan ini.
  */
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? '';
 
 export const assetUrl = (path: string) => {
   if (!path) return '';
@@ -27,7 +30,6 @@ class ApiError extends Error {
   }
 }
 
-// ❌ HAPUS logoutCallback — logout sekarang hanya dari AppContext
 export const api = {
   async fetch<T>(path: string, options: RequestInit = {}): Promise<T> {
     const token = localStorage.getItem('pkl_token');
@@ -54,9 +56,6 @@ export const api = {
         data = { error: 'Invalid JSON response' };
       }
 
-      // ❌ HAPUS auto-logout di sini
-      // Logout sekarang HANYA dari AppContext.loadSession()
-      // karena hanya /api/auth/me yang authoritative
       if (!response.ok) {
         throw new ApiError(response.status, data.error || 'Request failed', data);
       }
@@ -127,9 +126,6 @@ export const api = {
     }
   },
 
-  // Untuk endpoint yang mengembalikan file (mis. export PDF), bukan JSON.
-  // Melempar ApiError dengan pesan dari body JSON jika request gagal,
-  // atau memicu unduhan file di browser jika berhasil.
   async download(path: string, fallbackFilename: string): Promise<void> {
     const token = localStorage.getItem('pkl_token');
     const headers: Record<string, string> = {};
@@ -168,5 +164,4 @@ export const api = {
   },
 };
 
-// Hapus setLogoutCallback — tidak dipakai lagi
-export const setLogoutCallback = (_cb: () => void) => {};
+export const setLogoutCallback = (_cb: () => void) => {};1
