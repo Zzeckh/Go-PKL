@@ -67,6 +67,7 @@ export const Logbook: React.FC<LogbookProps> = ({
   const [hours, setHours] = useState(8);
   const [category, setCategory] = useState('Frontend Development');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterType>('all');
   const [search, setSearch] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -76,11 +77,13 @@ export const Logbook: React.FC<LogbookProps> = ({
   const [editHours, setEditHours] = useState(8);
   const [editCategory, setEditCategory] = useState('Frontend Development');
   const [isEditSubmitting, setIsEditSubmitting] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !desc) return;
     setIsSubmitting(true);
+    setSubmitError(null);
     try {
       await onAddLog({ 
         title, 
@@ -93,8 +96,8 @@ export const Logbook: React.FC<LogbookProps> = ({
       setDesc('');
       setHours(8);
       setCategory('Frontend Development');
-    } catch (error) {
-      console.error('Gagal menambah logbook', error);
+    } catch (error: any) {
+      setSubmitError(error?.data?.error || error?.message || 'Gagal menambah logbook.');
     } finally {
       setIsSubmitting(false);
     }
@@ -104,6 +107,7 @@ export const Logbook: React.FC<LogbookProps> = ({
     e.preventDefault();
     if (!editingLog || !editTitle || !editDesc) return;
     setIsEditSubmitting(true);
+    setEditError(null);
     try {
       await updateLogEntry(editingLog.id, {
         title: editTitle,
@@ -116,8 +120,8 @@ export const Logbook: React.FC<LogbookProps> = ({
       setEditDesc('');
       setEditHours(8);
       setEditCategory('Frontend Development');
-    } catch (error) {
-      console.error('Gagal update logbook', error);
+    } catch (error: any) {
+      setEditError(error?.data?.error || error?.message || 'Gagal update logbook.');
     } finally {
       setIsEditSubmitting(false);
     }
@@ -129,6 +133,7 @@ export const Logbook: React.FC<LogbookProps> = ({
     setEditDesc(log.description);
     setEditHours(log.hours);
     setEditCategory(log.category);
+    setEditError(null);
   };
 
   const totalHours = logs.reduce((s, l) => s + l.hours, 0);
@@ -566,12 +571,19 @@ export const Logbook: React.FC<LogbookProps> = ({
                     </div>
                   </div>
                 )}
+
+                {editError && (
+                  <div className="p-3 bg-navy/5 border border-navy/15 rounded-[24px] text-xs font-semibold text-navy flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{editError}</span>
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-3 pt-5 mt-5 border-t border-mist/60">
                 <button 
                   type="button" 
-                  onClick={() => setEditingLog(null)} 
+                  onClick={() => { setEditingLog(null); setEditError(null); }} 
                   disabled={isEditSubmitting}
                   className="flex-1 py-3 text-sm font-bold text-navy/70 hover:bg-mist/50 rounded-[24px] transition-colors disabled:opacity-50"
                 >
@@ -610,7 +622,7 @@ export const Logbook: React.FC<LogbookProps> = ({
                   </div>
                 </div>
                 <button 
-                  onClick={() => setIsModalOpen(false)} 
+                  onClick={() => { setIsModalOpen(false); setSubmitError(null); }} 
                   disabled={isSubmitting}
                   className="w-9 h-9 rounded-[10px] bg-mist/60 hover:bg-mist flex items-center justify-center text-navy/60 hover:text-navy transition-colors shrink-0 disabled:opacity-50"
                 >
@@ -702,12 +714,19 @@ export const Logbook: React.FC<LogbookProps> = ({
                     </p>
                   </div>
                 </div>
+
+                {submitError && (
+                  <div className="p-3 bg-navy/5 border border-navy/15 rounded-[24px] text-xs font-semibold text-navy flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{submitError}</span>
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-3 pt-5 mt-5 border-t border-mist/60">
                 <button 
                   type="button" 
-                  onClick={() => setIsModalOpen(false)} 
+                  onClick={() => { setIsModalOpen(false); setSubmitError(null); }} 
                   disabled={isSubmitting}
                   className="flex-1 py-3 text-sm font-bold text-navy/70 hover:bg-mist/50 rounded-[24px] transition-colors disabled:opacity-50"
                 >

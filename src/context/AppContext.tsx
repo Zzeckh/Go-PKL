@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { ActivePage, AuthMode, UserRole, LogEntry, PKLMapLocation, AttendanceRecord } from '../types';
+import { ActivePage, AuthMode, UserRole, LogEntry, PKLMapLocation, AttendanceRecord, AcademicYear } from '../types';
 import { api, setLogoutCallback } from '../utils/api';
 
 export interface SiswaItem {
@@ -64,6 +64,8 @@ export interface PerusahaanItem {
   id: number;
   name: string;
   address: string;
+  city?: string;
+  country?: string;
   category?: string;
   quota: number;
   filled: number;
@@ -103,6 +105,7 @@ interface AppContextType {
   attendances: AttendanceRecord[];
   perizinanList: PerizinanItem[];
   dailyStatus: DailyStatus | null;
+  academicYears: AcademicYear[];
   mapLocations: PKLMapLocation[];
   superStats: any;
   superClasses: ClassItem[];
@@ -114,11 +117,14 @@ interface AppContextType {
   updatePerizinanStatus: (id: number, status: 'approved' | 'rejected', rejectReason?: string) => Promise<void>;
   createPermission: (data: { type: string; reason: string; date: string; file?: File | null; attachmentUrl?: string }) => Promise<any>;
   deletePermission: (id: number) => Promise<void>;
+  createAcademicYear: (name: string) => Promise<void>;
+  updateAcademicYear: (id: number, data: { name?: string; isActive?: boolean }) => Promise<void>;
+  deleteAcademicYear: (id: number) => Promise<void>;
   submitEvaluation: (siswaId: number, nilaiDUDI: number, nilaiGuru: number, period: string) => Promise<void>;
   submitGuruGrade: (siswaId: number, nilaiGuru: number, period: string) => Promise<void>;
   addSiswa: (newSiswa: Omit<SiswaItem, 'id' | 'kehadiran' | 'logs' | 'nilaiDUDI' | 'nilaiGuru' | 'finalNilai' | 'berkasPct'>) => Promise<void>;
   addPerusahaan: (data: { name: string; address: string; quota: number; mentor: string }) => Promise<void>;
-  updateSiswaMapping: (siswaId: number, data: { perusahaan: string; guruPembimbing: string; mentor: string; companyId?: number | string; teacherId?: number | string; mentorName?: string }) => Promise<void>;
+  updateSiswaMapping: (siswaId: number, data: { perusahaan: string; guruPembimbing: string; mentor: string; companyId?: number | string; teacherId?: number | string; mentorName?: string; academicYear?: string }) => Promise<void>;
   updateCompanyLocation: (companyId: number, lat: number, lng: number, radius: number) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string, institution?: string, classId?: number) => Promise<void>;
@@ -186,6 +192,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [attendances, setAttendances] = useState<AttendanceRecord[]>([]);
   const [perizinanList, setPerizinanList] = useState<PerizinanItem[]>([]);
   const [dailyStatus, setDailyStatus] = useState<DailyStatus | null>(null);
+  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const [mapLocations, setMapLocations] = useState<PKLMapLocation[]>([]);
 
   const [superStats, setSuperStats] = useState<any>(null);
@@ -226,6 +233,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAttendances([]);
     setPerizinanList([]);
     setDailyStatus(null);
+    setAcademicYears([]);
     setMapLocations([]);
     setSuperStats(null);
     setSuperClasses([]);
@@ -347,13 +355,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       startLoading('mentor');
       const response = await api.get('/api/users?role=mentor') as any[];
-      const mapped = response.map((u: any): MentorItem => ({
-        id: u.id,
-        name: u.name,
-        perusahaan: u.company?.name || '-',
-        role: 'Mentor',
-        totalSiswa: u._count?.students ?? 0,
-      }));
+
+      // FIX: _count.students pada data mentor tidak merepresentasikan jumlah
+      // siswa PKL yang berada di perusahaan mentor tersebut — mentor tidak
+      // punya relasi langsung ke siswa. Siswa terhubung ke Company, dan
+      // Company punya mentor, jadi dihitung lewat: siswa.company.mentor.id.
+      const studentsResponse = await api.get('/api/users?role=student') as any[];
+
+      const mapped = response.map((u: any): MentorItem => {
+        const studentsOfMentor = studentsResponse.filter(
+          (student: any) => student.company?.mentor?.id === u.id
+        );
+        const perusahaanNames = Array.from(
+          new Set(studentsOfMentor.map((student: any) => student.company?.name).filter(Boolean))
+        );
+
+        return {
+          id: u.id,
+          name: u.name,
+          perusahaan: u.company?.name || perusahaanNames.join(', ') || '-',
+          role: 'Mentor',
+          totalSiswa: studentsOfMentor.length,
+        };
+      });
       setMentorList(mapped);
     } catch (error: any) {
       console.warn('Gagal mengambil mentor:', error?.message);
@@ -404,6 +428,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const loadAcademicYears = async () => {
+    try {
+      startLoading('academicYears');
+      const res = await api.get('/api/academic-years') as AcademicYear[];
+      setAcademicYears(res || []);
+    } catch (error: any) {
+      console.warn('Gagal mengambil data Tahun Ajaran:', error?.message);
+    } finally {
+      stopLoading('academicYears');
+    }
+  };
+
   const loadPerusahaan = async () => {
     try {
       startLoading('perusahaan');
@@ -412,6 +448,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         id: c.id,
         name: c.name,
         address: c.address || '-',
+        city: c.city || undefined,
+        country: c.country || undefined,
         category: c.category || undefined,
         quota: c.quota || 0,
         filled: c.filled || 0,
@@ -516,6 +554,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         id: c.id,
         name: c.name,
         address: c.address || '-',
+        city: c.city || undefined,
+        country: c.country || undefined,
         category: c.category || undefined,
         quota: c.quota || 0,
         filled: c.filled || 0,
@@ -584,6 +624,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         loadSiswa(),
         loadPerizinan(),
         loadDailyStatus(),
+        loadAcademicYears(),
         loadPerusahaan(),
         loadGuru(),
         loadMentor(),
@@ -764,6 +805,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const createAcademicYear = async (name: string) => {
+    try {
+      await api.post('/api/academic-years', { name });
+      await loadAcademicYears();
+    } catch (error: any) {
+      throw new Error(error.message || 'Gagal menambah Tahun Ajaran');
+    }
+  };
+
+  const updateAcademicYear = async (id: number, data: { name?: string; isActive?: boolean }) => {
+    try {
+      await api.patch(`/api/academic-years/${id}`, data);
+      await loadAcademicYears();
+    } catch (error: any) {
+      throw new Error(error.message || 'Gagal mengubah Tahun Ajaran');
+    }
+  };
+
+  const deleteAcademicYear = async (id: number) => {
+    try {
+      await api.delete(`/api/academic-years/${id}`);
+      await loadAcademicYears();
+    } catch (error: any) {
+      throw new Error(error.message || 'Gagal menghapus Tahun Ajaran');
+    }
+  };
+
   const submitEvaluation = async (siswaId: number, nilaiDUDI: number, nilaiGuru: number, period: string) => {
     try {
       await Promise.all([
@@ -791,6 +859,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         name: newSiswa.name,
         email: `${newSiswa.name.toLowerCase().replace(/\s+/g, '.')}@gopkl.id`,
         password: 'gopkl123',
+        academicYear: newSiswa.academicYear || undefined,
       });
       await loadSiswa();
     } catch (error: any) {
@@ -811,14 +880,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const updateSiswaMapping = async (siswaId: number, data: { perusahaan: string; guruPembimbing: string; mentor: string; companyId?: number | string; teacherId?: number | string; mentorName?: string }) => {
+  const updateSiswaMapping = async (siswaId: number, data: { perusahaan: string; guruPembimbing: string; mentor: string; companyId?: number | string; teacherId?: number | string; mentorName?: string; academicYear?: string }) => {
     try {
       await api.patch(`/api/users/${siswaId}`, {
         companyId: data.companyId ? Number(data.companyId) : undefined,
         teacherId: data.teacherId ? Number(data.teacherId) : undefined,
         mentorName: data.mentorName,
+        academicYear: data.academicYear !== undefined ? data.academicYear : undefined,
       });
       await loadSiswa();
+      await loadGuru();
+      await loadMentor();
+      await loadPerusahaan();
     } catch (error: any) {
       throw new Error(error.message || 'Gagal update pemetaan siswa');
     }
@@ -843,10 +916,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isAuthenticated, authMode, setAuthMode, userRole, activePage, setActivePage,
         userName, schoolName, userId, userCompanyName, userCompanyAddress, userCompanyLocation,
         isLoading, loadingResources,        siswaList, guruList, mentorList, perusahaanList,
-        logEntries, attendances, perizinanList, dailyStatus, mapLocations,
+        logEntries, attendances, perizinanList, dailyStatus, academicYears, mapLocations,
         superStats, superClasses, superUsers,
         addLogEntry, updateLogStatus, updateLogEntry, checkInAttendance, updatePerizinanStatus,
-        createPermission, deletePermission, submitEvaluation, submitGuruGrade, addSiswa, addPerusahaan, updateSiswaMapping, updateCompanyLocation,
+        createPermission, deletePermission, createAcademicYear, updateAcademicYear, deleteAcademicYear,
+        submitEvaluation, submitGuruGrade, addSiswa, addPerusahaan, updateSiswaMapping, updateCompanyLocation,
         login, register, logout, refreshData,
         loadSuperStats, loadSuperClasses, createClass, deleteClass, loadClassStudents,
         loadSuperUsers, toggleUser, deleteUser, updateUserRole, resetPassword,

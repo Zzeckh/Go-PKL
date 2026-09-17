@@ -4,6 +4,7 @@ export const getUsers = async (req, res, next) => {
   try {
     const { id, role } = req.user;
     const { role: filterRole } = req.query;
+
     let where = {};
 
     if (role === 'teacher') {
@@ -25,22 +26,64 @@ export const getUsers = async (req, res, next) => {
     const users = await prisma.user.findMany({
       where,
       include: {
-        class: { select: { id: true, name: true, major: true } },
-        teacher: { select: { id: true, name: true } },
-        company: { select: { id: true, name: true, mentor: { select: { name: true } } } },
-        evalAsStudent: {
-          select: { type: true, score: true, period: true },
-          orderBy: { createdAt: 'desc' },
+        class: {
+          select: {
+            id: true,
+            name: true,
+            major: true
+          }
         },
+
+        teacher: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+
+        company: {
+          select: {
+            id: true,
+            name: true,
+
+            mentor: {
+              select: {
+                name: true
+              }
+            },
+
+            // JUMLAH SISWA DI PERUSAHAAN
+            _count: {
+              select: {
+                students: true
+              }
+            }
+          }
+        },
+
+        evalAsStudent: {
+          select: {
+            type: true,
+            score: true,
+            period: true
+          },
+          orderBy: {
+            createdAt: 'desc'
+          }
+        },
+
         _count: {
           select: {
             absensis: true,
             logbooks: true,
-            students: true,
-          },
-        },
+            students: true
+          }
+        }
       },
-      orderBy: { id: 'desc' },
+
+      orderBy: {
+        id: 'desc'
+      }
     });
 
     res.json(users);
@@ -52,16 +95,30 @@ export const getUsers = async (req, res, next) => {
 export const getUserById = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
+
     const user = await prisma.user.findUnique({
       where: { id },
+
       include: {
-        class: { select: { name: true, major: true } },
-        teacher: { select: { name: true } },
-      },
+        class: {
+          select: {
+            name: true,
+            major: true
+          }
+        },
+
+        teacher: {
+          select: {
+            name: true
+          }
+        }
+      }
     });
 
     if (!user) {
-      return res.status(404).json({ error: 'User tidak ditemukan' });
+      return res.status(404).json({
+        error: 'User tidak ditemukan'
+      });
     }
 
     res.json(user);
@@ -73,35 +130,84 @@ export const getUserById = async (req, res, next) => {
 export const updateUser = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
-    const { name, classId, teacherId, companyId, mentorName } = req.body;
+
+    const {
+      name,
+      classId,
+      teacherId,
+      companyId,
+      mentorName,
+      academicYear
+    } = req.body;
+
+    // academicYear (kalau dikirim) harus merujuk ke data master AcademicYear.
+    // Kirim string kosong / null untuk mengosongkan Tahun Ajaran siswa.
+    let resolvedAcademicYear;
+    if (academicYear !== undefined) {
+      if (academicYear === null || String(academicYear).trim() === '') {
+        resolvedAcademicYear = null;
+      } else {
+        const year = await prisma.academicYear.findUnique({
+          where: { name: String(academicYear).trim() },
+        });
+        if (!year) {
+          return res.status(400).json({ error: 'Tahun Ajaran tidak ditemukan.' });
+        }
+        resolvedAcademicYear = year.name;
+      }
+    }
 
     const data = {
       name: name ?? undefined,
       classId: classId ? parseInt(classId) : undefined,
       teacherId: teacherId ? parseInt(teacherId) : undefined,
       companyId: companyId ? parseInt(companyId) : undefined,
+      academicYear: resolvedAcademicYear,
     };
 
     if (mentorName) {
       const mentor = await prisma.user.findFirst({
-        where: { name: mentorName, role: 'mentor' },
-        select: { id: true },
+        where: {
+          name: mentorName,
+          role: 'mentor'
+        },
+        select: {
+          id: true
+        }
       });
+
       if (mentor) {
         await prisma.company.update({
-          where: { id: data.companyId },
-          data: { mentorId: mentor.id },
+          where: {
+            id: data.companyId
+          },
+          data: {
+            mentorId: mentor.id
+          }
         });
       }
     }
 
     const user = await prisma.user.update({
-      where: { id },
-      data,
-      include: {
-        class: { select: { name: true } },
-        teacher: { select: { name: true } },
+      where: {
+        id
       },
+
+      data,
+
+      include: {
+        class: {
+          select: {
+            name: true
+          }
+        },
+
+        teacher: {
+          select: {
+            name: true
+          }
+        }
+      }
     });
 
     res.json(user);
@@ -113,8 +219,16 @@ export const updateUser = async (req, res, next) => {
 export const deleteUser = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
-    await prisma.user.delete({ where: { id } });
-    res.json({ success: true });
+
+    await prisma.user.delete({
+      where: {
+        id
+      }
+    });
+
+    res.json({
+      success: true
+    });
   } catch (error) {
     next(error);
   }
