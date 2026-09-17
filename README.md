@@ -15,7 +15,11 @@ company mapping with geofencing, and final grading.
 
 - Node.js 18 or newer
 - npm or pnpm
-- Docker (recommended), or a local MySQL server such as Laragon/XAMPP
+- A Supabase project (PostgreSQL). The `DATABASE_URL` in `.env` must point to
+  Supabase (session/direct connection, port 5432) as documented in `.env.example`.
+
+> Note: local MySQL via `docker-compose.yml` (and Laragon/XAMPP) is optional and
+> effectively retired — the backend now targets Supabase PostgreSQL.
 
 ## Installation
 
@@ -33,28 +37,23 @@ npm install
 # or: pnpm install
 ```
 
-3. Start the database.
-
-```bash
-docker compose up -d
-```
-
-If you use Laragon/XAMPP instead, start MySQL manually and adjust
-`DATABASE_URL` in the `.env` file.
+3. Point the backend at your Supabase database (see `.env.example` for the
+   two supported URL forms). Local MySQL via `docker compose up -d` is no
+   longer required.
 
 4. Create a `.env` file in the project root.
 
 ```env
-DATABASE_URL="mysql://root:@localhost:3306/gopkl"
+DATABASE_URL="postgresql://postgres.REF:PASSWORD@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres"
 JWT_SECRET="replace-with-a-strong-secret"
 PORT=3000
 ```
 
-5. Generate the Prisma client, create the schema, and load the seed data.
+5. Generate the Prisma client, apply migrations, and load the seed data.
 
 ```bash
 npx prisma generate
-npx prisma db push
+npx prisma migrate dev
 node prisma/seed.js
 ```
 

@@ -142,8 +142,8 @@ export const getUsers = async (req, res, next) => {
     if (role && role !== 'all') where.role = role;
     if (search) {
       where.OR = [
-        { name: { contains: search } },
-        { email: { contains: search } },
+        { name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
       ];
     }
 

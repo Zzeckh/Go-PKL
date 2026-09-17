@@ -18,7 +18,7 @@ export const getDashboardStats = async (req, res, next) => {
     const studentWhere = getScope(req.user);
     const companyWhere = getCompanyScope(req.user);
     const location = typeof req.query.location === 'string' ? req.query.location.trim() : '';
-    if (location) companyWhere.address = { contains: location };
+    if (location) companyWhere.address = { contains: location, mode: 'insensitive' };
 
     const [students, companies] = await Promise.all([
       prisma.user.findMany({
