@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import fs from 'node:fs';
 import path from 'node:path';
 
 dotenv.config();
@@ -22,12 +23,19 @@ import dashboardRoutes from './src/routes/dashboardRoutes.js';
 
 const app = express();
 
+/* Render/Heroku-style reverse proxy (TLS termination) */
+app.set('trust proxy', 1);
+
 /* ── 1. Core middleware ── */
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(requestLogger);
 
 /* ── 2. Static: uploaded files (PDF surat izin) ── */
+/* Render free tier has an ephemeral disk: recreate upload dirs on every boot. */
+for (const dir of ['uploads', 'uploads/permissions']) {
+  fs.mkdirSync(path.resolve(dir), { recursive: true });
+}
 app.use('/uploads', express.static(path.resolve('uploads')));
 
 /* ── 3. Health check ── */

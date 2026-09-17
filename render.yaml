@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: gopkl-api
+    runtime: node
+    region: singapore
+    plan: free
+    buildCommand: npm install && npx prisma generate
+    startCommand: node server.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"

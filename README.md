@@ -69,6 +69,54 @@ npm run dev
 
 7. Open http://localhost:5173 in your browser.
 
+## Deploy ke Render
+
+Backend ini siap di-deploy ke Render (free tier) tanpa perubahan kode.
+Repo sudah menyertakan Blueprint `render.yaml` dan pin versi Node via `.node-version`.
+
+### 1. Buat Web Service
+
+Cara termudah (Blueprint, otomatis membaca `render.yaml`):
+
+1. Login ke [dashboard.render.com](https://dashboard.render.com) → **New → Blueprint Instance** → pilih repo ini → **Apply**.
+2. Render akan otomatis memakai `buildCommand`, `startCommand`, dan `healthCheckPath` dari `render.yaml`.
+
+Alternatif manual (**New → Web Service**), isi:
+
+- **Runtime**: Node
+- **Build Command**: `npm install && npx prisma generate`
+- **Start Command**: `node server.js`
+- **Health Check Path**: `/api/health`
+- **Region**: Singapore
+
+### 2. Environment Variables (wajib diisi manual di dashboard Render)
+
+JANGAN menyimpan secret di `render.yaml`. Tambahkan di dashboard Render (**Environment**):
+
+| Key | Value | Keterangan |
+| --- | --- | --- |
+| `DATABASE_URL` | `postgresql://postgres.[REF]:[PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres` | Supabase **direct/session**, port **5432** (lihat `.env.example`; password di-URL-encode). |
+| `JWT_SECRET` | placeholder: `change_this_secret` | Ganti dengan secret kuat. |
+| `VITE_API_URL` | placeholder: `http://localhost:3000` | Hanya untuk build frontend lokal; di Render tidak dipakai backend. |
+| `PORT` | (tidak perlu) | Render menyuntikkan `PORT` otomatis; `server.js` memakai `process.env.PORT \|\| 3000`. |
+
+Semua key yang ada di `.env.example` harus terpenuhi di dashboard Render.
+
+### 3. Catatan Free Tier
+
+- **Spin-down**: service free tidur setelah 15 menit tanpa trafik; cold start pertama **30–60 detik**.
+- **Disk ephemeral**: file upload (mis. lampiran perizinan di `uploads/`) **hilang saat redeploy/restart**.
+  Jangan simpan data penting di disk — langkah lanjutan: migrasi ke **Supabase Storage**.
+- **Supabase free tier** dapat pause mingguan; aktifkan kembali dari dashboard Supabase bila API error koneksi.
+
+### 4. Redirect Client Setelah Deploy
+
+Setelah URL Render aktif (mis. `https://gopkl-api.onrender.com`):
+
+1. **Vercel**: set `VITE_API_BASE` ke `https://gopkl-api.onrender.com/api` lalu **redeploy** frontend.
+2. **Mobile (gopkl-student)**: update secret `VITE_API_BASE` ke `https://gopkl-api.onrender.com/api` lalu **build ulang APK**.
+3. Hapus/tiap ganti tunnel ngrok yang lama.
+
 ## Default Accounts
 
 The seed script creates one account for each role
