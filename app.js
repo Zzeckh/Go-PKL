@@ -43,6 +43,7 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok', app: 'Go-PKL API' 
 
 /* ── 3. Routes ── */
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/absensi', absensiRoutes);
 app.use('/api/logbook', logbookRoutes);
 app.use('/api/static', staticRoutes);

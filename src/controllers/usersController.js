@@ -48,6 +48,7 @@ export const getUsers = async (req, res, next) => {
 
             mentor: {
               select: {
+                id: true,
                 name: true
               }
             },
@@ -140,20 +141,15 @@ export const updateUser = async (req, res, next) => {
       academicYear
     } = req.body;
 
-    // academicYear (kalau dikirim) harus merujuk ke data master AcademicYear.
-    // Kirim string kosong / null untuk mengosongkan Tahun Ajaran siswa.
+    // academicYear adalah kolom string biasa pada User (Model AcademicYear
+    // TIDAK ada di schema / database). Kirim string kosong / null untuk
+    // mengosongkan Tahun Ajaran siswa.
     let resolvedAcademicYear;
     if (academicYear !== undefined) {
       if (academicYear === null || String(academicYear).trim() === '') {
         resolvedAcademicYear = null;
       } else {
-        const year = await prisma.academicYear.findUnique({
-          where: { name: String(academicYear).trim() },
-        });
-        if (!year) {
-          return res.status(400).json({ error: 'Tahun Ajaran tidak ditemukan.' });
-        }
-        resolvedAcademicYear = year.name;
+        resolvedAcademicYear = String(academicYear).trim();
       }
     }
 
