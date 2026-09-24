@@ -37,7 +37,8 @@ Hanya ada **dua layanan** — tidak ada backend host lain (tanpa Koyeb/Render/ng
 
 - Node.js 20 or newer
 - npm or pnpm
-- A Supabase project (PostgreSQL + Storage)
+- Docker (untuk local dev: PostgreSQL + Adminer via `docker compose`)
+- A Supabase project (PostgreSQL + Storage) — hanya untuk produksi/deploy
 
 ## Installation
 
@@ -58,24 +59,33 @@ npm install
 3. Create a `.env` file in the project root (see `.env.example`).
 
 ```env
-# Local dev: session/direct connection (port 5432) — wajib untuk prisma migrate
-DATABASE_URL="postgresql://postgres.REF:PASSWORD@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres"
+# Local dev: PostgreSQL LOKAL via Docker (engine sama dengan Supabase)
+DATABASE_URL="postgresql://sail:password@localhost:5432/ujikom_go_pkl"
 JWT_SECRET="replace-with-a-strong-secret"
 SUPABASE_URL="https://REF.supabase.co"
 SUPABASE_SERVICE_ROLE_KEY="service-role-secret-key"
 ```
 
-4. Generate the Prisma client, apply migrations, create the Storage bucket, and seed.
+4. Start the local PostgreSQL + Adminer with Docker Compose (opsional
+   untuk Supabase — local dev memakai Postgres lokal, production tetap Supabase).
+
+```bash
+docker compose up -d
+# Adminer: http://localhost:8080  → System: PostgreSQL, Server: postgres,
+#           Username: sail, Password: password, Database: ujikom_go_pkl
+```
+
+5. Generate the Prisma client, apply migrations, create the Storage bucket, and seed.
 
 ```bash
 npx prisma generate
-npx prisma migrate dev
-# Bucket "uploads" + RLS policies (idempotent):
+npx prisma migrate deploy   # atau npx prisma migrate dev
+# Bucket "uploads" + RLS policies (idempotent) — hanya untuk Supabase:
 npx prisma db execute --file prisma/sql/storage_bucket.sql --schema prisma/schema.prisma
 node prisma/seed.js
 ```
 
-5. Run the backend and frontend in two separate terminals.
+6. Run the backend and frontend in two separate terminals.
 
 ```bash
 # Terminal 1 (API) — hanya listen saat dijalankan langsung
@@ -85,7 +95,96 @@ node server.js
 npm run dev:frontend
 ```
 
-6. Open http://localhost:5173 in your browser.
+7. Open http://localhost:5173 in your browser.
+
+### Cara Menjalankan — Ringkas (local dev)
+
+> Backend: `node server.js` listen di :3000 · Frontend: Vite di :5173 ·
+> `npm run dev` menjalankan keduanya sekaligus (concurrently + nodemon).
+> Frontend memanggil API di `http://localhost:3000` (dari `VITE_API_URL`,
+> bukan proxy Vite).
+
+```bash
+# 1) Nyalakan database lokal (PostgreSQL + Adminer) — Docker
+docker compose up -d
+
+# 2) Pertama kali / reset data: drop → migrate → seed (idempotent, aman diulang)
+npm run db:reset
+
+# 3) Run backend + frontend sekaligus
+npm run dev
+#     → Backend : http://localhost:3000   (auto-reload lewat nodemon)
+#     → Frontend: http://localhost:5173
+
+# Alternatif: pisah-pisah
+#   Terminal A: node server.js            (backend saja)
+#   Terminal B: npm run dev:frontend      (vite saja)
+
+# Adminer (lihat isi DB): http://localhost:8080
+#   System: PostgreSQL · Server: postgres · User: sail · Pass: password · DB: ujikom_go_pkl
+```
+
+> **Jika port 3000 sudah terpakai** oleh proses lama, matikan dulu:
+> `pkill -f "node server.js"` (atau `lsof -i :3000`) lalu jalankan `npm run dev` lagi.
+
+### Reset Data Database
+
+```bash
+npm run db:reset
+```
+
+Skrip ini menjalankan `prisma migrate reset --force --skip-seed` lalu
+`node prisma/seed.js` — menghapus seluruh data, menerapkan ulang semua
+migration Prisma, dan mengisi ulang data dummy (49 user + 6 perusahaan +
+1 kelas, password semua akun `gopkl123`). Cocok dipakai kapan pun ingin
+kembali ke kondisi awal.
+
+### Melihat Database lewat IDE (Database Client)
+
+> ⚠️ **Project ini memakai PostgreSQL** (Prisma `provider = "postgresql"`),
+> bukan MySQL! Jangan pilih driver MySQL saat menghubungkan database client —
+> pilih **PostgreSQL**. (Repositori ini pernah berisi MySQL di
+> `docker-compose.yml`, tapi sudah diganti PostgreSQL agar sama dengan Supabase:
+> `prisma/migrations_mysql_backup/` hanyalah arsip lama.)
+
+Sebelum connect, pastikan database lokal hidup:
+
+```bash
+docker compose up -d
+```
+
+Lalu isi form **Database Client** (extension IDE, mis. *Database Client*,
+*SQLTools*, *DataGrip*, dll.) dengan nilai berikut:
+
+| Field | Nilai |
+| --- | --- |
+| Driver / Type | **PostgreSQL** (bukan MySQL) |
+| Host / Server | `localhost` |
+| Port | `5432` |
+| Username | `sail` |
+| Password | `password` |
+| Database | `ujikom_go_pkl` |
+| SSL / TLS | `Disabled` / `prefer` |
+
+Connection string (kalau extension menerima URL):
+
+```text
+postgresql://sail:password@localhost:5432/ujikom_go_pkl
+```
+
+Tabel yang akan terlihat setelah terhubung:
+
+| Tabel | Isi |
+| --- | --- |
+| `User` | 49 user (superadmin, hubin, 6 guru, 6 mentor, 35 siswa) |
+| `Company` | 6 perusahaan PKL |
+| `Class` | 1 kelas |
+| `Absensi`, `Logbook`, `Permission`, `Evaluation` | kosong (belum ada aktivitas PKL) |
+| `_prisma_migrations` | riwayat migration Prisma |
+
+> Kalau **Test Connection gagal**: cek driver masih MySQL, pastikan
+> `docker compose up -d` sudah jalan (`docker ps`), atau reset ulang DB
+> dengan `npm run db:reset`.
 
 ## Deploy ke Vercel
 

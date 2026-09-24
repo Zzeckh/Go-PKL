@@ -1,18 +1,44 @@
-version: "3.9"
 services:
-  mysql:
-    image: mysql:8.1
-    container_name: ujikom_go_pkl_mysql
+  # ─────────────────────────────────────────────────────────────
+  # PostgreSQL LOKAL — engine yang sama dengan Supabase (PostgreSQL),
+  # sehingga migration & seed Prisma identik antara lokal dan cloud.
+  # Dulu service ini MySQL (stale) — sekarang PostgreSQL murni.
+  # ─────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: ujikom_go_pkl_postgres
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: ujikom_go_pkl
-      MYSQL_USER: sail
-      MYSQL_PASSWORD: password
+      POSTGRES_USER: sail
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ujikom_go_pkl
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sail -d ujikom_go_pkl"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ─────────────────────────────────────────────────────────────
+  # Adminer — UI untuk melihat database lokal lewat browser.
+  # Buka http://localhost:8080
+  #   System   : PostgreSQL
+  #   Server   : postgres   (nama service di compose, bukan localhost)
+  #   Username : sail
+  #   Password : password
+  #   Database : ujikom_go_pkl
+  # ─────────────────────────────────────────────────────────────
+  adminer:
+    image: adminer:latest
+    container_name: ujikom_go_pkl_adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
 
 volumes:
-  mysql_data:
+  postgres_data:
