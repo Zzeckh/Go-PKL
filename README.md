@@ -11,10 +11,10 @@ company mapping with geofencing, and final grading.
 ┌─────────────────────────────┐        ┌──────────────────────────────┐
 │           VERCEL            │        │          SUPABASE            │
 │  Web statis (Vite build)    │  SQL   │  PostgreSQL (Prisma ORM)     │
-│  API serverless (/api/*)    │──────▶ │  - port 6543 (pooler, prod)  │
+│  API serverless (/api/*)    │──────▶│  - port 6543 (pooler, prod)  │
 │  Express app = api/index.js │        │  - port 5432 (session, dev)  │
 │                             │        │                              │
-│  Upload multipart ──────────┼──────▶ │  Storage bucket "uploads"    │
+│  Upload multipart ──────────┼──────▶│  Storage bucket "uploads"    │
 └─────────────────────────────┘ upload └──────────────────────────────┘
 ```
 
@@ -185,6 +185,102 @@ Tabel yang akan terlihat setelah terhubung:
 > Kalau **Test Connection gagal**: cek driver masih MySQL, pastikan
 > `docker compose up -d` sudah jalan (`docker ps`), atau reset ulang DB
 > dengan `npm run db:reset`.
+
+#### Buat yang biasa pakai phpMyAdmin (Laragon)
+
+> ⚠️ **phpMyAdmin TIDAK bisa dipakai untuk database ini.** phpMyAdmin hanya
+> mendukung MySQL — project ini PostgreSQL, jadi phpMyAdmin tidak akan pernah
+> connect. Gantinya pakai **Adminer**, web UI database yang tampilan &
+> cara pakainya mirip phpMyAdmin dan sudah masuk `docker-compose.yml`.
+
+Cara pakai Adminer (ganti phpMyAdmin):
+
+```bash
+# 1) Pastikan adminer + postgres jalan
+docker compose up -d
+
+# 2) Buka di browser
+#    http://localhost:8080
+```
+
+Lalu isi form login Adminer:
+
+| Field | Isi |
+| --- | --- |
+| System | **PostgreSQL** (dropdown di pojok kiri atas) |
+| Server | `postgres` |
+| Username | `sail` |
+| Password | `password` |
+| Database | `ujikom_go_pkl` |
+
+Lebih lanjut (PostgreSQL vs MySQL, kenapa bukan phpMyAdmin) ada di bagian
+atas README — intinya satu: **pilih PostgreSQL, bukan MySQL.**
+
+#### Kalau Tidak Pakai Docker (untuk anggota kelompok)
+
+> ⚠️ `docker compose up -d` **hanya jalan kalau Docker terpasang** di mesin
+> tersebut (Docker Desktop / docker engine). Tanpa Docker, perintah itu error
+> (`docker: command not found` atau `Cannot connect to the Docker daemon`).
+> Berikut dua cara tanpa Docker:
+
+**Opsi 1 — Pakai database Supabase bersama (PALING GAMPANG, nol setup)**
+
+Semua anggota memakai database yang sama persis dengan produksi. Tidak perlu
+install PostgreSQL/Docker apa pun — tinggal uncomment URL Supabase di `.env`:
+
+```env
+DATABASE_URL="postgresql://postgres.ggxmeagaccegdatkrylp:qwerty3306%3F%21jo@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres"
+```
+
+Lalu jalankan sekali (untuk memastikan schema + data dummy tersedia):
+
+```bash
+npx prisma migrate deploy
+node prisma/seed.js
+npm run dev
+```
+
+Cara lihat datanya: **Supabase Dashboard → SQL Editor** (browser, tanpa install)
+atau connect lewat Database Client IDE memakai host
+`aws-0-ap-southeast-1.pooler.supabase.com` port `5432`, user
+`postgres.ggxmeagaccegdatkrylp`, password `qwerty3306?!jo`, database `postgres`.
+
+> ⚠️ Karena semua anggota share 1 database, `npm run db:reset` dari salah satu
+> anggota akan menghapus data anggota lain. Untuk data dummy tidak masalah,
+> tapi jangan jalankan `db:reset` sembarangan saat semua sedang aktif kerja.
+
+**Opsi 2 — PostgreSQL via Laragon (untuk yang sudah terbiasa Laragon)**
+
+Laragon tidak hanya untuk MySQL — ia juga bisa menjalankan **PostgreSQL**
+(menu Laragon → buka panel, aktifkan service **PostgreSQL**, bukan MySQL).
+Lalu:
+
+1. Start PostgreSQL dari Laragon (port default `5432`).
+2. Buat database `ujikom_go_pkl`, atau buat user/role sesuai yang dipakai.
+3. Sesuaikan `DATABASE_URL` di `.env` dengan kredensial Postgres di Laragon.
+
+   ```env
+   DATABASE_URL="postgresql://postgres:PASSWORD@localhost:5432/ujikom_go_pkl"
+   ```
+
+4. Migration + seed + run:
+
+   ```bash
+   npx prisma migrate deploy
+   node prisma/seed.js
+   npm run dev
+   ```
+
+5. Lihat database pakai **Adminer bawaan Laragon** (menu Laragon → Tools →
+   **Adminer**) — mendukung PostgreSQL, login `System: PostgreSQL`.
+
+> Sebelum migration, pastikan user Postgres di Laragon punya hak akses ke
+> database `ujikom_go_pkl` (`GRANT ALL PRIVILEGES` / meng-`OWNER`-kan), karena
+> Prisma perlu membuat/mengubah tabel.
+
+Intinya: **Docker hanya salah satu cara** untuk dapat PostgreSQL lokal. Yang
+penting untuk project ini selalu `PostgreSQL` — lewat Supabase, Docker,
+atau Laragon, semuanya valid selama `DATABASE_URL` benar.
 
 ## Deploy ke Vercel
 
