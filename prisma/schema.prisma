@@ -44,12 +44,32 @@ enum EvaluationType {
   guru
 }
 
+model AcademicYear {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  users     User[]
+  classes   Class[]
+  companies Company[]
+
+  @@map("academicyear")
+}
+
 model Class {
   id        Int      @id @default(autoincrement())
   name      String
   major     String?
   createdAt DateTime @default(now())
-  users     User[]
+
+  academicYearId Int?
+  academicYear   AcademicYear? @relation(fields: [academicYearId], references: [id])
+
+  users User[]
+
+  @@index([academicYearId])
+  @@map("class")
 }
 
 model Company {
@@ -68,37 +88,62 @@ model Company {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  mentorId  Int?
-  mentor    User?    @relation("CompanyMentor", fields: [mentorId], references: [id])
+  academicYearId Int?
+  academicYear   AcademicYear? @relation(fields: [academicYearId], references: [id])
+
+  mentorId Int?
+  mentor   User? @relation("CompanyMentor", fields: [mentorId], references: [id])
 
   students User[] @relation("CompanyStudents")
+
+  @@index([academicYearId])
+  @@index([mentorId])
+  @@map("company")
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  name         String
-  email        String   @unique
-  password     String
-  role         Role     @default(student)
-  isActive     Boolean  @default(true)
+  id       Int     @id @default(autoincrement())
+  name     String
+  email    String  @unique
+  password String
+  role     Role    @default(student)
+  isActive Boolean @default(true)
+
   academicYear String?
-  createdAt    DateTime @default(now())
 
-  classId   Int?
-  class     Class?  @relation(fields: [classId], references: [id])
+  inactiveCategory String?
+  inactiveReason   String?
+  inactiveAt       DateTime?
+
+  createdAt DateTime @default(now())
+
+  academicYearId  Int?
+  academicYearRef AcademicYear? @relation(fields: [academicYearId], references: [id])
+
+  classId Int?
+  class   Class? @relation(fields: [classId], references: [id])
+
   teacherId Int?
-  teacher   User?   @relation("StudentTeacher", fields: [teacherId], references: [id])
-  students  User[]  @relation("StudentTeacher")
+  teacher   User?  @relation("StudentTeacher", fields: [teacherId], references: [id])
+  students  User[] @relation("StudentTeacher")
 
-  companyId  Int?
-  company    Company?  @relation("CompanyStudents", fields: [companyId], references: [id])
+  companyId Int?
+  company   Company? @relation("CompanyStudents", fields: [companyId], references: [id])
+
   mentoredCompanies Company[] @relation("CompanyMentor")
 
-  absensis          Absensi[]
-  logbooks          Logbook[]
-  permissions       Permission[]
-  evalAsStudent     Evaluation[] @relation("StudentEval")
-  evalAsEvaluator   Evaluation[] @relation("EvaluatorEval")
+  absensis    Absensi[]
+  logbooks    Logbook[]
+  permissions Permission[]
+
+  evalAsStudent   Evaluation[] @relation("StudentEval")
+  evalAsEvaluator Evaluation[] @relation("EvaluatorEval")
+
+  @@index([academicYearId])
+  @@index([classId])
+  @@index([teacherId])
+  @@index([companyId])
+  @@map("user")
 }
 
 model Absensi {
@@ -114,6 +159,7 @@ model Absensi {
   createdAt   DateTime      @default(now())
 
   @@unique([userId, date])
+  @@map("absensi")
 }
 
 model Logbook {
@@ -128,6 +174,9 @@ model Logbook {
   status        LogbookStatus @default(pending)
   feedback      String?       @db.Text
   createdAt     DateTime      @default(now())
+
+  @@index([userId])
+  @@map("logbook")
 }
 
 model Permission {
@@ -141,6 +190,9 @@ model Permission {
   status        PermissionStatus @default(pending)
   rejectReason  String?
   createdAt     DateTime         @default(now())
+
+  @@index([userId])
+  @@map("permission")
 }
 
 model Evaluation {
@@ -156,4 +208,6 @@ model Evaluation {
   createdAt   DateTime       @default(now())
 
   @@unique([studentId, evaluatorId, type, period])
+  @@index([evaluatorId])
+  @@map("evaluation")
 }

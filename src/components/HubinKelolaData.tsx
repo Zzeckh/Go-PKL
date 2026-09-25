@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Users,
   Building2,
@@ -16,6 +16,7 @@ import {
   Package,
   MapPinned,
   CheckCircle2,
+  ChevronDown,
 } from 'lucide-react';
 
 import { useApp } from '../context/AppContext';
@@ -33,7 +34,7 @@ const getInitials = (name: string) =>
 
 /* =========================================================
    MAIN COMPONENT
-   ========================================================= */
+========================================================= */
 
 export const HubinData: React.FC = () => {
   const {
@@ -44,111 +45,268 @@ export const HubinData: React.FC = () => {
     addSiswa,
     addPerusahaan,
     logEntries,
+
+    academicYears,
+    selectedAcademicYearId,
+    setSelectedAcademicYearId,
+
+    // reload data
+    loadSiswa,
+    loadGuru,
+    loadMentor,
+    loadPerusahaan,
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<TabKey>('siswa');
-  const [search, setSearch] = useState('');
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [activeTab, setActiveTab] =
+    useState<TabKey>('siswa');
 
-  const [detailSiswa, setDetailSiswa] = useState<any>(null);
-  const [detailPerusahaan, setDetailPerusahaan] = useState<any>(null);
-  const [detailGuru, setDetailGuru] = useState<any>(null);
-  const [detailMentor, setDetailMentor] = useState<any>(null);
-  const [pickerCompany, setPickerCompany] = useState<any>(null);
+  const [search, setSearch] = useState('');
+
+  const [showAddModal, setShowAddModal] =
+    useState(false);
+
+  const [detailSiswa, setDetailSiswa] =
+    useState<any>(null);
+
+  const [detailPerusahaan, setDetailPerusahaan] =
+    useState<any>(null);
+
+  const [detailGuru, setDetailGuru] =
+    useState<any>(null);
+
+  const [detailMentor, setDetailMentor] =
+    useState<any>(null);
+
+  const [pickerCompany, setPickerCompany] =
+    useState<any>(null);
+
+  /* =========================================================
+     SELECTED ACADEMIC YEAR
+  ========================================================= */
 
   const activeYear =
-    siswaList.find(
-      (s) => s.academicYear && s.academicYear !== '-'
-    )?.academicYear || '2025/2026';
+    academicYears.find(
+      (year) =>
+        Number(year.id) ===
+        Number(selectedAcademicYearId)
+    )?.name || '-';
 
   /* =========================================================
-     TAB CONFIG
-     ========================================================= */
+     RELOAD DATA WHEN ACADEMIC YEAR CHANGES
+  ========================================================= */
 
-  const tabConfig: {
-    key: TabKey;
-    label: string;
-    icon: React.ElementType;
-    count: number;
-    group: 'dalam' | 'luar';
-  }[] = [
-    {
-      key: 'siswa',
-      label: 'Siswa',
-      icon: GraduationCap,
-      count: siswaList.length,
-      group: 'dalam',
-    },
-    {
-      key: 'guru',
-      label: 'Guru',
-      icon: Users,
-      count: guruList.length,
-      group: 'dalam',
-    },
-    {
-      key: 'perusahaan',
-      label: 'Perusahaan',
-      icon: Building2,
-      count: perusahaanList.length,
-      group: 'luar',
-    },
-    {
-      key: 'mentor',
-      label: 'Mentor',
-      icon: Briefcase,
-      count: mentorList.length,
-      group: 'luar',
-    },
-  ];
+  useEffect(() => {
+    if (!selectedAcademicYearId) return;
+
+    const reload = async () => {
+      try {
+        await Promise.all([
+          loadSiswa(),
+          loadGuru(),
+          loadMentor(),
+          loadPerusahaan(),
+        ]);
+      } catch (error) {
+        console.error(
+          'Gagal memuat data berdasarkan tahun ajaran:',
+          error
+        );
+      }
+    };
+
+    reload();
+  }, [
+    selectedAcademicYearId,
+    loadSiswa,
+    loadGuru,
+    loadMentor,
+    loadPerusahaan,
+  ]);
 
   /* =========================================================
-     SEARCH
-     ========================================================= */
+     HELPER FILTER TAHUN
+  ========================================================= */
+
+  const isSameAcademicYear = (
+    item: any
+  ): boolean => {
+    if (!selectedAcademicYearId) {
+      return true;
+    }
+
+    /*
+     * PRIORITAS:
+     * 1. academicYearId
+     * 2. academicYear object
+     * 3. academicYear string
+     */
+
+    if (
+      item?.academicYearId !== undefined &&
+      item?.academicYearId !== null
+    ) {
+      return (
+        Number(item.academicYearId) ===
+        Number(selectedAcademicYearId)
+      );
+    }
+
+    if (
+      item?.academicYear &&
+      typeof item.academicYear === 'object'
+    ) {
+      return (
+        Number(item.academicYear.id) ===
+        Number(selectedAcademicYearId)
+      );
+    }
+
+    if (
+      item?.academicYear &&
+      typeof item.academicYear === 'string'
+    ) {
+      return (
+        item.academicYear === activeYear
+      );
+    }
+
+    /*
+     * Kalau AppContext sudah melakukan filtering
+     * berdasarkan academicYearId, data yang masuk
+     * dianggap sudah sesuai.
+     */
+    return true;
+  };
+
+  /* =========================================================
+     FILTER DATA BERDASARKAN TAHUN
+  ========================================================= */
+
+  const filteredSiswaByYear = useMemo(() => {
+    return siswaList.filter(isSameAcademicYear);
+  }, [
+    siswaList,
+    selectedAcademicYearId,
+    activeYear,
+  ]);
+
+  const filteredGuruByYear = useMemo(() => {
+    return guruList.filter(isSameAcademicYear);
+  }, [
+    guruList,
+    selectedAcademicYearId,
+    activeYear,
+  ]);
+
+  const filteredPerusahaanByYear = useMemo(() => {
+    return perusahaanList.filter(isSameAcademicYear);
+  }, [
+    perusahaanList,
+    selectedAcademicYearId,
+    activeYear,
+  ]);
+
+  const filteredMentorByYear = useMemo(() => {
+    return mentorList.filter(isSameAcademicYear);
+  }, [
+    mentorList,
+    selectedAcademicYearId,
+    activeYear,
+  ]);
+
+  /* =========================================================
+     SEARCH SISWA
+  ========================================================= */
 
   const filteredSiswa = useMemo(() => {
     const keyword = search.toLowerCase();
 
-    return siswaList.filter(
-      (s) =>
-        (s.name || '').toLowerCase().includes(keyword) ||
-        (s.kelas || '').toLowerCase().includes(keyword) ||
-        (s.perusahaan || '').toLowerCase().includes(keyword) ||
-        (s.guruPembimbing || '').toLowerCase().includes(keyword) ||
-        (s.mentor || '').toLowerCase().includes(keyword)
+    return filteredSiswaByYear.filter(
+      (s: any) =>
+        (s.name || '')
+          .toLowerCase()
+          .includes(keyword) ||
+        (s.kelas || '')
+          .toLowerCase()
+          .includes(keyword) ||
+        (s.perusahaan || '')
+          .toLowerCase()
+          .includes(keyword) ||
+        (s.guruPembimbing || '')
+          .toLowerCase()
+          .includes(keyword) ||
+        (s.mentor || '')
+          .toLowerCase()
+          .includes(keyword)
     );
-  }, [siswaList, search]);
+  }, [filteredSiswaByYear, search]);
 
-const filteredGuru = useMemo(() => {
-  const keyword = search.toLowerCase();
+  /* =========================================================
+     SEARCH GURU
+  ========================================================= */
 
-  return guruList.filter(
-    (g) =>
-      (g.name || '').toLowerCase().includes(keyword) ||
-      (g.subject || '').toLowerCase().includes(keyword)
-  );
-}, [guruList, search]);
+  const filteredGuru = useMemo(() => {
+    const keyword = search.toLowerCase();
+
+    return filteredGuruByYear.filter(
+      (g: any) =>
+        (g.name || '')
+          .toLowerCase()
+          .includes(keyword) ||
+        (g.subject || '')
+          .toLowerCase()
+          .includes(keyword)
+    );
+  }, [filteredGuruByYear, search]);
+
+  /* =========================================================
+     SEARCH PERUSAHAAN
+  ========================================================= */
+
   const filteredPerusahaan = useMemo(() => {
     const keyword = search.toLowerCase();
 
-    return perusahaanList.filter(
-      (c) =>
-        (c.name || '').toLowerCase().includes(keyword) ||
-        (c.address || '').toLowerCase().includes(keyword) ||
-        (c.mentor || '').toLowerCase().includes(keyword)
+    return filteredPerusahaanByYear.filter(
+      (c: any) =>
+        (c.name || '')
+          .toLowerCase()
+          .includes(keyword) ||
+        (c.address || '')
+          .toLowerCase()
+          .includes(keyword) ||
+        (c.mentor || '')
+          .toLowerCase()
+          .includes(keyword)
     );
-  }, [perusahaanList, search]);
+  }, [
+    filteredPerusahaanByYear,
+    search,
+  ]);
+
+  /* =========================================================
+     SEARCH MENTOR
+  ========================================================= */
 
   const filteredMentor = useMemo(() => {
     const keyword = search.toLowerCase();
 
-    return mentorList.filter(
-      (m) =>
-        (m.name || '').toLowerCase().includes(keyword) ||
-        (m.perusahaan || '').toLowerCase().includes(keyword) ||
-        (m.role || '').toLowerCase().includes(keyword)
+    return filteredMentorByYear.filter(
+      (m: any) =>
+        (m.name || '')
+          .toLowerCase()
+          .includes(keyword) ||
+        (m.perusahaan || '')
+          .toLowerCase()
+          .includes(keyword) ||
+        (m.role || '')
+          .toLowerCase()
+          .includes(keyword)
     );
-  }, [mentorList, search]);
+  }, [filteredMentorByYear, search]);
+
+  /* =========================================================
+     CHANGE TAB
+  ========================================================= */
 
   const changeTab = (key: TabKey) => {
     setActiveTab(key);
@@ -156,301 +314,331 @@ const filteredGuru = useMemo(() => {
   };
 
   /* =========================================================
-     STATISTICS
-     ========================================================= */
+     STATS
+  ========================================================= */
 
   const stats = [
     {
       icon: GraduationCap,
       label: 'Total Siswa',
-      value: siswaList.length,
+      value: filteredSiswaByYear.length,
     },
     {
       icon: Users,
       label: 'Total Guru',
-      value: guruList.length,
+      value: filteredGuruByYear.length,
     },
     {
       icon: Building2,
       label: 'Perusahaan Mitra',
-      value: perusahaanList.length,
+      value: filteredPerusahaanByYear.length,
     },
     {
       icon: Briefcase,
       label: 'Mentor DUDI',
-      value: mentorList.length,
+      value: filteredMentorByYear.length,
     },
   ];
 
   /* =========================================================
-     HELPER SISWA
-     ========================================================= */
-
-  const getSiswaLogs = (siswaName: string) =>
-    logEntries
-      .filter((l) =>
-        l.title
-          .toLowerCase()
-          .includes((siswaName || '').split(' ')[0].toLowerCase())
-      )
-      .slice(0, 3);
-
-  /* =========================================================
-     GURU -> SISWA
-     =========================================================
-     
-     Guru terhubung ke siswa melalui:
-     
-     User.teacherId -> User.id guru
-     
-     ========================================================= */
+     SISWA BY GURU
+  ========================================================= */
 
   const getSiswaByGuru = (guru: any) => {
     if (!guru) return [];
 
-    /*
-      Prioritas pertama:
-      Jika data frontend memiliki teacherId, gunakan itu.
-    */
+    const byTeacherId =
+      filteredSiswaByYear.filter((s: any) => {
+        if (
+          s.teacherId !== undefined &&
+          s.teacherId !== null &&
+          guru.id !== undefined &&
+          guru.id !== null
+        ) {
+          return (
+            Number(s.teacherId) ===
+            Number(guru.id)
+          );
+        }
 
-    const byTeacherId = siswaList.filter((s: any) => {
-      if (
-        s.teacherId !== undefined &&
-        s.teacherId !== null &&
-        guru.id !== undefined &&
-        guru.id !== null
-      ) {
-        return Number(s.teacherId) === Number(guru.id);
-      }
-
-      return false;
-    });
+        return false;
+      });
 
     if (byTeacherId.length > 0) {
       return byTeacherId;
     }
 
-    /*
-      Fallback:
-      Gunakan nama guru jika AppContext belum membawa teacherId.
-    */
-
-    return siswaList.filter(
+    return filteredSiswaByYear.filter(
       (s: any) =>
-        (s.guruPembimbing || '').trim().toLowerCase() ===
-        (guru.name || '').trim().toLowerCase()
+        (s.guruPembimbing || '')
+          .trim()
+          .toLowerCase() ===
+        (guru.name || '')
+          .trim()
+          .toLowerCase()
     );
   };
 
   /* =========================================================
-     GURU -> PERUSAHAAN
-     =========================================================
-     
-     Perusahaan guru ditentukan dari perusahaan siswa
-     yang dibimbing oleh guru tersebut.
-
-     Jadi TIDAK menggunakan data perusahaan statis.
-
-     Contoh:
-
-     Guru Budi
-       ↓
-     siswa A -> PT ABC
-     siswa B -> PT ABC
-     siswa C -> PT XYZ
-
-     Maka perusahaan Budi:
-       PT ABC
-       PT XYZ
-     ========================================================= */
+     PERUSAHAAN BY GURU
+  ========================================================= */
 
   const getPerusahaanByGuru = (guru: any) => {
     const students = getSiswaByGuru(guru);
 
     const companyNames = new Set(
       students
-        .map((s: any) => (s.perusahaan || '').trim())
+        .map((s: any) =>
+          (s.perusahaan || '').trim()
+        )
         .filter(
           (name: string) =>
             name &&
             name !== '-' &&
-            name.toLowerCase() !== 'belum dipetakan'
+            name.toLowerCase() !==
+              'belum dipetakan'
         )
     );
 
-    return perusahaanList.filter((company: any) =>
-      companyNames.has((company.name || '').trim())
+    return filteredPerusahaanByYear.filter(
+      (company: any) =>
+        companyNames.has(
+          (company.name || '').trim()
+        )
     );
   };
 
   /* =========================================================
-     PERUSAHAAN -> SISWA
-     ========================================================= */
+     SISWA BY PERUSAHAAN
+  ========================================================= */
 
-  const getSiswaByPerusahaan = (companyName: string) => {
+  const getSiswaByPerusahaan = (
+    companyName: string
+  ) => {
     if (!companyName) return [];
 
-    return siswaList.filter(
+    return filteredSiswaByYear.filter(
       (s: any) =>
-        (s.perusahaan || '').trim().toLowerCase() ===
+        (s.perusahaan || '')
+          .trim()
+          .toLowerCase() ===
         companyName.trim().toLowerCase()
     );
   };
 
   /* =========================================================
-     MENTOR -> PERUSAHAAN
-     =========================================================
-     
-     Relasi database:
+     PERUSAHAAN BY MENTOR
+  ========================================================= */
 
-     Company.mentorId -> User.id
-
-     Karena mentorList berasal dari User role mentor,
-     kita cocokkan mentor.id dengan company.mentorId.
-
-     Jika frontend belum membawa mentorId pada perusahaan,
-     fallback ke nama mentor.
-     ========================================================= */
-
-  const getPerusahaanByMentor = (mentor: any) => {
+  const getPerusahaanByMentor = (
+    mentor: any
+  ) => {
     if (!mentor) return [];
 
-    /*
-      PRIORITAS 1:
-      company.mentorId === mentor.id
-    */
+    const byMentorId =
+      filteredPerusahaanByYear.filter(
+        (company: any) => {
+          if (
+            company.mentorId !== undefined &&
+            company.mentorId !== null &&
+            mentor.id !== undefined &&
+            mentor.id !== null
+          ) {
+            return (
+              Number(company.mentorId) ===
+              Number(mentor.id)
+            );
+          }
 
-    const byMentorId = perusahaanList.filter((company: any) => {
-      if (
-        company.mentorId !== undefined &&
-        company.mentorId !== null &&
-        mentor.id !== undefined &&
-        mentor.id !== null
-      ) {
-        return Number(company.mentorId) === Number(mentor.id);
-      }
-
-      return false;
-    });
+          return false;
+        }
+      );
 
     if (byMentorId.length > 0) {
       return byMentorId;
     }
 
-    /*
-      FALLBACK:
-      Jika perusahaan hanya memiliki nama mentor.
-    */
-
-    return perusahaanList.filter(
+    return filteredPerusahaanByYear.filter(
       (company: any) =>
-        (company.mentor || '').trim().toLowerCase() ===
-        (mentor.name || '').trim().toLowerCase()
+        (company.mentor || '')
+          .trim()
+          .toLowerCase() ===
+        (mentor.name || '')
+          .trim()
+          .toLowerCase()
     );
   };
 
   /* =========================================================
-     MENTOR -> SISWA
-     ========================================================= */
+     SISWA BY MENTOR
+  ========================================================= */
 
-  const getSiswaByMentor = (mentor: any) => {
+  const getSiswaByMentor = (
+    mentor: any
+  ) => {
     if (!mentor) return [];
 
-    /*
-      Ambil perusahaan milik mentor dari database/frontend.
-    */
-
-    const mentorCompanies = getPerusahaanByMentor(mentor);
-
-    /*
-      Ambil nama perusahaan yang valid.
-    */
+    const mentorCompanies =
+      getPerusahaanByMentor(mentor);
 
     const companyNames = new Set(
       mentorCompanies
         .map((company: any) =>
-          (company.name || '').trim().toLowerCase()
+          (company.name || '')
+            .trim()
+            .toLowerCase()
         )
         .filter(Boolean)
     );
 
-    /*
-      Siswa harus berada di perusahaan yang
-      menjadi tanggung jawab mentor tersebut.
-    */
+    return filteredSiswaByYear.filter(
+      (student: any) => {
+        const studentCompany =
+          (student.perusahaan || '')
+            .trim()
+            .toLowerCase();
 
-    return siswaList.filter((student: any) => {
-      const studentCompany = (student.perusahaan || '')
-        .trim()
-        .toLowerCase();
+        if (
+          companyNames.has(studentCompany)
+        ) {
+          return true;
+        }
 
-      /*
-        Jika ada relasi perusahaan -> mentor,
-        perusahaan menjadi sumber kebenaran utama.
-      */
+        const studentMentor =
+          (student.mentor || '')
+            .trim()
+            .toLowerCase();
 
-      if (companyNames.has(studentCompany)) {
-        return true;
+        return (
+          studentMentor !== '' &&
+          studentMentor !== '-' &&
+          studentMentor ===
+            (mentor.name || '')
+              .trim()
+              .toLowerCase()
+        );
       }
-
-      /*
-        Fallback jika data siswa memiliki nama mentor.
-      */
-
-      const studentMentor = (student.mentor || '')
-        .trim()
-        .toLowerCase();
-
-      return (
-        studentMentor !== '' &&
-        studentMentor !== '-' &&
-        studentMentor ===
-          (mentor.name || '').trim().toLowerCase()
-      );
-    });
+    );
   };
 
   /* =========================================================
+     SISWA LOG
+  ========================================================= */
+
+  const getSiswaLogs = (
+    siswaName: string
+  ) =>
+    logEntries
+      .filter((l: any) =>
+        (l.title || '')
+          .toLowerCase()
+          .includes(
+            (siswaName || '')
+              .split(' ')[0]
+              .toLowerCase()
+          )
+      )
+      .slice(0, 3);
+
+  /* =========================================================
      RENDER
-     ========================================================= */
+  ========================================================= */
 
   return (
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-y-auto custom-scrollbar">
 
       {/* =====================================================
           HEADER
-          ===================================================== */}
+      ===================================================== */}
 
-      <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
 
-        <div className="flex items-center gap-3 md:gap-4 min-w-0">
+        {/* TITLE */}
+
+        <div className="flex items-center gap-3 min-w-0">
 
           <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[10px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <Package className="w-5 h-5 md:w-6 md:h-6" />
           </div>
 
           <div className="min-w-0">
-            <h2 className="font-bold text-lg md:text-xl text-navy leading-tight truncate">
+
+            <h2 className="font-bold text-lg md:text-xl text-navy leading-tight">
               Kelola Data
             </h2>
 
-            <p className="text-[13px] text-navy/60 font-semibold mt-0.5 truncate">
+            <p className="text-[13px] text-navy/60 font-semibold mt-0.5">
               Direktori siswa, guru, perusahaan mitra & mentor DUDI
             </p>
+
           </div>
 
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        {/* ACTION */}
 
-          <span className="hidden sm:flex items-center gap-1.5 text-[11px] font-bold text-navy/60 bg-mist/40 border border-mist px-3 py-2 rounded-full">
-            <Clock className="w-3.5 h-3.5" />
-            TA {activeYear}
-          </span>
+        <div className="flex flex-wrap items-center gap-2">
+
+          {/* ===============================================
+              DROPDOWN TAHUN AJARAN
+          =============================================== */}
+
+          <div className="relative">
+
+            <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-navy/50 pointer-events-none" />
+
+            <select
+              value={
+                selectedAcademicYearId ?? ''
+              }
+              onChange={(e) => {
+                const value =
+                  e.target.value;
+
+                if (!value) return;
+
+                setSelectedAcademicYearId(
+                  Number(value)
+                );
+              }}
+              className="appearance-none pl-9 pr-9 py-2.5 rounded-[24px] bg-mist/40 border border-mist text-xs font-bold text-navy outline-none cursor-pointer hover:bg-mist/70 focus:border-steel transition-all"
+            >
+
+              {academicYears.length === 0 ? (
+                <option value="">
+                  Tidak ada tahun ajaran
+                </option>
+              ) : (
+                academicYears.map(
+                  (year: any) => (
+                    <option
+                      key={year.id}
+                      value={year.id}
+                    >
+                      {year.name}
+                      {year.isActive
+                        ? ' (Aktif)'
+                        : ''}
+                    </option>
+                  )
+                )
+              )}
+
+            </select>
+
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-navy/50 pointer-events-none" />
+
+          </div>
+
+          {/* ===============================================
+              ADD BUTTON
+          =============================================== */}
 
           <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-1.5 bg-steel text-white text-xs font-bold px-4 py-2 rounded-[24px] shadow-md shadow-steel/25 hover:bg-steel/90 hover:-translate-y-0.5 transition-all"
+            onClick={() =>
+              setShowAddModal(true)
+            }
+            className="flex items-center gap-1.5 bg-steel text-white text-xs font-bold px-4 py-2.5 rounded-[24px] shadow-md shadow-steel/25 hover:bg-steel/90 hover:-translate-y-0.5 transition-all"
           >
             <Plus className="w-4 h-4" />
             Tambah Data
@@ -461,8 +649,30 @@ const filteredGuru = useMemo(() => {
       </div>
 
       {/* =====================================================
-          STATISTICS
-          ===================================================== */}
+          YEAR INFO
+      ===================================================== */}
+
+      <div className="flex items-center justify-between bg-steel/5 border border-steel/20 rounded-[20px] px-4 py-2.5 shrink-0">
+
+        <div className="flex items-center gap-2">
+
+          <Clock className="w-4 h-4 text-steel" />
+
+          <span className="text-xs font-bold text-navy">
+            Data Tahun Ajaran
+          </span>
+
+        </div>
+
+        <span className="text-xs font-bold text-steel">
+          {activeYear}
+        </span>
+
+      </div>
+
+      {/* =====================================================
+          STATS
+      ===================================================== */}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
 
@@ -473,10 +683,13 @@ const filteredGuru = useMemo(() => {
           >
 
             <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
+
               <s.icon className="w-4 h-4 text-white" />
+
             </div>
 
             <div>
+
               <p className="text-3xl font-bold text-navy tabular-nums leading-none">
                 {s.value}
               </p>
@@ -484,6 +697,7 @@ const filteredGuru = useMemo(() => {
               <p className="text-[11px] font-bold text-navy/60 uppercase tracking-wide mt-2">
                 {s.label}
               </p>
+
             </div>
 
           </div>
@@ -493,9 +707,11 @@ const filteredGuru = useMemo(() => {
 
       {/* =====================================================
           MAIN CARD
-          ===================================================== */}
+      ===================================================== */}
 
       <div className="lg:flex-1 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col overflow-hidden lg:min-h-0">
+
+        {/* TOP */}
 
         <div className="px-4 md:px-5 pt-4 pb-3 shrink-0 space-y-3 border-b border-mist/60">
 
@@ -507,39 +723,25 @@ const filteredGuru = useMemo(() => {
               Dalam
             </span>
 
-            {tabConfig
-              .filter((t) => t.group === 'dalam')
-              .map((t) => {
+            <TabButton
+              active={activeTab === 'siswa'}
+              onClick={() =>
+                changeTab('siswa')
+              }
+              icon={GraduationCap}
+              label="Siswa"
+              count={filteredSiswaByYear.length}
+            />
 
-                const Icon = t.icon;
-                const active = activeTab === t.key;
-
-                return (
-                  <button
-                    key={t.key}
-                    onClick={() => changeTab(t.key)}
-                    className={`flex-1 min-w-[100px] px-3 py-2 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
-                      active
-                        ? 'bg-steel text-white shadow'
-                        : 'text-navy/60 hover:text-navy'
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-
-                    {t.label}
-
-                    <span
-                      className={`text-[10px] tabular-nums ${
-                        active
-                          ? 'text-white/80'
-                          : 'text-navy/40'
-                      }`}
-                    >
-                      {t.count}
-                    </span>
-                  </button>
-                );
-              })}
+            <TabButton
+              active={activeTab === 'guru'}
+              onClick={() =>
+                changeTab('guru')
+              }
+              icon={Users}
+              label="Guru"
+              count={filteredGuruByYear.length}
+            />
 
             <div className="w-px h-5 bg-mist mx-1 shrink-0" />
 
@@ -547,39 +749,31 @@ const filteredGuru = useMemo(() => {
               Luar
             </span>
 
-            {tabConfig
-              .filter((t) => t.group === 'luar')
-              .map((t) => {
+            <TabButton
+              active={
+                activeTab === 'perusahaan'
+              }
+              onClick={() =>
+                changeTab('perusahaan')
+              }
+              icon={Building2}
+              label="Perusahaan"
+              count={
+                filteredPerusahaanByYear.length
+              }
+            />
 
-                const Icon = t.icon;
-                const active = activeTab === t.key;
-
-                return (
-                  <button
-                    key={t.key}
-                    onClick={() => changeTab(t.key)}
-                    className={`flex-1 min-w-[100px] px-3 py-2 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
-                      active
-                        ? 'bg-steel text-white shadow'
-                        : 'text-navy/60 hover:text-navy'
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-
-                    {t.label}
-
-                    <span
-                      className={`text-[10px] tabular-nums ${
-                        active
-                          ? 'text-white/80'
-                          : 'text-navy/40'
-                      }`}
-                    >
-                      {t.count}
-                    </span>
-                  </button>
-                );
-              })}
+            <TabButton
+              active={activeTab === 'mentor'}
+              onClick={() =>
+                changeTab('mentor')
+              }
+              icon={Briefcase}
+              label="Mentor"
+              count={
+                filteredMentorByYear.length
+              }
+            />
 
           </div>
 
@@ -592,7 +786,9 @@ const filteredGuru = useMemo(() => {
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
               placeholder={
                 `Cari ${
                   activeTab === 'siswa'
@@ -609,8 +805,10 @@ const filteredGuru = useMemo(() => {
 
             {search && (
               <button
-                onClick={() => setSearch('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-navy/10 hover:bg-navy/20 flex items-center justify-center transition-colors"
+                onClick={() =>
+                  setSearch('')
+                }
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-navy/10 hover:bg-navy/20 flex items-center justify-center"
               >
                 <X className="w-3 h-3 text-navy/60" />
               </button>
@@ -622,95 +820,82 @@ const filteredGuru = useMemo(() => {
 
         {/* ===================================================
             CONTENT
-            =================================================== */}
+        =================================================== */}
 
         <div className="lg:flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5 max-h-[65vh] lg:max-h-none">
 
           {/* =================================================
               SISWA
-              ================================================= */}
+          ================================================= */}
 
           {activeTab === 'siswa' && (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
 
               {filteredSiswa.length === 0 ? (
-                <EmptyState label="siswa" search={search} />
+                <EmptyState
+                  label="siswa"
+                  search={search}
+                  year={activeYear}
+                />
               ) : (
-                filteredSiswa.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => setDetailSiswa(s)}
-                    className="p-4 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 hover:shadow-sm transition-all text-left group"
-                  >
+                filteredSiswa.map(
+                  (s: any) => (
+                    <button
+                      key={s.id}
+                      onClick={() =>
+                        setDetailSiswa(s)
+                      }
+                      className="p-4 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 hover:shadow-sm transition-all text-left"
+                    >
 
-                    <div className="flex items-center gap-3 mb-3">
+                      <div className="flex items-center gap-3 mb-3">
 
-                      <div className="w-11 h-11 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md shadow-navy/20">
-                        {getInitials(s.name)}
-                      </div>
+                        <div className="w-11 h-11 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
+                          {getInitials(s.name)}
+                        </div>
 
-                      <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0">
 
-                        <p className="text-sm font-bold text-navy truncate">
-                          {s.name}
-                        </p>
+                          <p className="text-sm font-bold text-navy truncate">
+                            {s.name}
+                          </p>
 
-                        <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
-                          {s.kelas !== '-'
-                            ? s.kelas
-                            : 'Belum ada kelas'}{' '}
-                          ·{' '}
-                          {s.perusahaan !== '-'
-                            ? s.perusahaan
-                            : 'Belum dipetakan'}
-                        </p>
+                          <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
+                            {s.kelas !== '-'
+                              ? s.kelas
+                              : 'Belum ada kelas'}
+                            {' · '}
+                            {s.perusahaan !== '-'
+                              ? s.perusahaan
+                              : 'Belum dipetakan'}
+                          </p>
 
-                      </div>
-
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-2">
-
-                      <div className="bg-white border border-mist/60 shadow-sm rounded-lg px-2 py-1.5 text-center">
-
-                        <p className="text-sm font-bold text-navy tabular-nums leading-none">
-                          {s.kehadiran}%
-                        </p>
-
-                        <p className="text-[9px] font-bold text-navy/50 uppercase tracking-wide mt-1">
-                          Hadir
-                        </p>
+                        </div>
 
                       </div>
 
-                      <div className="bg-white border border-mist/60 shadow-sm rounded-lg px-2 py-1.5 text-center">
+                      <div className="grid grid-cols-3 gap-2">
 
-                        <p className="text-sm font-bold text-navy tabular-nums leading-none">
-                          {s.logs}
-                        </p>
+                        <MiniStat
+                          label="Hadir"
+                          value={`${s.kehadiran ?? 0}%`}
+                        />
 
-                        <p className="text-[9px] font-bold text-navy/50 uppercase tracking-wide mt-1">
-                          Log
-                        </p>
+                        <MiniStat
+                          label="Log"
+                          value={s.logs ?? 0}
+                        />
 
-                      </div>
-
-                      <div className="bg-white border border-mist/60 shadow-sm rounded-lg px-2 py-1.5 text-center">
-
-                        <p className="text-sm font-bold text-navy tabular-nums leading-none">
-                          {s.berkasPct}%
-                        </p>
-
-                        <p className="text-[9px] font-bold text-navy/50 uppercase tracking-wide mt-1">
-                          Berkas
-                        </p>
+                        <MiniStat
+                          label="Berkas"
+                          value={`${s.berkasPct ?? 0}%`}
+                        />
 
                       </div>
 
-                    </div>
-
-                  </button>
-                ))
+                    </button>
+                  )
+                )
               )}
 
             </div>
@@ -718,82 +903,79 @@ const filteredGuru = useMemo(() => {
 
           {/* =================================================
               GURU
-              ================================================= */}
+          ================================================= */}
 
           {activeTab === 'guru' && (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
 
               {filteredGuru.length === 0 ? (
-                <EmptyState label="guru" search={search} />
+                <EmptyState
+                  label="guru"
+                  search={search}
+                  year={activeYear}
+                />
               ) : (
-                filteredGuru.map((g) => {
+                filteredGuru.map(
+                  (g: any) => {
 
-                  const guruStudents = getSiswaByGuru(g);
-                  const guruCompanies = getPerusahaanByGuru(g);
+                    const students =
+                      getSiswaByGuru(g);
 
-                  return (
-                    <button
-                      key={g.id}
-                      onClick={() => setDetailGuru(g)}
-                      className="p-4 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 hover:shadow-sm transition-all text-left"
-                    >
+                    const companies =
+                      getPerusahaanByGuru(g);
 
-                      <div className="flex items-center gap-3 mb-3">
+                    return (
+                      <button
+                        key={g.id}
+                        onClick={() =>
+                          setDetailGuru(g)
+                        }
+                        className="p-4 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 hover:shadow-sm transition-all text-left"
+                      >
 
-                        <div className="w-11 h-11 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md shadow-navy/20">
-                          {getInitials(g.name)}
-                        </div>
+                        <div className="flex items-center gap-3 mb-3">
 
-                        <div className="flex-1 min-w-0">
+                          <div className="w-11 h-11 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
+                            {getInitials(g.name)}
+                          </div>
 
-                          <p className="text-sm font-bold text-navy truncate">
-                            {g.name}
-                          </p>
+                          <div className="flex-1 min-w-0">
 
-                          <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
-                            {g.subject || 'Guru Pembimbing'}
-                          </p>
+                            <p className="text-sm font-bold text-navy truncate">
+                              {g.name}
+                            </p>
 
-                        </div>
+                            <p className="text-[11px] font-semibold text-navy/50 truncate">
+                              {g.subject ||
+                                'Guru Pembimbing'}
+                            </p>
 
-                        <span className="text-[10px] font-bold bg-navy text-white px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
-                          <GraduationCap className="w-3 h-3" />
-                          GURU
-                        </span>
+                          </div>
 
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-
-                        <div className="bg-white border border-mist/60 shadow-sm rounded-lg px-2 py-2 text-center">
-
-                          <p className="text-base font-bold text-navy tabular-nums leading-none">
-                            {guruStudents.length}
-                          </p>
-
-                          <p className="text-[9px] font-bold text-navy/50 uppercase tracking-wide mt-1">
-                            Siswa
-                          </p>
+                          <span className="text-[10px] font-bold bg-navy text-white px-2 py-0.5 rounded-full">
+                            GURU
+                          </span>
 
                         </div>
 
-                        <div className="bg-white border border-mist/60 shadow-sm rounded-lg px-2 py-2 text-center">
+                        <div className="grid grid-cols-2 gap-2">
 
-                          <p className="text-base font-bold text-navy tabular-nums leading-none">
-                            {guruCompanies.length}
-                          </p>
+                          <MiniStat
+                            label="Siswa"
+                            value={students.length}
+                          />
 
-                          <p className="text-[9px] font-bold text-navy/50 uppercase tracking-wide mt-1">
-                            Perusahaan
-                          </p>
+                          <MiniStat
+                            label="Perusahaan"
+                            value={companies.length}
+                          />
 
                         </div>
 
-                      </div>
-
-                    </button>
-                  );
-                })
+                      </button>
+                    );
+                  }
+                )
               )}
 
             </div>
@@ -801,135 +983,135 @@ const filteredGuru = useMemo(() => {
 
           {/* =================================================
               PERUSAHAAN
-              ================================================= */}
+          ================================================= */}
 
           {activeTab === 'perusahaan' && (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
 
               {filteredPerusahaan.length === 0 ? (
-                <EmptyState label="perusahaan" search={search} />
+                <EmptyState
+                  label="perusahaan"
+                  search={search}
+                  year={activeYear}
+                />
               ) : (
-                filteredPerusahaan.map((c) => {
+                filteredPerusahaan.map(
+                  (c: any) => {
 
-                  const count = siswaList.filter(
-                    (s) =>
-                      (s.perusahaan || '').trim().toLowerCase() ===
-                      (c.name || '').trim().toLowerCase()
-                  ).length;
+                    const count =
+                      getSiswaByPerusahaan(
+                        c.name
+                      ).length;
 
-                  const hasCoords =
-                    c.latitude != null &&
-                    c.longitude != null;
+                    const hasCoords =
+                      c.latitude != null &&
+                      c.longitude != null;
 
-                  return (
-                    <button
-                      key={c.id}
-                      onClick={() => setDetailPerusahaan(c)}
-                      className="p-4 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 hover:shadow-sm transition-all text-left group"
-                    >
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() =>
+                          setDetailPerusahaan(c)
+                        }
+                        className="p-4 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 hover:shadow-sm transition-all text-left"
+                      >
 
-                      <div className="flex items-center gap-3 mb-3">
+                        <div className="flex items-center gap-3 mb-3">
 
-                        <div className="w-11 h-11 rounded-[10px] bg-navy flex items-center justify-center shrink-0 shadow-md shadow-navy/20">
-                          <BuildingIcon className="w-5 h-5 text-white" />
-                        </div>
+                          <div className="w-11 h-11 rounded-[10px] bg-navy flex items-center justify-center shrink-0">
+                            <BuildingIcon className="w-5 h-5 text-white" />
+                          </div>
 
-                        <div className="flex-1 min-w-0">
+                          <div className="flex-1 min-w-0">
 
-                          <p className="text-sm font-bold text-navy truncate">
-                            {c.name}
-                          </p>
+                            <p className="text-sm font-bold text-navy truncate">
+                              {c.name}
+                            </p>
 
-                          <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
-                            {c.address}
-                          </p>
+                            <p className="text-[11px] font-semibold text-navy/50 truncate">
+                              {c.address}
+                            </p>
 
-                        </div>
-
-                      </div>
-
-                      <div className="space-y-1.5">
-
-                        <div className="flex justify-between items-center bg-white border border-mist/60 shadow-sm rounded-lg px-2.5 py-1.5">
-
-                          <span className="text-[11px] font-bold text-navy/60">
-                            Kuota
-                          </span>
-
-                          <span className="text-[11px] font-bold text-navy tabular-nums">
-                            {count} / {c.quota}
-                          </span>
+                          </div>
 
                         </div>
 
-                        <div className="flex justify-between items-center bg-white border border-mist/60 shadow-sm rounded-lg px-2.5 py-1.5">
+                        <div className="space-y-1.5">
 
-                          <span className="text-[11px] font-bold text-navy/60">
-                            Mentor
-                          </span>
+                          <div className="flex justify-between items-center bg-white border border-mist/60 rounded-lg px-2.5 py-1.5">
 
-                          <span className="text-[11px] font-bold text-navy truncate ml-2">
-                            {c.mentor || '-'}
-                          </span>
+                            <span className="text-[11px] font-bold text-navy/60">
+                              Kuota
+                            </span>
 
-                        </div>
-
-                        <div
-                          className={`flex justify-between items-center rounded-lg px-2.5 py-1.5 border ${
-                            hasCoords
-                              ? 'bg-steel/5 border-steel/30'
-                              : 'bg-mist/30 border-mist/60'
-                          }`}
-                        >
-
-                          <div className="flex items-center gap-1.5">
-
-                            <MapPinned
-                              className={`w-3.5 h-3.5 ${
-                                hasCoords
-                                  ? 'text-steel'
-                                  : 'text-navy/50'
-                              }`}
-                            />
-
-                            <span
-                              className={`text-[11px] font-bold ${
-                                hasCoords
-                                  ? 'text-steel'
-                                  : 'text-navy/60'
-                              }`}
-                            >
-                              {hasCoords
-                                ? 'Koordinat Aktif'
-                                : 'Belum Diatur'}
+                            <span className="text-[11px] font-bold text-navy">
+                              {count} / {c.quota}
                             </span>
 
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setPickerCompany(c);
-                            }}
-                            className={`text-[10px] font-bold px-2 py-1 rounded-md transition-colors ${
+                          <div className="flex justify-between items-center bg-white border border-mist/60 rounded-lg px-2.5 py-1.5">
+
+                            <span className="text-[11px] font-bold text-navy/60">
+                              Mentor
+                            </span>
+
+                            <span className="text-[11px] font-bold text-navy truncate ml-2">
+                              {c.mentor || '-'}
+                            </span>
+
+                          </div>
+
+                          <div
+                            className={`flex justify-between items-center rounded-lg px-2.5 py-1.5 border ${
                               hasCoords
-                                ? 'bg-white text-navy border border-mist hover:bg-mist'
-                                : 'bg-steel text-white hover:bg-steel/90'
+                                ? 'bg-steel/5 border-steel/30'
+                                : 'bg-mist/30 border-mist/60'
                             }`}
                           >
-                            {hasCoords
-                              ? 'Edit'
-                              : 'Atur Lokasi'}
-                          </button>
+
+                            <div className="flex items-center gap-1.5">
+
+                              <MapPinned
+                                className={`w-3.5 h-3.5 ${
+                                  hasCoords
+                                    ? 'text-steel'
+                                    : 'text-navy/50'
+                                }`}
+                              />
+
+                              <span className="text-[11px] font-bold text-navy/60">
+                                {hasCoords
+                                  ? 'Koordinat Aktif'
+                                  : 'Belum Diatur'}
+                              </span>
+
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+
+                                setPickerCompany(
+                                  c
+                                );
+                              }}
+                              className="text-[10px] font-bold px-2 py-1 rounded-md bg-steel text-white"
+                            >
+                              {hasCoords
+                                ? 'Edit'
+                                : 'Atur Lokasi'}
+                            </button>
+
+                          </div>
 
                         </div>
 
-                      </div>
-
-                    </button>
-                  );
-                })
+                      </button>
+                    );
+                  }
+                )
               )}
 
             </div>
@@ -937,92 +1119,84 @@ const filteredGuru = useMemo(() => {
 
           {/* =================================================
               MENTOR
-              ================================================= */}
+          ================================================= */}
 
           {activeTab === 'mentor' && (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
 
               {filteredMentor.length === 0 ? (
-                <EmptyState label="mentor" search={search} />
+                <EmptyState
+                  label="mentor"
+                  search={search}
+                  year={activeYear}
+                />
               ) : (
-                filteredMentor.map((m) => {
+                filteredMentor.map(
+                  (m: any) => {
 
-                  const mentorCompanies =
-                    getPerusahaanByMentor(m);
+                    const companies =
+                      getPerusahaanByMentor(
+                        m
+                      );
 
-                  const mentorStudents =
-                    getSiswaByMentor(m);
+                    const students =
+                      getSiswaByMentor(m);
 
-                  return (
-                    <button
-                      key={m.id}
-                      onClick={() => setDetailMentor(m)}
-                      className="p-4 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 hover:shadow-sm transition-all text-left"
-                    >
+                    return (
+                      <button
+                        key={m.id}
+                        onClick={() =>
+                          setDetailMentor(m)
+                        }
+                        className="p-4 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 hover:shadow-sm transition-all text-left"
+                      >
 
-                      <div className="flex items-center gap-3 mb-3">
+                        <div className="flex items-center gap-3 mb-3">
 
-                        <div className="w-11 h-11 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md shadow-navy/20">
-                          {getInitials(m.name)}
-                        </div>
+                          <div className="w-11 h-11 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0">
+                            {getInitials(m.name)}
+                          </div>
 
-                        <div className="flex-1 min-w-0">
+                          <div className="flex-1 min-w-0">
 
-                          <p className="text-sm font-bold text-navy truncate">
-                            {m.name}
-                          </p>
+                            <p className="text-sm font-bold text-navy truncate">
+                              {m.name}
+                            </p>
 
-                          <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
-                            {m.role || 'Mentor'}
-                          </p>
+                            <p className="text-[11px] font-semibold text-navy/50 truncate">
+                              {m.role || 'Mentor'}
+                            </p>
 
-                        </div>
+                          </div>
 
-                        <span className="text-[10px] font-bold bg-navy text-white px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
-                          <Briefcase className="w-3 h-3" />
-                          MENTOR
-                        </span>
-
-                      </div>
-
-                      <div className="bg-white border border-mist/60 shadow-sm rounded-lg p-2.5 space-y-1.5">
-
-                        <div className="flex items-center justify-between text-[11px]">
-
-                          <span className="font-bold text-navy/60 flex items-center gap-1.5">
-                            <BuildingIcon className="w-3.5 h-3.5" />
-                            Perusahaan
-                          </span>
-
-                          <span className="font-bold text-navy truncate ml-2">
-                            {mentorCompanies.length > 0
-                              ? mentorCompanies.length
-                              : 0}{' '}
-                            perusahaan
+                          <span className="text-[10px] font-bold bg-navy text-white px-2 py-0.5 rounded-full">
+                            MENTOR
                           </span>
 
                         </div>
 
-                        <div className="h-px bg-mist" />
+                        <div className="grid grid-cols-2 gap-2">
 
-                        <div className="flex items-center justify-between text-[11px]">
+                          <MiniStat
+                            label="Perusahaan"
+                            value={
+                              companies.length
+                            }
+                          />
 
-                          <span className="font-bold text-navy/60 flex items-center gap-1.5">
-                            <GraduationCap className="w-3.5 h-3.5" />
-                            Bimbingan
-                          </span>
-
-                          <span className="font-bold text-navy">
-                            {mentorStudents.length} siswa
-                          </span>
+                          <MiniStat
+                            label="Siswa"
+                            value={
+                              students.length
+                            }
+                          />
 
                         </div>
 
-                      </div>
-
-                    </button>
-                  );
-                })
+                      </button>
+                    );
+                  }
+                )
               )}
 
             </div>
@@ -1034,15 +1208,18 @@ const filteredGuru = useMemo(() => {
 
       {/* =====================================================
           DETAIL SISWA
-          ===================================================== */}
+      ===================================================== */}
 
       {detailSiswa && (
         <DetailModal
-          onClose={() => setDetailSiswa(null)}
-          avatarBg="bg-navy"
-          avatarContent={getInitials(detailSiswa.name)}
+          onClose={() =>
+            setDetailSiswa(null)
+          }
           title={detailSiswa.name}
           subtitle={`${detailSiswa.kelas} · ${detailSiswa.perusahaan}`}
+          avatarContent={getInitials(
+            detailSiswa.name
+          )}
           icon={GraduationCap}
         >
 
@@ -1050,46 +1227,43 @@ const filteredGuru = useMemo(() => {
 
             <MiniStat
               label="Kehadiran"
-              value={`${detailSiswa.kehadiran}%`}
+              value={`${detailSiswa.kehadiran ?? 0}%`}
             />
 
             <MiniStat
               label="Logbook"
-              value={detailSiswa.logs}
+              value={detailSiswa.logs ?? 0}
             />
 
             <MiniStat
               label="Berkas"
-              value={`${detailSiswa.berkasPct}%`}
+              value={`${detailSiswa.berkasPct ?? 0}%`}
             />
 
           </div>
 
-          <h4 className="text-[11px] font-bold text-navy/50 uppercase tracking-wide mb-2">
-            Info Pembimbing
-          </h4>
-
-          <div className="grid grid-cols-2 gap-2 mb-5">
+          <div className="grid grid-cols-2 gap-2">
 
             <div className="bg-mist/30 border border-mist/60 rounded-2xl p-3">
 
-              <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">
+              <p className="text-[10px] font-bold text-navy/50 uppercase">
                 Guru Pembimbing
               </p>
 
-              <p className="text-sm font-bold text-navy mt-0.5 truncate">
-                {detailSiswa.guruPembimbing || '-'}
+              <p className="text-sm font-bold text-navy mt-1">
+                {detailSiswa.guruPembimbing ||
+                  '-'}
               </p>
 
             </div>
 
             <div className="bg-mist/30 border border-mist/60 rounded-2xl p-3">
 
-              <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">
+              <p className="text-[10px] font-bold text-navy/50 uppercase">
                 Mentor
               </p>
 
-              <p className="text-sm font-bold text-navy mt-0.5 truncate">
+              <p className="text-sm font-bold text-navy mt-1">
                 {detailSiswa.mentor || '-'}
               </p>
 
@@ -1097,30 +1271,23 @@ const filteredGuru = useMemo(() => {
 
           </div>
 
-          <h4 className="text-[11px] font-bold text-navy/50 uppercase tracking-wide mb-2">
-            Logbook Terbaru
-          </h4>
-
-          <LogPreviewList
-            logs={getSiswaLogs(detailSiswa.name)}
-          />
-
         </DetailModal>
       )}
 
       {/* =====================================================
           DETAIL PERUSAHAAN
-          ===================================================== */}
+      ===================================================== */}
 
       {detailPerusahaan && (
         <DetailModal
-          onClose={() => setDetailPerusahaan(null)}
-          avatarBg="bg-navy"
-          avatarContent={
-            <BuildingIcon className="w-5 h-5 text-white" />
+          onClose={() =>
+            setDetailPerusahaan(null)
           }
           title={detailPerusahaan.name}
           subtitle={detailPerusahaan.address}
+          avatarContent={
+            <BuildingIcon className="w-5 h-5 text-white" />
+          }
           icon={Building2}
         >
 
@@ -1128,19 +1295,30 @@ const filteredGuru = useMemo(() => {
 
             <MiniStat
               label="Kuota"
-              value={detailPerusahaan.quota}
+              value={detailPerusahaan.quota ?? 0}
             />
 
             <MiniStat
               label="Terisi"
-              value={detailPerusahaan.filled}
+              value={
+                getSiswaByPerusahaan(
+                  detailPerusahaan.name
+                ).length
+              }
             />
 
             <MiniStat
               label="Sisa"
               value={
-                detailPerusahaan.quota -
-                detailPerusahaan.filled
+                Math.max(
+                  0,
+                  Number(
+                    detailPerusahaan.quota || 0
+                  ) -
+                    getSiswaByPerusahaan(
+                      detailPerusahaan.name
+                    ).length
+                )
               }
             />
 
@@ -1150,72 +1328,47 @@ const filteredGuru = useMemo(() => {
 
             <div className="bg-mist/30 border border-mist/60 rounded-2xl p-3">
 
-              <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">
-                Mentor DUDI
+              <p className="text-[10px] font-bold text-navy/50 uppercase">
+                Mentor
               </p>
 
-              <p className="text-sm font-bold text-navy mt-0.5 truncate">
-                {detailPerusahaan.mentor || '-'}
+              <p className="text-sm font-bold text-navy mt-1">
+                {detailPerusahaan.mentor ||
+                  '-'}
               </p>
 
             </div>
 
             <div className="bg-mist/30 border border-mist/60 rounded-2xl p-3">
 
-              <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">
+              <p className="text-[10px] font-bold text-navy/50 uppercase">
                 Radius
               </p>
 
-              <p className="text-sm font-bold text-navy mt-0.5 tabular-nums">
-                {detailPerusahaan.radiusMeters || 500}m
+              <p className="text-sm font-bold text-navy mt-1">
+                {detailPerusahaan.radiusMeters ??
+                  500}
+                m
               </p>
 
             </div>
 
           </div>
 
-          {detailPerusahaan.latitude != null &&
-            detailPerusahaan.longitude != null && (
-              <div className="bg-mist/30 border border-mist/60 rounded-2xl p-3 mb-5 flex items-center gap-2">
-
-                <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center shrink-0">
-                  <MapPin className="w-4 h-4 text-white" />
-                </div>
-
-                <p className="text-[11px] font-bold text-navy/70 tabular-nums flex-1">
-                  {Number(
-                    detailPerusahaan.latitude
-                  ).toFixed(4)}
-                  ,{' '}
-                  {Number(
-                    detailPerusahaan.longitude
-                  ).toFixed(4)}
-                </p>
-
-              </div>
-            )}
-
           <button
             type="button"
-            onClick={() => setPickerCompany(detailPerusahaan)}
-            className={`w-full mb-5 flex items-center justify-center gap-2 py-3 rounded-[24px] font-bold text-sm transition-all ${
-              detailPerusahaan.latitude != null &&
-              detailPerusahaan.longitude != null
-                ? 'bg-white border border-mist text-navy hover:bg-mist/50'
-                : 'bg-steel text-white hover:bg-steel/90 shadow-md shadow-steel/25'
-            }`}
+            onClick={() =>
+              setPickerCompany(
+                detailPerusahaan
+              )
+            }
+            className="w-full mb-5 flex items-center justify-center gap-2 py-3 rounded-[24px] font-bold text-sm bg-steel text-white"
           >
-
             <MapPinned className="w-4 h-4" />
-
-            {detailPerusahaan.latitude != null &&
-            detailPerusahaan.longitude != null
-              ? 'Edit Lokasi Geofence'
-              : 'Atur Lokasi Geofence'}
-
+            Atur Lokasi Geofence
           </button>
 
-          <h4 className="text-[11px] font-bold text-navy/50 uppercase tracking-wide mb-2">
+          <h4 className="text-[11px] font-bold text-navy/50 uppercase mb-2">
             Siswa yang Magang
           </h4>
 
@@ -1230,277 +1383,121 @@ const filteredGuru = useMemo(() => {
 
       {/* =====================================================
           DETAIL GURU
-          ===================================================== */}
+      ===================================================== */}
 
       {detailGuru && (
         <DetailModal
-          onClose={() => setDetailGuru(null)}
-          avatarBg="bg-navy"
-          avatarContent={getInitials(detailGuru.name)}
+          onClose={() =>
+            setDetailGuru(null)
+          }
           title={detailGuru.name}
           subtitle={
-            detailGuru.subject || 'Guru Pembimbing'
+            detailGuru.subject ||
+            'Guru Pembimbing'
           }
+          avatarContent={getInitials(
+            detailGuru.name
+          )}
           icon={Users}
-          badge={{
-            label: 'GURU',
-            icon: GraduationCap,
-            bg: 'bg-white',
-            text: 'text-navy',
-          }}
         >
 
-          {(() => {
+          <div className="grid grid-cols-2 gap-2 mb-5">
 
-            const guruStudents =
-              getSiswaByGuru(detailGuru);
+            <MiniStat
+              label="Siswa"
+              value={
+                getSiswaByGuru(detailGuru)
+                  .length
+              }
+            />
 
-            const guruCompanies =
-              getPerusahaanByGuru(detailGuru);
+            <MiniStat
+              label="Perusahaan"
+              value={
+                getPerusahaanByGuru(
+                  detailGuru
+                ).length
+              }
+            />
 
-            return (
-              <>
-                <div className="grid grid-cols-2 gap-2 mb-5">
+          </div>
 
-                  <MiniStat
-                    label="Siswa Bimbingan"
-                    value={guruStudents.length}
-                  />
+          <h4 className="text-[11px] font-bold text-navy/50 uppercase mb-2">
+            Daftar Siswa
+          </h4>
 
-                  <MiniStat
-                    label="Perusahaan"
-                    value={guruCompanies.length}
-                  />
-
-                </div>
-
-                {/* PERUSAHAAN GURU */}
-
-                <h4 className="text-[11px] font-bold text-navy/50 uppercase tracking-wide mb-2">
-                  Perusahaan yang Dibimbing
-                </h4>
-
-                {guruCompanies.length === 0 ? (
-                  <div className="bg-mist/30 border border-mist/60 rounded-2xl p-5 text-center mb-5">
-
-                    <BuildingIcon className="w-6 h-6 text-navy/30 mx-auto mb-2" />
-
-                    <p className="text-xs font-semibold text-navy/50">
-                      Belum ada perusahaan yang terhubung
-                      dengan guru ini.
-                    </p>
-
-                    <p className="text-[10px] text-navy/40 mt-1">
-                      Perusahaan akan muncul berdasarkan
-                      penempatan siswa di database.
-                    </p>
-
-                  </div>
-                ) : (
-                  <div className="space-y-2 mb-5">
-
-                    {guruCompanies.map((company: any) => {
-
-                      const companyStudents =
-                        getSiswaByPerusahaan(
-                          company.name
-                        );
-
-                      return (
-                        <div
-                          key={company.id}
-                          className="p-3 rounded-2xl border border-mist/60 bg-white"
-                        >
-
-                          <div className="flex items-center gap-3">
-
-                            <div className="w-9 h-9 rounded-[10px] bg-navy flex items-center justify-center shrink-0">
-                              <BuildingIcon className="w-4 h-4 text-white" />
-                            </div>
-
-                            <div className="flex-1 min-w-0">
-
-                              <p className="text-[13px] font-bold text-navy truncate">
-                                {company.name}
-                              </p>
-
-                              <p className="text-[10px] font-semibold text-navy/50 truncate">
-                                {company.address || 'Alamat belum tersedia'}
-                              </p>
-
-                            </div>
-
-                            <span className="text-[10px] font-bold bg-steel text-white px-2 py-1 rounded-full shrink-0">
-                              {companyStudents.length} siswa
-                            </span>
-
-                          </div>
-
-                        </div>
-                      );
-                    })}
-
-                  </div>
-                )}
-
-                {/* SISWA GURU */}
-
-                <h4 className="text-[11px] font-bold text-navy/50 uppercase tracking-wide mb-2">
-                  Daftar Siswa Bimbingan
-                </h4>
-
-                <SiswaPreviewList list={guruStudents} />
-
-              </>
-            );
-
-          })()}
+          <SiswaPreviewList
+            list={getSiswaByGuru(
+              detailGuru
+            )}
+          />
 
         </DetailModal>
       )}
 
       {/* =====================================================
           DETAIL MENTOR
-          ===================================================== */}
+      ===================================================== */}
 
       {detailMentor && (
         <DetailModal
-          onClose={() => setDetailMentor(null)}
-          avatarBg="bg-navy"
-          avatarContent={getInitials(detailMentor.name)}
+          onClose={() =>
+            setDetailMentor(null)
+          }
           title={detailMentor.name}
-          subtitle={`${detailMentor.role || 'Mentor'} · ${
-            getPerusahaanByMentor(detailMentor)
-              .map((c: any) => c.name)
-              .join(', ') || 'Belum ada perusahaan'
-          }`}
+          subtitle={
+            detailMentor.role || 'Mentor'
+          }
+          avatarContent={getInitials(
+            detailMentor.name
+          )}
           icon={Briefcase}
-          badge={{
-            label: 'MENTOR',
-            icon: Briefcase,
-            bg: 'bg-white',
-            text: 'text-navy',
-          }}
         >
 
-          {(() => {
+          <div className="grid grid-cols-2 gap-2 mb-5">
 
-            const mentorCompanies =
-              getPerusahaanByMentor(detailMentor);
+            <MiniStat
+              label="Perusahaan"
+              value={
+                getPerusahaanByMentor(
+                  detailMentor
+                ).length
+              }
+            />
 
-            const mentorStudents =
-              getSiswaByMentor(detailMentor);
+            <MiniStat
+              label="Siswa"
+              value={
+                getSiswaByMentor(
+                  detailMentor
+                ).length
+              }
+            />
 
-            return (
-              <>
-                <div className="grid grid-cols-2 gap-2 mb-5">
+          </div>
 
-                  <MiniStat
-                    label="Siswa Bimbingan"
-                    value={mentorStudents.length}
-                  />
+          <h4 className="text-[11px] font-bold text-navy/50 uppercase mb-2">
+            Daftar Siswa
+          </h4>
 
-                  <MiniStat
-                    label="Perusahaan"
-                    value={mentorCompanies.length}
-                  />
-
-                </div>
-
-                {/* PERUSAHAAN MENTOR */}
-
-                <h4 className="text-[11px] font-bold text-navy/50 uppercase tracking-wide mb-2">
-                  Perusahaan yang Ditangani
-                </h4>
-
-                {mentorCompanies.length === 0 ? (
-                  <div className="bg-mist/30 border border-mist/60 rounded-2xl p-5 text-center mb-5">
-
-                    <BuildingIcon className="w-6 h-6 text-navy/30 mx-auto mb-2" />
-
-                    <p className="text-xs font-semibold text-navy/50">
-                      Belum ada perusahaan yang terhubung
-                      dengan mentor ini.
-                    </p>
-
-                    <p className="text-[10px] text-navy/40 mt-1">
-                      Hubungan perusahaan dan mentor diambil
-                      dari database.
-                    </p>
-
-                  </div>
-                ) : (
-                  <div className="space-y-2 mb-5">
-
-                    {mentorCompanies.map((company: any) => {
-
-                      const companyStudents =
-                        getSiswaByPerusahaan(
-                          company.name
-                        );
-
-                      return (
-                        <div
-                          key={company.id}
-                          className="p-3 rounded-2xl border border-mist/60 bg-white"
-                        >
-
-                          <div className="flex items-center gap-3">
-
-                            <div className="w-9 h-9 rounded-[10px] bg-navy flex items-center justify-center shrink-0">
-                              <BuildingIcon className="w-4 h-4 text-white" />
-                            </div>
-
-                            <div className="flex-1 min-w-0">
-
-                              <p className="text-[13px] font-bold text-navy truncate">
-                                {company.name}
-                              </p>
-
-                              <p className="text-[10px] font-semibold text-navy/50 truncate">
-                                {company.address || 'Alamat belum tersedia'}
-                              </p>
-
-                            </div>
-
-                            <span className="text-[10px] font-bold bg-steel text-white px-2 py-1 rounded-full shrink-0">
-                              {companyStudents.length} siswa
-                            </span>
-
-                          </div>
-
-                        </div>
-                      );
-                    })}
-
-                  </div>
-                )}
-
-                {/* SISWA MENTOR */}
-
-                <h4 className="text-[11px] font-bold text-navy/50 uppercase tracking-wide mb-2">
-                  Daftar Siswa Bimbingan
-                </h4>
-
-                <SiswaPreviewList
-                  list={mentorStudents}
-                />
-
-              </>
-            );
-
-          })()}
+          <SiswaPreviewList
+            list={getSiswaByMentor(
+              detailMentor
+            )}
+          />
 
         </DetailModal>
       )}
 
       {/* =====================================================
-          ADD DATA MODAL
-          ===================================================== */}
+          ADD DATA
+      ===================================================== */}
 
       {showAddModal && (
         <AddDataModal
-          onClose={() => setShowAddModal(false)}
+          onClose={() =>
+            setShowAddModal(false)
+          }
           activeTab={activeTab}
           addSiswa={addSiswa}
           addPerusahaan={addPerusahaan}
@@ -1509,18 +1506,24 @@ const filteredGuru = useMemo(() => {
 
       {/* =====================================================
           LOCATION PICKER
-          ===================================================== */}
+      ===================================================== */}
 
       {pickerCompany && (
         <LocationPickerModal
           companyId={pickerCompany.id}
           companyName={pickerCompany.name}
-          initialLat={pickerCompany.latitude}
-          initialLng={pickerCompany.longitude}
+          initialLat={
+            pickerCompany.latitude
+          }
+          initialLng={
+            pickerCompany.longitude
+          }
           initialRadius={
             pickerCompany.radiusMeters || 500
           }
-          onClose={() => setPickerCompany(null)}
+          onClose={() =>
+            setPickerCompany(null)
+          }
         />
       )}
 
@@ -1529,13 +1532,61 @@ const filteredGuru = useMemo(() => {
 };
 
 /* =========================================================
-   EMPTY STATE
-   ========================================================= */
+   TAB BUTTON
+========================================================= */
+
+const TabButton: React.FC<{
+  active: boolean;
+  onClick: () => void;
+  icon: React.ElementType;
+  label: string;
+  count: number;
+}> = ({
+  active,
+  onClick,
+  icon: Icon,
+  label,
+  count,
+}) => (
+  <button
+    onClick={onClick}
+    className={`flex-1 min-w-[100px] px-3 py-2 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
+      active
+        ? 'bg-steel text-white shadow'
+        : 'text-navy/60 hover:text-navy'
+    }`}
+  >
+
+    <Icon className="w-3.5 h-3.5" />
+
+    {label}
+
+    <span
+      className={`text-[10px] ${
+        active
+          ? 'text-white/80'
+          : 'text-navy/40'
+      }`}
+    >
+      {count}
+    </span>
+
+  </button>
+);
+
+/* =========================================================
+   EMPTY
+========================================================= */
 
 const EmptyState: React.FC<{
   label: string;
   search: string;
-}> = ({ label, search }) => (
+  year: string;
+}> = ({
+  label,
+  search,
+  year,
+}) => (
   <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
 
     <div className="w-14 h-14 rounded-[10px] bg-navy flex items-center justify-center mb-3">
@@ -1549,7 +1600,7 @@ const EmptyState: React.FC<{
     <p className="text-xs text-navy/50 max-w-xs">
       {search
         ? `Tidak ada ${label} yang cocok dengan "${search}"`
-        : `Belum ada data ${label}. Klik "Tambah Data" untuk menambah.`}
+        : `Belum ada data ${label} untuk tahun ajaran ${year}.`}
     </p>
 
   </div>
@@ -1557,20 +1608,23 @@ const EmptyState: React.FC<{
 
 /* =========================================================
    MINI STAT
-   ========================================================= */
+========================================================= */
 
 const MiniStat: React.FC<{
   label: string;
   value: string | number;
-}> = ({ label, value }) => (
-  <div className="bg-mist/30 border border-mist/60 rounded-2xl p-3 text-center">
+}> = ({
+  label,
+  value,
+}) => (
+  <div className="bg-white border border-mist/60 rounded-lg px-2 py-2 text-center shadow-sm">
 
-    <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">
-      {label}
+    <p className="text-sm font-bold text-navy tabular-nums leading-none">
+      {value}
     </p>
 
-    <p className="text-xl font-bold text-navy tabular-nums mt-1">
-      {value}
+    <p className="text-[9px] font-bold text-navy/50 uppercase tracking-wide mt-1">
+      {label}
     </p>
 
   </div>
@@ -1578,77 +1632,43 @@ const MiniStat: React.FC<{
 
 /* =========================================================
    DETAIL MODAL
-   ========================================================= */
+========================================================= */
 
 interface DetailModalProps {
   onClose: () => void;
-  avatarBg: string;
-  avatarContent: React.ReactNode;
   title: string;
   subtitle: string;
+  avatarContent: React.ReactNode;
   icon: React.ElementType;
-  badge?: {
-    label: string;
-    icon: React.ElementType;
-    bg: string;
-    text: string;
-  };
   children: React.ReactNode;
 }
 
-const DetailModal: React.FC<DetailModalProps> = ({
+const DetailModal: React.FC<
+  DetailModalProps
+> = ({
   onClose,
-  avatarBg,
-  avatarContent,
   title,
   subtitle,
-  badge,
+  avatarContent,
   children,
 }) => (
-  <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 sm:p-4 bg-navy/50 backdrop-blur-md animate-in fade-in duration-200">
+  <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 sm:p-4 bg-navy/50 backdrop-blur-md">
 
-    <div className="bg-white rounded-t-[24px] sm:rounded-[24px] max-w-2xl w-full max-h-[90vh] shadow-2xl flex flex-col overflow-hidden border border-mist/60">
-
-      {/* HEADER */}
+    <div className="bg-white rounded-t-[24px] sm:rounded-[24px] max-w-2xl w-full max-h-[90vh] shadow-2xl flex flex-col overflow-hidden">
 
       <div className="bg-navy p-4 sm:p-5 flex items-center justify-between shrink-0">
 
         <div className="flex items-center gap-3 min-w-0">
 
-          <div
-            className={`w-12 h-12 rounded-[10px] ${
-              avatarBg === 'bg-navy'
-                ? 'bg-white/15 text-white'
-                : 'bg-white text-steel'
-            } flex items-center justify-center shrink-0`}
-          >
-            {typeof avatarContent === 'string' ? (
-              <span className="font-bold text-base">
-                {avatarContent}
-              </span>
-            ) : (
-              avatarContent
-            )}
+          <div className="w-12 h-12 rounded-[10px] bg-white/15 text-white flex items-center justify-center shrink-0">
+            {avatarContent}
           </div>
 
           <div className="min-w-0">
 
-            <div className="flex items-center gap-2 flex-wrap">
-
-              <h3 className="text-lg font-bold text-white truncate">
-                {title}
-              </h3>
-
-              {badge && (
-                <span
-                  className={`text-[10px] font-bold ${badge.bg} ${badge.text} px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0`}
-                >
-                  <badge.icon className="w-3 h-3" />
-                  {badge.label}
-                </span>
-              )}
-
-            </div>
+            <h3 className="text-lg font-bold text-white truncate">
+              {title}
+            </h3>
 
             <p className="text-[12px] font-semibold text-white/60 truncate mt-0.5">
               {subtitle}
@@ -1660,14 +1680,12 @@ const DetailModal: React.FC<DetailModalProps> = ({
 
         <button
           onClick={onClose}
-          className="w-9 h-9 rounded-[10px] bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors shrink-0"
+          className="w-9 h-9 rounded-[10px] bg-white/10 hover:bg-white/20 flex items-center justify-center text-white"
         >
           <X className="w-4 h-4" />
         </button>
 
       </div>
-
-      {/* BODY */}
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-5">
         {children}
@@ -1679,8 +1697,8 @@ const DetailModal: React.FC<DetailModalProps> = ({
 );
 
 /* =========================================================
-   SISWA PREVIEW LIST
-   ========================================================= */
+   SISWA PREVIEW
+========================================================= */
 
 const SiswaPreviewList: React.FC<{
   list: any[];
@@ -1691,7 +1709,7 @@ const SiswaPreviewList: React.FC<{
       <div className="bg-mist/30 border border-mist/60 rounded-2xl p-5 text-center">
 
         <p className="text-xs font-semibold text-navy/50">
-          Belum ada siswa yang terdaftar.
+          Belum ada siswa.
         </p>
 
       </div>
@@ -1701,7 +1719,7 @@ const SiswaPreviewList: React.FC<{
   return (
     <div className="space-y-2">
 
-      {list.map((s) => (
+      {list.map((s: any) => (
         <div
           key={s.id}
           className="p-2.5 rounded-2xl border border-mist/60 bg-white flex items-center gap-3"
@@ -1718,12 +1736,13 @@ const SiswaPreviewList: React.FC<{
             </p>
 
             <p className="text-[11px] font-semibold text-navy/50 truncate">
-              {s.kelas || '-'} · {s.perusahaan || '-'}
+              {s.kelas || '-'} ·{' '}
+              {s.perusahaan || '-'}
             </p>
 
           </div>
 
-          <span className="text-[10px] font-bold bg-steel text-white shadow-sm shadow-steel/30 px-2.5 py-1 rounded-full tabular-nums shrink-0">
+          <span className="text-[10px] font-bold bg-steel text-white px-2.5 py-1 rounded-full">
             {s.kehadiran ?? 0}%
           </span>
 
@@ -1736,7 +1755,7 @@ const SiswaPreviewList: React.FC<{
 
 /* =========================================================
    LOG PREVIEW
-   ========================================================= */
+========================================================= */
 
 const LogPreviewList: React.FC<{
   logs: any[];
@@ -1747,67 +1766,36 @@ const LogPreviewList: React.FC<{
       <div className="bg-mist/30 border border-mist/60 rounded-2xl p-5 text-center">
 
         <p className="text-xs font-semibold text-navy/50">
-          Belum ada logbook tercatat.
+          Belum ada logbook.
         </p>
 
       </div>
     );
   }
 
-  const statusPill = (s: string) =>
-    s === 'approved'
-      ? 'bg-steel text-white shadow-sm shadow-steel/30'
-      : s === 'revision'
-      ? 'bg-navy text-white'
-      : 'bg-white text-navy/70 border border-mist/60 shadow-sm';
-
-  const statusLabel = (s: string) =>
-    s === 'approved'
-      ? 'Disetujui'
-      : s === 'revision'
-      ? 'Revisi'
-      : 'Menunggu';
-
-  const StatusIcon = (s: string) => {
-
-    if (s === 'approved') {
-      return <CheckCircle2 className="w-3 h-3" />;
-    }
-
-    if (s === 'revision') {
-      return <X className="w-3 h-3" />;
-    }
-
-    return <Clock className="w-3 h-3" />;
-  };
-
   return (
     <div className="space-y-2">
 
-      {logs.map((l) => (
+      {logs.map((l: any) => (
         <div
           key={l.id}
           className="p-3 rounded-2xl border border-mist/60 bg-white"
         >
 
-          <div className="flex items-center justify-between gap-2 mb-1">
+          <div className="flex items-center justify-between mb-1">
 
-            <span className="text-[10px] font-bold text-navy/40 uppercase tracking-wide">
+            <span className="text-[10px] font-bold text-navy/40 uppercase">
               {l.date}
             </span>
 
-            <span
-              className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${statusPill(
-                l.status
-              )}`}
-            >
-              {StatusIcon(l.status)}
-              {statusLabel(l.status)}
+            <span className="text-[10px] font-bold bg-steel text-white px-2 py-0.5 rounded-full flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3" />
+              {l.status}
             </span>
 
           </div>
 
-          <p className="text-sm font-bold text-navy line-clamp-2">
+          <p className="text-sm font-bold text-navy">
             {l.title}
           </p>
 
@@ -1824,7 +1812,7 @@ const LogPreviewList: React.FC<{
 
 /* =========================================================
    ADD DATA MODAL
-   ========================================================= */
+========================================================= */
 
 interface AddDataModalProps {
   onClose: () => void;
@@ -1833,7 +1821,9 @@ interface AddDataModalProps {
   addPerusahaan: any;
 }
 
-const AddDataModal: React.FC<AddDataModalProps> = ({
+const AddDataModal: React.FC<
+  AddDataModalProps
+> = ({
   onClose,
   activeTab,
   addSiswa,
@@ -1844,22 +1834,20 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
     guruList,
     mentorList,
     perusahaanList,
+    selectedAcademicYearId,
+    academicYears,
   } = useApp();
 
   const [formTab, setFormTab] =
     useState<TabKey>(activeTab);
 
-  const [formSiswa, setFormSiswa] = useState({
-    name: '',
-    kelas: '',
-    guruPembimbing: '',
-    perusahaan: '',
-  });
-
-  const [formGuru, setFormGuru] = useState({
-    name: '',
-    subject: '',
-  });
+  const [formSiswa, setFormSiswa] =
+    useState({
+      name: '',
+      kelas: '',
+      guruPembimbing: '',
+      perusahaan: '',
+    });
 
   const [formPerusahaan, setFormPerusahaan] =
     useState({
@@ -1869,12 +1857,16 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
       mentor: '',
     });
 
-  const [formMentor, setFormMentor] =
-    useState({
-      name: '',
-      role: '',
-      perusahaan: '',
-    });
+  const selectedYearName =
+    academicYears.find(
+      (year: any) =>
+        Number(year.id) ===
+        Number(selectedAcademicYearId)
+    )?.name || '-';
+
+  /* =========================================================
+     SUBMIT
+  ========================================================= */
 
   const handleSubmit = async (
     e: React.FormEvent
@@ -1882,46 +1874,78 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
 
     e.preventDefault();
 
+    if (!selectedAcademicYearId) {
+      alert(
+        'Pilih tahun ajaran terlebih dahulu.'
+      );
+      return;
+    }
+
     try {
+
+      /* =====================================================
+         SISWA
+      ===================================================== */
 
       if (formTab === 'siswa') {
 
         await addSiswa({
           name: formSiswa.name,
-          kelas: formSiswa.kelas || '-',
+          kelas:
+            formSiswa.kelas || '-',
           perusahaan:
             formSiswa.perusahaan || '-',
           guruPembimbing:
             formSiswa.guruPembimbing || '-',
           mentor: '-',
-          academicYear: '2025/2026',
+
+          // PENTING
+          academicYearId:
+            selectedAcademicYearId,
+
+          // fallback untuk kode lama
+          academicYear:
+            selectedYearName,
         });
 
-      } else if (formTab === 'perusahaan') {
+      }
+
+      /* =====================================================
+         PERUSAHAAN
+      ===================================================== */
+
+      else if (
+        formTab === 'perusahaan'
+      ) {
 
         await addPerusahaan({
           name: formPerusahaan.name,
-          address: formPerusahaan.address,
-          quota: Number(formPerusahaan.quota),
-          mentor: formPerusahaan.mentor,
+          address:
+            formPerusahaan.address,
+          quota: Number(
+            formPerusahaan.quota
+          ),
+          mentor:
+            formPerusahaan.mentor,
+
+          // PENTING
+          academicYearId:
+            selectedAcademicYearId,
         });
-
-      } else {
-
-        console.warn(
-          'Tambah guru/mentor belum diimplementasi di backend'
-        );
 
       }
 
       onClose();
 
-    } catch (err) {
+    } catch (error) {
 
-      console.error(err);
+      console.error(
+        'Gagal menambah data:',
+        error
+      );
 
       alert(
-        'Gagal menambah data. Pastikan backend support endpoint ini.'
+        'Gagal menambahkan data. Periksa koneksi backend.'
       );
 
     }
@@ -1929,20 +1953,22 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 sm:p-6 bg-navy/50 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 sm:p-6 bg-navy/50 backdrop-blur-md">
 
-      <div className="bg-white rounded-t-[24px] sm:rounded-[24px] max-w-2xl w-full max-h-[90vh] shadow-2xl flex flex-col overflow-hidden border border-mist/60">
+      <div className="bg-white rounded-t-[24px] sm:rounded-[24px] max-w-2xl w-full max-h-[90vh] shadow-2xl flex flex-col overflow-hidden">
 
         {/* HEADER */}
 
-        <div className="p-4 sm:p-5 border-b border-mist/60 shrink-0">
+        <div className="p-4 sm:p-5 border-b border-mist/60">
 
           <div className="flex items-center justify-between mb-4">
 
             <div className="flex items-center gap-3">
 
               <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center">
+
                 <UserPlus className="w-4 h-4 text-white" />
+
               </div>
 
               <div>
@@ -1951,8 +1977,8 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
                   Tambah Data Baru
                 </h3>
 
-                <p className="text-[12px] font-semibold text-navy/60 mt-0.5">
-                  Pilih tipe data yang akan ditambah
+                <p className="text-[12px] font-semibold text-steel">
+                  Tahun Ajaran {selectedYearName}
                 </p>
 
               </div>
@@ -1961,9 +1987,9 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
 
             <button
               onClick={onClose}
-              className="w-9 h-9 rounded-[10px] bg-mist/60 hover:bg-mist flex items-center justify-center text-navy/60 transition-colors shrink-0"
+              className="w-9 h-9 rounded-[10px] bg-mist/60 hover:bg-mist flex items-center justify-center"
             >
-              <X className="w-4 h-4" />
+              <X className="w-4 h-4 text-navy/60" />
             </button>
 
           </div>
@@ -1977,24 +2003,13 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
                 icon: UserPlus,
               },
               {
-                key: 'guru',
-                label: 'Guru',
-                icon: UserCog,
-              },
-              {
                 key: 'perusahaan',
                 label: 'Perusahaan',
                 icon: BuildingIcon,
               },
-              {
-                key: 'mentor',
-                label: 'Mentor',
-                icon: Briefcase,
-              },
             ].map((t: any) => {
 
               const Icon = t.icon;
-              const active = formTab === t.key;
 
               return (
                 <button
@@ -2003,10 +2018,10 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
                   onClick={() =>
                     setFormTab(t.key)
                   }
-                  className={`flex-1 px-3 py-2 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                    active
+                  className={`flex-1 px-3 py-2 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 ${
+                    formTab === t.key
                       ? 'bg-steel text-white shadow'
-                      : 'text-navy/60 hover:text-navy'
+                      : 'text-navy/60'
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5" />
@@ -2031,9 +2046,12 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
 
           {formTab === 'siswa' && (
             <>
+
               <FormInput
                 label="Nama Lengkap"
-                value={formSiswa.name}
+                value={
+                  formSiswa.name
+                }
                 onChange={(v) =>
                   setFormSiswa({
                     ...formSiswa,
@@ -2046,19 +2064,23 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
 
               <FormInput
                 label="Kelas"
-                value={formSiswa.kelas}
+                value={
+                  formSiswa.kelas
+                }
                 onChange={(v) =>
                   setFormSiswa({
                     ...formSiswa,
                     kelas: v,
                   })
                 }
-                placeholder="Contoh: XII RPL 1"
+                placeholder="Contoh: XII RPL 2"
               />
 
               <FormSelect
                 label="Guru Pembimbing"
-                value={formSiswa.guruPembimbing}
+                value={
+                  formSiswa.guruPembimbing
+                }
                 onChange={(v) =>
                   setFormSiswa({
                     ...formSiswa,
@@ -2066,13 +2088,15 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
                   })
                 }
                 options={guruList.map(
-                  (g) => g.name
+                  (g: any) => g.name
                 )}
               />
 
               <FormSelect
-                label="Tempat PKL (Perusahaan)"
-                value={formSiswa.perusahaan}
+                label="Perusahaan"
+                value={
+                  formSiswa.perusahaan
+                }
                 onChange={(v) =>
                   setFormSiswa({
                     ...formSiswa,
@@ -2080,40 +2104,10 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
                   })
                 }
                 options={perusahaanList.map(
-                  (c) => c.name
+                  (c: any) => c.name
                 )}
               />
-            </>
-          )}
 
-          {/* GURU */}
-
-          {formTab === 'guru' && (
-            <>
-              <FormInput
-                label="Nama Lengkap"
-                value={formGuru.name}
-                onChange={(v) =>
-                  setFormGuru({
-                    ...formGuru,
-                    name: v,
-                  })
-                }
-                required
-                placeholder="Nama guru"
-              />
-
-              <FormInput
-                label="Mata Pelajaran / Bidang"
-                value={formGuru.subject}
-                onChange={(v) =>
-                  setFormGuru({
-                    ...formGuru,
-                    subject: v,
-                  })
-                }
-                placeholder="Contoh: Produktif RPL"
-              />
             </>
           )}
 
@@ -2121,9 +2115,12 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
 
           {formTab === 'perusahaan' && (
             <>
+
               <FormInput
                 label="Nama Perusahaan"
-                value={formPerusahaan.name}
+                value={
+                  formPerusahaan.name
+                }
                 onChange={(v) =>
                   setFormPerusahaan({
                     ...formPerusahaan,
@@ -2131,12 +2128,14 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
                   })
                 }
                 required
-                placeholder="Contoh: UPTD Tikomdik"
+                placeholder="Nama perusahaan"
               />
 
               <FormInput
                 label="Alamat"
-                value={formPerusahaan.address}
+                value={
+                  formPerusahaan.address
+                }
                 onChange={(v) =>
                   setFormPerusahaan({
                     ...formPerusahaan,
@@ -2144,24 +2143,29 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
                   })
                 }
                 required
-                placeholder="Alamat lengkap"
+                placeholder="Alamat perusahaan"
               />
 
               <FormInput
                 label="Kuota Siswa"
-                value={formPerusahaan.quota}
+                type="number"
+                value={
+                  formPerusahaan.quota
+                }
                 onChange={(v) =>
                   setFormPerusahaan({
                     ...formPerusahaan,
-                    quota: Number(v) || 0,
+                    quota:
+                      Number(v) || 0,
                   })
                 }
-                type="number"
               />
 
               <FormSelect
                 label="Mentor DUDI"
-                value={formPerusahaan.mentor}
+                value={
+                  formPerusahaan.mentor
+                }
                 onChange={(v) =>
                   setFormPerusahaan({
                     ...formPerusahaan,
@@ -2169,83 +2173,23 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
                   })
                 }
                 options={mentorList.map(
-                  (m) => m.name
+                  (m: any) => m.name
                 )}
               />
+
             </>
-          )}
-
-          {/* MENTOR */}
-
-          {formTab === 'mentor' && (
-            <>
-              <FormInput
-                label="Nama Lengkap"
-                value={formMentor.name}
-                onChange={(v) =>
-                  setFormMentor({
-                    ...formMentor,
-                    name: v,
-                  })
-                }
-                required
-                placeholder="Nama mentor"
-              />
-
-              <FormInput
-                label="Role / Jabatan"
-                value={formMentor.role}
-                onChange={(v) =>
-                  setFormMentor({
-                    ...formMentor,
-                    role: v,
-                  })
-                }
-                placeholder="Contoh: Kepala Unit"
-              />
-
-              <FormSelect
-                label="Perusahaan"
-                value={formMentor.perusahaan}
-                onChange={(v) =>
-                  setFormMentor({
-                    ...formMentor,
-                    perusahaan: v,
-                  })
-                }
-                options={perusahaanList.map(
-                  (c) => c.name
-                )}
-              />
-            </>
-          )}
-
-          {(formTab === 'guru' ||
-            formTab === 'mentor') && (
-            <div className="bg-mist/30 border border-mist/60 rounded-2xl p-3 flex items-start gap-2 mt-2">
-
-              <ShieldCheck className="w-4 h-4 text-steel shrink-0 mt-0.5" />
-
-              <p className="text-[11px] font-medium text-navy/70 leading-relaxed">
-                Endpoint untuk menambah guru/mentor
-                belum diimplementasi di backend.
-                Data guru dan mentor saat ini
-                berasal dari database/seed.
-              </p>
-
-            </div>
           )}
 
         </form>
 
         {/* FOOTER */}
 
-        <div className="p-4 sm:p-5 pt-3 border-t border-mist/60 flex gap-2 shrink-0">
+        <div className="p-4 sm:p-5 pt-3 border-t border-mist/60 flex gap-2">
 
           <button
             onClick={onClose}
             type="button"
-            className="flex-1 bg-mist/60 text-navy/70 font-bold text-sm py-3 rounded-[24px] hover:bg-mist transition-colors"
+            className="flex-1 bg-mist/60 text-navy/70 font-bold text-sm py-3 rounded-[24px]"
           >
             Batal
           </button>
@@ -2253,10 +2197,13 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
           <button
             type="submit"
             onClick={handleSubmit}
-            className="flex-1 bg-steel text-white font-bold text-sm py-3 rounded-[24px] hover:bg-steel/90 shadow-lg shadow-steel/25 transition-all flex items-center justify-center gap-1.5"
+            className="flex-1 bg-steel text-white font-bold text-sm py-3 rounded-[24px] shadow-lg shadow-steel/25 flex items-center justify-center gap-1.5"
           >
+
             <Plus className="w-4 h-4" />
+
             Simpan Data
+
           </button>
 
         </div>
@@ -2269,7 +2216,7 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
 
 /* =========================================================
    FORM INPUT
-   ========================================================= */
+========================================================= */
 
 const FormInput: React.FC<{
   label: string;
@@ -2300,7 +2247,7 @@ const FormInput: React.FC<{
       }
       required={required}
       placeholder={placeholder}
-      className="w-full bg-mist/30 border border-mist rounded-[24px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
+      className="w-full bg-mist/30 border border-mist rounded-[24px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white"
     />
 
   </div>
@@ -2308,7 +2255,7 @@ const FormInput: React.FC<{
 
 /* =========================================================
    FORM SELECT
-   ========================================================= */
+========================================================= */
 
 const FormSelect: React.FC<{
   label: string;
@@ -2332,16 +2279,19 @@ const FormSelect: React.FC<{
       onChange={(e) =>
         onChange(e.target.value)
       }
-      className="w-full bg-mist/30 border border-mist rounded-[24px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
+      className="w-full bg-mist/30 border border-mist rounded-[24px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white"
     >
 
       <option value="">
         — Pilih —
       </option>
 
-      {options.map((o) => (
-        <option key={o} value={o}>
-          {o}
+      {options.map((option) => (
+        <option
+          key={option}
+          value={option}
+        >
+          {option}
         </option>
       ))}
 

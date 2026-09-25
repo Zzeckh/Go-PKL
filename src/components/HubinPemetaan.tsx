@@ -1,13 +1,32 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+
 import {
-  MapPin, Users, Briefcase, GraduationCap, Compass, Building2,
-  Search, Pencil, Save, X, CheckCircle2, ShieldCheck, Map,
-  ChevronDown, Filter, Plus, Calendar, ChevronRight, Upload
+  MapPin,
+  Users,
+  Briefcase,
+  GraduationCap,
+  Compass,
+  Building2,
+  Search,
+  Pencil,
+  Save,
+  X,
+  CheckCircle2,
+  ShieldCheck,
+  Map,
+  ChevronDown,
+  Filter,
+  Plus,
+  Calendar,
+  ChevronRight,
+  Upload,
 } from 'lucide-react';
+
 import { useApp, SiswaItem } from '../context/AppContext';
 import { api } from '../utils/api';
 
-const normalize = (value: string) => value.toLowerCase().replace(/\s+/g, ' ').trim();
+const normalize = (value: string) =>
+  value.toLowerCase().replace(/\s+/g, ' ').trim();
 
 type FilterType = 'all' | 'mapped' | 'unmapped';
 
@@ -17,9 +36,10 @@ interface SearchableOption {
   sublabel?: string;
 }
 
-/* ══════════════════════════════════════════════════════
+/* =========================================================
    SEARCHABLE SELECT
-   ══════════════════════════════════════════════════════ */
+   ========================================================= */
+
 interface SearchableSelectProps {
   label: string;
   icon: React.ElementType;
@@ -31,45 +51,70 @@ interface SearchableSelectProps {
 }
 
 const SearchableSelect: React.FC<SearchableSelectProps> = ({
-  label, icon: Icon, value, options, onChange, placeholder, emptyText = 'Tidak ada data'
+  label,
+  icon: Icon,
+  value,
+  options,
+  onChange,
+  placeholder,
+  emptyText = 'Tidak ada data',
 }) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
         setQuery('');
       }
     };
+
     document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+
+    return () => {
+      document.removeEventListener('mousedown', handler);
+    };
   }, []);
 
   useEffect(() => {
     if (open) {
-      setTimeout(() => inputRef.current?.focus(), 50);
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 50);
     }
   }, [open]);
 
-  const selected = options.find(o => String(o.id) === String(value));
+  const selected = options.find(
+    (o) => String(o.id) === String(value)
+  );
+
   const filtered = useMemo(() => {
     if (!query) return options;
+
     const q = query.toLowerCase();
-    return options.filter(o =>
-      o.label.toLowerCase().includes(q) ||
-      (o.sublabel && o.sublabel.toLowerCase().includes(q))
+
+    return options.filter(
+      (o) =>
+        o.label.toLowerCase().includes(q) ||
+        (o.sublabel &&
+          o.sublabel.toLowerCase().includes(q))
     );
   }, [options, query]);
 
   return (
     <div ref={containerRef} className="relative">
       <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide flex items-center gap-1.5 mb-2">
-        <Icon className="w-3.5 h-3.5" /> {label}
+        <Icon className="w-3.5 h-3.5" />
+        {label}
       </label>
+
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -79,10 +124,19 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
             : 'bg-mist/30 border border-mist text-navy hover:border-steel/50'
         }`}
       >
-        <span className={`truncate ${selected ? 'text-navy' : 'text-navy/40'}`}>
+        <span
+          className={`truncate ${
+            selected ? 'text-navy' : 'text-navy/40'
+          }`}
+        >
           {selected ? selected.label : placeholder}
         </span>
-        <ChevronDown className={`w-4 h-4 text-navy/40 transition-transform shrink-0 ${open ? 'rotate-180' : ''}`} />
+
+        <ChevronDown
+          className={`w-4 h-4 text-navy/40 transition-transform shrink-0 ${
+            open ? 'rotate-180' : ''
+          }`}
+        />
       </button>
 
       {open && (
@@ -90,11 +144,12 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
           <div className="p-2 border-b border-mist">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-navy/40" />
+
               <input
                 ref={inputRef}
                 type="text"
                 value={query}
-                onChange={e => setQuery(e.target.value)}
+                onChange={(e) => setQuery(e.target.value)}
                 placeholder="Cari..."
                 className="w-full bg-mist/30 border border-transparent rounded-lg pl-8 pr-3 py-2 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
               />
@@ -104,11 +159,15 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
           <div className="overflow-y-auto custom-scrollbar max-h-60 p-1">
             {filtered.length === 0 ? (
               <div className="py-6 text-center">
-                <p className="text-xs font-semibold text-navy/40">{emptyText}</p>
+                <p className="text-xs font-semibold text-navy/40">
+                  {emptyText}
+                </p>
               </div>
             ) : (
               filtered.map((opt) => {
-                const isSelected = String(opt.id) === String(value);
+                const isSelected =
+                  String(opt.id) === String(value);
+
                 return (
                   <button
                     key={opt.id}
@@ -125,16 +184,32 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
                     }`}
                   >
                     <div className="min-w-0 flex-1">
-                      <p className={`text-sm font-bold truncate ${isSelected ? 'text-white' : 'text-navy'}`}>
+                      <p
+                        className={`text-sm font-bold truncate ${
+                          isSelected
+                            ? 'text-white'
+                            : 'text-navy'
+                        }`}
+                      >
                         {opt.label}
                       </p>
+
                       {opt.sublabel && (
-                        <p className={`text-[11px] font-semibold truncate mt-0.5 ${isSelected ? 'text-white/80' : 'text-navy/50'}`}>
+                        <p
+                          className={`text-[11px] font-semibold truncate mt-0.5 ${
+                            isSelected
+                              ? 'text-white/80'
+                              : 'text-navy/50'
+                          }`}
+                        >
                           {opt.sublabel}
                         </p>
                       )}
                     </div>
-                    {isSelected && <CheckCircle2 className="w-4 h-4 text-white shrink-0" />}
+
+                    {isSelected && (
+                      <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
+                    )}
                   </button>
                 );
               })
@@ -152,692 +227,1554 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
   );
 };
 
-/* ══════════════════════════════════════════════════════
+/* =========================================================
    MAIN COMPONENT
-   ══════════════════════════════════════════════════════ */
+   ========================================================= */
+
 export const HubinPemetaan: React.FC = () => {
   const {
-  perusahaanList: mapLocations,
-  siswaList,
-  guruList,
-  mentorList,
-  updateSiswaMapping,
-  refreshData,
-} = useApp();
+    perusahaanList: mapLocations,
+    siswaList,
+    guruList,
+    mentorList,
+    updateSiswaMapping,
+    refreshData,
+
+    academicYears,
+    selectedAcademicYearId,
+    selectAcademicYear,
+  } = useApp();
+
   const [search, setSearch] = useState('');
-const [filter, setFilter] = useState<FilterType>('all');
+  const [filter, setFilter] =
+    useState<FilterType>('all');
 
-const [selectedCountry, setSelectedCountry] = useState('');
-const [selectedCity, setSelectedCity] = useState('');
-const [importing, setImporting] = useState(false);
-const [importResult, setImportResult] = useState<{
-  total: number;
-  successCount: number;
-  errorCount: number;
-  errors: Array<{
-    row: number;
-    name?: string;
-    error: string;
-  }>;
-} | null>(null);
-const fileInputRef = useRef<HTMLInputElement>(null);
-const [selectedSiswaId, setSelectedSiswaId] = useState<number | null>(null);
-  const [editing, setEditing] = useState(false);
-  const [justSaved, setJustSaved] = useState(false);
+  const [selectedCountry, setSelectedCountry] =
+    useState('');
 
-  const [formCompanyId, setFormCompanyId] = useState<number | string>('');
-  const [formGuruId, setFormGuruId] = useState<number | string>('');
-  const [formMentorId, setFormMentorId] = useState<number | string>('');
+  const [selectedCity, setSelectedCity] =
+    useState('');
+
+  const [importing, setImporting] =
+    useState(false);
+
+  const [importResult, setImportResult] = useState<{
+    total: number;
+    successCount: number;
+    errorCount: number;
+    errors: Array<{
+      row: number;
+      name?: string;
+      error: string;
+    }>;
+  } | null>(null);
+
+  const fileInputRef =
+    useRef<HTMLInputElement>(null);
+
+  const [selectedSiswaId, setSelectedSiswaId] =
+    useState<number | null>(null);
+
+  const [editing, setEditing] =
+    useState(false);
+
+  const [justSaved, setJustSaved] =
+    useState(false);
+
+  const [formCompanyId, setFormCompanyId] =
+    useState<number | string>('');
+
+  const [formGuruId, setFormGuruId] =
+    useState<number | string>('');
+
+  const [formMentorId, setFormMentorId] =
+    useState<number | string>('');
+
+  /* =========================================================
+     TAHUN AJARAN
+     ========================================================= */
+
+  const activeYear =
+    academicYears.find(
+      (year) =>
+        year.id === selectedAcademicYearId
+    )?.name || '2026/2027';
+
+  /* =========================================================
+     CHANGE TAHUN AJARAN
+     ========================================================= */
+
+  const handleAcademicYearChange = (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    const id = Number(e.target.value);
+
+    if (!id) return;
+
+    selectAcademicYear(id);
+
+    // Reset state pemetaan
+    setSelectedSiswaId(null);
+    setEditing(false);
+    setJustSaved(false);
+
+    setSelectedCountry('');
+    setSelectedCity('');
+    setSearch('');
+    setFilter('all');
+  };
+
+  /* =========================================================
+     IMPORT EXCEL PERUSAHAAN
+     ========================================================= */
 
   const handleImportExcel = async (
-  event: React.ChangeEvent<HTMLInputElement>
-) => {
-  const file = event.target.files?.[0];
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
 
-  if (!file) return;
+    if (!file) return;
 
-  if (!file.name.toLowerCase().endsWith('.xlsx')) {
-    alert('Silakan pilih file Excel (.xlsx)');
-    event.target.value = '';
-    return;
-  }
+    if (
+      !file.name
+        .toLowerCase()
+        .endsWith('.xlsx')
+    ) {
+      alert(
+        'Silakan pilih file Excel (.xlsx)'
+      );
 
-  setImporting(true);
-  setImportResult(null);
+      event.target.value = '';
+      return;
+    }
 
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
+    if (!selectedAcademicYearId) {
+      alert(
+        'Silakan pilih Tahun Ajaran terlebih dahulu.'
+      );
 
-    const result = await api.upload<{
-      total: number;
-      successCount: number;
-      errorCount: number;
-      errors?: Array<{
-        row: number;
-        name?: string;
-        error: string;
-      }>;
-    }>('/api/companies/import', formData);
+      event.target.value = '';
+      return;
+    }
 
-    setImportResult({
-      total: result.total,
-      successCount: result.successCount,
-      errorCount: result.errorCount,
-      errors: result.errors || [],
-    });
+    setImporting(true);
+    setImportResult(null);
 
-    await refreshData();
+    try {
+      const formData = new FormData();
 
-    alert(
-      `Import selesai!\n\n` +
-      `Berhasil: ${result.successCount}\n` +
-      `Gagal: ${result.errorCount}`
-    );
-  } catch (error: any) {
-    alert(
-      error?.response?.data?.error ||
-      error?.message ||
-      'Gagal mengimport file Excel'
-    );
-  } finally {
-    setImporting(false);
-    event.target.value = '';
-  }
-};
+      formData.append('file', file);
 
-  const matchLocation = (company?: string) => {
-    if (!company || company === '-') return undefined;
+      formData.append(
+        'academicYearId',
+        String(selectedAcademicYearId)
+      );
+
+      const result = await api.upload<{
+        total: number;
+        successCount: number;
+        errorCount: number;
+        errors?: Array<{
+          row: number;
+          name?: string;
+          error: string;
+        }>;
+      }>(
+        '/api/companies/import',
+        formData
+      );
+
+      setImportResult({
+        total: result.total,
+        successCount:
+          result.successCount,
+        errorCount:
+          result.errorCount,
+        errors: result.errors || [],
+      });
+
+      await refreshData();
+
+      alert(
+        `Import selesai!\n\n` +
+        `Tahun Ajaran: ${activeYear}\n` +
+        `Berhasil: ${result.successCount}\n` +
+        `Gagal: ${result.errorCount}`
+      );
+    } catch (error: any) {
+      alert(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Gagal mengimport file Excel'
+      );
+    } finally {
+      setImporting(false);
+
+      event.target.value = '';
+    }
+  };
+
+  /* =========================================================
+     LOCATION
+     ========================================================= */
+
+  const matchLocation = (
+    company?: string
+  ) => {
+    if (
+      !company ||
+      company === '-'
+    ) {
+      return undefined;
+    }
+
     const q = normalize(company);
-    return mapLocations.find(l =>
-      normalize(l.name).includes(q) || q.includes(normalize(l.name).split('(')[0].trim())
+
+    return mapLocations.find(
+      (l) =>
+        normalize(l.name).includes(q) ||
+        q.includes(
+          normalize(
+            l.name
+          )
+            .split('(')[0]
+            .trim()
+        )
     );
   };
 
+  /* =========================================================
+     MAPPING STATUS
+     ========================================================= */
+
   const isMapped = (s: SiswaItem) =>
-    !!(s.perusahaan && s.perusahaan !== '-' && matchLocation(s.perusahaan));
+    !!(
+      s.perusahaan &&
+      s.perusahaan !== '-' &&
+      matchLocation(s.perusahaan)
+    );
 
   const mappedLocations = siswaList
-  .map(s => matchLocation(s.perusahaan))
-  .filter(Boolean);
+    .map((s) =>
+      matchLocation(s.perusahaan)
+    )
+    .filter(Boolean);
+
+  /* =========================================================
+     COUNTRY
+     ========================================================= */
 
   const countries = Array.from(
     new Set(
       mappedLocations
-        .map(loc => loc?.country)
+        .map((loc) => loc?.country)
         .filter(Boolean)
     )
   );
+
+  /* =========================================================
+     CITY
+     ========================================================= */
 
   const cities = Array.from(
     new Set(
       mappedLocations
-        .filter(loc => !selectedCountry || loc?.country === selectedCountry)
-        .map(loc => loc?.city)
+        .filter(
+          (loc) =>
+            !selectedCountry ||
+            loc?.country === selectedCountry
+        )
+        .map((loc) => loc?.city)
         .filter(Boolean)
     )
   );
 
-  const filteredSiswa = useMemo(() => {
-    return siswaList.filter(s => {
-      const matchSearch =
-        s.name.toLowerCase().includes(search.toLowerCase()) ||
-        s.kelas.toLowerCase().includes(search.toLowerCase());
+  /* =========================================================
+     FILTER SISWA
+     ========================================================= */
 
-      if (!matchSearch) return false;
+  const filteredSiswa = useMemo(() => {
+    return siswaList.filter((s) => {
+      const searchValue =
+        search.toLowerCase();
+
+      const matchSearch =
+        s.name
+          .toLowerCase()
+          .includes(searchValue) ||
+        s.kelas
+          .toLowerCase()
+          .includes(searchValue);
+
+      if (!matchSearch) {
+        return false;
+      }
 
       const mapped = isMapped(s);
 
-      if (filter === 'mapped' && !mapped) return false;
-      if (filter === 'unmapped' && mapped) return false;
+      if (
+        filter === 'mapped' &&
+        !mapped
+      ) {
+        return false;
+      }
 
-      if (selectedCountry || selectedCity) {
-        const loc = matchLocation(s.perusahaan);
+      if (
+        filter === 'unmapped' &&
+        mapped
+      ) {
+        return false;
+      }
 
-        if (!loc) return false;
+      if (
+        selectedCountry ||
+        selectedCity
+      ) {
+        const loc =
+          matchLocation(
+            s.perusahaan
+          );
 
-        if (selectedCountry && loc.country !== selectedCountry) {
+        if (!loc) {
           return false;
         }
 
-        if (selectedCity && loc.city !== selectedCity) {
+        if (
+          selectedCountry &&
+          loc.country !== selectedCountry
+        ) {
+          return false;
+        }
+
+        if (
+          selectedCity &&
+          loc.city !== selectedCity
+        ) {
           return false;
         }
       }
 
-        return true;
-      });
-    }, [
-      siswaList,
-      search,
-      filter,
-      selectedCountry,
-      selectedCity,
-      mapLocations,
-    ]);
+      return true;
+    });
+  }, [
+    siswaList,
+    search,
+    filter,
+    selectedCountry,
+    selectedCity,
+    mapLocations,
+  ]);
 
-  const selectedSiswa = siswaList.find(s => s.id === selectedSiswaId) || null;
-  const selectedLoc = selectedSiswa ? matchLocation(selectedSiswa.perusahaan) : undefined;
+  /* =========================================================
+     SISWA TERPILIH
+     ========================================================= */
 
-  const mappedCount = siswaList.filter(isMapped).length;
-  const unmappedCount = siswaList.length - mappedCount;
-  const activeYear = siswaList.find(s => s.academicYear && s.academicYear !== '-')?.academicYear || '2025/2026';
+  const selectedSiswa =
+    siswaList.find(
+      (s) =>
+        s.id === selectedSiswaId
+    ) || null;
 
-  const companyOptions: SearchableOption[] = mapLocations.map(loc => ({
-    id: loc.id, label: loc.name, sublabel: loc.address,
-  }));
-  const guruOptions: SearchableOption[] = guruList.map(g => ({
-    id: g.id, label: g.name, sublabel: g.subject || 'Guru Pembimbing',
-  }));
-  const mentorOptions: SearchableOption[] = mentorList.map(m => ({
-    id: m.id, label: m.name, sublabel: m.perusahaan || 'Mentor Industri',
-  }));
+  const selectedLoc =
+    selectedSiswa
+      ? matchLocation(
+          selectedSiswa.perusahaan
+        )
+      : undefined;
 
-  const handleSelectSiswa = (s: SiswaItem) => {
+  /* =========================================================
+     STATISTICS
+     ========================================================= */
+
+  const mappedCount =
+    siswaList.filter(
+      isMapped
+    ).length;
+
+  const unmappedCount =
+    siswaList.length -
+    mappedCount;
+
+  /* =========================================================
+     OPTIONS
+     ========================================================= */
+
+  const companyOptions: SearchableOption[] =
+    mapLocations.map((loc) => ({
+      id: loc.id,
+      label: loc.name,
+      sublabel: loc.address,
+    }));
+
+  const guruOptions: SearchableOption[] =
+    guruList.map((g) => ({
+      id: g.id,
+      label: g.name,
+      sublabel:
+        g.subject ||
+        'Guru Pembimbing',
+    }));
+
+  const mentorOptions: SearchableOption[] =
+    mentorList.map((m) => ({
+      id: m.id,
+      label: m.name,
+      sublabel:
+        m.perusahaan ||
+        'Mentor Industri',
+    }));
+
+  /* =========================================================
+     SELECT SISWA
+     ========================================================= */
+
+  const handleSelectSiswa = (
+    s: SiswaItem
+  ) => {
     setSelectedSiswaId(s.id);
+
     setEditing(false);
     setJustSaved(false);
-    const loc = matchLocation(s.perusahaan);
-    const guru = guruList.find(g => g.name.split(',')[0] === s.guruPembimbing?.split(',')[0]);
-    const mentor = mentorList.find(m => m.name.split(',')[0] === s.mentor?.split(',')[0]);
-    setFormCompanyId(loc?.id ?? '');
-    setFormGuruId(guru?.id ?? '');
-    setFormMentorId(mentor?.id ?? '');
+
+    const loc =
+      matchLocation(
+        s.perusahaan
+      );
+
+    const guru =
+      guruList.find(
+        (g) =>
+          g.name.split(',')[0] ===
+          s.guruPembimbing
+            ?.split(',')[0]
+      );
+
+    const mentor =
+      mentorList.find(
+        (m) =>
+          m.name.split(',')[0] ===
+          s.mentor
+            ?.split(',')[0]
+      );
+
+    setFormCompanyId(
+      loc?.id ?? ''
+    );
+
+    setFormGuruId(
+      guru?.id ?? ''
+    );
+
+    setFormMentorId(
+      mentor?.id ?? ''
+    );
   };
 
-  const handleEdit = () => { setEditing(true); setJustSaved(false); };
+  /* =========================================================
+     EDIT
+     ========================================================= */
+
+  const handleEdit = () => {
+    setEditing(true);
+    setJustSaved(false);
+  };
+
+  /* =========================================================
+     SAVE
+     ========================================================= */
 
   const handleSave = async () => {
-    if (!selectedSiswa) return;
-    const loc = mapLocations.find(l => String(l.id) === String(formCompanyId));
-    const guru = guruList.find(g => String(g.id) === String(formGuruId));
-    const mentor = mentorList.find(m => String(m.id) === String(formMentorId));
-    await updateSiswaMapping(selectedSiswa.id, {
-      perusahaan: loc ? loc.name.replace(/\s*\(.*\)$/, '') : selectedSiswa.perusahaan,
-      guruPembimbing: guru ? guru.name : selectedSiswa.guruPembimbing,
-      mentor: mentor ? mentor.name : selectedSiswa.mentor,
-      companyId: formCompanyId,
-      teacherId: formGuruId,
-      mentorName: mentor ? mentor.name : undefined,
-    });
+    if (!selectedSiswa) {
+      return;
+    }
+
+    const loc =
+      mapLocations.find(
+        (l) =>
+          String(l.id) ===
+          String(formCompanyId)
+      );
+
+    const guru =
+      guruList.find(
+        (g) =>
+          String(g.id) ===
+          String(formGuruId)
+      );
+
+    const mentor =
+      mentorList.find(
+        (m) =>
+          String(m.id) ===
+          String(formMentorId)
+      );
+
+    await updateSiswaMapping(
+      selectedSiswa.id,
+      {
+        perusahaan: loc
+          ? loc.name.replace(
+              /\s*\([^)]*\)$/,
+              ''
+            )
+          : selectedSiswa.perusahaan,
+
+        guruPembimbing: guru
+          ? guru.name
+          : selectedSiswa.guruPembimbing,
+
+        mentor: mentor
+          ? mentor.name
+          : selectedSiswa.mentor,
+
+        companyId:
+          formCompanyId,
+
+        teacherId:
+          formGuruId,
+
+        mentorName:
+          mentor
+            ? mentor.name
+            : undefined,
+      }
+    );
+
     setEditing(false);
     setJustSaved(true);
-    setTimeout(() => setJustSaved(false), 2500);
+
+    setTimeout(() => {
+      setJustSaved(false);
+    }, 2500);
   };
 
+  /* =========================================================
+     CANCEL
+     ========================================================= */
+
   const handleCancel = () => {
-    if (!selectedSiswa) return;
-    const loc = matchLocation(selectedSiswa.perusahaan);
-    const guru = guruList.find(g => g.name.split(',')[0] === selectedSiswa.guruPembimbing?.split(',')[0]);
-    const mentor = mentorList.find(m => m.name.split(',')[0] === selectedSiswa.mentor?.split(',')[0]);
-    setFormCompanyId(loc?.id ?? '');
-    setFormGuruId(guru?.id ?? '');
-    setFormMentorId(mentor?.id ?? '');
+    if (!selectedSiswa) {
+      return;
+    }
+
+    const loc =
+      matchLocation(
+        selectedSiswa.perusahaan
+      );
+
+    const guru =
+      guruList.find(
+        (g) =>
+          g.name.split(',')[0] ===
+          selectedSiswa.guruPembimbing
+            ?.split(',')[0]
+      );
+
+    const mentor =
+      mentorList.find(
+        (m) =>
+          m.name.split(',')[0] ===
+          selectedSiswa.mentor
+            ?.split(',')[0]
+      );
+
+    setFormCompanyId(
+      loc?.id ?? ''
+    );
+
+    setFormGuruId(
+      guru?.id ?? ''
+    );
+
+    setFormMentorId(
+      mentor?.id ?? ''
+    );
+
     setEditing(false);
   };
 
+  /* =========================================================
+     STATS
+     ========================================================= */
+
   const stats = [
-    { icon: GraduationCap, label: 'Total Siswa', value: siswaList.length },
-    { icon: Building2, label: 'Perusahaan Mitra', value: mapLocations.length },
-    { icon: CheckCircle2, label: 'Sudah Terpetakan', value: mappedCount },
+    {
+      icon: GraduationCap,
+      label: 'Total Siswa',
+      value: siswaList.length,
+    },
+    {
+      icon: Building2,
+      label: 'Perusahaan Mitra',
+      value: mapLocations.length,
+    },
+    {
+      icon: CheckCircle2,
+      label: 'Sudah Terpetakan',
+      value: mappedCount,
+    },
   ];
+
+  /* =========================================================
+     RETURN
+     ========================================================= */
 
   return (
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-y-auto custom-scrollbar">
 
-      {/* ── HEADER ─ */}
-      <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
+      {/* HEADER */}
+
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
+
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
+
           <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[10px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <Compass className="w-5 h-5 md:w-6 md:h-6" />
           </div>
+
           <div className="min-w-0">
-            <h2 className="font-bold text-lg md:text-xl text-navy leading-tight truncate">Pemetaan Sebaran PKL</h2>
+            <h2 className="font-bold text-lg md:text-xl text-navy leading-tight truncate">
+              Pemetaan Sebaran PKL
+            </h2>
+
             <p className="text-[13px] text-navy/60 font-semibold mt-0.5 truncate">
               Atur penempatan siswa ke perusahaan, guru & mentor pembimbing
             </p>
           </div>
+
         </div>
-        <div className="hidden sm:flex items-center gap-2 shrink-0">
-          {/* ✅ chip TA: card putih ber-border steel */}
-          <span className="flex items-center gap-1.5 text-[11px] font-bold text-steel bg-white border border-steel/30 shadow-sm px-3 py-2 rounded-full">
-            <Calendar className="w-3.5 h-3.5" />
-            TA {activeYear}
-          </span>
+
+        {/* DROPDOWN TAHUN AJARAN */}
+
+        <div className="flex items-center gap-2 shrink-0">
+
+          <Calendar className="w-4 h-4 text-navy/50 hidden sm:block" />
+
+          <select
+            value={
+              selectedAcademicYearId ?? ''
+            }
+            onChange={
+              handleAcademicYearChange
+            }
+            className="bg-white border border-steel/30 text-steel font-bold text-[11px] px-3 py-2 rounded-full outline-none cursor-pointer hover:border-steel transition-all"
+          >
+            {academicYears.map(
+              (year) => (
+                <option
+                  key={year.id}
+                  value={year.id}
+                >
+                  TA {year.name}
+                  {year.isActive
+                    ? ' — Aktif'
+                    : ''}
+                </option>
+              )
+            )}
+          </select>
+
         </div>
+
       </div>
 
-      {/* ── IMPORT PERUSAHAAN ── */}
+      {/* IMPORT PERUSAHAAN */}
+
       <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 md:p-5 shrink-0">
+
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+
           <div className="min-w-0">
-            <p className="text-[13px] font-bold text-navy">Import Data Perusahaan</p>
+
+            <p className="text-[13px] font-bold text-navy">
+              Import Data Perusahaan
+            </p>
+
             <p className="text-[11px] font-medium text-navy/50 mt-0.5">
               Upload file Excel (.xlsx) untuk menambahkan perusahaan mitra beserta lokasi geofence.
             </p>
+
+            <p className="text-[10px] font-bold text-steel mt-1">
+              Akan masuk ke Tahun Ajaran: {activeYear}
+            </p>
+
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+
             <input
               ref={fileInputRef}
               type="file"
               accept=".xlsx"
-              onChange={handleImportExcel}
+              onChange={
+                handleImportExcel
+              }
               className="hidden"
             />
+
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() =>
+                fileInputRef.current?.click()
+              }
               disabled={importing}
               className="flex items-center justify-center gap-2 bg-navy text-white font-bold text-xs px-4 py-2.5 rounded-[18px] hover:bg-navy/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               <Upload className="w-4 h-4" />
-              {importing ? 'Mengimpor...' : 'Import Excel'}
+
+              {importing
+                ? 'Mengimpor...'
+                : 'Import Excel'}
             </button>
+
           </div>
+
         </div>
 
         {importResult && (
           <div className="mt-3 p-3 bg-mist/30 border border-mist/60 rounded-[18px]">
+
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-bold text-navy">
-              <span>Total: {importResult.total}</span>
-              <span className="text-steel">Berhasil: {importResult.successCount}</span>
-              <span className={importResult.errorCount > 0 ? 'text-red-600' : 'text-navy/50'}>
+
+              <span>
+                Total: {importResult.total}
+              </span>
+
+              <span className="text-steel">
+                Berhasil: {importResult.successCount}
+              </span>
+
+              <span
+                className={
+                  importResult.errorCount > 0
+                    ? 'text-red-600'
+                    : 'text-navy/50'
+                }
+              >
                 Gagal: {importResult.errorCount}
               </span>
+
             </div>
 
             {importResult.errors.length > 0 && (
               <div className="mt-3 space-y-1.5">
-                <p className="text-[11px] font-bold text-navy">Baris yang gagal:</p>
+
+                <p className="text-[11px] font-bold text-navy">
+                  Baris yang gagal:
+                </p>
+
                 <div className="max-h-40 overflow-y-auto custom-scrollbar space-y-1">
-                  {importResult.errors.map((item, index) => (
-                    <div
-                      key={`${item.row}-${index}`}
-                      className="text-[11px] font-medium text-navy/70 bg-white border border-mist/60 rounded-lg px-2.5 py-1.5"
-                    >
-                      Baris {item.row}{item.name ? ` — ${item.name}` : ''}: {item.error}
-                    </div>
-                  ))}
+
+                  {importResult.errors.map(
+                    (item, index) => (
+                      <div
+                        key={`${item.row}-${index}`}
+                        className="text-[11px] font-medium text-navy/70 bg-white border border-mist/60 rounded-lg px-2.5 py-1.5"
+                      >
+                        Baris {item.row}
+                        {item.name
+                          ? ` — ${item.name}`
+                          : ''}
+                        : {item.error}
+                      </div>
+                    )
+                  )}
+
                 </div>
+
               </div>
             )}
+
           </div>
         )}
+
       </div>
 
-      {/* ── STATS CARDS — icon chip navy solid ── */}
+      {/* STATS */}
+
       <div className="grid grid-cols-3 gap-3 shrink-0">
+
         {stats.map((s) => (
           <div
             key={s.label}
             className="bg-white border border-mist/60 rounded-[24px] p-4 md:p-5 min-h-[100px] flex flex-col justify-between"
           >
+
             <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
+
               <s.icon className="w-4 h-4 text-white" />
+
             </div>
+
             <div>
-              <p className="text-3xl font-bold text-navy tabular-nums leading-none">{s.value}</p>
-              <p className="text-[11px] font-bold text-navy/60 uppercase tracking-wide mt-2">{s.label}</p>
+
+              <p className="text-3xl font-bold text-navy tabular-nums leading-none">
+                {s.value}
+              </p>
+
+              <p className="text-[11px] font-bold text-navy/60 uppercase tracking-wide mt-2">
+                {s.label}
+              </p>
+
             </div>
+
           </div>
         ))}
+
       </div>
 
-      {/* ── MAIN GRID ── */}
+      {/* MAIN GRID */}
+
       <div className="lg:flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-4 lg:min-h-0">
 
-        {/* ══ LEFT: Daftar Siswa ══ */}
+        {/* LEFT */}
+
         <div className="lg:col-span-3 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col overflow-hidden lg:min-h-0">
+
           <div className="px-4 md:px-5 pt-4 pb-3 shrink-0 space-y-3">
+
             <div className="flex items-center justify-between">
+
               <div className="flex items-center gap-2">
-                {/* ✅ chip navy solid */}
+
                 <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center">
                   <GraduationCap className="w-3.5 h-3.5 text-white" />
                 </div>
+
                 <p className="text-[13px] font-bold uppercase tracking-widest text-navy/70">
                   Daftar Siswa PKL
                 </p>
+
               </div>
+
               <span className="text-[11px] font-bold text-navy/40 tabular-nums">
                 {filteredSiswa.length} siswa
               </span>
+
             </div>
 
-            {/* ✅ search: mist/40 */}
+            {/* SEARCH */}
+
             <div className="relative">
+
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-navy/40" />
+
               <input
                 type="text"
                 value={search}
-                onChange={e => setSearch(e.target.value)}
+                onChange={(e) =>
+                  setSearch(e.target.value)
+                }
                 placeholder="Cari nama siswa atau kelas..."
                 className="w-full bg-mist/40 border border-mist rounded-[24px] pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
               />
+
               {search && (
                 <button
-                  onClick={() => setSearch('')}
+                  type="button"
+                  onClick={() =>
+                    setSearch('')
+                  }
                   className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-navy/10 hover:bg-navy/20 flex items-center justify-center transition-colors"
                 >
                   <X className="w-3 h-3 text-navy/60" />
                 </button>
               )}
+
             </div>
 
-            {/* ✅ filter pills: track mist/40, aktif steel solid */}
+            {/* FILTER */}
+
             <div className="bg-mist/40 p-1 rounded-[24px] flex gap-1">
+
               {([
-                { key: 'all', label: 'Semua', count: siswaList.length },
-                { key: 'mapped', label: 'Terpetakan', count: mappedCount },
-                { key: 'unmapped', label: 'Belum', count: unmappedCount },
-              ] as const).map(f => (
-                <button
-                  key={f.key}
-                  onClick={() => setFilter(f.key)}
-                  className={`flex-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                    filter === f.key ? 'bg-steel text-white shadow' : 'text-navy/60 hover:text-navy'
-                  }`}
-                >
-                  <Filter className="w-3 h-3" />
-                  {f.label}
-                  <span className={`text-[10px] tabular-nums ${filter === f.key ? 'text-white/80' : 'text-navy/40'}`}>
-                    {f.count}
-                  </span>
-                </button>
-              ))}
-            </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[10px] font-bold text-navy/50 uppercase tracking-wide mb-1.5 block">
-                    Negara
-                  </label>
-
-                  <select
-                    value={selectedCountry}
-                    onChange={e => {
-                      setSelectedCountry(e.target.value);
-                      setSelectedCity('');
-                    }}
-                    className="w-full bg-mist/40 border border-mist rounded-[18px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
+                {
+                  key: 'all',
+                  label: 'Semua',
+                  count: siswaList.length,
+                },
+                {
+                  key: 'mapped',
+                  label: 'Terpetakan',
+                  count: mappedCount,
+                },
+                {
+                  key: 'unmapped',
+                  label: 'Belum',
+                  count: unmappedCount,
+                },
+              ] as const).map(
+                (f) => (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() =>
+                      setFilter(f.key)
+                    }
+                    className={`flex-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                      filter === f.key
+                        ? 'bg-steel text-white shadow'
+                        : 'text-navy/60 hover:text-navy'
+                    }`}
                   >
-                    <option value="">Semua Negara</option>
 
-                    {countries.map(country => (
-                      <option key={country} value={country}>
+                    <Filter className="w-3 h-3" />
+
+                    {f.label}
+
+                    <span
+                      className={`text-[10px] tabular-nums ${
+                        filter === f.key
+                          ? 'text-white/80'
+                          : 'text-navy/40'
+                      }`}
+                    >
+                      {f.count}
+                    </span>
+
+                  </button>
+                )
+              )}
+
+            </div>
+
+            {/* LOCATION FILTER */}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+
+              <div>
+
+                <label className="text-[10px] font-bold text-navy/50 uppercase tracking-wide mb-1.5 block">
+                  Negara
+                </label>
+
+                <select
+                  value={selectedCountry}
+                  onChange={(e) => {
+                    setSelectedCountry(
+                      e.target.value
+                    );
+
+                    setSelectedCity('');
+                  }}
+                  className="w-full bg-mist/40 border border-mist rounded-[18px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
+                >
+
+                  <option value="">
+                    Semua Negara
+                  </option>
+
+                  {countries.map(
+                    (country) => (
+                      <option
+                        key={country}
+                        value={country}
+                      >
                         {country}
                       </option>
-                    ))}
-                  </select>
-                </div>
+                    )
+                  )}
 
-                <div>
-                  <label className="text-[10px] font-bold text-navy/50 uppercase tracking-wide mb-1.5 block">
-                    Kota
-                  </label>
+                </select>
 
-                  <select
-                    value={selectedCity}
-                    onChange={e => setSelectedCity(e.target.value)}
-                    className="w-full bg-mist/40 border border-mist rounded-[18px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
-                  >
-                    <option value="">Semua Kota</option>
+              </div>
 
-                    {cities.map(city => (
-                      <option key={city} value={city}>
+              <div>
+
+                <label className="text-[10px] font-bold text-navy/50 uppercase tracking-wide mb-1.5 block">
+                  Kota
+                </label>
+
+                <select
+                  value={selectedCity}
+                  onChange={(e) =>
+                    setSelectedCity(
+                      e.target.value
+                    )
+                  }
+                  className="w-full bg-mist/40 border border-mist rounded-[18px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
+                >
+
+                  <option value="">
+                    Semua Kota
+                  </option>
+
+                  {cities.map(
+                    (city) => (
+                      <option
+                        key={city}
+                        value={city}
+                      >
                         {city}
                       </option>
-                    ))}
-                  </select>
-                </div>
+                    )
+                  )}
+
+                </select>
+
               </div>
+
+            </div>
+
           </div>
 
+          {/* STUDENT LIST */}
+
           <div className="lg:flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 lg:min-h-0 max-h-[50vh] lg:max-h-none">
+
             {filteredSiswa.length === 0 ? (
+
               <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
-                {/* ✅ empty state: navy solid + icon putih */}
+
                 <div className="w-14 h-14 rounded-[10px] bg-navy flex items-center justify-center mb-3">
+
                   <Search className="w-6 h-6 text-white" />
+
                 </div>
-                <p className="text-sm font-bold text-navy mb-1">Siswa tidak ditemukan</p>
-                <p className="text-xs text-navy/50 max-w-xs">
-                  {search ? `Tidak ada siswa yang cocok dengan "${search}"` : 'Belum ada data siswa di sistem.'}
+
+                <p className="text-sm font-bold text-navy mb-1">
+                  Siswa tidak ditemukan
                 </p>
+
+                <p className="text-xs text-navy/50 max-w-xs">
+                  {search
+                    ? `Tidak ada siswa yang cocok dengan "${search}"`
+                    : 'Belum ada data siswa di sistem.'}
+                </p>
+
               </div>
+
             ) : (
+
               filteredSiswa.map((s) => {
-                const mapped = isMapped(s);
-                const isSelected = selectedSiswaId === s.id;
+
+                const mapped =
+                  isMapped(s);
+
+                const isSelected =
+                  selectedSiswaId ===
+                  s.id;
+
                 return (
                   <button
                     key={s.id}
-                    onClick={() => handleSelectSiswa(s)}
+                    type="button"
+                    onClick={() =>
+                      handleSelectSiswa(s)
+                    }
                     className={`p-3 rounded-[24px] border transition-all shrink-0 text-left group flex items-center gap-3 ${
                       isSelected
                         ? 'bg-steel/5 border-steel/30 shadow-sm'
                         : 'bg-white border-mist/60 hover:border-steel/30 hover:bg-mist/30'
                     }`}
                   >
-                    {/* ✅ avatar kotak navy solid (seragam, bahkan saat selected) */}
+
                     <div className="w-10 h-10 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-md shadow-navy/20">
-                      {s.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+
+                      {s.name
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')
+                        .toUpperCase()
+                        .slice(0, 2)}
+
                     </div>
+
                     <div className="flex-1 min-w-0">
+
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className={`text-sm font-bold truncate ${isSelected ? 'text-steel' : 'text-navy'}`}>
+
+                        <p
+                          className={`text-sm font-bold truncate ${
+                            isSelected
+                              ? 'text-steel'
+                              : 'text-navy'
+                          }`}
+                        >
                           {s.name}
                         </p>
-                        {s.kelas && s.kelas !== '-' && (
-                          /* ✅ chip kelas: card putih ber-border */
-                          <span className="text-[10px] font-bold text-steel bg-white border border-steel/30 px-2 py-0.5 rounded-md shadow-sm shrink-0">
-                            {s.kelas}
-                          </span>
-                        )}
+
+                        {s.kelas &&
+                          s.kelas !== '-' && (
+                            <span className="text-[10px] font-bold text-steel bg-white border border-steel/30 px-2 py-0.5 rounded-md shadow-sm shrink-0">
+                              {s.kelas}
+                            </span>
+                          )}
+
                       </div>
+
                       <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
-                        {mapped ? s.perusahaan : 'Belum dipetakan'}
+                        {mapped
+                          ? s.perusahaan
+                          : 'Belum dipetakan'}
                       </p>
+
                     </div>
-                    {/* ✅ badge Terpetakan/Belum: solid */}
-                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 ${
-                      mapped
-                        ? 'bg-steel text-white shadow-sm shadow-steel/30'
-                        : 'bg-white text-navy/70 border border-mist/60 shadow-sm'
-                    }`}>
-                      {mapped ? '✓ Terpetakan' : 'Belum'}
+
+                    <span
+                      className={`text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 ${
+                        mapped
+                          ? 'bg-steel text-white shadow-sm shadow-steel/30'
+                          : 'bg-white text-navy/70 border border-mist/60 shadow-sm'
+                      }`}
+                    >
+                      {mapped
+                        ? '✓ Terpetakan'
+                        : 'Belum'}
                     </span>
-                    <ChevronRight className={`w-4 h-4 shrink-0 ${isSelected ? 'text-steel' : 'text-navy/20 group-hover:text-steel'} group-hover:translate-x-0.5 transition-all`} />
+
+                    <ChevronRight
+                      className={`w-4 h-4 shrink-0 ${
+                        isSelected
+                          ? 'text-steel'
+                          : 'text-navy/20 group-hover:text-steel'
+                      } group-hover:translate-x-0.5 transition-all`}
+                    />
+
                   </button>
                 );
               })
+
             )}
+
           </div>
+
         </div>
 
-        {/* ══ RIGHT: Detail + Form ══ */}
+        {/* RIGHT */}
+
         <div className="lg:col-span-2 flex flex-col gap-3 lg:min-h-0">
 
           {!selectedSiswa ? (
+
             <div className="flex-1 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col items-center justify-center p-8 text-center">
-              {/* ✅ empty state: navy solid + icon putih */}
+
               <div className="w-16 h-16 rounded-[10px] bg-navy flex items-center justify-center mb-4">
+
                 <Map className="w-7 h-7 text-white" />
+
               </div>
-              <h3 className="text-base font-bold text-navy mb-1">Pilih Siswa untuk Memetakan</h3>
+
+              <h3 className="text-base font-bold text-navy mb-1">
+                Pilih Siswa untuk Memetakan
+              </h3>
+
               <p className="text-sm text-navy/60 max-w-xs leading-relaxed">
                 Klik salah satu siswa di daftar kiri untuk melihat dan mengatur tempat PKL, guru, serta mentor pembimbingnya.
               </p>
 
               <div className="mt-6 w-full max-w-xs h-32 relative rounded-[24px] border border-navy/10 overflow-hidden">
+
                 <div className="absolute inset-0 bg-mist/30">
-                  <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <rect x="36" y="8" width="26" height="22" rx="2" fill="#E7EBF2" />
-                    <rect x="8" y="40" width="22" height="22" rx="2" fill="#E7EBF2" />
-                    <rect x="38" y="40" width="24" height="22" rx="2" fill="#E7EBF2" />
-                    <rect x="70" y="40" width="24" height="20" rx="2" fill="#E7EBF2" />
-                    <rect x="36" y="70" width="26" height="16" rx="2" fill="#E7EBF2" />
-                    <path d="M0,34 L100,34" stroke="#FFFFFF" strokeWidth="2" vectorEffect="non-scaling-stroke" />
-                    <path d="M0,66 L100,66" stroke="#FFFFFF" strokeWidth="2" vectorEffect="non-scaling-stroke" />
-                    <path d="M32,0 L32,100" stroke="#FFFFFF" strokeWidth="2" vectorEffect="non-scaling-stroke" />
-                    <path d="M66,0 L66,100" stroke="#FFFFFF" strokeWidth="2" vectorEffect="non-scaling-stroke" />
-                  </svg>
-                </div>
-                {mapLocations.slice(0, 3).map((loc, i) => (
-                  <div
-                    key={loc.id}
-                    className="absolute -translate-x-1/2 -translate-y-1/2"
-                    style={{ left: `${20 + i * 30}%`, top: `${30 + (i % 2) * 30}%` }}
+
+                  <svg
+                    className="absolute inset-0 h-full w-full"
+                    viewBox="0 0 100 100"
+                    preserveAspectRatio="none"
                   >
-                    <div className={`w-5 h-5 rounded-full border-2 border-white shadow-md flex items-center justify-center ${
-                      i === 0 ? 'bg-steel' : 'bg-white'
-                    }`}>
-                      <MapPin className={`w-2.5 h-2.5 ${i === 0 ? 'text-white' : 'text-navy/60'}`} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* Card identitas navy */}
-              <div className="bg-navy rounded-[24px] p-5 shrink-0 relative overflow-hidden shadow-lg shadow-navy/20">
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
-                        <GraduationCap className="w-4 h-4 text-white" />
+
+                    <rect
+                      x="36"
+                      y="8"
+                      width="26"
+                      height="22"
+                      rx="2"
+                      fill="#E7EBF2"
+                    />
+
+                    <rect
+                      x="8"
+                      y="40"
+                      width="22"
+                      height="22"
+                      rx="2"
+                      fill="#E7EBF2"
+                    />
+
+                    <rect
+                      x="38"
+                      y="40"
+                      width="24"
+                      height="22"
+                      rx="2"
+                      fill="#E7EBF2"
+                    />
+
+                    <rect
+                      x="70"
+                      y="40"
+                      width="24"
+                      height="20"
+                      rx="2"
+                      fill="#E7EBF2"
+                    />
+
+                    <rect
+                      x="36"
+                      y="70"
+                      width="26"
+                      height="16"
+                      rx="2"
+                      fill="#E7EBF2"
+                    />
+
+                    <path
+                      d="M0,34 L100,34"
+                      stroke="#FFFFFF"
+                      strokeWidth="2"
+                      vectorEffect="non-scaling-stroke"
+                    />
+
+                    <path
+                      d="M0,66 L100,66"
+                      stroke="#FFFFFF"
+                      strokeWidth="2"
+                      vectorEffect="non-scaling-stroke"
+                    />
+
+                    <path
+                      d="M32,0 L32,100"
+                      stroke="#FFFFFF"
+                      strokeWidth="2"
+                      vectorEffect="non-scaling-stroke"
+                    />
+
+                    <path
+                      d="M66,0 L66,100"
+                      stroke="#FFFFFF"
+                      strokeWidth="2"
+                      vectorEffect="non-scaling-stroke"
+                    />
+
+                  </svg>
+
+                </div>
+
+                {mapLocations
+                  .slice(0, 3)
+                  .map((loc, i) => (
+
+                    <div
+                      key={loc.id}
+                      className="absolute -translate-x-1/2 -translate-y-1/2"
+                      style={{
+                        left: `${20 + i * 30}%`,
+                        top: `${30 + (i % 2) * 30}%`,
+                      }}
+                    >
+
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 border-white shadow-md flex items-center justify-center ${
+                          i === 0
+                            ? 'bg-steel'
+                            : 'bg-white'
+                        }`}
+                      >
+
+                        <MapPin
+                          className={`w-2.5 h-2.5 ${
+                            i === 0
+                              ? 'text-white'
+                              : 'text-navy/60'
+                          }`}
+                        />
+
                       </div>
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-white/60">Siswa Terpilih</p>
+
                     </div>
+
+                  ))}
+
+              </div>
+
+            </div>
+
+          ) : (
+
+            <>
+
+              {/* IDENTITAS SISWA */}
+
+              <div className="bg-navy rounded-[24px] p-5 shrink-0 relative overflow-hidden shadow-lg shadow-navy/20">
+
+                <div className="relative z-10">
+
+                  <div className="flex items-center justify-between mb-3">
+
+                    <div className="flex items-center gap-2">
+
+                      <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
+
+                        <GraduationCap className="w-4 h-4 text-white" />
+
+                      </div>
+
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-white/60">
+                        Siswa Terpilih
+                      </p>
+
+                    </div>
+
                     {justSaved && (
                       <span className="flex items-center gap-1.5 text-[11px] font-bold bg-steel text-white shadow-sm shadow-steel/30 px-2.5 py-1 rounded-full animate-in fade-in">
-                        <CheckCircle2 className="w-3 h-3" /> Tersimpan
+
+                        <CheckCircle2 className="w-3 h-3" />
+
+                        Tersimpan
+
                       </span>
                     )}
+
                   </div>
 
                   <div className="flex items-center gap-3">
+
                     <div className="w-12 h-12 rounded-[10px] bg-white/15 border border-white/10 flex items-center justify-center font-bold text-sm text-white shrink-0">
-                      {selectedSiswa.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+
+                      {selectedSiswa.name
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')
+                        .toUpperCase()
+                        .slice(0, 2)}
+
                     </div>
+
                     <div className="min-w-0">
-                      <h4 className="font-bold text-base text-white leading-tight truncate">{selectedSiswa.name}</h4>
+
+                      <h4 className="font-bold text-base text-white leading-tight truncate">
+                        {selectedSiswa.name}
+                      </h4>
+
                       <div className="flex items-center gap-1.5 mt-1">
-                        {selectedSiswa.kelas && selectedSiswa.kelas !== '-' && (
-                          <span className="text-[10px] font-bold text-white bg-white/15 px-2 py-0.5 rounded-md">
-                            {selectedSiswa.kelas}
-                          </span>
-                        )}
+
+                        {selectedSiswa.kelas &&
+                          selectedSiswa.kelas !== '-' && (
+                            <span className="text-[10px] font-bold text-white bg-white/15 px-2 py-0.5 rounded-md">
+                              {selectedSiswa.kelas}
+                            </span>
+                          )}
+
                         <span className="text-[11px] font-semibold text-white/60 truncate">
-                          {selectedSiswa.guruPembimbing && selectedSiswa.guruPembimbing !== '-'
+                          {selectedSiswa.guruPembimbing &&
+                          selectedSiswa.guruPembimbing !== '-'
                             ? `Pembimbing: ${selectedSiswa.guruPembimbing}`
                             : 'Belum ada pembimbing'}
                         </span>
+
                       </div>
+
                     </div>
+
                   </div>
+
                 </div>
+
               </div>
 
-              {/* Card form */}
+              {/* FORM */}
+
               <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm lg:flex-1 flex flex-col overflow-hidden lg:min-h-0">
+
                 <div className="flex items-center justify-between px-4 md:px-5 pt-4 pb-3 shrink-0 border-b border-mist/60">
+
                   <div className="flex items-center gap-2">
-                    {/* ✅ chip navy solid */}
+
                     <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center">
+
                       <MapPin className="w-3.5 h-3.5 text-white" />
+
                     </div>
+
                     <p className="text-[13px] font-bold text-navy">
-                      {editing ? 'Edit Pemetaan' : 'Detail Pemetaan'}
+                      {editing
+                        ? 'Edit Pemetaan'
+                        : 'Detail Pemetaan'}
                     </p>
+
                   </div>
+
                   <div className="flex items-center gap-2">
+
                     {editing ? (
+
                       <span className="flex items-center gap-1.5 text-[11px] font-bold text-steel bg-steel/10 px-2.5 py-1 rounded-full">
+
                         <span className="w-1.5 h-1.5 rounded-full bg-steel animate-pulse" />
+
                         Mode Edit
+
                       </span>
+
                     ) : (
+
                       <button
+                        type="button"
                         onClick={handleEdit}
                         className="flex items-center gap-1.5 text-[11px] font-bold bg-navy text-white px-3 py-1.5 rounded-lg hover:bg-navy/90 transition-colors"
                       >
-                        <Pencil className="w-3 h-3" /> Edit
+
+                        <Pencil className="w-3 h-3" />
+
+                        Edit
+
                       </button>
+
                     )}
+
                   </div>
+
                 </div>
 
                 <div className="lg:flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5 lg:min-h-0 max-h-[50vh] lg:max-h-none">
+
                   {!editing ? (
+
                     <div className="space-y-3">
-                      {/* Tempat PKL — icon chip navy solid */}
-                      <div className={`p-3 rounded-[24px] border ${selectedLoc ? 'border-steel/30 bg-steel/5' : 'border-mist/60 bg-white'}`}>
+
+                      {/* TEMPAT PKL */}
+
+                      <div
+                        className={`p-3 rounded-[24px] border ${
+                          selectedLoc
+                            ? 'border-steel/30 bg-steel/5'
+                            : 'border-mist/60 bg-white'
+                        }`}
+                      >
+
                         <div className="flex items-center gap-3">
+
                           <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center shrink-0 shadow-md shadow-navy/20">
+
                             <Building2 className="w-4 h-4 text-white" />
+
                           </div>
+
                           <div className="flex-1 min-w-0">
-                            <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">Tempat PKL</p>
-                            <p className={`text-sm font-bold truncate mt-0.5 ${selectedLoc ? 'text-steel' : 'text-navy/60'}`}>
-                              {selectedSiswa.perusahaan && selectedSiswa.perusahaan !== '-' ? selectedSiswa.perusahaan : 'Belum dipetakan'}
+
+                            <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">
+                              Tempat PKL
                             </p>
+
+                            <p
+                              className={`text-sm font-bold truncate mt-0.5 ${
+                                selectedLoc
+                                  ? 'text-steel'
+                                  : 'text-navy/60'
+                              }`}
+                            >
+                              {selectedSiswa.perusahaan &&
+                              selectedSiswa.perusahaan !== '-'
+                                ? selectedSiswa.perusahaan
+                                : 'Belum dipetakan'}
+                            </p>
+
                           </div>
-                          {selectedLoc && <MapPin className="w-4 h-4 text-steel shrink-0" />}
+
+                          {selectedLoc && (
+                            <MapPin className="w-4 h-4 text-steel shrink-0" />
+                          )}
+
                         </div>
+
                       </div>
 
-                      {/* Guru Pembimbing — icon chip navy solid + badge navy */}
-                      <div className={`p-3 rounded-[24px] border ${
-                        selectedSiswa.guruPembimbing && selectedSiswa.guruPembimbing !== '-' ? 'border-mist/60 bg-white' : 'border-mist/60 bg-white'
-                      }`}>
+                      {/* GURU */}
+
+                      <div className="p-3 rounded-[24px] border border-mist/60 bg-white">
+
                         <div className="flex items-center gap-3">
+
                           <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center shrink-0 shadow-md shadow-navy/20">
+
                             <Users className="w-4 h-4 text-white" />
+
                           </div>
+
                           <div className="flex-1 min-w-0">
-                            <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">Guru Pembimbing</p>
-                            <p className="text-sm font-bold text-navy truncate mt-0.5">
-                              {selectedSiswa.guruPembimbing && selectedSiswa.guruPembimbing !== '-' ? selectedSiswa.guruPembimbing : 'Belum ditentukan'}
+
+                            <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">
+                              Guru Pembimbing
                             </p>
+
+                            <p className="text-sm font-bold text-navy truncate mt-0.5">
+                              {selectedSiswa.guruPembimbing &&
+                              selectedSiswa.guruPembimbing !== '-'
+                                ? selectedSiswa.guruPembimbing
+                                : 'Belum ditentukan'}
+                            </p>
+
                           </div>
+
                           <span className="text-[10px] font-bold bg-navy text-white px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
-                            <GraduationCap className="w-3 h-3" /> GURU
+
+                            <GraduationCap className="w-3 h-3" />
+
+                            GURU
+
                           </span>
+
                         </div>
+
                       </div>
 
-                      {/* ✅ Mentor Industri — icon chip navy solid + badge navy (bukan steel) */}
-                      <div className={`p-3 rounded-[24px] border ${
-                        selectedSiswa.mentor && selectedSiswa.mentor !== '-' ? 'border-mist/60 bg-white' : 'border-mist/60 bg-white'
-                      }`}>
+                      {/* MENTOR */}
+
+                      <div className="p-3 rounded-[24px] border border-mist/60 bg-white">
+
                         <div className="flex items-center gap-3">
+
                           <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center shrink-0 shadow-md shadow-navy/20">
+
                             <Briefcase className="w-4 h-4 text-white" />
+
                           </div>
+
                           <div className="flex-1 min-w-0">
-                            <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">Mentor Industri</p>
-                            <p className="text-sm font-bold text-navy truncate mt-0.5">
-                              {selectedSiswa.mentor && selectedSiswa.mentor !== '-' ? selectedSiswa.mentor : 'Belum ditentukan'}
+
+                            <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">
+                              Mentor Industri
                             </p>
+
+                            <p className="text-sm font-bold text-navy truncate mt-0.5">
+                              {selectedSiswa.mentor &&
+                              selectedSiswa.mentor !== '-'
+                                ? selectedSiswa.mentor
+                                : 'Belum ditentukan'}
+                            </p>
+
                           </div>
+
                           <span className="text-[10px] font-bold bg-navy text-white px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
-                            <Briefcase className="w-3 h-3" /> MENTOR
+
+                            <Briefcase className="w-3 h-3" />
+
+                            MENTOR
+
                           </span>
+
                         </div>
+
                       </div>
 
-                      {/* ✅ Info box: mist/30 */}
+                      {/* INFO */}
+
                       <div className="p-3 bg-mist/30 border border-mist/60 rounded-[24px] flex items-start gap-2">
+
                         <ShieldCheck className="w-4 h-4 text-steel shrink-0 mt-0.5" />
+
                         <p className="text-[11px] font-medium text-navy/70 leading-relaxed">
                           Pemetaan ini menentukan tempat siswa melaksanakan PKL beserta guru dan mentor yang akan membimbing selama periode akademik.
                         </p>
+
                       </div>
+
                     </div>
+
                   ) : (
+
                     <div className="space-y-4">
+
                       <SearchableSelect
                         label="Tempat PKL"
                         icon={Building2}
@@ -847,6 +1784,7 @@ const [selectedSiswaId, setSelectedSiswaId] = useState<number | null>(null);
                         placeholder="— Pilih Tempat PKL —"
                         emptyText="Belum ada perusahaan. Tambah di halaman Data Perusahaan."
                       />
+
                       <SearchableSelect
                         label="Guru Pembimbing"
                         icon={Users}
@@ -856,6 +1794,7 @@ const [selectedSiswaId, setSelectedSiswaId] = useState<number | null>(null);
                         placeholder="— Pilih Guru Pembimbing —"
                         emptyText="Belum ada guru pembimbing."
                       />
+
                       <SearchableSelect
                         label="Mentor Industri"
                         icon={Briefcase}
@@ -866,38 +1805,64 @@ const [selectedSiswaId, setSelectedSiswaId] = useState<number | null>(null);
                         emptyText="Belum ada mentor industri."
                       />
 
-                      {/* ✅ Info box edit: mist/30 */}
                       <div className="p-3 bg-mist/30 border border-mist/60 rounded-[24px] flex items-start gap-2">
+
                         <Plus className="w-4 h-4 text-steel shrink-0 mt-0.5" />
+
                         <p className="text-[11px] font-medium text-navy/70 leading-relaxed">
                           Data perusahaan, guru, dan mentor dikelola terpisah. Tambah data baru di halaman Data Siswa atau Data Pembimbing.
                         </p>
+
                       </div>
+
                     </div>
+
                   )}
+
                 </div>
 
                 {editing && (
+
                   <div className="p-4 md:p-5 pt-3 border-t border-mist/60 flex gap-2 shrink-0">
+
                     <button
+                      type="button"
                       onClick={handleCancel}
                       className="flex-1 flex items-center justify-center gap-1.5 bg-mist/60 text-navy/70 font-bold text-sm py-3 rounded-[24px] hover:bg-mist transition-colors"
                     >
-                      <X className="w-4 h-4" /> Batal
+
+                      <X className="w-4 h-4" />
+
+                      Batal
+
                     </button>
+
                     <button
+                      type="button"
                       onClick={handleSave}
                       className="flex-1 flex items-center justify-center gap-1.5 bg-steel text-white font-bold text-sm py-3 rounded-[24px] hover:bg-steel/90 hover:-translate-y-0.5 shadow-lg shadow-steel/25 transition-all"
                     >
-                      <Save className="w-4 h-4" /> Simpan
+
+                      <Save className="w-4 h-4" />
+
+                      Simpan
+
                     </button>
+
                   </div>
+
                 )}
+
               </div>
+
             </>
+
           )}
+
         </div>
+
       </div>
+
     </div>
   );
 };
