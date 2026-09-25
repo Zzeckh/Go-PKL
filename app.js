@@ -7,6 +7,7 @@
  *
  * File ini TIDAK pernah listen — listening hanya di server.js (local dev).
  */
+
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -27,6 +28,7 @@ import companyRoutes from './src/routes/companyRoutes.js';
 import superAdminRoutes from './src/routes/superAdminRoutes.js';
 import reportRoutes from './src/routes/reportRoutes.js';
 import dashboardRoutes from './src/routes/dashboardRoutes.js';
+import academicYearRoutes from './src/routes/academicYearRoutes.js';
 
 const app = express();
 
@@ -39,7 +41,12 @@ app.use(express.json({ limit: '10mb' }));
 app.use(requestLogger);
 
 /* ── 2. Health check ── */
-app.get('/api/health', (req, res) => res.json({ status: 'ok', app: 'Go-PKL API' }));
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    app: 'Go-PKL API',
+  });
+});
 
 /* ── 3. Routes ── */
 app.use('/api/auth', authRoutes);
@@ -54,9 +61,14 @@ app.use('/api/super-admin', superAdminRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
+/* ── Tahun Ajaran ── */
+app.use('/api/academic-years', academicYearRoutes);
+
 /* ── 4. 404 handler ── */
 app.use((req, res) => {
-  res.status(404).json({ error: `Route tidak ditemukan: ${req.method} ${req.path}` });
+  res.status(404).json({
+    error: `Route tidak ditemukan: ${req.method} ${req.path}`,
+  });
 });
 
 /* ── 5. Central error handler (WAJIB di akhir) ── */
