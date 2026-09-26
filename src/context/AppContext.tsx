@@ -18,20 +18,35 @@ import {
 
 import { api, setLogoutCallback } from '../utils/api';
 
+/*
+ * =========================================================
+ * TYPES
+ * =========================================================
+ */
+
 export interface SiswaItem {
   id: number;
   name: string;
   kelas: string;
+
+  // ID tahun ajaran untuk filtering Dashboard
+  academicYearId: number | null;
+
   academicYear: string;
+
   perusahaan: string;
   guruPembimbing: string;
   mentor: string;
+
   kehadiran: number;
   logs: number;
+
   nilaiDUDI: string;
   nilaiGuru: string;
   finalNilai: string;
+
   berkasPct: number;
+
   img?: string;
 }
 
@@ -41,6 +56,9 @@ export interface GuruItem {
   subject: string;
   totalSiswa: number;
   totalDUDI: number;
+
+  // ID tahun ajaran
+  academicYearId: number | null;
 }
 
 export interface MentorItem {
@@ -49,6 +67,9 @@ export interface MentorItem {
   perusahaan: string;
   role: string;
   totalSiswa: number;
+
+  // ID tahun ajaran
+  academicYearId: number | null;
 }
 
 export interface PerizinanItem {
@@ -65,15 +86,18 @@ export interface PerizinanItem {
 
 export interface DailyStatus {
   date: string;
+
   status:
     | 'belum_ada'
     | 'hadir'
     | 'izin_pending'
     | 'izin_approved'
     | 'izin_rejected';
+
   canCheckIn: boolean;
   canRequestPermission: boolean;
   canDeletePermission: boolean;
+
   permissionId?: number | null;
 }
 
@@ -81,15 +105,23 @@ export interface PerusahaanItem {
   id: number;
   name: string;
   address: string;
+
   city?: string;
   country?: string;
   category?: string;
+
   quota: number;
   filled: number;
+
   mentor?: string;
+
   latitude?: number | null;
   longitude?: number | null;
+
   radiusMeters?: number;
+
+  // ID tahun ajaran
+  academicYearId: number | null;
 }
 
 export interface ClassItem {
@@ -98,6 +130,12 @@ export interface ClassItem {
   major: string;
   totalStudents: number;
 }
+
+/*
+ * =========================================================
+ * CONTEXT TYPE
+ * =========================================================
+ */
 
 interface AppContextType {
   isAuthenticated: boolean;
@@ -116,6 +154,7 @@ interface AppContextType {
 
   userCompanyName: string;
   userCompanyAddress: string;
+
   userCompanyLocation: {
     lat: number;
     lng: number;
@@ -138,7 +177,10 @@ interface AppContextType {
   academicYears: AcademicYear[];
 
   selectedAcademicYearId: number | null;
-  setSelectedAcademicYearId: (id: number | null) => void;
+
+  setSelectedAcademicYearId: (
+    id: number | null
+  ) => void;
 
   mapLocations: PKLMapLocation[];
 
@@ -186,9 +228,13 @@ interface AppContextType {
     attachmentUrl?: string;
   }) => Promise<any>;
 
-  deletePermission: (id: number) => Promise<void>;
+  deletePermission: (
+    id: number
+  ) => Promise<void>;
 
-  createAcademicYear: (name: string) => Promise<void>;
+  createAcademicYear: (
+    name: string
+  ) => Promise<void>;
 
   updateAcademicYear: (
     id: number,
@@ -198,7 +244,9 @@ interface AppContextType {
     }
   ) => Promise<void>;
 
-  deleteAcademicYear: (id: number) => Promise<void>;
+  deleteAcademicYear: (
+    id: number
+  ) => Promise<void>;
 
   submitEvaluation: (
     siswaId: number,
@@ -253,7 +301,10 @@ interface AppContextType {
     radius: number
   ) => Promise<void>;
 
-  login: (email: string, password: string) => Promise<void>;
+  login: (
+    email: string,
+    password: string
+  ) => Promise<void>;
 
   register: (
     name: string,
@@ -276,20 +327,31 @@ interface AppContextType {
     major?: string;
   }) => Promise<any>;
 
-  deleteClass: (id: number) => Promise<void>;
+  deleteClass: (
+    id: number
+  ) => Promise<void>;
 
-  loadClassStudents: (id: number) => Promise<any>;
+  loadClassStudents: (
+    id: number
+  ) => Promise<any>;
 
   loadSuperUsers: (filters?: {
     role?: string;
     search?: string;
   }) => Promise<boolean>;
 
-  toggleUser: (id: number) => Promise<any>;
+  toggleUser: (
+    id: number
+  ) => Promise<any>;
 
-  deleteUser: (id: number) => Promise<any>;
+  deleteUser: (
+    id: number
+  ) => Promise<any>;
 
-  updateUserRole: (id: number, role: string) => Promise<any>;
+  updateUserRole: (
+    id: number,
+    role: string
+  ) => Promise<any>;
 
   resetPassword: (
     id: number
@@ -310,19 +372,36 @@ interface AppContextType {
     data: Partial<PerusahaanItem>
   ) => Promise<any>;
 
-  deleteCompany: (id: number) => Promise<any>;
+  deleteCompany: (
+    id: number
+  ) => Promise<any>;
 
   changePassword: (
     currentPassword: string,
     newPassword: string
   ) => Promise<void>;
 
-  deleteAccount: (password: string) => Promise<void>;
+  deleteAccount: (
+    password: string
+  ) => Promise<void>;
 }
 
-const AppContext = createContext<AppContextType | undefined>(
-  undefined
-);
+/*
+ * =========================================================
+ * CONTEXT
+ * =========================================================
+ */
+
+const AppContext =
+  createContext<AppContextType | undefined>(
+    undefined
+  );
+
+/*
+ * =========================================================
+ * HELPER
+ * =========================================================
+ */
 
 const mapBackendRoleToUserRole = (
   role: string
@@ -362,6 +441,43 @@ const formatDate = (value: string) => {
   });
 };
 
+/*
+ * API kadang mengembalikan:
+ *
+ * [
+ *   {...}
+ * ]
+ *
+ * atau:
+ *
+ * {
+ *   data: [...]
+ * }
+ *
+ * Helper ini membuat frontend aman terhadap
+ * kedua bentuk response tersebut.
+ */
+
+const getArrayResponse = <T,>(
+  response: any
+): T[] => {
+  if (Array.isArray(response)) {
+    return response;
+  }
+
+  if (Array.isArray(response?.data)) {
+    return response.data;
+  }
+
+  return [];
+};
+
+/*
+ * =========================================================
+ * PROVIDER
+ * =========================================================
+ */
+
 export const AppProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
@@ -383,32 +499,47 @@ export const AppProvider: React.FC<{
   const [userId, setUserId] =
     useState<number | null>(null);
 
-  const [schoolName, setSchoolName] = useState(
-    'SMK Negeri 1 Nusantara'
-  );
+  const [schoolName, setSchoolName] =
+    useState(
+      'SMK Negeri 1 Nusantara'
+    );
 
-  const [userCompanyName, setUserCompanyName] =
-    useState('');
+  const [
+    userCompanyName,
+    setUserCompanyName,
+  ] = useState('');
 
-  const [userCompanyAddress, setUserCompanyAddress] =
-    useState('');
+  const [
+    userCompanyAddress,
+    setUserCompanyAddress,
+  ] = useState('');
 
-  const [userCompanyLocation, setUserCompanyLocation] =
-    useState<{
-      lat: number;
-      lng: number;
-      radius: number;
-    } | null>(null);
+  const [
+    userCompanyLocation,
+    setUserCompanyLocation,
+  ] = useState<{
+    lat: number;
+    lng: number;
+    radius: number;
+  } | null>(null);
 
-  const [token, setToken] = useState<string | null>(
-    () => localStorage.getItem('pkl_token')
-  );
+  const [token, setToken] =
+    useState<string | null>(
+      () =>
+        localStorage.getItem(
+          'pkl_token'
+        )
+    );
 
   const [isLoading, setIsLoading] =
     useState(false);
 
-  const [loadingResources, setLoadingResources] =
-    useState<Set<string>>(new Set());
+  const [
+    loadingResources,
+    setLoadingResources,
+  ] = useState<Set<string>>(
+    new Set()
+  );
 
   const [siswaList, setSiswaList] =
     useState<SiswaItem[]>([]);
@@ -419,8 +550,10 @@ export const AppProvider: React.FC<{
   const [mentorList, setMentorList] =
     useState<MentorItem[]>([]);
 
-  const [perusahaanList, setPerusahaanList] =
-    useState<PerusahaanItem[]>([]);
+  const [
+    perusahaanList,
+    setPerusahaanList,
+  ] = useState<PerusahaanItem[]>([]);
 
   const [logEntries, setLogEntries] =
     useState<LogEntry[]>([]);
@@ -428,19 +561,23 @@ export const AppProvider: React.FC<{
   const [attendances, setAttendances] =
     useState<AttendanceRecord[]>([]);
 
-  const [perizinanList, setPerizinanList] =
-    useState<PerizinanItem[]>([]);
+  const [
+    perizinanList,
+    setPerizinanList,
+  ] = useState<PerizinanItem[]>([]);
 
   const [dailyStatus, setDailyStatus] =
     useState<DailyStatus | null>(null);
 
-  const [academicYears, setAcademicYears] =
-    useState<AcademicYear[]>([]);
+  const [
+    academicYears,
+    setAcademicYears,
+  ] = useState<AcademicYear[]>([]);
 
   /*
-   * ==========================================
-   * TAHUN AJARAN YANG DIPILIH
-   * ==========================================
+   * =======================================================
+   * SELECTED ACADEMIC YEAR
+   * =======================================================
    */
 
   const [
@@ -452,25 +589,31 @@ export const AppProvider: React.FC<{
         'selectedAcademicYearId'
       );
 
-    return saved ? Number(saved) : null;
+    return saved
+      ? Number(saved)
+      : null;
   });
 
-  const [mapLocations, setMapLocations] =
-    useState<PKLMapLocation[]>([]);
+  const [
+    mapLocations,
+    setMapLocations,
+  ] = useState<PKLMapLocation[]>([]);
 
   const [superStats, setSuperStats] =
     useState<any>(null);
 
-  const [superClasses, setSuperClasses] =
-    useState<ClassItem[]>([]);
+  const [
+    superClasses,
+    setSuperClasses,
+  ] = useState<ClassItem[]>([]);
 
   const [superUsers, setSuperUsers] =
     useState<any[]>([]);
 
   /*
-   * ==========================================
-   * LOADING HELPER
-   * ==========================================
+   * =======================================================
+   * LOADING
+   * =======================================================
    */
 
   const startLoading = useCallback(
@@ -496,41 +639,50 @@ export const AppProvider: React.FC<{
   );
 
   /*
-   * ==========================================
-   * SET TAHUN AJARAN
-   * ==========================================
+   * =======================================================
+   * SET ACADEMIC YEAR
+   * =======================================================
    */
 
   const setSelectedAcademicYearId =
-    useCallback((id: number | null) => {
-      setSelectedAcademicYearIdState(id);
+    useCallback(
+      (id: number | null) => {
+        setSelectedAcademicYearIdState(
+          id
+        );
 
-      if (id === null) {
-        localStorage.removeItem(
-          'selectedAcademicYearId'
-        );
-      } else {
-        localStorage.setItem(
-          'selectedAcademicYearId',
-          String(id)
-        );
-      }
-    }, []);
+        if (id === null) {
+          localStorage.removeItem(
+            'selectedAcademicYearId'
+          );
+        } else {
+          localStorage.setItem(
+            'selectedAcademicYearId',
+            String(id)
+          );
+        }
+      },
+      []
+    );
 
   /*
-   * ==========================================
+   * =======================================================
    * LOGOUT
-   * ==========================================
+   * =======================================================
    */
 
   const logout = useCallback(() => {
-    localStorage.removeItem('pkl_token');
-    localStorage.removeItem('pkl_role');
-    localStorage.removeItem('pkl_user_name');
+    localStorage.removeItem(
+      'pkl_token'
+    );
 
-    /*
-     * Tahun ajaran tetap disimpan.
-     */
+    localStorage.removeItem(
+      'pkl_role'
+    );
+
+    localStorage.removeItem(
+      'pkl_user_name'
+    );
 
     setToken(null);
     setUserId(null);
@@ -571,75 +723,89 @@ export const AppProvider: React.FC<{
   }, [logout]);
 
   /*
-   * ==========================================
+   * =======================================================
    * LOGBOOK
-   * ==========================================
+   * =======================================================
    */
 
-  const loadLogEntries = useCallback(async () => {
-    try {
-      startLoading('logbook');
+  const loadLogEntries =
+    useCallback(async () => {
+      try {
+        startLoading('logbook');
 
-      const response =
-        await api.get(
-          '/api/logbook'
-        ) as any[];
+        const response =
+          await api.get(
+            '/api/logbook'
+          );
 
-      const mapped = response.map(
-        (item: any): LogEntry => ({
-          id: `LOG-${item.id}`,
+        const items =
+          getArrayResponse<any>(
+            response
+          );
 
-          date: formatDate(item.date),
+        const mapped =
+          items.map(
+            (item: any): LogEntry => ({
+              id: `LOG-${item.id}`,
 
-          title:
-            item.activityTitle,
+              date: formatDate(
+                item.date
+              ),
 
-          description:
-            item.description,
+              title:
+                item.activityTitle,
 
-          hours:
-            item.hours || 8,
+              description:
+                item.description,
 
-          category:
-            item.category ||
-            'PKL Activity',
+              hours:
+                item.hours || 8,
 
-          status:
-            item.status === 'approved'
-              ? 'approved'
-              : item.status === 'rejected'
-              ? 'revision'
-              : 'pending',
+              category:
+                item.category ||
+                'PKL Activity',
 
-          feedback:
-            item.feedback,
+              status:
+                item.status ===
+                'approved'
+                  ? 'approved'
+                  : item.status ===
+                    'rejected'
+                  ? 'revision'
+                  : 'pending',
 
-          userId:
-            item.user?.id,
+              feedback:
+                item.feedback,
 
-          userName:
-            item.user?.name,
+              userId:
+                item.user?.id,
 
-          userClass:
-            item.user?.class?.name,
-        })
-      );
+              userName:
+                item.user?.name,
 
-      setLogEntries(mapped);
-    } catch (error: any) {
-      console.warn(
-        'Gagal mengambil logbook:',
-        error?.message
-      );
-    } finally {
-      stopLoading('logbook');
-    }
-  }, [startLoading, stopLoading]);
+              userClass:
+                item.user?.class?.name,
+            })
+          );
+
+        setLogEntries(mapped);
+      } catch (error: any) {
+        console.warn(
+          'Gagal mengambil logbook:',
+          error?.message
+        );
+      } finally {
+        stopLoading('logbook');
+      }
+    }, [
+      startLoading,
+      stopLoading,
+    ]);
 
   /*
-   * ==========================================
+   * =======================================================
    * ABSENSI
-   * ==========================================
+   * =======================================================
    */
 
   const loadAttendances =
@@ -647,19 +813,28 @@ export const AppProvider: React.FC<{
       try {
         startLoading('absensi');
 
-        const absensi =
+        const response =
           await api.get(
             '/api/absensi'
-          ) as any[];
+          );
+
+        const absensi =
+          getArrayResponse<any>(
+            response
+          );
 
         const mapped =
           absensi.map(
-            (item: any): AttendanceRecord => ({
+            (
+              item: any
+            ): AttendanceRecord => ({
               id:
                 `ATT-${item.id}`,
 
               date:
-                formatDate(item.date),
+                formatDate(
+                  item.date
+                ),
 
               checkInTime:
                 item.checkInTime
@@ -676,11 +851,14 @@ export const AppProvider: React.FC<{
                   : '',
 
               status:
-                item.status === 'hadir'
+                item.status ===
+                'hadir'
                   ? 'Hadir'
-                  : item.status === 'izin'
+                  : item.status ===
+                    'izin'
                   ? 'Izin'
-                  : item.status === 'alpha'
+                  : item.status ===
+                    'alpha'
                   ? 'Alpha'
                   : 'Sakit',
 
@@ -699,222 +877,268 @@ export const AppProvider: React.FC<{
       } finally {
         stopLoading('absensi');
       }
-    }, [startLoading, stopLoading]);
+    }, [
+      startLoading,
+      stopLoading,
+    ]);
 
   /*
-   * ==========================================
+   * =======================================================
    * SISWA
-   * ==========================================
+   * =======================================================
    */
 
-  const loadSiswa = useCallback(async () => {
-    try {
-      startLoading('siswa');
+  const loadSiswa =
+    useCallback(async () => {
+      try {
+        startLoading('siswa');
 
-      const params =
-        new URLSearchParams();
+        const params =
+          new URLSearchParams();
 
-      params.set(
-        'role',
-        'student'
-      );
-
-      if (selectedAcademicYearId) {
         params.set(
-          'academicYearId',
-          String(
-            selectedAcademicYearId
-          )
+          'role',
+          'student'
         );
-      }
 
-      const response =
-        await api.get(
-          `/api/users?${params.toString()}`
-        ) as any[];
+        if (
+          selectedAcademicYearId
+        ) {
+          params.set(
+            'academicYearId',
+            String(
+              selectedAcademicYearId
+            )
+          );
+        }
 
-      const mapped =
-        response.map(
-          (u: any): SiswaItem => {
-            const evals =
-              u.evalAsStudent || [];
+        const response =
+          await api.get(
+            `/api/users?${params.toString()}`
+          );
 
-            const dudiEval =
-              evals.find(
-                (e: any) =>
-                  e.type === 'dudi'
-              );
+        const users =
+          getArrayResponse<any>(
+            response
+          );
 
-            const guruEval =
-              evals.find(
-                (e: any) =>
-                  e.type === 'guru'
-              );
+        /*
+         * Backend sudah melakukan filter
+         * tahun ajaran.
+         *
+         * Kita tetap simpan academicYearId
+         * agar Dashboard dapat melakukan
+         * filtering juga.
+         */
 
-            const nilaiDUDI =
-              dudiEval
-                ? String(
-                    dudiEval.score
-                  )
-                : '0';
+        const mapped =
+          users.map(
+            (u: any): SiswaItem => {
+              const evals =
+                u.evalAsStudent || [];
 
-            const nilaiGuru =
-              guruEval
-                ? String(
-                    guruEval.score
-                  )
-                : '0';
+              const dudiEval =
+                evals.find(
+                  (e: any) =>
+                    e.type === 'dudi'
+                );
 
-            const d =
-              dudiEval
-                ? dudiEval.score
-                : 0;
+              const guruEval =
+                evals.find(
+                  (e: any) =>
+                    e.type === 'guru'
+                );
 
-            const g =
-              guruEval
-                ? guruEval.score
-                : 0;
-
-            const finalNilai =
-              d && g
-                ? String(
-                    Math.round(
-                      (d + g) / 2
+              const nilaiDUDI =
+                dudiEval
+                  ? String(
+                      dudiEval.score
                     )
-                  )
-                : String(
-                    g || d || 0
-                  );
+                  : '0';
 
-            return {
+              const nilaiGuru =
+                guruEval
+                  ? String(
+                      guruEval.score
+                    )
+                  : '0';
+
+              const d =
+                dudiEval
+                  ? dudiEval.score
+                  : 0;
+
+              const g =
+                guruEval
+                  ? guruEval.score
+                  : 0;
+
+              const finalNilai =
+                d && g
+                  ? String(
+                      Math.round(
+                        (d + g) / 2
+                      )
+                    )
+                  : String(
+                      g || d || 0
+                    );
+
+              return {
+                id: u.id,
+
+                name: u.name,
+
+                kelas:
+                  u.class?.name ||
+                  '-',
+
+                /*
+                 * INI PERBAIKAN UTAMA
+                 */
+                academicYearId:
+                  u.academicYearId ??
+                  u.academicYearRef?.id ??
+                  null,
+
+                academicYear:
+                  u.academicYear ||
+                  u.academicYearRef
+                    ?.name ||
+                  '-',
+
+                perusahaan:
+                  u.company?.name ||
+                  '-',
+
+                guruPembimbing:
+                  u.teacher?.name ||
+                  '-',
+
+                mentor:
+                  u.company?.mentor
+                    ?.name ||
+                  '-',
+
+                kehadiran:
+                  u._count?.absensis ||
+                  0,
+
+                logs:
+                  u._count?.logbooks ||
+                  0,
+
+                nilaiDUDI,
+                nilaiGuru,
+                finalNilai,
+
+                berkasPct: 0,
+
+                img: '',
+              };
+            }
+          );
+
+        setSiswaList(mapped);
+      } catch (error: any) {
+        console.warn(
+          'Gagal mengambil siswa:',
+          error?.message
+        );
+      } finally {
+        stopLoading('siswa');
+      }
+    }, [
+      selectedAcademicYearId,
+      startLoading,
+      stopLoading,
+    ]);
+
+  /*
+   * =======================================================
+   * GURU
+   * =======================================================
+   */
+
+  const loadGuru =
+    useCallback(async () => {
+      try {
+        startLoading('guru');
+
+        const params =
+          new URLSearchParams();
+
+        params.set(
+          'role',
+          'teacher'
+        );
+
+        if (
+          selectedAcademicYearId
+        ) {
+          params.set(
+            'academicYearId',
+            String(
+              selectedAcademicYearId
+            )
+          );
+        }
+
+        const response =
+          await api.get(
+            `/api/users?${params.toString()}`
+          );
+
+        const users =
+          getArrayResponse<any>(
+            response
+          );
+
+        const mapped =
+          users.map(
+            (u: any): GuruItem => ({
               id: u.id,
 
               name: u.name,
 
-              kelas:
-                u.class?.name ||
-                '-',
+              subject:
+                'Guru Pembimbing',
 
-              academicYear:
-                u.academicYear ||
-                u.academicYearRef?.name ||
-                '-',
-
-              perusahaan:
-                u.company?.name ||
-                '-',
-
-              guruPembimbing:
-                u.teacher?.name ||
-                '-',
-
-              mentor:
-                u.company?.mentor?.name ||
-                '-',
-
-              kehadiran:
-                u._count?.absensis ||
+              totalSiswa:
+                u._count?.students ??
                 0,
 
-              logs:
-                u._count?.logbooks ||
-                0,
+              totalDUDI: 0,
 
-              nilaiDUDI,
-              nilaiGuru,
-              finalNilai,
+              /*
+               * INI PERBAIKAN
+               */
+              academicYearId:
+                u.academicYearId ??
+                u.academicYearRef?.id ??
+                null,
+            })
+          );
 
-              berkasPct: 0,
-
-              img: '',
-            };
-          }
+        setGuruList(mapped);
+      } catch (error: any) {
+        console.warn(
+          'Gagal mengambil guru:',
+          error?.message
         );
-
-      setSiswaList(mapped);
-    } catch (error: any) {
-      console.warn(
-        'Gagal mengambil siswa:',
-        error?.message
-      );
-    } finally {
-      stopLoading('siswa');
-    }
-  }, [
-    selectedAcademicYearId,
-    startLoading,
-    stopLoading,
-  ]);
-
-  /*
-   * ==========================================
-   * GURU
-   * ==========================================
-   */
-
-  const loadGuru = useCallback(async () => {
-    try {
-      startLoading('guru');
-
-      const params =
-        new URLSearchParams();
-
-      params.set(
-        'role',
-        'teacher'
-      );
-
-      if (selectedAcademicYearId) {
-        params.set(
-          'academicYearId',
-          String(
-            selectedAcademicYearId
-          )
-        );
+      } finally {
+        stopLoading('guru');
       }
-
-      const response =
-        await api.get(
-          `/api/users?${params.toString()}`
-        ) as any[];
-
-      const mapped =
-        response.map(
-          (u: any): GuruItem => ({
-            id: u.id,
-
-            name: u.name,
-
-            subject:
-              'Guru Pembimbing',
-
-            totalSiswa:
-              u._count?.students ??
-              0,
-
-            totalDUDI: 0,
-          })
-        );
-
-      setGuruList(mapped);
-    } catch (error: any) {
-      console.warn(
-        'Gagal mengambil guru:',
-        error?.message
-      );
-    } finally {
-      stopLoading('guru');
-    }
-  }, [
-    selectedAcademicYearId,
-    startLoading,
-    stopLoading,
-  ]);
+    }, [
+      selectedAcademicYearId,
+      startLoading,
+      stopLoading,
+    ]);
 
   /*
-   * ==========================================
+   * =======================================================
    * MENTOR
-   * ==========================================
+   * =======================================================
    */
 
   const loadMentor =
@@ -930,7 +1154,9 @@ export const AppProvider: React.FC<{
           'mentor'
         );
 
-        if (selectedAcademicYearId) {
+        if (
+          selectedAcademicYearId
+        ) {
           mentorParams.set(
             'academicYearId',
             String(
@@ -939,10 +1165,15 @@ export const AppProvider: React.FC<{
           );
         }
 
-        const response =
+        const mentorResponse =
           await api.get(
             `/api/users?${mentorParams.toString()}`
-          ) as any[];
+          );
+
+        const mentors =
+          getArrayResponse<any>(
+            mentorResponse
+          );
 
         const studentParams =
           new URLSearchParams();
@@ -952,7 +1183,9 @@ export const AppProvider: React.FC<{
           'student'
         );
 
-        if (selectedAcademicYearId) {
+        if (
+          selectedAcademicYearId
+        ) {
           studentParams.set(
             'academicYearId',
             String(
@@ -961,18 +1194,24 @@ export const AppProvider: React.FC<{
           );
         }
 
-        const studentsResponse =
+        const studentResponse =
           await api.get(
             `/api/users?${studentParams.toString()}`
-          ) as any[];
+          );
+
+        const students =
+          getArrayResponse<any>(
+            studentResponse
+          );
 
         const mapped =
-          response.map(
+          mentors.map(
             (u: any): MentorItem => {
               const studentsOfMentor =
-                studentsResponse.filter(
+                students.filter(
                   (student: any) =>
-                    student.company?.mentor?.id ===
+                    student.company
+                      ?.mentor?.id ===
                     u.id
                 );
 
@@ -981,8 +1220,12 @@ export const AppProvider: React.FC<{
                   new Set(
                     studentsOfMentor
                       .map(
-                        (student: any) =>
-                          student.company?.name
+                        (
+                          student: any
+                        ) =>
+                          student
+                            .company
+                            ?.name
                       )
                       .filter(Boolean)
                   )
@@ -1004,6 +1247,15 @@ export const AppProvider: React.FC<{
 
                 totalSiswa:
                   studentsOfMentor.length,
+
+                /*
+                 * INI PERBAIKAN
+                 */
+                academicYearId:
+                  u.academicYearId ??
+                  u.academicYearRef?.id ??
+                  selectedAcademicYearId ??
+                  null,
               };
             }
           );
@@ -1024,24 +1276,33 @@ export const AppProvider: React.FC<{
     ]);
 
   /*
-   * ==========================================
+   * =======================================================
    * PERIZINAN
-   * ==========================================
+   * =======================================================
    */
 
   const loadPerizinan =
     useCallback(async () => {
       try {
-        startLoading('perizinan');
+        startLoading(
+          'perizinan'
+        );
 
         const response =
           await api.get(
             '/api/permissions'
-          ) as any[];
+          );
+
+        const permissions =
+          getArrayResponse<any>(
+            response
+          );
 
         const mapped =
-          response.map(
-            (p: any): PerizinanItem => ({
+          permissions.map(
+            (
+              p: any
+            ): PerizinanItem => ({
               id: p.id,
 
               name:
@@ -1081,14 +1342,19 @@ export const AppProvider: React.FC<{
           error?.message
         );
       } finally {
-        stopLoading('perizinan');
+        stopLoading(
+          'perizinan'
+        );
       }
-    }, [startLoading, stopLoading]);
+    }, [
+      startLoading,
+      stopLoading,
+    ]);
 
   /*
-   * ==========================================
+   * =======================================================
    * DAILY STATUS
-   * ==========================================
+   * =======================================================
    */
 
   const loadDailyStatus =
@@ -1132,12 +1398,15 @@ export const AppProvider: React.FC<{
           'dailyStatus'
         );
       }
-    }, [startLoading, stopLoading]);
+    }, [
+      startLoading,
+      stopLoading,
+    ]);
 
   /*
-   * ==========================================
+   * =======================================================
    * ACADEMIC YEARS
-   * ==========================================
+   * =======================================================
    */
 
   const loadAcademicYears =
@@ -1147,21 +1416,20 @@ export const AppProvider: React.FC<{
           'academicYears'
         );
 
-        const res =
+        const response =
           await api.get(
             '/api/academic-years'
-          ) as AcademicYear[];
+          );
 
         const years =
-          res || [];
+          getArrayResponse<AcademicYear>(
+            response
+          );
 
         setAcademicYears(
           years
         );
 
-        /*
-         * Cek pilihan yang tersimpan.
-         */
         const savedId =
           localStorage.getItem(
             'selectedAcademicYearId'
@@ -1187,10 +1455,6 @@ export const AppProvider: React.FC<{
           }
         }
 
-        /*
-         * Kalau tidak ada pilihan,
-         * gunakan tahun aktif.
-         */
         const activeYear =
           years.find(
             year =>
@@ -1225,9 +1489,9 @@ export const AppProvider: React.FC<{
     ]);
 
   /*
-   * ==========================================
+   * =======================================================
    * PERUSAHAAN
-   * ==========================================
+   * =======================================================
    */
 
   const loadPerusahaan =
@@ -1245,13 +1509,18 @@ export const AppProvider: React.FC<{
         const response =
           await api.get(
             `/api/companies${query}`
-          ) as {
-            data: any[];
-          };
+          );
+
+        const companies =
+          getArrayResponse<any>(
+            response
+          );
 
         const mapped =
-          response.data.map(
-            (c: any): PerusahaanItem => ({
+          companies.map(
+            (
+              c: any
+            ): PerusahaanItem => ({
               id: c.id,
 
               name:
@@ -1296,6 +1565,15 @@ export const AppProvider: React.FC<{
               radiusMeters:
                 c.radiusMeters ||
                 500,
+
+              /*
+               * INI PERBAIKAN
+               */
+              academicYearId:
+                c.academicYearId ??
+                c.academicYearRef?.id ??
+                selectedAcademicYearId ??
+                null,
             })
           );
 
@@ -1319,202 +1597,148 @@ export const AppProvider: React.FC<{
     ]);
 
   /*
-   * ==========================================
+   * =======================================================
    * SUPER ADMIN STATS
-   * ==========================================
+   * =======================================================
    */
 
   const loadSuperStats =
-    useCallback(async (): Promise<boolean> => {
-      if (
-        !localStorage.getItem(
-          'pkl_token'
-        )
-      ) {
-        return false;
-      }
-
-      try {
-        const params =
-          new URLSearchParams();
-
+    useCallback(
+      async (): Promise<boolean> => {
         if (
-          selectedAcademicYearId
+          !localStorage.getItem(
+            'pkl_token'
+          )
         ) {
-          params.set(
-            'academicYearId',
-            String(
-              selectedAcademicYearId
-            )
-          );
+          return false;
         }
 
-        const query =
-          params.toString();
+        try {
+          const params =
+            new URLSearchParams();
 
-        const res =
-          await api.get(
-            `/api/super-admin/stats${
-              query
-                ? `?${query}`
-                : ''
-            }`
-          ) as any;
+          if (
+            selectedAcademicYearId
+          ) {
+            params.set(
+              'academicYearId',
+              String(
+                selectedAcademicYearId
+              )
+            );
+          }
 
-        setSuperStats(
-          res
-        );
+          const query =
+            params.toString();
 
-        return true;
-      } catch (error: any) {
-        console.warn(
-          'Gagal mengambil super stats:',
-          error?.message
-        );
+          const res =
+            await api.get(
+              `/api/super-admin/stats${
+                query
+                  ? `?${query}`
+                  : ''
+              }`
+            );
 
-        return false;
-      }
-    }, [
-      selectedAcademicYearId,
-    ]);
+          setSuperStats(
+            res
+          );
+
+          return true;
+        } catch (error: any) {
+          console.warn(
+            'Gagal mengambil super stats:',
+            error?.message
+          );
+
+          return false;
+        }
+      },
+      [
+        selectedAcademicYearId,
+      ]
+    );
 
   /*
-   * ==========================================
+   * =======================================================
    * SUPER ADMIN CLASSES
-   * ==========================================
+   * =======================================================
    */
 
   const loadSuperClasses =
-    useCallback(async (): Promise<boolean> => {
-      if (
-        !localStorage.getItem(
-          'pkl_token'
-        )
-      ) {
-        return false;
-      }
-
-      /*
-       * Jangan mengambil semua kelas
-       * jika tahun belum dipilih.
-       */
-      if (
-        !selectedAcademicYearId
-      ) {
-        setSuperClasses([]);
-        return false;
-      }
-
-      try {
-        const params =
-          new URLSearchParams();
-
-        params.set(
-          'academicYearId',
-          String(
-            selectedAcademicYearId
+    useCallback(
+      async (): Promise<boolean> => {
+        if (
+          !localStorage.getItem(
+            'pkl_token'
           )
-        );
-
-        const res =
-          await api.get(
-            `/api/super-admin/classes?${params.toString()}`
-          ) as any[];
-
-        setSuperClasses(
-          res || []
-        );
-
-        return true;
-      } catch (error: any) {
-        console.warn(
-          'Gagal mengambil daftar kelas:',
-          error?.message
-        );
-
-        return false;
-      }
-    }, [
-      selectedAcademicYearId,
-    ]);
-
-  /*
-   * ==========================================
-   * CREATE CLASS
-   * ==========================================
-   */
-
-  const createClass = async (
-    data: {
-      name: string;
-      major?: string;
-    }
-  ) => {
-    /*
-     * WAJIB ada tahun ajaran.
-     */
-    if (
-      !selectedAcademicYearId
-    ) {
-      throw new Error(
-        'Pilih Tahun Ajaran terlebih dahulu.'
-      );
-    }
-
-    const res =
-      await api.post(
-        '/api/super-admin/classes',
-        {
-          name:
-            data.name,
-
-          major:
-            data.major,
-
-          academicYearId:
-            selectedAcademicYearId,
+        ) {
+          return false;
         }
-      );
 
-    /*
-     * Refresh kelas pada
-     * tahun yang sedang dipilih.
-     */
-    await loadSuperClasses();
+        try {
+          const params =
+            new URLSearchParams();
 
-    /*
-     * Refresh statistik.
-     */
-    await loadSuperStats();
+          // null = Semua Tahun Ajaran
+          if (
+            selectedAcademicYearId !== null
+          ) {
+            params.set(
+              'academicYearId',
+              String(
+                selectedAcademicYearId
+              )
+            );
+          }
 
-    return res;
-  };
+          const query =
+            params.toString();
 
-  /*
-   * ==========================================
-   * DELETE CLASS
-   * ==========================================
-   */
+          const response =
+            await api.get(
+              `/api/super-admin/classes${
+                query
+                  ? `?${query}`
+                  : ''
+              }`
+            );
 
-  const deleteClass = async (
-    id: number
-  ) => {
-    await api.delete(
-      `/api/super-admin/classes/${id}`
+          const classes =
+            getArrayResponse<ClassItem>(
+              response
+            );
+
+          setSuperClasses(
+            classes
+          );
+
+          return true;
+        } catch (error: any) {
+          console.warn(
+            'Gagal mengambil daftar kelas:',
+            error?.message
+          );
+
+          return false;
+        }
+      },
+      [
+        selectedAcademicYearId,
+      ]
     );
 
-    await loadSuperClasses();
-    await loadSuperStats();
-  };
-
   /*
-   * ==========================================
-   * CLASS STUDENTS
-   * ==========================================
+   * =======================================================
+   * CREATE CLASS
+   * =======================================================
    */
 
-  const loadClassStudents =
-    async (id: number) => {
+  const createClass =
+    async (data: {
+      name: string;
+      major?: string;
+    }) => {
       if (
         !selectedAcademicYearId
       ) {
@@ -1523,15 +1747,65 @@ export const AppProvider: React.FC<{
         );
       }
 
-      return await api.get(
-        `/api/super-admin/classes/${id}/students?academicYearId=${selectedAcademicYearId}`
-      ) as any;
+      const res =
+        await api.post(
+          '/api/super-admin/classes',
+          {
+            name:
+              data.name,
+
+            major:
+              data.major,
+
+            academicYearId:
+              selectedAcademicYearId,
+          }
+        );
+
+      await loadSuperClasses();
+      await loadSuperStats();
+
+      return res;
     };
 
   /*
-   * ==========================================
+   * =======================================================
+   * DELETE CLASS
+   * =======================================================
+   */
+
+  const deleteClass =
+    async (id: number) => {
+      await api.delete(
+        `/api/super-admin/classes/${id}`
+      );
+
+      await loadSuperClasses();
+      await loadSuperStats();
+    };
+
+  /*
+   * =======================================================
+   * CLASS STUDENTS
+   * =======================================================
+   */
+
+  const loadClassStudents =
+    async (id: number) => {
+      const query =
+        selectedAcademicYearId !== null
+          ? `?academicYearId=${selectedAcademicYearId}`
+          : '';
+
+      return await api.get(
+        `/api/super-admin/classes/${id}/students${query}`
+      );
+    };
+
+  /*
+   * =======================================================
    * SUPER ADMIN USERS
-   * ==========================================
+   * =======================================================
    */
 
   const loadSuperUsers =
@@ -1547,13 +1821,6 @@ export const AppProvider: React.FC<{
             'pkl_token'
           )
         ) {
-          return false;
-        }
-
-        if (
-          !selectedAcademicYearId
-        ) {
-          setSuperUsers([]);
           return false;
         }
 
@@ -1580,23 +1847,30 @@ export const AppProvider: React.FC<{
             );
           }
 
-          params.set(
-            'academicYearId',
-            String(
-              selectedAcademicYearId
-            )
-          );
+          // null = Semua Tahun Ajaran
+          if (
+            selectedAcademicYearId !== null
+          ) {
+            params.set(
+              'academicYearId',
+              String(
+                selectedAcademicYearId
+              )
+            );
+          }
 
-          const query =
-            params.toString();
-
-          const res =
+          const response =
             await api.get(
-              `/api/super-admin/users?${query}`
-            ) as any[];
+              `/api/super-admin/users?${params.toString()}`
+            );
+
+          const users =
+            getArrayResponse<any>(
+              response
+            );
 
           setSuperUsers(
-            res || []
+            users
           );
 
           return true;
@@ -1615,48 +1889,46 @@ export const AppProvider: React.FC<{
     );
 
   /*
-   * ==========================================
+   * =======================================================
    * TOGGLE USER
-   * ==========================================
+   * =======================================================
    */
 
-  const toggleUser = async (
-    id: number
-  ) => {
-    const res =
-      await api.patch(
-        `/api/super-admin/users/${id}/toggle`
-      );
+  const toggleUser =
+    async (id: number) => {
+      const res =
+        await api.patch(
+          `/api/super-admin/users/${id}/toggle`
+        );
 
-    await loadSuperUsers();
+      await loadSuperUsers();
 
-    return res;
-  };
+      return res;
+    };
 
   /*
-   * ==========================================
+   * =======================================================
    * DELETE USER
-   * ==========================================
+   * =======================================================
    */
 
-  const deleteUser = async (
-    id: number
-  ) => {
-    const res =
-      await api.delete(
-        `/api/super-admin/users/${id}`
-      );
+  const deleteUser =
+    async (id: number) => {
+      const res =
+        await api.delete(
+          `/api/super-admin/users/${id}`
+        );
 
-    await loadSuperUsers();
-    await loadSuperStats();
+      await loadSuperUsers();
+      await loadSuperStats();
 
-    return res;
-  };
+      return res;
+    };
 
   /*
-   * ==========================================
+   * =======================================================
    * UPDATE ROLE
-   * ==========================================
+   * =======================================================
    */
 
   const updateUserRole =
@@ -1676,9 +1948,9 @@ export const AppProvider: React.FC<{
     };
 
   /*
-   * ==========================================
+   * =======================================================
    * RESET PASSWORD
-   * ==========================================
+   * =======================================================
    */
 
   const resetPassword =
@@ -1696,161 +1968,179 @@ export const AppProvider: React.FC<{
     };
 
   /*
-   * ==========================================
+   * =======================================================
    * LOAD COMPANIES
-   * ==========================================
+   * =======================================================
    */
 
   const loadCompanies =
-    useCallback(async (): Promise<boolean> => {
-      if (
-        !localStorage.getItem(
-          'pkl_token'
-        )
-      ) {
-        return false;
-      }
+    useCallback(
+      async (): Promise<boolean> => {
+        if (
+          !localStorage.getItem(
+            'pkl_token'
+          )
+        ) {
+          return false;
+        }
 
-      try {
-        const query =
-          selectedAcademicYearId
-            ? `?academicYearId=${selectedAcademicYearId}`
-            : '';
+        try {
+          const query =
+            selectedAcademicYearId
+              ? `?academicYearId=${selectedAcademicYearId}`
+              : '';
 
-        const res =
-          await api.get(
-            `/api/companies${query}`
-          ) as {
-            data: any[];
-          };
+          const response =
+            await api.get(
+              `/api/companies${query}`
+            );
 
-        const mapped =
-          res.data.map(
-            (c: any): PerusahaanItem => ({
-              id: c.id,
+          const companies =
+            getArrayResponse<any>(
+              response
+            );
 
-              name:
-                c.name,
+          const mapped =
+            companies.map(
+              (
+                c: any
+              ): PerusahaanItem => ({
+                id: c.id,
 
-              address:
-                c.address ||
-                '-',
+                name:
+                  c.name,
 
-              city:
-                c.city ||
-                undefined,
+                address:
+                  c.address ||
+                  '-',
 
-              country:
-                c.country ||
-                undefined,
+                city:
+                  c.city ||
+                  undefined,
 
-              category:
-                c.category ||
-                undefined,
+                country:
+                  c.country ||
+                  undefined,
 
-              quota:
-                c.quota ||
-                0,
+                category:
+                  c.category ||
+                  undefined,
 
-              filled:
-                c.filled ||
-                0,
+                quota:
+                  c.quota ||
+                  0,
 
-              mentor:
-                c.mentor?.name ||
-                undefined,
+                filled:
+                  c.filled ||
+                  0,
 
-              latitude:
-                c.latitude ??
-                null,
+                mentor:
+                  c.mentor?.name ||
+                  undefined,
 
-              longitude:
-                c.longitude ??
-                null,
+                latitude:
+                  c.latitude ??
+                  null,
 
-              radiusMeters:
-                c.radiusMeters ||
-                500,
-            })
+                longitude:
+                  c.longitude ??
+                  null,
+
+                radiusMeters:
+                  c.radiusMeters ||
+                  500,
+
+                /*
+                 * INI PERBAIKAN
+                 */
+                academicYearId:
+                  c.academicYearId ??
+                  c.academicYearRef?.id ??
+                  selectedAcademicYearId ??
+                  null,
+              })
+            );
+
+          setPerusahaanList(
+            mapped
           );
 
-        setPerusahaanList(
-          mapped
-        );
+          return true;
+        } catch (error: any) {
+          console.warn(
+            'Gagal mengambil daftar perusahaan:',
+            error?.message
+          );
 
-        return true;
-      } catch (error: any) {
-        console.warn(
-          'Gagal mengambil daftar perusahaan:',
-          error?.message
-        );
-
-        return false;
-      }
-    }, [
-      selectedAcademicYearId,
-    ]);
+          return false;
+        }
+      },
+      [
+        selectedAcademicYearId,
+      ]
+    );
 
   /*
-   * ==========================================
+   * =======================================================
    * ADD COMPANY
-   * ==========================================
+   * =======================================================
    */
 
-  const addCompany = async (
-    data: Partial<PerusahaanItem>
-  ) => {
-    if (
-      !selectedAcademicYearId
-    ) {
-      throw new Error(
-        'Pilih Tahun Ajaran terlebih dahulu.'
-      );
-    }
+  const addCompany =
+    async (
+      data: Partial<PerusahaanItem>
+    ) => {
+      if (
+        !selectedAcademicYearId
+      ) {
+        throw new Error(
+          'Pilih Tahun Ajaran terlebih dahulu.'
+        );
+      }
 
-    const res =
-      await api.post(
-        '/api/companies',
-        {
-          name:
-            data.name,
+      const res =
+        await api.post(
+          '/api/companies',
+          {
+            name:
+              data.name,
 
-          address:
-            data.address,
+            address:
+              data.address,
 
-          category:
-            data.category,
+            category:
+              data.category,
 
-          quota:
-            Number(
-              data.quota
-            ) || 0,
+            quota:
+              Number(
+                data.quota
+              ) || 0,
 
-          latitude:
-            data.latitude,
+            latitude:
+              data.latitude,
 
-          longitude:
-            data.longitude,
+            longitude:
+              data.longitude,
 
-          radiusMeters:
-            Number(
-              data.radiusMeters
-            ) || 500,
+            radiusMeters:
+              Number(
+                data.radiusMeters
+              ) || 500,
 
-          academicYearId:
-            selectedAcademicYearId,
-        }
-      );
+            academicYearId:
+              selectedAcademicYearId,
+          }
+        );
 
-    await loadCompanies();
+      await loadCompanies();
 
-    return res;
-  };
+      return res;
+    };
 
   /*
-   * ==========================================
+   * =======================================================
    * UPDATE COMPANY
-   * ==========================================
+   * =======================================================
    */
 
   const updateCompany =
@@ -1901,9 +2191,9 @@ export const AppProvider: React.FC<{
     };
 
   /*
-   * ==========================================
+   * =======================================================
    * DELETE COMPANY
-   * ==========================================
+   * =======================================================
    */
 
   const deleteCompany =
@@ -1919,9 +2209,9 @@ export const AppProvider: React.FC<{
     };
 
   /*
-   * ==========================================
+   * =======================================================
    * CHANGE PASSWORD
-   * ==========================================
+   * =======================================================
    */
 
   const changePassword =
@@ -1939,9 +2229,9 @@ export const AppProvider: React.FC<{
     };
 
   /*
-   * ==========================================
+   * =======================================================
    * DELETE ACCOUNT
-   * ==========================================
+   * =======================================================
    */
 
   const deleteAccount =
@@ -1955,9 +2245,9 @@ export const AppProvider: React.FC<{
     };
 
   /*
-   * ==========================================
+   * =======================================================
    * REFRESH DATA
-   * ==========================================
+   * =======================================================
    */
 
   const refreshData =
@@ -1965,15 +2255,8 @@ export const AppProvider: React.FC<{
       setIsLoading(true);
 
       try {
-        /*
-         * Tahun ajaran harus dimuat
-         * terlebih dahulu.
-         */
         await loadAcademicYears();
 
-        /*
-         * Data umum.
-         */
         await Promise.all([
           loadLogEntries(),
           loadAttendances(),
@@ -1985,14 +2268,6 @@ export const AppProvider: React.FC<{
           loadMentor(),
         ]);
 
-        /*
-         * Data Super Admin.
-         *
-         * Jika tahun ajaran baru saja
-         * ditentukan oleh loadAcademicYears,
-         * useEffect di bawah akan melakukan
-         * reload berdasarkan ID tersebut.
-         */
         if (
           localStorage.getItem(
             'pkl_role'
@@ -2023,9 +2298,9 @@ export const AppProvider: React.FC<{
     ]);
 
   /*
-   * ==========================================
+   * =======================================================
    * SESSION
-   * ==========================================
+   * =======================================================
    */
 
   const loadSession = async (
@@ -2082,16 +2357,8 @@ export const AppProvider: React.FC<{
         true
       );
 
-      /*
-       * Ambil Tahun Ajaran dahulu.
-       */
       await loadAcademicYears();
 
-      /*
-       * Data akan direload oleh
-       * useEffect setelah selectedAcademicYearId
-       * berubah.
-       */
       if (
         mappedRole !==
         'super_admin'
@@ -2122,9 +2389,9 @@ export const AppProvider: React.FC<{
   };
 
   /*
-   * ==========================================
-   * RELOAD SAAT TAHUN AJARAN BERUBAH
-   * ==========================================
+   * =======================================================
+   * RELOAD KETIKA TAHUN AJARAN BERUBAH
+   * =======================================================
    */
 
   useEffect(() => {
@@ -2134,20 +2401,11 @@ export const AppProvider: React.FC<{
       return;
     }
 
-    if (
-      !selectedAcademicYearId
-    ) {
-      return;
-    }
+    // null = Semua Tahun Ajaran, jadi tetap reload.
 
     const reloadByAcademicYear =
       async () => {
         try {
-          /*
-           * Semua data yang memiliki
-           * hubungan dengan tahun ajaran
-           * diambil ulang.
-           */
           await Promise.all([
             loadSiswa(),
             loadGuru(),
@@ -2155,9 +2413,6 @@ export const AppProvider: React.FC<{
             loadPerusahaan(),
           ]);
 
-          /*
-           * Khusus Super Admin.
-           */
           if (
             userRole ===
             'super_admin'
@@ -2191,9 +2446,9 @@ export const AppProvider: React.FC<{
   ]);
 
   /*
-   * ==========================================
+   * =======================================================
    * SESSION TOKEN
-   * ==========================================
+   * =======================================================
    */
 
   useEffect(() => {
@@ -2205,9 +2460,9 @@ export const AppProvider: React.FC<{
   }, [token]);
 
   /*
-   * ==========================================
+   * =======================================================
    * LOGIN
-   * ==========================================
+   * =======================================================
    */
 
   const login = async (
@@ -2264,9 +2519,9 @@ export const AppProvider: React.FC<{
   };
 
   /*
-   * ==========================================
+   * =======================================================
    * REGISTER
-   * ==========================================
+   * =======================================================
    */
 
   const register = async (
@@ -2328,9 +2583,9 @@ export const AppProvider: React.FC<{
   };
 
   /*
-   * ==========================================
+   * =======================================================
    * ADD LOGBOOK
-   * ==========================================
+   * =======================================================
    */
 
   const addLogEntry = async (
@@ -2400,9 +2655,9 @@ export const AppProvider: React.FC<{
   };
 
   /*
-   * ==========================================
+   * =======================================================
    * UPDATE LOG STATUS
-   * ==========================================
+   * =======================================================
    */
 
   const updateLogStatus =
@@ -2441,9 +2696,9 @@ export const AppProvider: React.FC<{
     };
 
   /*
-   * ==========================================
+   * =======================================================
    * UPDATE LOG ENTRY
-   * ==========================================
+   * =======================================================
    */
 
   const updateLogEntry =
@@ -2492,9 +2747,9 @@ export const AppProvider: React.FC<{
     };
 
   /*
-   * ==========================================
+   * =======================================================
    * CHECK IN
-   * ==========================================
+   * =======================================================
    */
 
   const checkInAttendance =
@@ -2531,9 +2786,9 @@ export const AppProvider: React.FC<{
     };
 
   /*
-   * ==========================================
+   * =======================================================
    * UPDATE PERIZINAN
-   * ==========================================
+   * =======================================================
    */
 
   const updatePerizinanStatus =
@@ -2564,9 +2819,9 @@ export const AppProvider: React.FC<{
     };
 
   /*
-   * ==========================================
+   * =======================================================
    * CREATE PERMISSION
-   * ==========================================
+   * =======================================================
    */
 
   const createPermission =
@@ -2631,9 +2886,9 @@ export const AppProvider: React.FC<{
     };
 
   /*
-   * ==========================================
+   * =======================================================
    * DELETE PERMISSION
-   * ==========================================
+   * =======================================================
    */
 
   const deletePermission =
@@ -2656,9 +2911,9 @@ export const AppProvider: React.FC<{
     };
 
   /*
-   * ==========================================
+   * =======================================================
    * CREATE ACADEMIC YEAR
-   * ==========================================
+   * =======================================================
    */
 
   const createAcademicYear =
@@ -2679,9 +2934,9 @@ export const AppProvider: React.FC<{
     };
 
   /*
-   * ==========================================
+   * =======================================================
    * UPDATE ACADEMIC YEAR
-   * ==========================================
+   * =======================================================
    */
 
   const updateAcademicYear =
@@ -2708,9 +2963,9 @@ export const AppProvider: React.FC<{
     };
 
   /*
-   * ==========================================
+   * =======================================================
    * DELETE ACADEMIC YEAR
-   * ==========================================
+   * =======================================================
    */
 
   const deleteAcademicYear =
@@ -2743,9 +2998,9 @@ export const AppProvider: React.FC<{
     };
 
   /*
-   * ==========================================
+   * =======================================================
    * EVALUATION
-   * ==========================================
+   * =======================================================
    */
 
   const submitEvaluation =
@@ -2800,9 +3055,9 @@ export const AppProvider: React.FC<{
     };
 
   /*
-   * ==========================================
+   * =======================================================
    * GURU GRADE
-   * ==========================================
+   * =======================================================
    */
 
   const submitGuruGrade =
@@ -2838,9 +3093,9 @@ export const AppProvider: React.FC<{
     };
 
   /*
-   * ==========================================
+   * =======================================================
    * ADD SISWA
-   * ==========================================
+   * =======================================================
    */
 
   const addSiswa = async (
@@ -2893,9 +3148,9 @@ export const AppProvider: React.FC<{
   };
 
   /*
-   * ==========================================
+   * =======================================================
    * ADD PERUSAHAAN
-   * ==========================================
+   * =======================================================
    */
 
   const addPerusahaan =
@@ -2941,9 +3196,9 @@ export const AppProvider: React.FC<{
     };
 
   /*
-   * ==========================================
+   * =======================================================
    * UPDATE SISWA MAPPING
-   * ==========================================
+   * =======================================================
    */
 
   const updateSiswaMapping =
@@ -3005,9 +3260,9 @@ export const AppProvider: React.FC<{
     };
 
   /*
-   * ==========================================
+   * =======================================================
    * UPDATE COMPANY LOCATION
-   * ==========================================
+   * =======================================================
    */
 
   const updateCompanyLocation =
@@ -3042,9 +3297,9 @@ export const AppProvider: React.FC<{
     };
 
   /*
-   * ==========================================
+   * =======================================================
    * PROVIDER
-   * ==========================================
+   * =======================================================
    */
 
   return (
@@ -3148,6 +3403,12 @@ export const AppProvider: React.FC<{
     </AppContext.Provider>
   );
 };
+
+/*
+ * =========================================================
+ * USE APP
+ * =========================================================
+ */
 
 export const useApp = () => {
   const context =

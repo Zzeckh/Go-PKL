@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Users,
   Building2,
@@ -41,9 +41,9 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
     setSelectedAcademicYearId,
   } = useApp();
 
-  /* ─────────────────────────────────────────────
+  /* =========================================================
      TAHUN AJARAN
-  ───────────────────────────────────────────── */
+  ========================================================= */
 
   const selectedYear = academicYears.find(
     (year) => year.id === selectedAcademicYearId
@@ -54,9 +54,69 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
     academicYears.find((year) => year.isActive)?.name ||
     '2025/2026';
 
-  /* ─────────────────────────────────────────────
+  /* =========================================================
+     FILTER DATA BERDASARKAN TAHUN AJARAN
+  ========================================================= */
+
+  /*
+   * Semua data dashboard Hubin mengikuti:
+   * selectedAcademicYearId
+   *
+   * Tidak menggunakan academicYearRef karena
+   * tipe data frontend tidak memilikinya.
+   */
+
+  const filteredSiswaList = useMemo(() => {
+    if (!selectedAcademicYearId) {
+      return siswaList;
+    }
+
+    return siswaList.filter(
+      (siswa) =>
+        Number(siswa.academicYearId) ===
+        Number(selectedAcademicYearId)
+    );
+  }, [siswaList, selectedAcademicYearId]);
+
+  const filteredPerusahaanList = useMemo(() => {
+    if (!selectedAcademicYearId) {
+      return perusahaanList;
+    }
+
+    return perusahaanList.filter(
+      (company) =>
+        Number(company.academicYearId) ===
+        Number(selectedAcademicYearId)
+    );
+  }, [perusahaanList, selectedAcademicYearId]);
+
+  const filteredGuruList = useMemo(() => {
+    if (!selectedAcademicYearId) {
+      return guruList;
+    }
+
+    return guruList.filter(
+      (guru) =>
+        Number(guru.academicYearId) ===
+        Number(selectedAcademicYearId)
+    );
+  }, [guruList, selectedAcademicYearId]);
+
+  const filteredMentorList = useMemo(() => {
+    if (!selectedAcademicYearId) {
+      return mentorList;
+    }
+
+    return mentorList.filter(
+      (mentor) =>
+        Number(mentor.academicYearId) ===
+        Number(selectedAcademicYearId)
+    );
+  }, [mentorList, selectedAcademicYearId]);
+
+  /* =========================================================
      CLOCK / STOPWATCH
-  ───────────────────────────────────────────── */
+  ========================================================= */
 
   const [time, setTime] = useState(new Date());
   const [mode, setMode] = useState<'clock' | 'sw'>('clock');
@@ -85,12 +145,15 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
     const m = Math.floor(s / 60);
     const sec = s % 60;
 
-    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+    return `${String(m).padStart(2, '0')}:${String(sec).padStart(
+      2,
+      '0'
+    )}`;
   };
 
-  /* ─────────────────────────────────────────────
+  /* =========================================================
      NOTES
-  ───────────────────────────────────────────── */
+  ========================================================= */
 
   const [notes, setNotes] = useState(
     '- Koordinasikan kunjungan industri minggu depan\n- Update data perusahaan mitra\n- Cek penempatan siswa kelas XII TKJ'
@@ -98,23 +161,28 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
 
   const [editNotes, setEditNotes] = useState(false);
 
-  /* ─────────────────────────────────────────────
+  /* =========================================================
      HELPER SISWA PERUSAHAAN
-  ───────────────────────────────────────────── */
+  ========================================================= */
 
-  const countSiswa = (companyName: string) =>
-    siswaList.filter(
-      (s) =>
-        s.perusahaan?.toLowerCase() === companyName.toLowerCase()
+  const countSiswa = (companyName: string) => {
+    return filteredSiswaList.filter(
+      (siswa) =>
+        siswa.perusahaan?.toLowerCase() ===
+        companyName.toLowerCase()
     ).length;
+  };
 
   const getDominantClass = (companyName: string) => {
-    const siswa = siswaList.filter(
+    const siswa = filteredSiswaList.filter(
       (s) =>
-        s.perusahaan?.toLowerCase() === companyName.toLowerCase()
+        s.perusahaan?.toLowerCase() ===
+        companyName.toLowerCase()
     );
 
-    if (siswa.length === 0) return null;
+    if (siswa.length === 0) {
+      return null;
+    }
 
     const classCount: Record<string, number> = {};
 
@@ -127,52 +195,56 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
 
     const entries = Object.entries(classCount);
 
-    if (entries.length === 0) return null;
+    if (entries.length === 0) {
+      return null;
+    }
 
-    return entries.sort((a, b) => b[1] - a[1])[0][0];
+    return entries.sort(
+      (a, b) => b[1] - a[1]
+    )[0][0];
   };
 
-  /* ─────────────────────────────────────────────
+  /* =========================================================
      STATISTIK
-  ───────────────────────────────────────────── */
+  ========================================================= */
 
   const stats = [
     {
       icon: GraduationCap,
       label: 'Siswa Magang',
-      value: siswaList.length,
+      value: filteredSiswaList.length,
       page: 'data-siswa' as ActivePage,
     },
     {
       icon: Building2,
       label: 'Perusahaan Mitra',
-      value: perusahaanList.length,
+      value: filteredPerusahaanList.length,
       page: 'pemetaan' as ActivePage,
     },
     {
       icon: Users,
       label: 'Guru Pembimbing',
-      value: guruList.length,
+      value: filteredGuruList.length,
       page: 'data-pembimbing' as ActivePage,
     },
     {
       icon: Briefcase,
       label: 'Mentor DUDI',
-      value: mentorList.length,
+      value: filteredMentorList.length,
       page: 'data-pembimbing' as ActivePage,
     },
   ];
 
-  /* ─────────────────────────────────────────────
+  /* =========================================================
      RENDER
-  ───────────────────────────────────────────── */
+  ========================================================= */
 
   return (
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-y-auto custom-scrollbar">
 
-      {/* ─────────────────────────────────────────
+      {/* =====================================================
           HEADER
-      ───────────────────────────────────────── */}
+      ===================================================== */}
 
       <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
 
@@ -183,6 +255,7 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
           </div>
 
           <div className="min-w-0">
+
             <h2 className="font-bold text-lg md:text-xl text-navy leading-tight truncate">
               Panel Pengawasan Hubin
             </h2>
@@ -190,6 +263,7 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
             <p className="text-[13px] text-navy/60 font-semibold mt-0.5 truncate">
               {schoolName || 'Sekolah'} · Koordinasi & pemetaan PKL
             </p>
+
           </div>
 
         </div>
@@ -199,6 +273,7 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
           {/* TANGGAL */}
 
           <span className="hidden md:flex items-center gap-1.5 text-[11px] font-bold text-navy/60 bg-mist/40 border border-mist px-3 py-2 rounded-full">
+
             <Clock className="w-3.5 h-3.5" />
 
             {time.toLocaleDateString('id-ID', {
@@ -206,6 +281,7 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
               day: 'numeric',
               month: 'long',
             })}
+
           </span>
 
           {/* TAHUN AJARAN */}
@@ -213,8 +289,11 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
           <div className="hidden sm:flex items-center gap-1.5">
 
             <div className="flex items-center gap-1.5 text-[11px] font-bold text-steel bg-white border border-steel/30 shadow-sm px-3 py-2 rounded-l-full border-r-0">
+
               <Calendar className="w-3.5 h-3.5" />
+
               TA
+
             </div>
 
             <select
@@ -228,12 +307,17 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
               }}
               className="text-[11px] font-bold text-steel bg-white border border-steel/30 shadow-sm px-3 py-2 rounded-r-full outline-none cursor-pointer hover:bg-mist/30 transition-colors"
             >
+
               {academicYears.length === 0 ? (
+
                 <option value="">
                   {activeYear}
                 </option>
+
               ) : (
+
                 academicYears.map((year) => (
+
                   <option
                     key={year.id}
                     value={year.id}
@@ -241,28 +325,35 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
                     {year.name}
                     {year.isActive ? ' (Aktif)' : ''}
                   </option>
+
                 ))
+
               )}
+
             </select>
 
           </div>
 
         </div>
+
       </div>
 
-      {/* ─────────────────────────────────────────
+      {/* =====================================================
           DASHBOARD CHARTS
-      ───────────────────────────────────────── */}
+      ===================================================== */}
 
-      <DashboardCharts role="hubin" />
+      <DashboardCharts
+        role="hubin"
+      />
 
-      {/* ─────────────────────────────────────────
-          STATS CARDS
-      ───────────────────────────────────────── */}
+      {/* =====================================================
+          STAT CARDS
+      ===================================================== */}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
 
         {stats.map((s) => (
+
           <button
             key={s.label}
             onClick={() =>
@@ -274,7 +365,9 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
             <div className="flex items-center justify-between">
 
               <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
+
                 <s.icon className="w-4 h-4 text-white" />
+
               </div>
 
               <ChevronRight className="w-4 h-4 text-navy/20 group-hover:text-steel group-hover:translate-x-0.5 transition-all" />
@@ -294,19 +387,20 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
             </div>
 
           </button>
+
         ))}
 
       </div>
 
-      {/* ─────────────────────────────────────────
+      {/* =====================================================
           MAIN GRID
-      ───────────────────────────────────────── */}
+      ===================================================== */}
 
       <div className="lg:flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-4 lg:min-h-0">
 
-        {/* ═══════════════════════════════════════
+        {/* ===================================================
             LEFT — PERUSAHAAN MITRA
-        ═══════════════════════════════════════ */}
+        =================================================== */}
 
         <div className="lg:col-span-3 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col overflow-hidden min-h-[380px] lg:min-h-0">
 
@@ -315,7 +409,9 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
             <div className="flex items-center gap-2">
 
               <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center">
+
                 <Building2 className="w-3.5 h-3.5 text-white" />
+
               </div>
 
               <p className="text-[13px] font-bold uppercase tracking-widest text-navy/70">
@@ -325,26 +421,34 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
             </div>
 
             {onNavigate && (
+
               <button
-                onClick={() => onNavigate('pemetaan')}
+                onClick={() =>
+                  onNavigate('pemetaan')
+                }
                 className="text-[11px] font-bold bg-steel text-white px-3 py-1.5 rounded-lg hover:bg-steel/90 transition-colors flex items-center gap-1"
               >
+
                 Kelola Pemetaan
 
                 <ChevronRight className="w-3 h-3" />
+
               </button>
+
             )}
 
           </div>
 
           <div className="lg:flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 lg:min-h-0 max-h-[50vh] lg:max-h-none">
 
-            {perusahaanList.length === 0 ? (
+            {filteredPerusahaanList.length === 0 ? (
 
               <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
 
                 <div className="w-14 h-14 rounded-[10px] bg-navy flex items-center justify-center mb-3">
+
                   <Building2 className="w-6 h-6 text-white" />
+
                 </div>
 
                 <p className="text-sm font-bold text-navy mb-1">
@@ -352,22 +456,23 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
                 </p>
 
                 <p className="text-xs text-navy/50 max-w-xs">
-                  Tambahkan perusahaan dan petakan siswa melalui halaman pemetaan.
+                  Tidak ada perusahaan mitra pada tahun ajaran{' '}
+                  {activeYear}.
                 </p>
 
               </div>
 
             ) : (
 
-              perusahaanList.map((c) => {
+              filteredPerusahaanList.map((c) => {
 
-                const count =
-                  countSiswa(c.name) || c.filled;
+                const count = countSiswa(c.name);
 
                 const dominantClass =
                   getDominantClass(c.name);
 
                 return (
+
                   <button
                     key={c.id}
                     onClick={() =>
@@ -380,7 +485,9 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
                     <div className="flex items-center gap-3">
 
                       <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center shrink-0 shadow-md shadow-navy/20">
+
                         <Building2 className="w-5 h-5 text-white" />
+
                       </div>
 
                       <div className="flex-1 min-w-0">
@@ -392,15 +499,18 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
                           </p>
 
                           {dominantClass && (
+
                             <span className="text-[10px] font-bold text-steel bg-white border border-steel/30 px-2 py-0.5 rounded-md shadow-sm shrink-0">
                               {dominantClass}
                             </span>
+
                           )}
 
                         </div>
 
                         <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
-                          Mentor: {c.mentor || 'Belum ditentukan'} · {c.address}
+                          Mentor: {c.mentor || 'Belum ditentukan'} ·{' '}
+                          {c.address}
                         </p>
 
                       </div>
@@ -418,7 +528,9 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
                     </div>
 
                   </button>
+
                 );
+
               })
 
             )}
@@ -427,22 +539,22 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
 
         </div>
 
-        {/* ═══════════════════════════════════════
+        {/* ===================================================
             RIGHT — CLOCK + NOTES
-        ═══════════════════════════════════════ */}
+        =================================================== */}
 
         <div className="lg:col-span-2 flex flex-col gap-3 lg:min-h-0">
 
-          {/* ─────────────────────────────────────
-              JAM / STOPWATCH
-          ───────────────────────────────────── */}
+          {/* JAM / STOPWATCH */}
 
           <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 shrink-0">
 
             <div className="flex gap-1 bg-mist/60 p-1 rounded-full mb-2">
 
               <button
-                onClick={() => setMode('clock')}
+                onClick={() =>
+                  setMode('clock')
+                }
                 className={`flex-1 text-xs font-bold py-1.5 rounded-full transition-all ${
                   mode === 'clock'
                     ? 'bg-steel text-white shadow'
@@ -453,7 +565,9 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
               </button>
 
               <button
-                onClick={() => setMode('sw')}
+                onClick={() =>
+                  setMode('sw')
+                }
                 className={`flex-1 text-xs font-bold py-1.5 rounded-full transition-all ${
                   mode === 'sw'
                     ? 'bg-steel text-white shadow'
@@ -470,14 +584,21 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
               <div className="flex flex-col items-center justify-center py-4">
 
                 <span className="text-4xl md:text-5xl font-light text-navy font-mono tabular-nums leading-none">
+
                   {time.toLocaleTimeString('id-ID', {
                     hour: '2-digit',
                     minute: '2-digit',
                   })}
+
                 </span>
 
                 <span className="text-sm font-bold text-steel mt-2 tabular-nums">
-                  :{String(time.getSeconds()).padStart(2, '0')}
+
+                  :
+                  {String(
+                    time.getSeconds()
+                  ).padStart(2, '0')}
+
                 </span>
 
                 <div className="mt-3 flex items-center gap-1.5 text-[13px] font-semibold text-navy/50">
@@ -485,9 +606,12 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
                   <Clock className="w-3.5 h-3.5" />
 
                   <span>
-                    {time.toLocaleDateString('id-ID', {
-                      weekday: 'long',
-                    })}
+                    {time.toLocaleDateString(
+                      'id-ID',
+                      {
+                        weekday: 'long',
+                      }
+                    )}
                   </span>
 
                 </div>
@@ -505,18 +629,22 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
                 <div className="flex gap-2">
 
                   <button
-                    onClick={() => setSwRun(!swRun)}
+                    onClick={() =>
+                      setSwRun(!swRun)
+                    }
                     className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-all hover:scale-105 border ${
                       swRun
                         ? 'bg-white border-mist text-navy'
                         : 'bg-steel border-steel text-white'
                     }`}
                   >
+
                     {swRun ? (
                       <Pause className="w-4 h-4 fill-current" />
                     ) : (
                       <Play className="w-4 h-4 fill-current" />
                     )}
+
                   </button>
 
                   <button
@@ -526,7 +654,9 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
                     }}
                     className="w-10 h-10 rounded-full bg-white border border-mist flex items-center justify-center text-navy/70 hover:bg-mist/50 transition-all hover:scale-105 shadow-sm"
                   >
+
                     <Square className="w-4 h-4 fill-current" />
+
                   </button>
 
                 </div>
@@ -537,9 +667,7 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
 
           </div>
 
-          {/* ─────────────────────────────────────
-              NOTES
-          ───────────────────────────────────── */}
+          {/* NOTES */}
 
           <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col min-h-[220px] lg:flex-1">
 
@@ -548,7 +676,9 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
               <div className="flex items-center gap-2">
 
                 <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
+
                   <BookOpen className="w-4 h-4 text-white" />
+
                 </div>
 
                 <div>
@@ -568,6 +698,7 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
               <div className="flex items-center gap-2">
 
                 {editNotes && (
+
                   <span className="flex items-center gap-1.5 text-[11px] font-bold text-steel bg-steel/10 px-2.5 py-1 rounded-full">
 
                     <span className="w-1.5 h-1.5 rounded-full bg-steel animate-pulse" />
@@ -575,10 +706,13 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
                     Mode Edit
 
                   </span>
+
                 )}
 
                 <button
-                  onClick={() => setEditNotes(!editNotes)}
+                  onClick={() =>
+                    setEditNotes(!editNotes)
+                  }
                   title={
                     editNotes
                       ? 'Simpan catatan'
@@ -590,11 +724,13 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
                       : 'bg-white text-navy/60 border-mist hover:border-steel hover:text-steel'
                   }`}
                 >
+
                   {editNotes ? (
                     <Check className="w-4 h-4" />
                   ) : (
                     <Edit2 className="w-4 h-4" />
                   )}
+
                 </button>
 
               </div>

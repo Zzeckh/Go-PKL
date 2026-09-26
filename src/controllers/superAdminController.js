@@ -516,27 +516,22 @@ export const getUsers = async (
 
     /* SEARCH */
 
-    if (search?.trim()) {
-      where.OR = [
- 
-        { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-        {
-          name: {
-            contains:
-              search.trim(),
-          },
-        },
+   if (search?.trim()) {
+  const keyword = search.trim();
 
-        {
-          email: {
-            contains:
-              search.trim(),
-          },
-        },
-      ];
-    }
-
+  where.OR = [
+    {
+      name: {
+        contains: keyword,
+      },
+    },
+    {
+      email: {
+        contains: keyword,
+      },
+    },
+  ];
+}
     const users =
       await prisma.user.findMany({
         where,
