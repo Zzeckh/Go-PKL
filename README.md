@@ -32,7 +32,7 @@ Hanya ada **dua layanan** — tidak ada backend host lain (tanpa Koyeb/Render/ng
 - Backend: Node.js, Express, JWT (dijalankan sebagai Vercel function)
 - Database: PostgreSQL via Prisma ORM (Supabase)
 - Storage: Supabase Storage (bucket `uploads`)
-
+ 
 ## Prerequisites
 
 - Node.js 20 or newer
