@@ -1,4 +1,7 @@
+# Lifecycle script Prisma (prisma generate + download query engine) wajib
+# jalan saat install. Kalau tidak, Prisma Client tidak ter-generate dan semua
+# request API gagal di runtime.
 allowBuilds:
-  '@prisma/client': set this to true or false
-  '@prisma/engines': set this to true or false
-  prisma: set this to true or false
+  '@prisma/client': true
+  '@prisma/engines': true
+  prisma: true

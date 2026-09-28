@@ -7,6 +7,7 @@
     "node": ">=20"
   },
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "concurrently \"nodemon server.js\" \"npm run dev:frontend\"",
     "start": "node server.js",
     "dev:frontend": "vite --host 0.0.0.0",
