@@ -106,6 +106,7 @@ model User {
   name     String
   email    String  @unique
   password String
+  whatsapp String?
   role     Role    @default(student)
   isActive Boolean @default(true)
 

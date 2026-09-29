@@ -348,6 +348,22 @@ Setelah URL Vercel aktif (mis. `https://<vercel-domain>`):
 - Serverless = disk ephemeral: **jangan** pernah menulis file ke disk; semua
   upload wajib ke Supabase Storage (sudah diterapkan).
 
+## API Endpoints (Auth)
+
+| Method | Path | Auth | Body | Keterangan |
+| --- | --- | --- | --- | --- |
+| POST | `/api/auth/login` | — | `{email, password}` | Login, mengembalikan `{token, user}` (user berisi `whatsapp`, null jika kosong) |
+| POST | `/api/auth/register` | — | `{name, email, password, classId?}` | Registrasi siswa baru |
+| GET | `/api/auth/me` | Bearer JWT | — | Profil user saat ini (termasuk `whatsapp`) |
+| PUT | `/api/auth/profile` | Bearer JWT | `{email?, whatsapp?}` | Edit email/WhatsApp milik sendiri; balikan objek user sama seperti `/me`. Email duplikat → 409, nomor WA invalid → 400 |
+| PUT | `/api/auth/password` | Bearer JWT | `{currentPassword, newPassword}` | Ganti password sendiri; password lama salah → 401, baru min 6 karakter → 400 |
+| POST | `/api/auth/change-password` | Bearer JWT | `{currentPassword, newPassword}` | Alias lama ganti password (tetap ada) |
+| POST | `/api/auth/delete-account` | Bearer JWT | `{password}` | Hapus akun sendiri |
+
+> Catatan: klaim `email` di dalam JWT **tidak berubah otomatis** setelah `PUT /api/auth/profile`
+> mengganti email — token lama masih valid untuk auth, dan klaim email hanya menyegar
+> pada **login berikutnya**.
+
 ## Default Accounts
 
 The seed script creates one account for each role

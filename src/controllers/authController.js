@@ -29,6 +29,7 @@ const toFrontendUser = (user) => {
     id: user.id,
     name: user.name,
     email: user.email,
+    whatsapp: user.whatsapp ?? null,
     role: user.role,
     companyName: company?.name ?? null,
     companyAddress: company?.address ?? null,
@@ -135,6 +136,104 @@ export const changePassword = async (req, res, next) => {
     const valid = await bcrypt.compare(currentPassword, user.password);
     if (!valid) {
       return res.status(401).json({ error: 'Password lama salah' });
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({ where: { id: user.id }, data: { password: hashed } });
+
+    res.json({ message: 'Password berhasil diubah' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/* Normalisasi nomor WA: simpan digit saja, tanpa '+' / '62' leading.
+   Menerima 08..., 628..., 8..., atau +62... — length digit 9–15. */
+const normalizeWhatsapp = (raw) => {
+  if (typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  if (!/^\+?[0-9]+$/.test(trimmed)) return undefined; // invalid
+  let digits = trimmed.replace(/[^0-9]/g, '');
+  if (digits.startsWith('62')) digits = digits.slice(2);
+  else if (digits.startsWith('0')) digits = digits.slice(1);
+  if (digits.length < 9 || digits.length > 15) return undefined; // invalid
+  return digits; // kanonik: digit lokal tanpa leading 0/62
+};
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/* PUT /api/auth/profile — edit email / whatsapp milik sendiri */
+export const updateProfile = async (req, res, next) => {
+  try {
+    const { email, whatsapp } = req.body;
+
+    if (email === undefined && whatsapp === undefined) {
+      return res.status(400).json({ error: 'Email atau whatsapp harus diisi' });
+    }
+
+    const data = {};
+
+    if (email !== undefined) {
+      if (typeof email !== 'string' || !EMAIL_RE.test(email.trim())) {
+        return res.status(400).json({ error: 'Format email tidak valid' });
+      }
+      const normalizedEmail = email.trim().toLowerCase();
+      const taken = await prisma.user.findFirst({ where: { email: { equals: normalizedEmail, mode: 'insensitive' } } });
+      if (taken && taken.id !== req.user.id) {
+        return res.status(409).json({ error: 'Email sudah dipakai akun lain' });
+      }
+      data.email = normalizedEmail;
+    }
+
+    if (whatsapp !== undefined) {
+      if (typeof whatsapp !== 'string' || whatsapp.trim() === '') {
+        return res.status(400).json({ error: 'Nomor WhatsApp tidak valid' });
+      }
+      const normalized = normalizeWhatsapp(whatsapp);
+      if (normalized === undefined) {
+        return res.status(400).json({
+          error: 'Nomor WhatsApp tidak valid (9-15 digit, boleh diawali +/62)'
+        });
+      }
+      data.whatsapp = normalized;
+    }
+
+    const user = await prisma.user.update({
+      where: { id: req.user.id },
+      data,
+      include: userInclude,
+    });
+
+    res.json(toFrontendUser(user));
+  } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(409).json({ error: 'Email sudah dipakai akun lain' });
+    }
+    next(error);
+  }
+};
+
+/* PUT /api/auth/password — ganti password milik sendiri (verifikasi password lama) */
+export const updatePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Password saat ini dan baru harus diisi' });
+    }
+    if (typeof newPassword !== 'string' || newPassword.length < 6) {
+      return res.status(400).json({ error: 'Password baru minimal 6 karakter' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) {
+      return res.status(404).json({ error: 'User tidak ditemukan' });
+    }
+
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid) {
+      return res.status(401).json({ error: 'Password saat ini salah' });
     }
 
     const hashed = await bcrypt.hash(newPassword, 10);
