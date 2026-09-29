@@ -154,6 +154,7 @@ model Absensi {
   date        DateTime      @db.Date
   status      AbsensiStatus @default(hadir)
   checkInTime DateTime?
+  checkOutTime DateTime?
   imageUrl    String?
   latitude    Float?
   longitude   Float?
