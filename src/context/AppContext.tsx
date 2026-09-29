@@ -99,6 +99,13 @@ export interface DailyStatus {
   canDeletePermission: boolean;
 
   permissionId?: number | null;
+
+  /* Absensi hari ini (dipakai untuk status absen pulang) */
+  attendance?: {
+    id: number;
+    checkInTime?: string | null;
+    checkOutTime?: string | null;
+  } | null;
 }
 
 export interface PerusahaanItem {
@@ -210,6 +217,11 @@ interface AppContextType {
 
   checkInAttendance: (
     imageUrl?: string,
+    latitude?: number,
+    longitude?: number
+  ) => Promise<void>;
+
+  checkOutAttendance: (
     latitude?: number,
     longitude?: number
   ) => Promise<void>;
@@ -850,6 +862,20 @@ export const AppProvider: React.FC<{
                     )
                   : '',
 
+              checkOutTime:
+                item.checkOutTime
+                  ? new Date(
+                      item.checkOutTime
+                    ).toLocaleTimeString(
+                      'id-ID',
+                      {
+                        hour: '2-digit',
+                        minute:
+                          '2-digit',
+                      }
+                    )
+                  : '',
+
               status:
                 item.status ===
                 'hadir'
@@ -1387,6 +1413,20 @@ export const AppProvider: React.FC<{
           permissionId:
             res.permission?.id ??
             null,
+
+          attendance: res.attendance
+            ? {
+                id: res.attendance.id,
+
+                checkInTime:
+                  res.attendance.checkInTime ??
+                  null,
+
+                checkOutTime:
+                  res.attendance.checkOutTime ??
+                  null,
+              }
+            : null,
         });
       } catch (error: any) {
         console.warn(
@@ -2814,6 +2854,42 @@ export const AppProvider: React.FC<{
 
   /*
    * =======================================================
+   * CHECK OUT (ABSEN PULANG)
+   * =======================================================
+   *
+   * POST /api/absensi/checkout — hanya untuk absensi hari ini
+   * yang sudah check-in dan belum check-out. Geofence divalidasi
+   * di server (sama seperti check-in).
+   */
+
+  const checkOutAttendance =
+    async (
+      latitude?: number,
+      longitude?: number
+    ) => {
+      try {
+        await api.post(
+          '/api/absensi/checkout',
+          {
+            latitude,
+            longitude,
+          }
+        );
+
+        await Promise.all([
+          loadAttendances(),
+          loadDailyStatus(),
+        ]);
+      } catch (error: any) {
+        throw new Error(
+          error.message ||
+          'Gagal melakukan absen pulang'
+        );
+      }
+    };
+
+  /*
+   * =======================================================
    * UPDATE PERIZINAN
    * =======================================================
    */
@@ -3379,6 +3455,7 @@ export const AppProvider: React.FC<{
         updateLogEntry,
 
         checkInAttendance,
+        checkOutAttendance,
 
         updatePerizinanStatus,
         createPermission,

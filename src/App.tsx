@@ -46,6 +46,7 @@ export default function App() {
     dailyStatus,
     addLogEntry,
     checkInAttendance,
+    checkOutAttendance,
     login,
     register,
     logout
@@ -202,6 +203,9 @@ export default function App() {
               companyLocation={userCompanyLocation}
               onCheckIn={checkInAttendance}
               hasCheckedIn={dailyStatus?.status === 'hadir'}
+              onCheckOut={checkOutAttendance}
+              hasCheckedOut={!!dailyStatus?.attendance?.checkOutTime}
+              checkOutTime={dailyStatus?.attendance?.checkOutTime ?? null}
               permissionBlockStatus={
                 dailyStatus?.status === 'izin_pending' || dailyStatus?.status === 'izin_approved'
                   ? dailyStatus.status
