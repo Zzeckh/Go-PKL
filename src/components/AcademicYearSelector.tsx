@@ -71,7 +71,7 @@
           "
         >
           <option value="">
-            Pilih Tahun Ajaran
+            Semua Tahun Ajaran
           </option>
 
           {academicYears.map((year) => (

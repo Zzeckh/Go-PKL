@@ -1680,9 +1680,14 @@ export const AppProvider: React.FC<{
           const params =
             new URLSearchParams();
 
-          // null = Semua Tahun Ajaran
+          /*
+           * selectedAcademicYearId === null artinya
+           * "Semua Tahun Ajaran" -> jangan kirim
+           * academicYearId, biarkan backend
+           * mengambil dari seluruh tahun ajaran.
+           */
           if (
-            selectedAcademicYearId !== null
+            selectedAcademicYearId
           ) {
             params.set(
               'academicYearId',
@@ -1792,13 +1797,16 @@ export const AppProvider: React.FC<{
 
   const loadClassStudents =
     async (id: number) => {
-      const query =
-        selectedAcademicYearId !== null
-          ? `?academicYearId=${selectedAcademicYearId}`
-          : '';
+      if (
+        !selectedAcademicYearId
+      ) {
+        throw new Error(
+          'Pilih Tahun Ajaran terlebih dahulu.'
+        );
+      }
 
       return await api.get(
-        `/api/super-admin/classes/${id}/students${query}`
+        `/api/super-admin/classes/${id}/students?academicYearId=${selectedAcademicYearId}`
       );
     };
 
@@ -1847,9 +1855,14 @@ export const AppProvider: React.FC<{
             );
           }
 
-          // null = Semua Tahun Ajaran
+          /*
+           * selectedAcademicYearId === null artinya
+           * "Semua Tahun Ajaran" -> jangan kirim
+           * academicYearId, biarkan backend
+           * mengambil dari seluruh tahun ajaran.
+           */
           if (
-            selectedAcademicYearId !== null
+            selectedAcademicYearId
           ) {
             params.set(
               'academicYearId',
@@ -1859,9 +1872,16 @@ export const AppProvider: React.FC<{
             );
           }
 
+          const query =
+            params.toString();
+
           const response =
             await api.get(
-              `/api/super-admin/users?${params.toString()}`
+              `/api/super-admin/users${
+                query
+                  ? `?${query}`
+                  : ''
+              }`
             );
 
           const users =
@@ -2401,7 +2421,14 @@ export const AppProvider: React.FC<{
       return;
     }
 
-    // null = Semua Tahun Ajaran, jadi tetap reload.
+    /*
+     * PENTING:
+     *
+     * selectedAcademicYearId === null berarti mode
+     * "Semua Tahun Ajaran". Data tetap harus di-reload
+     * (tanpa filter academicYearId), jadi TIDAK boleh
+     * di-skip di sini.
+     */
 
     const reloadByAcademicYear =
       async () => {

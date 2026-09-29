@@ -21,7 +21,34 @@ const normalizeNis = (value) =>
  */
 export const getCompanies = async (req, res, next) => {
   try {
+    const { academicYearId } = req.query;
+
+    const where = {};
+
+    /*
+     * FILTER TAHUN AJARAN
+     *
+     * academicYearId dikirim -> hanya perusahaan pada
+     * tahun ajaran tersebut.
+     *
+     * academicYearId TIDAK dikirim (mode
+     * "Semua Tahun Ajaran") -> jangan filter,
+     * ambil dari seluruh tahun ajaran.
+     */
+    if (academicYearId) {
+      const yearId = Number(academicYearId);
+
+      if (!Number.isInteger(yearId) || yearId <= 0) {
+        return res.status(400).json({
+          error: 'academicYearId tidak valid.',
+        });
+      }
+
+      where.academicYearId = yearId;
+    }
+
     const companies = await prisma.company.findMany({
+      where,
       orderBy: { name: 'asc' },
       include: {
         mentor: {

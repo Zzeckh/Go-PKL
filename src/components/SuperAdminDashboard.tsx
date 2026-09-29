@@ -115,6 +115,7 @@ export const SuperAdminDashboard: React.FC<{
     const value = event.target.value;
 
     if (!value) {
+      setSelectedAcademicYearId(null);
       return;
     }
 
@@ -295,19 +296,25 @@ export const SuperAdminDashboard: React.FC<{
               >
                 {academicYears &&
                 academicYears.length > 0 ? (
-                  academicYears.map(
-                    (year) => (
-                      <option
-                        key={year.id}
-                        value={year.id}
-                      >
-                        {year.name}
-                        {year.isActive
-                          ? ' • Aktif'
-                          : ''}
-                      </option>
-                    )
-                  )
+                  <>
+                    <option value="">
+                      Semua Tahun Ajaran
+                    </option>
+
+                    {academicYears.map(
+                      (year) => (
+                        <option
+                          key={year.id}
+                          value={year.id}
+                        >
+                          {year.name}
+                          {year.isActive
+                            ? ' • Aktif'
+                            : ''}
+                        </option>
+                      )
+                    )}
+                  </>
                 ) : (
                   <option value="">
                     Memuat tahun ajaran...

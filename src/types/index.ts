@@ -22,6 +22,12 @@ export type ActivePage =
 export type AuthMode = 'login' | 'register';
 export type UserRole = 'intern' | 'mentor' | 'teacher' | 'hubin' | 'super_admin'; // ← TAMBAH super_admin
 
+export interface AcademicYear {
+  id: number;
+  name: string;
+  isActive: boolean;
+}
+
 export interface LogEntry {
   id: string;
   date: string;

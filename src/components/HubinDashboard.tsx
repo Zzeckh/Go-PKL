@@ -316,17 +316,23 @@ export const HubinDashboard: React.FC<HubinDashboardProps> = ({
 
               ) : (
 
-                academicYears.map((year) => (
-
-                  <option
-                    key={year.id}
-                    value={year.id}
-                  >
-                    {year.name}
-                    {year.isActive ? ' (Aktif)' : ''}
+                <>
+                  <option value="">
+                    Semua Tahun Ajaran
                   </option>
 
-                ))
+                  {academicYears.map((year) => (
+
+                    <option
+                      key={year.id}
+                      value={year.id}
+                    >
+                      {year.name}
+                      {year.isActive ? ' (Aktif)' : ''}
+                    </option>
+
+                  ))}
+                </>
 
               )}
 

@@ -287,18 +287,6 @@ export const DashboardCharts: React.FC<{
 
     let cancelled = false;
 
-    /*
-     * Kalau Super Admin belum memilih tahun,
-     * jangan request dulu.
-     */
-    if (
-      role === 'super_admin' &&
-      !selectedAcademicYearId
-    ) {
-      setStats(null);
-      return;
-    }
-
     setStats(null);
     setError(false);
 

@@ -242,7 +242,7 @@ export const HubinPemetaan: React.FC = () => {
 
     academicYears,
     selectedAcademicYearId,
-    selectAcademicYear,
+    setSelectedAcademicYearId,
   } = useApp();
 
   const [search, setSearch] = useState('');
@@ -307,11 +307,11 @@ export const HubinPemetaan: React.FC = () => {
   const handleAcademicYearChange = (
     e: React.ChangeEvent<HTMLSelectElement>
   ) => {
-    const id = Number(e.target.value);
+    const value = e.target.value;
 
-    if (!id) return;
-
-    selectAcademicYear(id);
+    setSelectedAcademicYearId(
+      value ? Number(value) : null
+    );
 
     // Reset state pemetaan
     setSelectedSiswaId(null);
@@ -859,6 +859,10 @@ export const HubinPemetaan: React.FC = () => {
             }
             className="bg-white border border-steel/30 text-steel font-bold text-[11px] px-3 py-2 rounded-full outline-none cursor-pointer hover:border-steel transition-all"
           >
+            <option value="">
+              Semua Tahun Ajaran
+            </option>
+
             {academicYears.map(
               (year) => (
                 <option

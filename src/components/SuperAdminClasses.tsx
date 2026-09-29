@@ -44,7 +44,7 @@ export const SuperClasses: React.FC = () => {
      LOAD KELAS SESUAI TAHUN AJARAN
      ══════════════════════════════════════════════════════ */
   useEffect(() => {
-    if (!isAuthenticated || !selectedAcademicYearId) {
+    if (!isAuthenticated) {
       setLoading(false);
       return;
     }
@@ -182,25 +182,7 @@ export const SuperClasses: React.FC = () => {
 
         <div className="lg:flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5 max-h-[65vh] lg:max-h-none">
 
-          {!selectedAcademicYearId ? (
-
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-
-              <div className="w-14 h-14 rounded-[10px] bg-navy flex items-center justify-center mb-3">
-                <BookMarked className="w-6 h-6 text-white" />
-              </div>
-
-              <p className="text-sm font-bold text-navy mb-1">
-                Pilih Tahun Ajaran
-              </p>
-
-              <p className="text-xs text-navy/50 max-w-xs">
-                Pilih tahun ajaran terlebih dahulu untuk melihat daftar kelas.
-              </p>
-
-            </div>
-
-          ) : loading ? (
+          {loading ? (
 
             <div className="flex items-center justify-center h-40">
 

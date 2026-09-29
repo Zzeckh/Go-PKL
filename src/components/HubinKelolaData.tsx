@@ -96,7 +96,11 @@ export const HubinData: React.FC = () => {
   ========================================================= */
 
   useEffect(() => {
-    if (!selectedAcademicYearId) return;
+    /*
+     * selectedAcademicYearId === null berarti mode
+     * "Semua Tahun Ajaran". Data tetap harus
+     * di-reload (tanpa filter academicYearId).
+     */
 
     const reload = async () => {
       try {
@@ -595,10 +599,10 @@ export const HubinData: React.FC = () => {
                 const value =
                   e.target.value;
 
-                if (!value) return;
-
                 setSelectedAcademicYearId(
-                  Number(value)
+                  value
+                    ? Number(value)
+                    : null
                 );
               }}
               className="appearance-none pl-9 pr-9 py-2.5 rounded-[24px] bg-mist/40 border border-mist text-xs font-bold text-navy outline-none cursor-pointer hover:bg-mist/70 focus:border-steel transition-all"
@@ -609,19 +613,25 @@ export const HubinData: React.FC = () => {
                   Tidak ada tahun ajaran
                 </option>
               ) : (
-                academicYears.map(
-                  (year: any) => (
-                    <option
-                      key={year.id}
-                      value={year.id}
-                    >
-                      {year.name}
-                      {year.isActive
-                        ? ' (Aktif)'
-                        : ''}
-                    </option>
-                  )
-                )
+                <>
+                  <option value="">
+                    Semua Tahun Ajaran
+                  </option>
+
+                  {academicYears.map(
+                    (year: any) => (
+                      <option
+                        key={year.id}
+                        value={year.id}
+                      >
+                        {year.name}
+                        {year.isActive
+                          ? ' (Aktif)'
+                          : ''}
+                      </option>
+                    )
+                  )}
+                </>
               )}
 
             </select>
