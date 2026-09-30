@@ -21,34 +21,7 @@ const normalizeNis = (value) =>
  */
 export const getCompanies = async (req, res, next) => {
   try {
-    const { academicYearId } = req.query;
-
-    const where = {};
-
-    /*
-     * FILTER TAHUN AJARAN
-     *
-     * academicYearId dikirim -> hanya perusahaan pada
-     * tahun ajaran tersebut.
-     *
-     * academicYearId TIDAK dikirim (mode
-     * "Semua Tahun Ajaran") -> jangan filter,
-     * ambil dari seluruh tahun ajaran.
-     */
-    if (academicYearId) {
-      const yearId = Number(academicYearId);
-
-      if (!Number.isInteger(yearId) || yearId <= 0) {
-        return res.status(400).json({
-          error: 'academicYearId tidak valid.',
-        });
-      }
-
-      where.academicYearId = yearId;
-    }
-
     const companies = await prisma.company.findMany({
-      where,
       orderBy: { name: 'asc' },
       include: {
         mentor: {
@@ -154,6 +127,84 @@ export const createCompany = async (req, res, next) => {
 };
 
 /**
+ * GET /api/companies/template
+ *
+ * Download template Excel kosong untuk import mapping.
+ *
+ * Format:
+ * NIS
+ * Nama Siswa
+ * Nama Perusahaan
+ * Alamat
+ * Kota
+ * Negara
+ * Latitude
+ * Longitude
+ * Radius
+ * Kuota
+ */
+export const downloadCompanyTemplate = async (req, res, next) => {
+  try {
+    const templateData = [
+      {
+        NIS: '',
+        'Nama Siswa': '',
+        'Nama Perusahaan': '',
+        Alamat: '',
+        Kota: '',
+        Negara: '',
+        Latitude: '',
+        Longitude: '',
+        Radius: '',
+        Kuota: '',
+      },
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(templateData);
+
+    worksheet['!cols'] = [
+      { wch: 15 },
+      { wch: 30 },
+      { wch: 30 },
+      { wch: 40 },
+      { wch: 20 },
+      { wch: 20 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 12 },
+    ];
+
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      'Template Import'
+    );
+
+    const buffer = XLSX.write(workbook, {
+      type: 'buffer',
+      bookType: 'xlsx',
+    });
+
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="template-import-pkl.xlsx"'
+    );
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+
+    res.send(buffer);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * POST /api/companies/import
  *
  * Import Excel mapping:
@@ -168,14 +219,16 @@ export const createCompany = async (req, res, next) => {
  * Longitude
  * Radius
  * Kuota
- * Nama Mentor
  * Guru Pembimbing
  *
  * Konsep:
  * 1 perusahaan
- *    -> 1 mentor DUDI
- *    -> 1 guru pembimbing
  *    -> banyak siswa
+ *    -> guru pembimbing dapat digunakan untuk siswa
+ *
+ * Mentor TIDAK diambil dari Excel.
+ * Mentor perusahaan tetap mengikuti data perusahaan
+ * yang sudah tersimpan di database.
  */
 export const importCompanies = async (req, res, next) => {
   try {
@@ -184,6 +237,7 @@ export const importCompanies = async (req, res, next) => {
      * 1. CEK FILE
      * ============================================================
      */
+
     if (!req.file) {
       return res.status(400).json({
         error: 'File Excel wajib diupload',
@@ -195,6 +249,7 @@ export const importCompanies = async (req, res, next) => {
      * 2. BACA EXCEL
      * ============================================================
      */
+
     const workbook = XLSX.read(req.file.buffer, {
       type: 'buffer',
     });
@@ -227,6 +282,7 @@ export const importCompanies = async (req, res, next) => {
      * NIS pada project sekarang berasal dari bagian sebelum "@"
      * pada email user.
      */
+
     const students = await prisma.user.findMany({
       where: {
         role: 'student',
@@ -260,33 +316,10 @@ export const importCompanies = async (req, res, next) => {
 
     /**
      * ============================================================
-     * 4. AMBIL SEMUA MENTOR
+     * 4. AMBIL SEMUA GURU
      * ============================================================
      */
-    const mentors = await prisma.user.findMany({
-      where: {
-        role: 'mentor',
-      },
-      select: {
-        id: true,
-        name: true,
-      },
-    });
 
-    const mentorByName = new Map();
-
-    for (const mentor of mentors) {
-      mentorByName.set(
-        normalize(mentor.name),
-        mentor
-      );
-    }
-
-    /**
-     * ============================================================
-     * 5. AMBIL SEMUA GURU
-     * ============================================================
-     */
     const teachers = await prisma.user.findMany({
       where: {
         role: 'teacher',
@@ -308,14 +341,16 @@ export const importCompanies = async (req, res, next) => {
 
     /**
      * ============================================================
-     * 6. HASIL IMPORT
+     * 5. HASIL IMPORT
      * ============================================================
      */
+
     const success = [];
     const errors = [];
 
     /**
      * Siswa yang sudah diproses di Excel.
+     *
      * Tujuannya supaya satu siswa tidak muncul dua kali.
      */
     const processedStudentIds = new Set();
@@ -332,16 +367,17 @@ export const importCompanies = async (req, res, next) => {
     const companyFilled = new Map();
 
     /**
-     * Menyimpan mentor + guru yang sudah dipasang
+     * Menyimpan guru yang sudah dipasang
      * pada perusahaan tertentu.
      */
     const companyAssignment = new Map();
 
     /**
      * ============================================================
-     * 7. HELPER CARI PERUSAHAAN
+     * 6. HELPER CARI PERUSAHAAN
      * ============================================================
      */
+
     const getCompany = async (companyName) => {
       const key = normalize(companyName);
 
@@ -378,9 +414,10 @@ export const importCompanies = async (req, res, next) => {
 
     /**
      * ============================================================
-     * 8. PROSES SATU PER SATU BARIS EXCEL
+     * 7. PROSES SATU PER SATU BARIS EXCEL
      * ============================================================
      */
+
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
 
@@ -396,6 +433,7 @@ export const importCompanies = async (req, res, next) => {
        * Ambil data siswa
        * ----------------------------------------------------------
        */
+
       const nis = normalizeNis(
         row['NIS'] ??
           row['nis'] ??
@@ -413,6 +451,7 @@ export const importCompanies = async (req, res, next) => {
        * Ambil data perusahaan
        * ----------------------------------------------------------
        */
+
       const companyName = String(
         row['Nama Perusahaan'] ??
           row['nama perusahaan'] ??
@@ -442,6 +481,7 @@ export const importCompanies = async (req, res, next) => {
        * Koordinat
        * ----------------------------------------------------------
        */
+
       const latitude = Number(
         row['Latitude'] ??
           row['latitude']
@@ -457,6 +497,7 @@ export const importCompanies = async (req, res, next) => {
        * Radius
        * ----------------------------------------------------------
        */
+
       const radiusValue =
         row['Radius'] ??
         row['RadiusMeters'] ??
@@ -474,6 +515,7 @@ export const importCompanies = async (req, res, next) => {
        * Kuota
        * ----------------------------------------------------------
        */
+
       const quotaValue =
         row['Kuota'] ??
         row['kuota'] ??
@@ -488,22 +530,10 @@ export const importCompanies = async (req, res, next) => {
 
       /**
        * ----------------------------------------------------------
-       * Mentor
-       * ----------------------------------------------------------
-       */
-      const mentorName = String(
-        row['Nama Mentor'] ??
-          row['nama mentor'] ??
-          row['Mentor'] ??
-          row['mentor'] ??
-          ''
-      ).trim();
-
-      /**
-       * ----------------------------------------------------------
        * Guru Pembimbing
        * ----------------------------------------------------------
        */
+
       const teacherName = String(
         row['Guru Pembimbing'] ??
           row['guru pembimbing'] ??
@@ -514,7 +544,7 @@ export const importCompanies = async (req, res, next) => {
 
       /**
        * ==========================================================
-       * 9. VALIDASI WAJIB
+       * 8. VALIDASI WAJIB
        * ==========================================================
        */
 
@@ -631,17 +661,6 @@ export const importCompanies = async (req, res, next) => {
         continue;
       }
 
-      if (!mentorName) {
-        errors.push({
-          row: rowNumber,
-          name: studentName || undefined,
-          error:
-            'Nama Mentor wajib diisi',
-        });
-
-        continue;
-      }
-
       if (!teacherName) {
         errors.push({
           row: rowNumber,
@@ -655,13 +674,14 @@ export const importCompanies = async (req, res, next) => {
 
       /**
        * ==========================================================
-       * 10. CARI SISWA
+       * 9. CARI SISWA
        * ==========================================================
        *
        * Prioritas:
        * 1. NIS
        * 2. Nama
        */
+
       const student =
         (nis && studentByNis.get(nis)) ||
         studentByName.get(
@@ -686,6 +706,7 @@ export const importCompanies = async (req, res, next) => {
       /**
        * Cegah siswa yang sama diproses dua kali.
        */
+
       if (
         processedStudentIds.has(student.id)
       ) {
@@ -701,30 +722,10 @@ export const importCompanies = async (req, res, next) => {
 
       /**
        * ==========================================================
-       * 11. CARI MENTOR
+       * 10. CARI GURU
        * ==========================================================
        */
-      const mentor =
-        mentorByName.get(
-          normalize(mentorName)
-        );
 
-      if (!mentor) {
-        errors.push({
-          row: rowNumber,
-          name: student.name,
-          error:
-            `Mentor "${mentorName}" tidak ditemukan`,
-        });
-
-        continue;
-      }
-
-      /**
-       * ==========================================================
-       * 12. CARI GURU
-       * ==========================================================
-       */
       const teacher =
         teacherByName.get(
           normalize(teacherName)
@@ -743,9 +744,10 @@ export const importCompanies = async (req, res, next) => {
 
       /**
        * ==========================================================
-       * 13. CARI / BUAT PERUSAHAAN
+       * 11. CARI / BUAT PERUSAHAAN
        * ==========================================================
        */
+
       try {
         let company =
           await getCompany(companyName);
@@ -754,7 +756,11 @@ export const importCompanies = async (req, res, next) => {
          * --------------------------------------------------------
          * Kalau perusahaan belum ada → buat baru
          * --------------------------------------------------------
+         *
+         * Mentor sengaja tidak diisi dari Excel.
+         * Perusahaan baru akan memiliki mentor null.
          */
+
         if (!company) {
           company =
             await prisma.company.create({
@@ -767,7 +773,7 @@ export const importCompanies = async (req, res, next) => {
                 latitude,
                 longitude,
                 radiusMeters,
-                mentorId: mentor.id,
+                mentorId: null,
               },
             });
 
@@ -787,6 +793,7 @@ export const importCompanies = async (req, res, next) => {
            * UPDATE datanya, bukan buat duplikat.
            * ------------------------------------------------------
            */
+
           const filled =
             companyFilled.get(
               company.id
@@ -805,27 +812,13 @@ export const importCompanies = async (req, res, next) => {
 
           /**
            * Cek apakah perusahaan ini sebelumnya
-           * sudah diberi mentor + guru berbeda.
+           * sudah diberi Guru Pembimbing berbeda.
            */
+
           const existingAssignment =
             companyAssignment.get(
               company.id
             );
-
-          if (
-            existingAssignment &&
-            existingAssignment.mentorId !==
-              mentor.id
-          ) {
-            errors.push({
-              row: rowNumber,
-              name: student.name,
-              error:
-                `Perusahaan "${companyName}" sudah memiliki mentor berbeda di baris Excel sebelumnya`,
-            });
-
-            continue;
-          }
 
           if (
             existingAssignment &&
@@ -844,7 +837,11 @@ export const importCompanies = async (req, res, next) => {
 
           /**
            * Update perusahaan.
+           *
+           * Mentor tidak disentuh.
+           * Mentor yang sudah ada tetap aman.
            */
+
           company =
             await prisma.company.update({
               where: {
@@ -858,7 +855,6 @@ export const importCompanies = async (req, res, next) => {
                 latitude,
                 longitude,
                 radiusMeters,
-                mentorId: mentor.id,
               },
             });
 
@@ -870,26 +866,29 @@ export const importCompanies = async (req, res, next) => {
 
         /**
          * ========================================================
-         * 14. SIMPAN ASSIGNMENT PERUSAHAAN
+         * 12. SIMPAN ASSIGNMENT PERUSAHAAN
          * ========================================================
          *
          * Satu perusahaan:
-         * - satu mentor
-         * - satu guru pembimbing
+         * - banyak siswa
+         * - satu Guru Pembimbing
+         *
+         * Mentor tidak berasal dari Excel.
          */
+
         companyAssignment.set(
           company.id,
           {
-            mentorId: mentor.id,
             teacherId: teacher.id,
           }
         );
 
         /**
          * ========================================================
-         * 15. CEK KUOTA
+         * 13. CEK KUOTA
          * ========================================================
          */
+
         const oldCompanyId =
           student.companyId;
 
@@ -897,6 +896,7 @@ export const importCompanies = async (req, res, next) => {
          * Kalau siswa memang belum berada
          * di perusahaan tersebut.
          */
+
         if (
           oldCompanyId !== company.id
         ) {
@@ -918,12 +918,13 @@ export const importCompanies = async (req, res, next) => {
 
           /**
            * ======================================================
-           * 16. UPDATE SISWA
+           * 14. UPDATE SISWA
            * ======================================================
            *
-           * companyId  = perusahaan
-           * teacherId  = guru pembimbing perusahaan
+           * companyId = perusahaan
+           * teacherId = guru pembimbing perusahaan
            */
+
           await prisma.user.update({
             where: {
               id: student.id,
@@ -937,6 +938,7 @@ export const importCompanies = async (req, res, next) => {
           /**
            * Update jumlah siswa perusahaan baru.
            */
+
           companyFilled.set(
             company.id,
             filled + 1
@@ -946,6 +948,7 @@ export const importCompanies = async (req, res, next) => {
            * Kalau sebelumnya punya perusahaan lain,
            * kurangi jumlah perusahaan lama.
            */
+
           if (oldCompanyId) {
             const oldFilled =
               companyFilled.get(
@@ -971,6 +974,7 @@ export const importCompanies = async (req, res, next) => {
            * tetap pastikan Guru Pembimbing diperbarui.
            * ======================================================
            */
+
           await prisma.user.update({
             where: {
               id: student.id,
@@ -983,9 +987,10 @@ export const importCompanies = async (req, res, next) => {
 
         /**
          * ========================================================
-         * 17. BERHASIL
+         * 15. BERHASIL
          * ========================================================
          */
+
         processedStudentIds.add(
           student.id
         );
@@ -996,8 +1001,6 @@ export const importCompanies = async (req, res, next) => {
           studentName: student.name,
           companyId: company.id,
           companyName: company.name,
-          mentorId: mentor.id,
-          mentorName: mentor.name,
           teacherId: teacher.id,
           teacherName: teacher.name,
         });
@@ -1020,23 +1023,19 @@ export const importCompanies = async (req, res, next) => {
 
     /**
      * ============================================================
-     * 18. RESPONSE
+     * 16. RESPONSE
      * ============================================================
      */
+
     return res.status(200).json({
       message:
-        'Import mapping siswa, perusahaan, mentor, dan guru selesai',
-
+        'Import mapping siswa, perusahaan, dan guru selesai',
       total: rows.length,
-
       successCount:
         success.length,
-
       errorCount:
         errors.length,
-
       success,
-
       errors,
     });
   } catch (error) {
@@ -1089,6 +1088,7 @@ export const updateCompany = async (
     /**
      * Validasi mentor jika dikirim.
      */
+
     if (
       mentorId !== undefined &&
       mentorId !== null &&
