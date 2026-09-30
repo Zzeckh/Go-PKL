@@ -20,7 +20,10 @@ import {
   Calendar,
   ChevronRight,
   Upload,
+  Download,
 } from 'lucide-react';
+
+import * as XLSX from 'xlsx';
 
 import { useApp, SiswaItem } from '../context/AppContext';
 import { api } from '../utils/api';
@@ -36,9 +39,9 @@ interface SearchableOption {
   sublabel?: string;
 }
 
-/* =========================================================
+/* ============================================================
    SEARCHABLE SELECT
-   ========================================================= */
+   ============================================================ */
 
 interface SearchableSelectProps {
   label: string;
@@ -85,9 +88,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
 
   useEffect(() => {
     if (open) {
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 50);
+      setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [open]);
 
@@ -227,9 +228,9 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
   );
 };
 
-/* =========================================================
+/* ============================================================
    MAIN COMPONENT
-   ========================================================= */
+   ============================================================ */
 
 export const HubinPemetaan: React.FC = () => {
   const {
@@ -239,10 +240,6 @@ export const HubinPemetaan: React.FC = () => {
     mentorList,
     updateSiswaMapping,
     refreshData,
-
-    academicYears,
-    selectedAcademicYearId,
-    setSelectedAcademicYearId,
   } = useApp();
 
   const [search, setSearch] = useState('');
@@ -290,43 +287,61 @@ export const HubinPemetaan: React.FC = () => {
   const [formMentorId, setFormMentorId] =
     useState<number | string>('');
 
-  /* =========================================================
-     TAHUN AJARAN
-     ========================================================= */
+  /* ============================================================
+     DOWNLOAD TEMPLATE EXCEL
+     
+     TEMPLATE HANYA BERISI HEADER.
+     TIDAK ADA DATA CONTOH.
+     ============================================================ */
 
-  const activeYear =
-    academicYears.find(
-      (year) =>
-        year.id === selectedAcademicYearId
-    )?.name || '2026/2027';
+  const handleDownloadTemplate = () => {
+    const headers = [
+      'NIS',
+      'Nama Siswa',
+      'Nama Perusahaan',
+      'Alamat',
+      'Kota',
+      'Negara',
+      'Latitude',
+      'Longitude',
+      'Radius',
+      'Kuota',
+    ];
 
-  /* =========================================================
-     CHANGE TAHUN AJARAN
-     ========================================================= */
+    const worksheet = XLSX.utils.aoa_to_sheet([
+      headers,
+    ]);
 
-  const handleAcademicYearChange = (
-    e: React.ChangeEvent<HTMLSelectElement>
-  ) => {
-    const value = e.target.value;
+    worksheet['!cols'] = [
+      { wch: 15 },
+      { wch: 30 },
+      { wch: 30 },
+      { wch: 40 },
+      { wch: 20 },
+      { wch: 20 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 12 },
+      { wch: 10 },
+    ];
 
-    setSelectedAcademicYearId(
-      value ? Number(value) : null
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      'Template Import'
     );
 
-    // Reset state pemetaan
-    setSelectedSiswaId(null);
-    setEditing(false);
-    setJustSaved(false);
-
-    setSelectedCountry('');
-    setSelectedCity('');
-    setSearch('');
-    setFilter('all');
+    XLSX.writeFile(
+      workbook,
+      'Template_Import_PKL.xlsx'
+    );
   };
 
-  /* =========================================================
-     IMPORT EXCEL PERUSAHAAN
-     ========================================================= */
+  /* ============================================================
+     IMPORT EXCEL
+     ============================================================ */
 
   const handleImportExcel = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -345,15 +360,7 @@ export const HubinPemetaan: React.FC = () => {
       );
 
       event.target.value = '';
-      return;
-    }
 
-    if (!selectedAcademicYearId) {
-      alert(
-        'Silakan pilih Tahun Ajaran terlebih dahulu.'
-      );
-
-      event.target.value = '';
       return;
     }
 
@@ -364,11 +371,6 @@ export const HubinPemetaan: React.FC = () => {
       const formData = new FormData();
 
       formData.append('file', file);
-
-      formData.append(
-        'academicYearId',
-        String(selectedAcademicYearId)
-      );
 
       const result = await api.upload<{
         total: number;
@@ -390,16 +392,16 @@ export const HubinPemetaan: React.FC = () => {
           result.successCount,
         errorCount:
           result.errorCount,
-        errors: result.errors || [],
+        errors:
+          result.errors || [],
       });
 
       await refreshData();
 
       alert(
         `Import selesai!\n\n` +
-        `Tahun Ajaran: ${activeYear}\n` +
-        `Berhasil: ${result.successCount}\n` +
-        `Gagal: ${result.errorCount}`
+          `Berhasil: ${result.successCount}\n` +
+          `Gagal: ${result.errorCount}`
       );
     } catch (error: any) {
       alert(
@@ -409,14 +411,13 @@ export const HubinPemetaan: React.FC = () => {
       );
     } finally {
       setImporting(false);
-
       event.target.value = '';
     }
   };
 
-  /* =========================================================
-     LOCATION
-     ========================================================= */
+  /* ============================================================
+     MATCH LOCATION
+     ============================================================ */
 
   const matchLocation = (
     company?: string
@@ -443,26 +444,30 @@ export const HubinPemetaan: React.FC = () => {
     );
   };
 
-  /* =========================================================
-     MAPPING STATUS
-     ========================================================= */
+  /* ============================================================
+     STATUS MAPPING
+     ============================================================ */
 
-  const isMapped = (s: SiswaItem) =>
+  const isMapped = (
+    s: SiswaItem
+  ) =>
     !!(
       s.perusahaan &&
       s.perusahaan !== '-' &&
       matchLocation(s.perusahaan)
     );
 
+  /* ============================================================
+     LOCATION FILTER
+     ============================================================ */
+
   const mappedLocations = siswaList
     .map((s) =>
-      matchLocation(s.perusahaan)
+      matchLocation(
+        s.perusahaan
+      )
     )
     .filter(Boolean);
-
-  /* =========================================================
-     COUNTRY
-     ========================================================= */
 
   const countries = Array.from(
     new Set(
@@ -472,45 +477,43 @@ export const HubinPemetaan: React.FC = () => {
     )
   );
 
-  /* =========================================================
-     CITY
-     ========================================================= */
-
   const cities = Array.from(
     new Set(
       mappedLocations
         .filter(
           (loc) =>
             !selectedCountry ||
-            loc?.country === selectedCountry
+            loc?.country ===
+              selectedCountry
         )
         .map((loc) => loc?.city)
         .filter(Boolean)
     )
   );
 
-  /* =========================================================
+  /* ============================================================
      FILTER SISWA
-     ========================================================= */
+     ============================================================ */
 
   const filteredSiswa = useMemo(() => {
     return siswaList.filter((s) => {
-      const searchValue =
+      const searchLower =
         search.toLowerCase();
 
       const matchSearch =
         s.name
           .toLowerCase()
-          .includes(searchValue) ||
+          .includes(searchLower) ||
         s.kelas
           .toLowerCase()
-          .includes(searchValue);
+          .includes(searchLower);
 
       if (!matchSearch) {
         return false;
       }
 
-      const mapped = isMapped(s);
+      const mapped =
+        isMapped(s);
 
       if (
         filter === 'mapped' &&
@@ -541,14 +544,16 @@ export const HubinPemetaan: React.FC = () => {
 
         if (
           selectedCountry &&
-          loc.country !== selectedCountry
+          loc.country !==
+            selectedCountry
         ) {
           return false;
         }
 
         if (
           selectedCity &&
-          loc.city !== selectedCity
+          loc.city !==
+            selectedCity
         ) {
           return false;
         }
@@ -565,14 +570,15 @@ export const HubinPemetaan: React.FC = () => {
     mapLocations,
   ]);
 
-  /* =========================================================
-     SISWA TERPILIH
-     ========================================================= */
+  /* ============================================================
+     SELECTED SISWA
+     ============================================================ */
 
   const selectedSiswa =
     siswaList.find(
       (s) =>
-        s.id === selectedSiswaId
+        s.id ===
+        selectedSiswaId
     ) || null;
 
   const selectedLoc =
@@ -582,9 +588,9 @@ export const HubinPemetaan: React.FC = () => {
         )
       : undefined;
 
-  /* =========================================================
+  /* ============================================================
      STATISTICS
-     ========================================================= */
+     ============================================================ */
 
   const mappedCount =
     siswaList.filter(
@@ -595,9 +601,17 @@ export const HubinPemetaan: React.FC = () => {
     siswaList.length -
     mappedCount;
 
-  /* =========================================================
-     OPTIONS
-     ========================================================= */
+  const activeYear =
+    siswaList.find(
+      (s) =>
+        s.academicYear &&
+        s.academicYear !== '-'
+    )?.academicYear ||
+    '2025/2026';
+
+  /* ============================================================
+     SELECT OPTIONS
+     ============================================================ */
 
   const companyOptions: SearchableOption[] =
     mapLocations.map((loc) => ({
@@ -624,15 +638,14 @@ export const HubinPemetaan: React.FC = () => {
         'Mentor Industri',
     }));
 
-  /* =========================================================
+  /* ============================================================
      SELECT SISWA
-     ========================================================= */
+     ============================================================ */
 
   const handleSelectSiswa = (
     s: SiswaItem
   ) => {
     setSelectedSiswaId(s.id);
-
     setEditing(false);
     setJustSaved(false);
 
@@ -645,16 +658,16 @@ export const HubinPemetaan: React.FC = () => {
       guruList.find(
         (g) =>
           g.name.split(',')[0] ===
-          s.guruPembimbing
-            ?.split(',')[0]
+          s.guruPembimbing?.split(
+            ','
+          )[0]
       );
 
     const mentor =
       mentorList.find(
         (m) =>
           m.name.split(',')[0] ===
-          s.mentor
-            ?.split(',')[0]
+          s.mentor?.split(',')[0]
       );
 
     setFormCompanyId(
@@ -670,18 +683,18 @@ export const HubinPemetaan: React.FC = () => {
     );
   };
 
-  /* =========================================================
+  /* ============================================================
      EDIT
-     ========================================================= */
+     ============================================================ */
 
   const handleEdit = () => {
     setEditing(true);
     setJustSaved(false);
   };
 
-  /* =========================================================
+  /* ============================================================
      SAVE
-     ========================================================= */
+     ============================================================ */
 
   const handleSave = async () => {
     if (!selectedSiswa) {
@@ -714,18 +727,20 @@ export const HubinPemetaan: React.FC = () => {
       {
         perusahaan: loc
           ? loc.name.replace(
-              /\s*\([^)]*\)$/,
+              /\s\((.*)\)$/,
               ''
             )
           : selectedSiswa.perusahaan,
 
-        guruPembimbing: guru
-          ? guru.name
-          : selectedSiswa.guruPembimbing,
+        guruPembimbing:
+          guru
+            ? guru.name
+            : selectedSiswa.guruPembimbing,
 
-        mentor: mentor
-          ? mentor.name
-          : selectedSiswa.mentor,
+        mentor:
+          mentor
+            ? mentor.name
+            : selectedSiswa.mentor,
 
         companyId:
           formCompanyId,
@@ -743,14 +758,16 @@ export const HubinPemetaan: React.FC = () => {
     setEditing(false);
     setJustSaved(true);
 
-    setTimeout(() => {
-      setJustSaved(false);
-    }, 2500);
+    setTimeout(
+      () =>
+        setJustSaved(false),
+      2500
+    );
   };
 
-  /* =========================================================
+  /* ============================================================
      CANCEL
-     ========================================================= */
+     ============================================================ */
 
   const handleCancel = () => {
     if (!selectedSiswa) {
@@ -766,16 +783,18 @@ export const HubinPemetaan: React.FC = () => {
       guruList.find(
         (g) =>
           g.name.split(',')[0] ===
-          selectedSiswa.guruPembimbing
-            ?.split(',')[0]
+          selectedSiswa.guruPembimbing?.split(
+            ','
+          )[0]
       );
 
     const mentor =
       mentorList.find(
         (m) =>
           m.name.split(',')[0] ===
-          selectedSiswa.mentor
-            ?.split(',')[0]
+          selectedSiswa.mentor?.split(
+            ','
+          )[0]
       );
 
     setFormCompanyId(
@@ -793,9 +812,9 @@ export const HubinPemetaan: React.FC = () => {
     setEditing(false);
   };
 
-  /* =========================================================
+  /* ============================================================
      STATS
-     ========================================================= */
+     ============================================================ */
 
   const stats = [
     {
@@ -815,17 +834,16 @@ export const HubinPemetaan: React.FC = () => {
     },
   ];
 
-  /* =========================================================
-     RETURN
-     ========================================================= */
+  /* ============================================================
+     RENDER
+     ============================================================ */
 
   return (
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-y-auto custom-scrollbar">
 
       {/* HEADER */}
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
-
+      <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
 
           <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[10px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
@@ -841,67 +859,29 @@ export const HubinPemetaan: React.FC = () => {
               Atur penempatan siswa ke perusahaan, guru & mentor pembimbing
             </p>
           </div>
-
         </div>
 
-        {/* DROPDOWN TAHUN AJARAN */}
-
-        <div className="flex items-center gap-2 shrink-0">
-
-          <Calendar className="w-4 h-4 text-navy/50 hidden sm:block" />
-
-          <select
-            value={
-              selectedAcademicYearId ?? ''
-            }
-            onChange={
-              handleAcademicYearChange
-            }
-            className="bg-white border border-steel/30 text-steel font-bold text-[11px] px-3 py-2 rounded-full outline-none cursor-pointer hover:border-steel transition-all"
-          >
-            <option value="">
-              Semua Tahun Ajaran
-            </option>
-
-            {academicYears.map(
-              (year) => (
-                <option
-                  key={year.id}
-                  value={year.id}
-                >
-                  TA {year.name}
-                  {year.isActive
-                    ? ' — Aktif'
-                    : ''}
-                </option>
-              )
-            )}
-          </select>
-
+        <div className="hidden sm:flex items-center gap-2 shrink-0">
+          <span className="flex items-center gap-1.5 text-[11px] font-bold text-steel bg-white border border-steel/30 shadow-sm px-3 py-2 rounded-full">
+            <Calendar className="w-3.5 h-3.5" />
+            TA {activeYear}
+          </span>
         </div>
-
       </div>
 
       {/* IMPORT PERUSAHAAN */}
 
       <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 md:p-5 shrink-0">
-
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
 
           <div className="min-w-0">
-
             <p className="text-[13px] font-bold text-navy">
               Import Data Perusahaan
             </p>
 
             <p className="text-[11px] font-medium text-navy/50 mt-0.5">
-              Upload file Excel (.xlsx) untuk menambahkan perusahaan mitra beserta lokasi geofence.
+              Unduh template Excel terlebih dahulu, isi data perusahaan, lalu import file Excel (.xlsx).
             </p>
-
-            <p className="text-[10px] font-bold text-steel mt-1">
-              Akan masuk ke Tahun Ajaran: {activeYear}
-            </p>
-
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
@@ -915,6 +895,22 @@ export const HubinPemetaan: React.FC = () => {
               }
               className="hidden"
             />
+
+            {/* DOWNLOAD TEMPLATE */}
+
+            <button
+              type="button"
+              onClick={
+                handleDownloadTemplate
+              }
+              disabled={importing}
+              className="flex items-center justify-center gap-2 bg-white border border-steel/30 text-steel font-bold text-xs px-4 py-2.5 rounded-[18px] hover:bg-steel/5 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              <Download className="w-4 h-4" />
+              Download Template
+            </button>
+
+            {/* IMPORT EXCEL */}
 
             <button
               type="button"
@@ -930,10 +926,10 @@ export const HubinPemetaan: React.FC = () => {
                 ? 'Mengimpor...'
                 : 'Import Excel'}
             </button>
-
           </div>
-
         </div>
+
+        {/* HASIL IMPORT */}
 
         {importResult && (
           <div className="mt-3 p-3 bg-mist/30 border border-mist/60 rounded-[18px]">
@@ -950,17 +946,18 @@ export const HubinPemetaan: React.FC = () => {
 
               <span
                 className={
-                  importResult.errorCount > 0
+                  importResult.errorCount >
+                  0
                     ? 'text-red-600'
                     : 'text-navy/50'
                 }
               >
                 Gagal: {importResult.errorCount}
               </span>
-
             </div>
 
-            {importResult.errors.length > 0 && (
+            {importResult.errors.length >
+              0 && (
               <div className="mt-3 space-y-1.5">
 
                 <p className="text-[11px] font-bold text-navy">
@@ -976,22 +973,20 @@ export const HubinPemetaan: React.FC = () => {
                         className="text-[11px] font-medium text-navy/70 bg-white border border-mist/60 rounded-lg px-2.5 py-1.5"
                       >
                         Baris {item.row}
+
                         {item.name
                           ? ` — ${item.name}`
                           : ''}
+
                         : {item.error}
                       </div>
                     )
                   )}
-
                 </div>
-
               </div>
             )}
-
           </div>
         )}
-
       </div>
 
       {/* STATS */}
@@ -1003,15 +998,11 @@ export const HubinPemetaan: React.FC = () => {
             key={s.label}
             className="bg-white border border-mist/60 rounded-[24px] p-4 md:p-5 min-h-[100px] flex flex-col justify-between"
           >
-
             <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
-
               <s.icon className="w-4 h-4 text-white" />
-
             </div>
 
             <div>
-
               <p className="text-3xl font-bold text-navy tabular-nums leading-none">
                 {s.value}
               </p>
@@ -1019,12 +1010,9 @@ export const HubinPemetaan: React.FC = () => {
               <p className="text-[11px] font-bold text-navy/60 uppercase tracking-wide mt-2">
                 {s.label}
               </p>
-
             </div>
-
           </div>
         ))}
-
       </div>
 
       {/* MAIN GRID */}
@@ -1048,13 +1036,11 @@ export const HubinPemetaan: React.FC = () => {
                 <p className="text-[13px] font-bold uppercase tracking-widest text-navy/70">
                   Daftar Siswa PKL
                 </p>
-
               </div>
 
               <span className="text-[11px] font-bold text-navy/40 tabular-nums">
                 {filteredSiswa.length} siswa
               </span>
-
             </div>
 
             {/* SEARCH */}
@@ -1075,7 +1061,6 @@ export const HubinPemetaan: React.FC = () => {
 
               {search && (
                 <button
-                  type="button"
                   onClick={() =>
                     setSearch('')
                   }
@@ -1084,76 +1069,77 @@ export const HubinPemetaan: React.FC = () => {
                   <X className="w-3 h-3 text-navy/60" />
                 </button>
               )}
-
             </div>
 
             {/* FILTER */}
 
             <div className="bg-mist/40 p-1 rounded-[24px] flex gap-1">
 
-              {([
-                {
-                  key: 'all',
-                  label: 'Semua',
-                  count: siswaList.length,
-                },
-                {
-                  key: 'mapped',
-                  label: 'Terpetakan',
-                  count: mappedCount,
-                },
-                {
-                  key: 'unmapped',
-                  label: 'Belum',
-                  count: unmappedCount,
-                },
-              ] as const).map(
-                (f) => (
-                  <button
-                    key={f.key}
-                    type="button"
-                    onClick={() =>
-                      setFilter(f.key)
-                    }
-                    className={`flex-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              {(
+                [
+                  {
+                    key: 'all',
+                    label: 'Semua',
+                    count:
+                      siswaList.length,
+                  },
+                  {
+                    key: 'mapped',
+                    label: 'Terpetakan',
+                    count:
+                      mappedCount,
+                  },
+                  {
+                    key: 'unmapped',
+                    label: 'Belum',
+                    count:
+                      unmappedCount,
+                  },
+                ] as const
+              ).map((f) => (
+                <button
+                  key={f.key}
+                  onClick={() =>
+                    setFilter(
+                      f.key
+                    )
+                  }
+                  className={`flex-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    filter === f.key
+                      ? 'bg-steel text-white shadow'
+                      : 'text-navy/60 hover:text-navy'
+                  }`}
+                >
+                  <Filter className="w-3 h-3" />
+
+                  {f.label}
+
+                  <span
+                    className={`text-[10px] tabular-nums ${
                       filter === f.key
-                        ? 'bg-steel text-white shadow'
-                        : 'text-navy/60 hover:text-navy'
+                        ? 'text-white/80'
+                        : 'text-navy/40'
                     }`}
                   >
-
-                    <Filter className="w-3 h-3" />
-
-                    {f.label}
-
-                    <span
-                      className={`text-[10px] tabular-nums ${
-                        filter === f.key
-                          ? 'text-white/80'
-                          : 'text-navy/40'
-                      }`}
-                    >
-                      {f.count}
-                    </span>
-
-                  </button>
-                )
-              )}
-
+                    {f.count}
+                  </span>
+                </button>
+              ))}
             </div>
 
-            {/* LOCATION FILTER */}
+            {/* COUNTRY / CITY */}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
 
               <div>
-
                 <label className="text-[10px] font-bold text-navy/50 uppercase tracking-wide mb-1.5 block">
                   Negara
                 </label>
 
                 <select
-                  value={selectedCountry}
+                  value={
+                    selectedCountry
+                  }
                   onChange={(e) => {
                     setSelectedCountry(
                       e.target.value
@@ -1163,7 +1149,6 @@ export const HubinPemetaan: React.FC = () => {
                   }}
                   className="w-full bg-mist/40 border border-mist rounded-[18px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
                 >
-
                   <option value="">
                     Semua Negara
                   </option>
@@ -1178,19 +1163,18 @@ export const HubinPemetaan: React.FC = () => {
                       </option>
                     )
                   )}
-
                 </select>
-
               </div>
 
               <div>
-
                 <label className="text-[10px] font-bold text-navy/50 uppercase tracking-wide mb-1.5 block">
                   Kota
                 </label>
 
                 <select
-                  value={selectedCity}
+                  value={
+                    selectedCity
+                  }
                   onChange={(e) =>
                     setSelectedCity(
                       e.target.value
@@ -1198,7 +1182,6 @@ export const HubinPemetaan: React.FC = () => {
                   }
                   className="w-full bg-mist/40 border border-mist rounded-[18px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
                 >
-
                   <option value="">
                     Semua Kota
                   </option>
@@ -1213,27 +1196,21 @@ export const HubinPemetaan: React.FC = () => {
                       </option>
                     )
                   )}
-
                 </select>
-
               </div>
-
             </div>
-
           </div>
 
           {/* STUDENT LIST */}
 
           <div className="lg:flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 lg:min-h-0 max-h-[50vh] lg:max-h-none">
 
-            {filteredSiswa.length === 0 ? (
-
+            {filteredSiswa.length ===
+            0 ? (
               <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
 
                 <div className="w-14 h-14 rounded-[10px] bg-navy flex items-center justify-center mb-3">
-
                   <Search className="w-6 h-6 text-white" />
-
                 </div>
 
                 <p className="text-sm font-bold text-navy mb-1">
@@ -1245,104 +1222,98 @@ export const HubinPemetaan: React.FC = () => {
                     ? `Tidak ada siswa yang cocok dengan "${search}"`
                     : 'Belum ada data siswa di sistem.'}
                 </p>
-
               </div>
-
             ) : (
+              filteredSiswa.map(
+                (s) => {
+                  const mapped =
+                    isMapped(s);
 
-              filteredSiswa.map((s) => {
+                  const isSelected =
+                    selectedSiswaId ===
+                    s.id;
 
-                const mapped =
-                  isMapped(s);
-
-                const isSelected =
-                  selectedSiswaId ===
-                  s.id;
-
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() =>
-                      handleSelectSiswa(s)
-                    }
-                    className={`p-3 rounded-[24px] border transition-all shrink-0 text-left group flex items-center gap-3 ${
-                      isSelected
-                        ? 'bg-steel/5 border-steel/30 shadow-sm'
-                        : 'bg-white border-mist/60 hover:border-steel/30 hover:bg-mist/30'
-                    }`}
-                  >
-
-                    <div className="w-10 h-10 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-md shadow-navy/20">
-
-                      {s.name
-                        .split(' ')
-                        .map((n) => n[0])
-                        .join('')
-                        .toUpperCase()
-                        .slice(0, 2)}
-
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-
-                      <div className="flex items-center gap-2 flex-wrap">
-
-                        <p
-                          className={`text-sm font-bold truncate ${
-                            isSelected
-                              ? 'text-steel'
-                              : 'text-navy'
-                          }`}
-                        >
-                          {s.name}
-                        </p>
-
-                        {s.kelas &&
-                          s.kelas !== '-' && (
-                            <span className="text-[10px] font-bold text-steel bg-white border border-steel/30 px-2 py-0.5 rounded-md shadow-sm shrink-0">
-                              {s.kelas}
-                            </span>
-                          )}
-
-                      </div>
-
-                      <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
-                        {mapped
-                          ? s.perusahaan
-                          : 'Belum dipetakan'}
-                      </p>
-
-                    </div>
-
-                    <span
-                      className={`text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 ${
-                        mapped
-                          ? 'bg-steel text-white shadow-sm shadow-steel/30'
-                          : 'bg-white text-navy/70 border border-mist/60 shadow-sm'
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() =>
+                        handleSelectSiswa(
+                          s
+                        )
+                      }
+                      className={`p-3 rounded-[24px] border transition-all shrink-0 text-left group flex items-center gap-3 ${
+                        isSelected
+                          ? 'bg-steel/5 border-steel/30 shadow-sm'
+                          : 'bg-white border-mist/60 hover:border-steel/30 hover:bg-mist/30'
                       }`}
                     >
-                      {mapped
-                        ? '✓ Terpetakan'
-                        : 'Belum'}
-                    </span>
+                      <div className="w-10 h-10 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-md shadow-navy/20">
+                        {s.name
+                          .split(' ')
+                          .map(
+                            (n) =>
+                              n[0]
+                          )
+                          .join('')
+                          .toUpperCase()
+                          .slice(0, 2)}
+                      </div>
 
-                    <ChevronRight
-                      className={`w-4 h-4 shrink-0 ${
-                        isSelected
-                          ? 'text-steel'
-                          : 'text-navy/20 group-hover:text-steel'
-                      } group-hover:translate-x-0.5 transition-all`}
-                    />
+                      <div className="flex-1 min-w-0">
 
-                  </button>
-                );
-              })
+                        <div className="flex items-center gap-2 flex-wrap">
 
+                          <p
+                            className={`text-sm font-bold truncate ${
+                              isSelected
+                                ? 'text-steel'
+                                : 'text-navy'
+                            }`}
+                          >
+                            {s.name}
+                          </p>
+
+                          {s.kelas &&
+                            s.kelas !==
+                              '-' && (
+                              <span className="text-[10px] font-bold text-steel bg-white border border-steel/30 px-2 py-0.5 rounded-md shadow-sm shrink-0">
+                                {s.kelas}
+                              </span>
+                            )}
+                        </div>
+
+                        <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
+                          {mapped
+                            ? s.perusahaan
+                            : 'Belum dipetakan'}
+                        </p>
+                      </div>
+
+                      <span
+                        className={`text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 ${
+                          mapped
+                            ? 'bg-steel text-white shadow-sm shadow-steel/30'
+                            : 'bg-white text-navy/70 border border-mist/60 shadow-sm'
+                        }`}
+                      >
+                        {mapped
+                          ? '✓ Terpetakan'
+                          : 'Belum'}
+                      </span>
+
+                      <ChevronRight
+                        className={`w-4 h-4 shrink-0 ${
+                          isSelected
+                            ? 'text-steel'
+                            : 'text-navy/20 group-hover:text-steel'
+                        } group-hover:translate-x-0.5 transition-all`}
+                      />
+                    </button>
+                  );
+                }
+              )
             )}
-
           </div>
-
         </div>
 
         {/* RIGHT */}
@@ -1350,13 +1321,10 @@ export const HubinPemetaan: React.FC = () => {
         <div className="lg:col-span-2 flex flex-col gap-3 lg:min-h-0">
 
           {!selectedSiswa ? (
-
             <div className="flex-1 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col items-center justify-center p-8 text-center">
 
               <div className="w-16 h-16 rounded-[10px] bg-navy flex items-center justify-center mb-4">
-
                 <Map className="w-7 h-7 text-white" />
-
               </div>
 
               <h3 className="text-base font-bold text-navy mb-1">
@@ -1376,7 +1344,6 @@ export const HubinPemetaan: React.FC = () => {
                     viewBox="0 0 100 100"
                     preserveAspectRatio="none"
                   >
-
                     <rect
                       x="36"
                       y="8"
@@ -1449,24 +1416,25 @@ export const HubinPemetaan: React.FC = () => {
                       strokeWidth="2"
                       vectorEffect="non-scaling-stroke"
                     />
-
                   </svg>
-
                 </div>
 
                 {mapLocations
                   .slice(0, 3)
                   .map((loc, i) => (
-
                     <div
                       key={loc.id}
                       className="absolute -translate-x-1/2 -translate-y-1/2"
                       style={{
-                        left: `${20 + i * 30}%`,
-                        top: `${30 + (i % 2) * 30}%`,
+                        left: `${
+                          20 + i * 30
+                        }%`,
+                        top: `${
+                          30 +
+                          (i % 2) * 30
+                        }%`,
                       }}
                     >
-
                       <div
                         className={`w-5 h-5 rounded-full border-2 border-white shadow-md flex items-center justify-center ${
                           i === 0
@@ -1474,7 +1442,6 @@ export const HubinPemetaan: React.FC = () => {
                             : 'bg-white'
                         }`}
                       >
-
                         <MapPin
                           className={`w-2.5 h-2.5 ${
                             i === 0
@@ -1482,21 +1449,13 @@ export const HubinPemetaan: React.FC = () => {
                               : 'text-navy/60'
                           }`}
                         />
-
                       </div>
-
                     </div>
-
                   ))}
-
               </div>
-
             </div>
-
           ) : (
-
             <>
-
               {/* IDENTITAS SISWA */}
 
               <div className="bg-navy rounded-[24px] p-5 shrink-0 relative overflow-hidden shadow-lg shadow-navy/20">
@@ -1508,40 +1467,34 @@ export const HubinPemetaan: React.FC = () => {
                     <div className="flex items-center gap-2">
 
                       <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
-
                         <GraduationCap className="w-4 h-4 text-white" />
-
                       </div>
 
                       <p className="text-[11px] font-bold uppercase tracking-widest text-white/60">
                         Siswa Terpilih
                       </p>
-
                     </div>
 
                     {justSaved && (
                       <span className="flex items-center gap-1.5 text-[11px] font-bold bg-steel text-white shadow-sm shadow-steel/30 px-2.5 py-1 rounded-full animate-in fade-in">
-
                         <CheckCircle2 className="w-3 h-3" />
-
                         Tersimpan
-
                       </span>
                     )}
-
                   </div>
 
                   <div className="flex items-center gap-3">
 
                     <div className="w-12 h-12 rounded-[10px] bg-white/15 border border-white/10 flex items-center justify-center font-bold text-sm text-white shrink-0">
-
                       {selectedSiswa.name
                         .split(' ')
-                        .map((n) => n[0])
+                        .map(
+                          (n) =>
+                            n[0]
+                        )
                         .join('')
                         .toUpperCase()
                         .slice(0, 2)}
-
                     </div>
 
                     <div className="min-w-0">
@@ -1553,7 +1506,8 @@ export const HubinPemetaan: React.FC = () => {
                       <div className="flex items-center gap-1.5 mt-1">
 
                         {selectedSiswa.kelas &&
-                          selectedSiswa.kelas !== '-' && (
+                          selectedSiswa.kelas !==
+                            '-' && (
                             <span className="text-[10px] font-bold text-white bg-white/15 px-2 py-0.5 rounded-md">
                               {selectedSiswa.kelas}
                             </span>
@@ -1561,19 +1515,15 @@ export const HubinPemetaan: React.FC = () => {
 
                         <span className="text-[11px] font-semibold text-white/60 truncate">
                           {selectedSiswa.guruPembimbing &&
-                          selectedSiswa.guruPembimbing !== '-'
+                          selectedSiswa.guruPembimbing !==
+                            '-'
                             ? `Pembimbing: ${selectedSiswa.guruPembimbing}`
                             : 'Belum ada pembimbing'}
                         </span>
-
                       </div>
-
                     </div>
-
                   </div>
-
                 </div>
-
               </div>
 
               {/* FORM */}
@@ -1585,9 +1535,7 @@ export const HubinPemetaan: React.FC = () => {
                   <div className="flex items-center gap-2">
 
                     <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center">
-
                       <MapPin className="w-3.5 h-3.5 text-white" />
-
                     </div>
 
                     <p className="text-[13px] font-bold text-navy">
@@ -1595,45 +1543,32 @@ export const HubinPemetaan: React.FC = () => {
                         ? 'Edit Pemetaan'
                         : 'Detail Pemetaan'}
                     </p>
-
                   </div>
 
                   <div className="flex items-center gap-2">
 
                     {editing ? (
-
                       <span className="flex items-center gap-1.5 text-[11px] font-bold text-steel bg-steel/10 px-2.5 py-1 rounded-full">
-
                         <span className="w-1.5 h-1.5 rounded-full bg-steel animate-pulse" />
-
                         Mode Edit
-
                       </span>
-
                     ) : (
-
                       <button
-                        type="button"
-                        onClick={handleEdit}
+                        onClick={
+                          handleEdit
+                        }
                         className="flex items-center gap-1.5 text-[11px] font-bold bg-navy text-white px-3 py-1.5 rounded-lg hover:bg-navy/90 transition-colors"
                       >
-
                         <Pencil className="w-3 h-3" />
-
                         Edit
-
                       </button>
-
                     )}
-
                   </div>
-
                 </div>
 
                 <div className="lg:flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5 lg:min-h-0 max-h-[50vh] lg:max-h-none">
 
                   {!editing ? (
-
                     <div className="space-y-3">
 
                       {/* TEMPAT PKL */}
@@ -1645,13 +1580,10 @@ export const HubinPemetaan: React.FC = () => {
                             : 'border-mist/60 bg-white'
                         }`}
                       >
-
                         <div className="flex items-center gap-3">
 
                           <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center shrink-0 shadow-md shadow-navy/20">
-
                             <Building2 className="w-4 h-4 text-white" />
-
                           </div>
 
                           <div className="flex-1 min-w-0">
@@ -1668,19 +1600,17 @@ export const HubinPemetaan: React.FC = () => {
                               }`}
                             >
                               {selectedSiswa.perusahaan &&
-                              selectedSiswa.perusahaan !== '-'
+                              selectedSiswa.perusahaan !==
+                                '-'
                                 ? selectedSiswa.perusahaan
                                 : 'Belum dipetakan'}
                             </p>
-
                           </div>
 
                           {selectedLoc && (
                             <MapPin className="w-4 h-4 text-steel shrink-0" />
                           )}
-
                         </div>
-
                       </div>
 
                       {/* GURU */}
@@ -1690,9 +1620,7 @@ export const HubinPemetaan: React.FC = () => {
                         <div className="flex items-center gap-3">
 
                           <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center shrink-0 shadow-md shadow-navy/20">
-
                             <Users className="w-4 h-4 text-white" />
-
                           </div>
 
                           <div className="flex-1 min-w-0">
@@ -1703,23 +1631,18 @@ export const HubinPemetaan: React.FC = () => {
 
                             <p className="text-sm font-bold text-navy truncate mt-0.5">
                               {selectedSiswa.guruPembimbing &&
-                              selectedSiswa.guruPembimbing !== '-'
+                              selectedSiswa.guruPembimbing !==
+                                '-'
                                 ? selectedSiswa.guruPembimbing
                                 : 'Belum ditentukan'}
                             </p>
-
                           </div>
 
                           <span className="text-[10px] font-bold bg-navy text-white px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
-
                             <GraduationCap className="w-3 h-3" />
-
                             GURU
-
                           </span>
-
                         </div>
-
                       </div>
 
                       {/* MENTOR */}
@@ -1729,9 +1652,7 @@ export const HubinPemetaan: React.FC = () => {
                         <div className="flex items-center gap-3">
 
                           <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center shrink-0 shadow-md shadow-navy/20">
-
                             <Briefcase className="w-4 h-4 text-white" />
-
                           </div>
 
                           <div className="flex-1 min-w-0">
@@ -1742,23 +1663,18 @@ export const HubinPemetaan: React.FC = () => {
 
                             <p className="text-sm font-bold text-navy truncate mt-0.5">
                               {selectedSiswa.mentor &&
-                              selectedSiswa.mentor !== '-'
+                              selectedSiswa.mentor !==
+                                '-'
                                 ? selectedSiswa.mentor
                                 : 'Belum ditentukan'}
                             </p>
-
                           </div>
 
                           <span className="text-[10px] font-bold bg-navy text-white px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
-
                             <Briefcase className="w-3 h-3" />
-
                             MENTOR
-
                           </span>
-
                         </div>
-
                       </div>
 
                       {/* INFO */}
@@ -1770,21 +1686,23 @@ export const HubinPemetaan: React.FC = () => {
                         <p className="text-[11px] font-medium text-navy/70 leading-relaxed">
                           Pemetaan ini menentukan tempat siswa melaksanakan PKL beserta guru dan mentor yang akan membimbing selama periode akademik.
                         </p>
-
                       </div>
-
                     </div>
-
                   ) : (
-
                     <div className="space-y-4">
 
                       <SearchableSelect
                         label="Tempat PKL"
                         icon={Building2}
-                        value={formCompanyId}
-                        options={companyOptions}
-                        onChange={setFormCompanyId}
+                        value={
+                          formCompanyId
+                        }
+                        options={
+                          companyOptions
+                        }
+                        onChange={
+                          setFormCompanyId
+                        }
                         placeholder="— Pilih Tempat PKL —"
                         emptyText="Belum ada perusahaan. Tambah di halaman Data Perusahaan."
                       />
@@ -1792,9 +1710,15 @@ export const HubinPemetaan: React.FC = () => {
                       <SearchableSelect
                         label="Guru Pembimbing"
                         icon={Users}
-                        value={formGuruId}
-                        options={guruOptions}
-                        onChange={setFormGuruId}
+                        value={
+                          formGuruId
+                        }
+                        options={
+                          guruOptions
+                        }
+                        onChange={
+                          setFormGuruId
+                        }
                         placeholder="— Pilih Guru Pembimbing —"
                         emptyText="Belum ada guru pembimbing."
                       />
@@ -1802,9 +1726,15 @@ export const HubinPemetaan: React.FC = () => {
                       <SearchableSelect
                         label="Mentor Industri"
                         icon={Briefcase}
-                        value={formMentorId}
-                        options={mentorOptions}
-                        onChange={setFormMentorId}
+                        value={
+                          formMentorId
+                        }
+                        options={
+                          mentorOptions
+                        }
+                        onChange={
+                          setFormMentorId
+                        }
                         placeholder="— Pilih Mentor Industri —"
                         emptyText="Belum ada mentor industri."
                       />
@@ -1816,57 +1746,40 @@ export const HubinPemetaan: React.FC = () => {
                         <p className="text-[11px] font-medium text-navy/70 leading-relaxed">
                           Data perusahaan, guru, dan mentor dikelola terpisah. Tambah data baru di halaman Data Siswa atau Data Pembimbing.
                         </p>
-
                       </div>
-
                     </div>
-
                   )}
-
                 </div>
 
                 {editing && (
-
                   <div className="p-4 md:p-5 pt-3 border-t border-mist/60 flex gap-2 shrink-0">
 
                     <button
-                      type="button"
-                      onClick={handleCancel}
+                      onClick={
+                        handleCancel
+                      }
                       className="flex-1 flex items-center justify-center gap-1.5 bg-mist/60 text-navy/70 font-bold text-sm py-3 rounded-[24px] hover:bg-mist transition-colors"
                     >
-
                       <X className="w-4 h-4" />
-
                       Batal
-
                     </button>
 
                     <button
-                      type="button"
-                      onClick={handleSave}
+                      onClick={
+                        handleSave
+                      }
                       className="flex-1 flex items-center justify-center gap-1.5 bg-steel text-white font-bold text-sm py-3 rounded-[24px] hover:bg-steel/90 hover:-translate-y-0.5 shadow-lg shadow-steel/25 transition-all"
                     >
-
                       <Save className="w-4 h-4" />
-
                       Simpan
-
                     </button>
-
                   </div>
-
                 )}
-
               </div>
-
             </>
-
           )}
-
         </div>
-
       </div>
-
     </div>
   );
 };
