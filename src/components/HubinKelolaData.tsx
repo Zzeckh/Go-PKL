@@ -8,7 +8,6 @@ import {
   X,
   Plus,
   MapPin,
-  Clock,
   ShieldCheck,
   UserPlus,
   Building as BuildingIcon,
@@ -21,6 +20,7 @@ import {
 
 import { useApp } from '../context/AppContext';
 import { LocationPickerModal } from './LocationPickerModal';
+import { AcademicYearSelector } from './AcademicYearSelector';
 
 type TabKey = 'siswa' | 'guru' | 'perusahaan' | 'mentor';
 
@@ -48,7 +48,6 @@ export const HubinData: React.FC = () => {
 
     academicYears,
     selectedAcademicYearId,
-    setSelectedAcademicYearId,
 
     // reload data
     loadSiswa,
@@ -96,12 +95,7 @@ export const HubinData: React.FC = () => {
   ========================================================= */
 
   useEffect(() => {
-    /*
-     * selectedAcademicYearId === null berarti mode
-     * "Semua Tahun Ajaran". Data tetap harus
-     * di-reload (tanpa filter academicYearId).
-     */
-
+    // null berarti mode Semua Tahun Ajaran; tetap muat ulang data.
     const reload = async () => {
       try {
         await Promise.all([
@@ -587,242 +581,7 @@ export const HubinData: React.FC = () => {
               DROPDOWN TAHUN AJARAN
           =============================================== */}
 
-          <div className="relative">
-
-            <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-navy/50 pointer-events-none" />
-
-            <select
-              value={
-                selectedAcademicYearId ?? ''
-              }
-              onChange={(e) => {
-                const value =
-                  e.target.value;
-
-                setSelectedAcademicYearId(
-                  value
-                    ? Number(value)
-                    : null
-                );
-              }}
-              className="appearance-none pl-9 pr-9 py-2.5 rounded-[24px] bg-mist/40 border border-mist text-xs font-bold text-navy outline-none cursor-pointer hover:bg-mist/70 focus:border-steel transition-all"
-            >
-
-              {academicYears.length === 0 ? (
-                <option value="">
-                  Tidak ada tahun ajaran
-                </option>
-              ) : (
-                <>
-                  <option value="">
-                    Semua Tahun Ajaran
-                  </option>
-
-                  {academicYears.map(
-                    (year: any) => (
-                      <option
-                        key={year.id}
-                        value={year.id}
-                      >
-                        {year.name}
-                        {year.isActive
-                          ? ' (Aktif)'
-                          : ''}
-                      </option>
-                    )
-                  )}
-                </>
-              )}
-
-            </select>
-
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-navy/50 pointer-events-none" />
-
-          </div>
-
-          {/* ===============================================
-              ADD BUTTON
-          =============================================== */}
-
-          <button
-            onClick={() =>
-              setShowAddModal(true)
-            }
-            className="flex items-center gap-1.5 bg-steel text-white text-xs font-bold px-4 py-2.5 rounded-[24px] shadow-md shadow-steel/25 hover:bg-steel/90 hover:-translate-y-0.5 transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            Tambah Data
-          </button>
-
-        </div>
-
-      </div>
-
-      {/* =====================================================
-          YEAR INFO
-      ===================================================== */}
-
-      <div className="flex items-center justify-between bg-steel/5 border border-steel/20 rounded-[20px] px-4 py-2.5 shrink-0">
-
-        <div className="flex items-center gap-2">
-
-          <Clock className="w-4 h-4 text-steel" />
-
-          <span className="text-xs font-bold text-navy">
-            Data Tahun Ajaran
-          </span>
-
-        </div>
-
-        <span className="text-xs font-bold text-steel">
-          {activeYear}
-        </span>
-
-      </div>
-
-      {/* =====================================================
-          STATS
-      ===================================================== */}
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
-
-        {stats.map((s) => (
-          <div
-            key={s.label}
-            className="bg-white border border-mist/60 rounded-[24px] p-4 md:p-5 min-h-[100px] flex flex-col justify-between"
-          >
-
-            <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
-
-              <s.icon className="w-4 h-4 text-white" />
-
-            </div>
-
-            <div>
-
-              <p className="text-3xl font-bold text-navy tabular-nums leading-none">
-                {s.value}
-              </p>
-
-              <p className="text-[11px] font-bold text-navy/60 uppercase tracking-wide mt-2">
-                {s.label}
-              </p>
-
-            </div>
-
-          </div>
-        ))}
-
-      </div>
-
-      {/* =====================================================
-          MAIN CARD
-      ===================================================== */}
-
-      <div className="lg:flex-1 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col overflow-hidden lg:min-h-0">
-
-        {/* TOP */}
-
-        <div className="px-4 md:px-5 pt-4 pb-3 shrink-0 space-y-3 border-b border-mist/60">
-
-          {/* TAB */}
-
-          <div className="bg-mist/40 p-1 rounded-[24px] flex items-center gap-1 overflow-x-auto">
-
-            <span className="text-[10px] font-bold text-navy/40 uppercase tracking-widest px-2 shrink-0">
-              Dalam
-            </span>
-
-            <TabButton
-              active={activeTab === 'siswa'}
-              onClick={() =>
-                changeTab('siswa')
-              }
-              icon={GraduationCap}
-              label="Siswa"
-              count={filteredSiswaByYear.length}
-            />
-
-            <TabButton
-              active={activeTab === 'guru'}
-              onClick={() =>
-                changeTab('guru')
-              }
-              icon={Users}
-              label="Guru"
-              count={filteredGuruByYear.length}
-            />
-
-            <div className="w-px h-5 bg-mist mx-1 shrink-0" />
-
-            <span className="text-[10px] font-bold text-navy/40 uppercase tracking-widest px-2 shrink-0">
-              Luar
-            </span>
-
-            <TabButton
-              active={
-                activeTab === 'perusahaan'
-              }
-              onClick={() =>
-                changeTab('perusahaan')
-              }
-              icon={Building2}
-              label="Perusahaan"
-              count={
-                filteredPerusahaanByYear.length
-              }
-            />
-
-            <TabButton
-              active={activeTab === 'mentor'}
-              onClick={() =>
-                changeTab('mentor')
-              }
-              icon={Briefcase}
-              label="Mentor"
-              count={
-                filteredMentorByYear.length
-              }
-            />
-
-          </div>
-
-          {/* SEARCH */}
-
-          <div className="relative">
-
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-navy/40" />
-
-            <input
-              type="text"
-              value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
-              }
-              placeholder={
-                `Cari ${
-                  activeTab === 'siswa'
-                    ? 'siswa, kelas, perusahaan...'
-                    : activeTab === 'guru'
-                    ? 'nama guru, mata pelajaran...'
-                    : activeTab === 'perusahaan'
-                    ? 'nama perusahaan, alamat...'
-                    : 'nama mentor, perusahaan, role...'
-                }...`
-              }
-              className="w-full bg-mist/40 border border-mist rounded-[24px] pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
-            />
-
-            {search && (
-              <button
-                onClick={() =>
-                  setSearch('')
-                }
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-navy/10 hover:bg-navy/20 flex items-center justify-center"
-              >
-                <X className="w-3 h-3 text-navy/60" />
-              </button>
-            )}
+          <AcademicYearSelector className="min-w-[180px]" label="Tahun Ajaran" />
 
           </div>
 
@@ -1213,8 +972,6 @@ export const HubinData: React.FC = () => {
           )}
 
         </div>
-
-      </div>
 
       {/* =====================================================
           DETAIL SISWA

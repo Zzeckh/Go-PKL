@@ -52,6 +52,11 @@ export const login = async (req, res, next) => {
     const user = await prisma.user.findUnique({ where: { email }, include: userInclude });
     if (!user) return res.status(401).json({ error: 'Email atau password salah' });
 
+    // Tolak akun legacy yang role-nya akan dihapus saat migrasi.
+    if (user.role === 'super_admin') {
+      return res.status(403).json({ error: 'Role Super Admin sudah dihapus. Silakan gunakan akun Hubin.' });
+    }
+
     if (!user.isActive) {
       return res.status(403).json({ error: 'Akun dinonaktifkan. Hubungi admin.' });
     }

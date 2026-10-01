@@ -23,10 +23,10 @@ const getInitials = (name: string) =>
 /* ══════════════════════════════════════════════════════
    KELOLA KELAS
    ══════════════════════════════════════════════════════ */
-export const SuperClasses: React.FC = () => {
+export const HubinClasses: React.FC = () => {
   const {
     superClasses,
-    loadSuperClasses,
+    loadHubinClasses,
     createClass,
     deleteClass,
     loadClassStudents,
@@ -51,13 +51,13 @@ export const SuperClasses: React.FC = () => {
 
     setLoading(true);
 
-    loadSuperClasses().finally(() => {
+    loadHubinClasses().finally(() => {
       setLoading(false);
     });
   }, [
     isAuthenticated,
     selectedAcademicYearId,
-    loadSuperClasses
+    loadHubinClasses
   ]);
 
   /* ══════════════════════════════════════════════════════

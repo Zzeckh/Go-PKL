@@ -46,7 +46,6 @@ export const authenticate = async (req, res, next) => {
 };
 
 export const requireRole = (...allowed) => (req, res, next) => {
-  if (req.user?.role === 'super_admin') return next();
   if (allowed.includes(req.user?.role)) return next();
   return res.status(403).json({ error: 'Akses ditolak untuk role Anda.' });
 };

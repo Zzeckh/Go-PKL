@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 
 /* =========================================================
    STATS GLOBAL
-   GET /api/super-admin/stats
+   GET /api/hubin/stats
    ========================================================= */
 
 export const getStats = async (req, res, next) => {
@@ -104,7 +104,7 @@ export const getStats = async (req, res, next) => {
 
 /* =========================================================
    GET CLASSES
-   GET /api/super-admin/classes
+   GET /api/hubin/classes
    Filter berdasarkan Tahun Ajaran
    ========================================================= */
 
@@ -177,7 +177,7 @@ export const getClasses = async (req, res, next) => {
 
 /* =========================================================
    CREATE CLASS
-   POST /api/super-admin/classes
+   POST /api/hubin/classes
    ========================================================= */
 
 export const createClass = async (
@@ -284,7 +284,7 @@ export const createClass = async (
 
 /* =========================================================
    DELETE CLASS
-   DELETE /api/super-admin/classes/:id
+   DELETE /api/hubin/classes/:id
    ========================================================= */
 
 export const deleteClass = async (
@@ -348,7 +348,7 @@ export const deleteClass = async (
 
 /* =========================================================
    GET CLASS STUDENTS
-   GET /api/super-admin/classes/:id/students
+   GET /api/hubin/classes/:id/students
    ========================================================= */
 
 export const getClassStudents = async (
@@ -468,7 +468,7 @@ export const getClassStudents = async (
 
 /* =========================================================
    GET USERS
-   GET /api/super-admin/users
+   GET /api/hubin/users
    ========================================================= */
 
 export const getUsers = async (
@@ -605,7 +605,7 @@ export const getUsers = async (
 
 /* =========================================================
    TOGGLE USER
-   PATCH /api/super-admin/users/:id/toggle
+   PATCH /api/hubin/users/:id/toggle
    ========================================================= */
 
 export const toggleUser = async (
@@ -638,13 +638,10 @@ export const toggleUser = async (
       });
     }
 
-    if (
-      user.role ===
-      'super_admin'
-    ) {
+    if (user.id === req.user.id) {
       return res.status(403).json({
         error:
-          'Tidak dapat menonaktifkan super admin.',
+          'Tidak dapat menonaktifkan akun sendiri.',
       });
     }
 
@@ -673,7 +670,7 @@ export const toggleUser = async (
 
 /* =========================================================
    DELETE USER
-   DELETE /api/super-admin/users/:id
+   DELETE /api/hubin/users/:id
    ========================================================= */
 
 export const deleteUser = async (
@@ -706,13 +703,10 @@ export const deleteUser = async (
       });
     }
 
-    if (
-      user.role ===
-      'super_admin'
-    ) {
+    if (user.id === req.user.id) {
       return res.status(403).json({
         error:
-          'Tidak dapat menghapus super admin.',
+          'Tidak dapat menghapus akun sendiri.',
       });
     }
 
@@ -733,7 +727,7 @@ export const deleteUser = async (
 
 /* =========================================================
    UPDATE USER ROLE
-   PATCH /api/super-admin/users/:id/role
+   PATCH /api/hubin/users/:id/role
    ========================================================= */
 
 export const updateUserRole = async (
@@ -775,13 +769,10 @@ export const updateUserRole = async (
       });
     }
 
-    if (
-      user.role ===
-      'super_admin'
-    ) {
+    if (user.id === req.user.id) {
       return res.status(403).json({
         error:
-          'Tidak dapat mengubah role super admin.',
+          'Tidak dapat mengubah role akun sendiri.',
       });
     }
 
@@ -808,7 +799,7 @@ export const updateUserRole = async (
 
 /* =========================================================
    RESET PASSWORD
-   POST /api/super-admin/users/:id/reset-password
+   POST /api/hubin/users/:id/reset-password
    ========================================================= */
 
 export const resetPassword = async (
@@ -841,13 +832,10 @@ export const resetPassword = async (
       });
     }
 
-    if (
-      user.role ===
-      'super_admin'
-    ) {
+    if (user.id === req.user.id) {
       return res.status(403).json({
         error:
-          'Tidak dapat mereset password super admin.',
+          'Tidak dapat mereset password akun sendiri.',
       });
     }
 
@@ -885,7 +873,7 @@ export const resetPassword = async (
 
 /* =========================================================
    GET SISWA UNTUK ALUMNI / KELUAR SEKOLAH
-   GET /api/super-admin/deactivation-students
+   GET /api/hubin/deactivation-students
 
    Query:
    type=alumni
@@ -927,8 +915,7 @@ export const getStudentsForDeactivation = async (
     /*
      * HANYA SISWA AKTIF
      *
-     * Guru, mentor, hubin,
-     * dan super_admin tidak akan
+     * Guru, mentor, dan Hubin tidak akan
      * masuk.
      */
 
@@ -1077,7 +1064,7 @@ export const getStudentsForDeactivation = async (
 
 /* =========================================================
    NONAKTIFKAN BANYAK SISWA
-   POST /api/super-admin/deactivate-students
+   POST /api/hubin/deactivate-students
 
    Body:
 
@@ -1236,7 +1223,7 @@ export const deactivateStudents = async (
 
 /* =========================================================
    AKTIFKAN KEMBALI USER
-   PATCH /api/super-admin/users/:id/activate
+   PATCH /api/hubin/users/:id/activate
 
    Data riwayat tidak dihapus.
    Hanya status aktif yang dikembalikan.
@@ -1274,15 +1261,12 @@ export const activateUser = async (
       });
     }
 
-    /* PROTEKSI SUPER ADMIN */
+    /* Cegah Hubin mengubah status akunnya sendiri */
 
-    if (
-      user.role ===
-      'super_admin'
-    ) {
+    if (user.id === req.user.id) {
       return res.status(403).json({
         error:
-          'Tidak dapat mengubah super admin.',
+          'Tidak dapat mengubah status akun sendiri.',
       });
     }
 

@@ -11,8 +11,6 @@ export const getEvaluations = async (req, res, next) => {
       where = { evaluatorId: id };
     } else if (role === 'hubin') {
       where = {};
-    } else if (role === 'super_admin') {
-      where = {};
     }
 
     const evaluations = await prisma.evaluation.findMany({

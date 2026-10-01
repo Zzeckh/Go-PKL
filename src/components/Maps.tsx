@@ -56,7 +56,7 @@ const companiesWithCoords = useMemo(() => {
     return validCompanies.filter(c => c.name === userCompanyName);
   }
 
-  // Guru, mentor, hubin, super admin tetap melihat semua perusahaan
+  // Guru, mentor, dan Hubin tetap melihat semua perusahaan
   return validCompanies;
 }, [perusahaanList, userRole, userCompanyName]);
 

@@ -26,24 +26,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
   userRole = 'intern'
 }) => {
   const getMenuItems = () => {
-    // ── SUPER ADMIN MENU ──
-    if (userRole === 'super_admin') {
-      return [
-        { id: 'dashboard',        icon: LayoutDashboard, label: 'Dashboard' },
-        { id: 'super-classes',    icon: School,          label: 'Kelola Kelas' },
-        { id: 'super-users',      icon: Users,           label: 'Kelola Pengguna' },
-        { id: 'super-companies',  icon: Building2,       label: 'Kelola Perusahaan' },
-        { id: 'laporan',          icon: FileDown,        label: 'Laporan' },
-        { id: 'settings',         icon: SettingsIcon,    label: 'Pengaturan' },
-      ];
-    }
+    // Hubin mendapatkan seluruh fitur pengelolaan yang sebelumnya ada di panel pengelolaan.
     if (userRole === 'hubin') {
       return [
-        { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        { id: 'data',      icon: Package,         label: 'Kelola Data' },
-        { id: 'pemetaan',  icon: MapPin,          label: 'Pemetaan' },
-        { id: 'laporan',   icon: FileDown,        label: 'Laporan' },
-        { id: 'settings',  icon: SettingsIcon,    label: 'Pengaturan' },
+        { id: 'dashboard',        icon: LayoutDashboard, label: 'Dashboard' },
+        { id: 'hubin-summary',    icon: ShieldCheck,     label: 'Ringkasan' },
+        { id: 'hubin-classes',    icon: School,          label: 'Kelola Kelas' },
+        { id: 'hubin-users',      icon: Users,           label: 'Kelola Pengguna' },
+        { id: 'hubin-companies',  icon: Building2,       label: 'Kelola Perusahaan' },
+        { id: 'data',             icon: Package,         label: 'Kelola Data' },
+        { id: 'pemetaan',         icon: MapPin,          label: 'Pemetaan' },
+        { id: 'laporan',          icon: FileDown,        label: 'Laporan' },
+        { id: 'settings',         icon: SettingsIcon,    label: 'Pengaturan' },
       ];
     }
     if (userRole === 'mentor') {
@@ -81,7 +75,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const getRoleLabel = (): string => {
     switch (userRole) {
-      case 'super_admin': return 'Super Admin';
       case 'hubin':       return 'Tim Hubin';
       case 'teacher':     return 'Guru';
       case 'mentor':      return 'Pembimbing';
@@ -94,14 +87,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <>
       {/* ── MOBILE BOTTOM NAVIGATION ── */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-t border-mist px-1 sm:px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(21,42,66,0.08)] flex justify-around items-center h-16 sm:h-18">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-t border-mist px-1 sm:px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(21,42,66,0.08)] flex justify-start overflow-x-auto items-center h-16 sm:h-18">
         {menuItems.map(item => {
           const isActive = activePage === item.id;
           return (
             <button
               key={item.id}
               onClick={() => setActivePage(item.id as ActivePage)}
-              className={`flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 py-1 transition-all duration-200 relative ${
+              className={`flex flex-col items-center justify-center gap-0.5 min-w-[68px] flex-1 py-1 transition-all duration-200 relative ${
                 isActive ? 'text-steel' : 'text-navy/40'
               }`}
             >
@@ -127,9 +120,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="flex items-center">
             <div className="flex items-center gap-3 min-w-0">
               <div className={`w-10 h-10 rounded-[14px] flex items-center justify-center text-white font-bold text-lg shadow-md shrink-0 border border-white/20 ${
-                userRole === 'super_admin' ? 'bg-steel shadow-steel/40' : 'bg-navy shadow-steel/40'
+                userRole === 'hubin' ? 'bg-steel shadow-steel/40' : 'bg-navy shadow-steel/40'
               }`}>
-                {userRole === 'super_admin' ? <ShieldCheck className="w-5 h-5" /> : 'Go'}
+                {userRole === 'hubin' ? <ShieldCheck className="w-5 h-5" /> : 'Go'}
               </div>
               <div className={`overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] whitespace-nowrap ${collapsed ? 'max-w-0 opacity-0' : 'max-w-[160px] opacity-100'}`}>
                 <div className="font-bold text-navy text-base leading-tight">Go-PKL</div>

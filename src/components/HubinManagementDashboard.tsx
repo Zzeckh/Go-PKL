@@ -25,10 +25,10 @@ const getInitials = (name: string) =>
     .slice(0, 2);
 
 /* ══════════════════════════════════════════════════════
-   SUPER ADMIN DASHBOARD
+   DASHBOARD HUBIN
    ══════════════════════════════════════════════════════ */
 
-export const SuperAdminDashboard: React.FC<{
+export const HubinManagementDashboard: React.FC<{
   userName: string;
   onNavigate: (page: any) => void;
 }> = ({ userName, onNavigate }) => {
@@ -37,7 +37,7 @@ export const SuperAdminDashboard: React.FC<{
     loadSuperStats,
 
     superClasses,
-    loadSuperClasses,
+    loadHubinClasses,
 
     isAuthenticated,
 
@@ -65,7 +65,7 @@ export const SuperAdminDashboard: React.FC<{
   }, []);
 
   /* ============================================================
-     LOAD DATA SUPER ADMIN
+     LOAD DATA DASHBOARD
   ============================================================ */
 
   useEffect(() => {
@@ -93,7 +93,7 @@ export const SuperAdminDashboard: React.FC<{
 
     run();
 
-    loadSuperClasses();
+    loadHubinClasses();
 
     return () => {
       cancelled = true;
@@ -101,7 +101,7 @@ export const SuperAdminDashboard: React.FC<{
   }, [
     isAuthenticated,
     loadSuperStats,
-    loadSuperClasses,
+    loadHubinClasses,
     selectedAcademicYearId,
   ]);
 
@@ -115,7 +115,6 @@ export const SuperAdminDashboard: React.FC<{
     const value = event.target.value;
 
     if (!value) {
-      setSelectedAcademicYearId(null);
       return;
     }
 
@@ -169,13 +168,13 @@ export const SuperAdminDashboard: React.FC<{
       icon: BookMarked,
       label: 'Total Kelas',
       value: superStats?.totalClasses ?? 0,
-      page: 'super-classes',
+      page: 'hubin-classes',
     },
     {
       icon: GraduationCap,
       label: 'Total Siswa',
       value: superStats?.totalStudents ?? 0,
-      page: 'super-users',
+      page: 'hubin-users',
     },
     {
       icon: Users,
@@ -183,7 +182,7 @@ export const SuperAdminDashboard: React.FC<{
       value:
         (superStats?.totalTeachers ?? 0) +
         (superStats?.totalMentors ?? 0),
-      page: 'super-users',
+      page: 'hubin-users',
     },
   ];
 
@@ -225,7 +224,7 @@ export const SuperAdminDashboard: React.FC<{
         tint: 'mist',
         title: c.name,
         desc: 'Belum ada siswa terdaftar',
-        page: 'super-classes',
+        page: 'hubin-classes',
       })),
   ].slice(0, 5);
 
@@ -258,11 +257,11 @@ export const SuperAdminDashboard: React.FC<{
 
           <div className="min-w-0">
             <h2 className="font-bold text-lg md:text-xl text-navy leading-tight truncate">
-              Super Admin Control
+              Ringkasan Pengelolaan Hubin
             </h2>
 
             <p className="text-[13px] text-navy/60 font-semibold mt-0.5 truncate">
-              Kelola kelas & pengguna dalam satu panel
+              Ringkasan data kelas, pengguna, dan aktivitas PKL
             </p>
           </div>
         </div>
@@ -296,25 +295,19 @@ export const SuperAdminDashboard: React.FC<{
               >
                 {academicYears &&
                 academicYears.length > 0 ? (
-                  <>
-                    <option value="">
-                      Semua Tahun Ajaran
-                    </option>
-
-                    {academicYears.map(
-                      (year) => (
-                        <option
-                          key={year.id}
-                          value={year.id}
-                        >
-                          {year.name}
-                          {year.isActive
-                            ? ' • Aktif'
-                            : ''}
-                        </option>
-                      )
-                    )}
-                  </>
+                  academicYears.map(
+                    (year) => (
+                      <option
+                        key={year.id}
+                        value={year.id}
+                      >
+                        {year.name}
+                        {year.isActive
+                          ? ' • Aktif'
+                          : ''}
+                      </option>
+                    )
+                  )
                 ) : (
                   <option value="">
                     Memuat tahun ajaran...
@@ -419,7 +412,7 @@ export const SuperAdminDashboard: React.FC<{
             onClick={() => {
               setStatsState('loading');
               loadSuperStats();
-              loadSuperClasses();
+              loadHubinClasses();
             }}
             className="shrink-0 text-[11px] font-bold bg-navy text-white px-3 py-1.5 rounded-lg hover:bg-navy/80 transition-colors"
           >
@@ -456,7 +449,7 @@ export const SuperAdminDashboard: React.FC<{
               CHART
           ════════════════════════════════════════════════ */}
 
-          <DashboardCharts role="super_admin" />
+          <DashboardCharts role="hubin" />
 
           {/* ════════════════════════════════════════════════
               STATS CARDS
@@ -536,7 +529,7 @@ export const SuperAdminDashboard: React.FC<{
 
                 <button
                   onClick={() =>
-                    onNavigate('super-classes')
+                    onNavigate('hubin-classes')
                   }
                   className="text-[11px] font-bold bg-steel text-white px-3 py-1.5 rounded-lg hover:bg-steel/90 transition-colors flex items-center gap-1"
                 >
@@ -578,7 +571,7 @@ export const SuperAdminDashboard: React.FC<{
                     <button
                       key={c.id}
                       onClick={() =>
-                        onNavigate('super-classes')
+                        onNavigate('hubin-classes')
                       }
                       className="p-3 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 hover:bg-mist/30 transition-all shrink-0 text-left group"
                     >

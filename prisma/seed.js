@@ -728,28 +728,9 @@ async function main() {
 
   console.log('');
 
-  // =========================================================
-  // 4. SUPER ADMIN
-  // =========================================================
-
-  console.log('👑 Membuat Super Admin...');
-
-  const superAdmin = await prisma.user.create({
-    data: {
-      name: 'Super Admin GO PKL',
-      email: 'superadmin@gopkl.id',
-      password: hash,
-      role: 'super_admin',
-      isActive: true,
-      academicYear: ACADEMIC_YEAR,
-    },
-  });
-
-  console.log(`   ✓ ${superAdmin.email}`);
-  console.log('');
 
   // =========================================================
-  // 5. HUBIN
+  // 4. HUBIN
   // =========================================================
 
   console.log('🏫 Membuat Hubin...');

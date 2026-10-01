@@ -18,12 +18,12 @@ import {
   getStudentsForDeactivation,
   deactivateStudents,
   activateUser,
-} from '../controllers/superAdminController.js';
+} from '../controllers/hubinController.js';
 
 const router = Router();
 
-// Semua route Super Admin wajib login sebagai super_admin
-router.use(authenticate, requireRole('super_admin'));
+// Semua route pengelolaan ini hanya dapat diakses oleh Hubin
+router.use(authenticate, requireRole('hubin'));
 
 // =========================
 // DASHBOARD

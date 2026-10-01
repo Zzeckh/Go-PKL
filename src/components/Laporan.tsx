@@ -74,7 +74,7 @@ export const Laporan: React.FC = () => {
     academicYears,
     selectedAcademicYearId,
     loadCompanies,
-    loadSuperClasses,
+    loadHubinClasses,
   } = useApp();
 
   /* ============================================================
@@ -94,7 +94,7 @@ export const Laporan: React.FC = () => {
   /*
    * Tahun ajaran untuk laporan.
    *
-   * Untuk Super Admin / Hubin:
+   * Untuk Hubin:
    * bisa memilih tahun ajaran secara manual.
    *
    * Default mengikuti selectedAcademicYearId
@@ -138,27 +138,23 @@ export const Laporan: React.FC = () => {
   const isHubin = userRole === 'hubin';
   const isTeacher = userRole === 'teacher';
   const isMentor = userRole === 'mentor';
-  const isSuperAdmin = userRole === 'super_admin';
   const isStudent = userRole === 'intern';
 
   const canViewAbsensi =
     isTeacher ||
     isMentor ||
     isHubin ||
-    isSuperAdmin ||
     isStudent;
 
   const canFilterScope =
-    isHubin ||
-    isSuperAdmin;
+    isHubin;
 
   /*
-   * Hanya Hubin dan Super Admin yang bisa
+   * Hanya Hubin yang bisa
    * memilih tahun ajaran laporan.
    */
   const canFilterAcademicYear =
-    isHubin ||
-    isSuperAdmin;
+    isHubin;
 
   /* ============================================================
      SYNC TAHUN AJARAN DARI APPCONTEXT
@@ -185,7 +181,7 @@ export const Laporan: React.FC = () => {
   useEffect(() => {
     if (canFilterScope) {
       loadCompanies();
-      loadSuperClasses();
+      loadHubinClasses();
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -533,7 +529,7 @@ export const Laporan: React.FC = () => {
 
     try {
       /*
-       * Untuk Super Admin / Hubin,
+       * Untuk Hubin,
        * tahun ajaran wajib dipilih.
        */
       if (
@@ -803,8 +799,6 @@ export const Laporan: React.FC = () => {
       : isMentor
       ? 'siswa yang menjadi tanggung jawab Anda'
       : isHubin
-      ? 'data penempatan PKL'
-      : isSuperAdmin
       ? 'seluruh data sistem'
       : isStudent
       ? 'data Anda sendiri'
@@ -958,8 +952,7 @@ export const Laporan: React.FC = () => {
                 </option>
               )}
 
-              {(isHubin ||
-                isSuperAdmin) && (
+              {isHubin && (
                 <>
                   <option value="mentor">
                     Mentor

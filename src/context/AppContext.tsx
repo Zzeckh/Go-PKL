@@ -320,7 +320,7 @@ interface AppContextType {
 
   loadSuperStats: () => Promise<boolean>;
 
-  loadSuperClasses: () => Promise<boolean>;
+  loadHubinClasses: () => Promise<boolean>;
 
   createClass: (data: {
     name: string;
@@ -335,7 +335,7 @@ interface AppContextType {
     id: number
   ) => Promise<any>;
 
-  loadSuperUsers: (filters?: {
+  loadHubinUsers: (filters?: {
     role?: string;
     search?: string;
   }) => Promise<boolean>;
@@ -418,9 +418,6 @@ const mapBackendRoleToUserRole = (
 
     case 'hubin':
       return 'hubin';
-
-    case 'super_admin':
-      return 'super_admin';
 
     default:
       return 'intern';
@@ -604,10 +601,10 @@ export const AppProvider: React.FC<{
 
   const [
     superClasses,
-    setSuperClasses,
+    setHubinClasses,
   ] = useState<ClassItem[]>([]);
 
-  const [superUsers, setSuperUsers] =
+  const [superUsers, setHubinUsers] =
     useState<any[]>([]);
 
   /*
@@ -714,8 +711,8 @@ export const AppProvider: React.FC<{
     setMapLocations([]);
 
     setSuperStats(null);
-    setSuperClasses([]);
-    setSuperUsers([]);
+    setHubinClasses([]);
+    setHubinUsers([]);
   }, []);
 
   useEffect(() => {
@@ -1598,7 +1595,7 @@ export const AppProvider: React.FC<{
 
   /*
    * =======================================================
-   * SUPER ADMIN STATS
+   * RINGKASAN HUBIN
    * =======================================================
    */
 
@@ -1633,7 +1630,7 @@ export const AppProvider: React.FC<{
 
           const res =
             await api.get(
-              `/api/super-admin/stats${
+              `/api/hubin/stats${
                 query
                   ? `?${query}`
                   : ''
@@ -1661,11 +1658,11 @@ export const AppProvider: React.FC<{
 
   /*
    * =======================================================
-   * SUPER ADMIN CLASSES
+   * KELOLA KELAS HUBIN
    * =======================================================
    */
 
-  const loadSuperClasses =
+  const loadHubinClasses =
     useCallback(
       async (): Promise<boolean> => {
         if (
@@ -1680,33 +1677,19 @@ export const AppProvider: React.FC<{
           const params =
             new URLSearchParams();
 
-          /*
-           * selectedAcademicYearId === null artinya
-           * "Semua Tahun Ajaran" -> jangan kirim
-           * academicYearId, biarkan backend
-           * mengambil dari seluruh tahun ajaran.
-           */
-          if (
-            selectedAcademicYearId
-          ) {
+          // null berarti semua tahun ajaran,
+          // sehingga parameter tahun tidak dikirim.
+          if (selectedAcademicYearId !== null) {
             params.set(
               'academicYearId',
-              String(
-                selectedAcademicYearId
-              )
+              String(selectedAcademicYearId)
             );
           }
 
-          const query =
-            params.toString();
-
+          const query = params.toString();
           const response =
             await api.get(
-              `/api/super-admin/classes${
-                query
-                  ? `?${query}`
-                  : ''
-              }`
+              `/api/hubin/classes${query ? `?${query}` : ''}`
             );
 
           const classes =
@@ -1714,7 +1697,7 @@ export const AppProvider: React.FC<{
               response
             );
 
-          setSuperClasses(
+          setHubinClasses(
             classes
           );
 
@@ -1754,7 +1737,7 @@ export const AppProvider: React.FC<{
 
       const res =
         await api.post(
-          '/api/super-admin/classes',
+          '/api/hubin/classes',
           {
             name:
               data.name,
@@ -1767,7 +1750,7 @@ export const AppProvider: React.FC<{
           }
         );
 
-      await loadSuperClasses();
+      await loadHubinClasses();
       await loadSuperStats();
 
       return res;
@@ -1782,10 +1765,10 @@ export const AppProvider: React.FC<{
   const deleteClass =
     async (id: number) => {
       await api.delete(
-        `/api/super-admin/classes/${id}`
+        `/api/hubin/classes/${id}`
       );
 
-      await loadSuperClasses();
+      await loadHubinClasses();
       await loadSuperStats();
     };
 
@@ -1797,26 +1780,23 @@ export const AppProvider: React.FC<{
 
   const loadClassStudents =
     async (id: number) => {
-      if (
-        !selectedAcademicYearId
-      ) {
-        throw new Error(
-          'Pilih Tahun Ajaran terlebih dahulu.'
-        );
-      }
+      const query =
+        selectedAcademicYearId !== null
+          ? `?academicYearId=${selectedAcademicYearId}`
+          : '';
 
       return await api.get(
-        `/api/super-admin/classes/${id}/students?academicYearId=${selectedAcademicYearId}`
+        `/api/hubin/classes/${id}/students${query}`
       );
     };
 
   /*
    * =======================================================
-   * SUPER ADMIN USERS
+   * KELOLA PENGGUNA HUBIN
    * =======================================================
    */
 
-  const loadSuperUsers =
+  const loadHubinUsers =
     useCallback(
       async (
         filters?: {
@@ -1855,33 +1835,17 @@ export const AppProvider: React.FC<{
             );
           }
 
-          /*
-           * selectedAcademicYearId === null artinya
-           * "Semua Tahun Ajaran" -> jangan kirim
-           * academicYearId, biarkan backend
-           * mengambil dari seluruh tahun ajaran.
-           */
-          if (
-            selectedAcademicYearId
-          ) {
+          if (selectedAcademicYearId !== null) {
             params.set(
               'academicYearId',
-              String(
-                selectedAcademicYearId
-              )
+              String(selectedAcademicYearId)
             );
           }
 
-          const query =
-            params.toString();
-
+          const query = params.toString();
           const response =
             await api.get(
-              `/api/super-admin/users${
-                query
-                  ? `?${query}`
-                  : ''
-              }`
+              `/api/hubin/users${query ? `?${query}` : ''}`
             );
 
           const users =
@@ -1889,7 +1853,7 @@ export const AppProvider: React.FC<{
               response
             );
 
-          setSuperUsers(
+          setHubinUsers(
             users
           );
 
@@ -1918,10 +1882,10 @@ export const AppProvider: React.FC<{
     async (id: number) => {
       const res =
         await api.patch(
-          `/api/super-admin/users/${id}/toggle`
+          `/api/hubin/users/${id}/toggle`
         );
 
-      await loadSuperUsers();
+      await loadHubinUsers();
 
       return res;
     };
@@ -1936,10 +1900,10 @@ export const AppProvider: React.FC<{
     async (id: number) => {
       const res =
         await api.delete(
-          `/api/super-admin/users/${id}`
+          `/api/hubin/users/${id}`
         );
 
-      await loadSuperUsers();
+      await loadHubinUsers();
       await loadSuperStats();
 
       return res;
@@ -1958,11 +1922,11 @@ export const AppProvider: React.FC<{
     ) => {
       const res =
         await api.patch(
-          `/api/super-admin/users/${id}/role`,
+          `/api/hubin/users/${id}/role`,
           { role }
         );
 
-      await loadSuperUsers();
+      await loadHubinUsers();
 
       return res;
     };
@@ -1977,7 +1941,7 @@ export const AppProvider: React.FC<{
     async (id: number) => {
       const res =
         await api.post(
-          `/api/super-admin/users/${id}/reset-password`
+          `/api/hubin/users/${id}/reset-password`
         ) as {
           id: number;
           name: string;
@@ -2291,12 +2255,12 @@ export const AppProvider: React.FC<{
         if (
           localStorage.getItem(
             'pkl_role'
-          ) === 'super_admin'
+          ) === 'hubin'
         ) {
           await Promise.all([
             loadSuperStats(),
-            loadSuperClasses(),
-            loadSuperUsers(),
+            loadHubinClasses(),
+            loadHubinUsers(),
           ]);
         }
       } finally {
@@ -2313,8 +2277,8 @@ export const AppProvider: React.FC<{
       loadGuru,
       loadMentor,
       loadSuperStats,
-      loadSuperClasses,
-      loadSuperUsers,
+      loadHubinClasses,
+      loadHubinUsers,
     ]);
 
   /*
@@ -2381,7 +2345,7 @@ export const AppProvider: React.FC<{
 
       if (
         mappedRole !==
-        'super_admin'
+        'hubin'
       ) {
         await Promise.all([
           loadLogEntries(),
@@ -2421,15 +2385,6 @@ export const AppProvider: React.FC<{
       return;
     }
 
-    /*
-     * PENTING:
-     *
-     * selectedAcademicYearId === null berarti mode
-     * "Semua Tahun Ajaran". Data tetap harus di-reload
-     * (tanpa filter academicYearId), jadi TIDAK boleh
-     * di-skip di sini.
-     */
-
     const reloadByAcademicYear =
       async () => {
         try {
@@ -2442,12 +2397,12 @@ export const AppProvider: React.FC<{
 
           if (
             userRole ===
-            'super_admin'
+            'hubin'
           ) {
             await Promise.all([
               loadSuperStats(),
-              loadSuperClasses(),
-              loadSuperUsers(),
+              loadHubinClasses(),
+              loadHubinUsers(),
             ]);
           }
         } catch (error: any) {
@@ -2468,8 +2423,8 @@ export const AppProvider: React.FC<{
     loadMentor,
     loadPerusahaan,
     loadSuperStats,
-    loadSuperClasses,
-    loadSuperUsers,
+    loadHubinClasses,
+    loadHubinUsers,
   ]);
 
   /*
@@ -3404,13 +3359,13 @@ export const AppProvider: React.FC<{
         refreshData,
 
         loadSuperStats,
-        loadSuperClasses,
+        loadHubinClasses,
 
         createClass,
         deleteClass,
         loadClassStudents,
 
-        loadSuperUsers,
+        loadHubinUsers,
 
         toggleUser,
         deleteUser,

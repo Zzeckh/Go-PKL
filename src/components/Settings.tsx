@@ -4,7 +4,6 @@ import { SettingsIntern } from './SettingsIntern';
 import { SettingsMentor } from './SettingsMentor';
 import { SettingsTeacher } from './SettingsTeacher';
 import { SettingsHubin } from './SettingsHubin';
-import { SettingsSuperAdmin } from './SettingsSuperAdmin';
 
 interface SettingsProps {
   userRole?: UserRole;
@@ -12,8 +11,6 @@ interface SettingsProps {
 
 export const Settings: React.FC<SettingsProps> = ({ userRole = 'intern' }) => {
   switch (userRole) {
-    case 'super_admin':
-      return <SettingsSuperAdmin />;
     case 'mentor':
       return <SettingsMentor />;
     case 'teacher':

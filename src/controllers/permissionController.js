@@ -145,7 +145,6 @@ export const updatePermission = async (req, res, next) => {
     if (role === 'teacher') allowed = permission.user.teacherId === reviewerId;
     else if (role === 'mentor') allowed = permission.user.company?.mentorId === reviewerId;
     else if (role === 'hubin') allowed = true;
-    else if (role === 'super_admin') allowed = true;
 
     if (!allowed) {
       return res.status(403).json({ error: 'Tidak berhak mengubah permission ini' });

@@ -3,7 +3,7 @@ import prisma from '../config/db.js';
 export const getUsers = async (req, res, next) => {
   try {
     const { id, role } = req.user;
-    const { role: filterRole, academicYearId } = req.query;
+    const { role: filterRole } = req.query;
 
     let where = {};
 
@@ -15,34 +15,10 @@ export const getUsers = async (req, res, next) => {
       where = { company: { mentorId: id } };
     } else if (role === 'hubin') {
       where = {};
-    } else if (role === 'super_admin') {
-      where = {};
     }
 
     if (filterRole) {
       where.role = filterRole;
-    }
-
-    /*
-     * FILTER TAHUN AJARAN
-     *
-     * Jika academicYearId dikirim -> hanya user pada
-     * tahun ajaran tersebut.
-     *
-     * Jika academicYearId TIDAK dikirim (mode
-     * "Semua Tahun Ajaran") -> jangan tambahkan
-     * filter apapun, ambil dari seluruh tahun ajaran.
-     */
-    if (academicYearId) {
-      const yearId = Number(academicYearId);
-
-      if (!Number.isInteger(yearId) || yearId <= 0) {
-        return res.status(400).json({
-          error: 'academicYearId tidak valid.'
-        });
-      }
-
-      where.academicYearId = yearId;
     }
 
     const users = await prisma.user.findMany({

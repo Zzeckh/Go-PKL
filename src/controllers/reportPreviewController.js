@@ -214,7 +214,6 @@ const validateRequestedStudent = async (
     target &&
     target.role === 'student' &&
     (
-      req.user.role === 'super_admin' ||
       req.user.role === 'hubin' ||
       (
         req.user.role === 'student' &&

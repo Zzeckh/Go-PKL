@@ -29,6 +29,7 @@ import {
 
 import { useApp } from '../context/AppContext';
 import { api } from '../utils/api';
+import { AcademicYearSelector } from './AcademicYearSelector';
 
 /* =========================================================
    HELPER
@@ -75,10 +76,10 @@ type DeactivationStudent = {
    COMPONENT
    ========================================================= */
 
-export const SuperUsers: React.FC = () => {
+export const HubinUsers: React.FC = () => {
   const {
     superUsers,
-    loadSuperUsers,
+    loadHubinUsers,
     deleteUser,
     updateUserRole,
     resetPassword,
@@ -190,7 +191,7 @@ export const SuperUsers: React.FC = () => {
 
     setLoading(true);
 
-    loadSuperUsers({
+    loadHubinUsers({
       role: roleFilter,
       search,
     }).finally(() => {
@@ -198,7 +199,7 @@ export const SuperUsers: React.FC = () => {
     });
   }, [
     isAuthenticated,
-    loadSuperUsers,
+    loadHubinUsers,
     roleFilter,
     search,
   ]);
@@ -466,7 +467,7 @@ export const SuperUsers: React.FC = () => {
 
       const result =
         (await api.get(
-          `/api/super-admin/deactivation-students?${params.toString()}`
+          `/api/hubin/deactivation-students?${params.toString()}`
         )) as DeactivationStudent[];
 
       setDeactivationStudents(
@@ -672,7 +673,7 @@ export const SuperUsers: React.FC = () => {
 
       const response =
         (await api.post(
-          '/api/super-admin/deactivate-students',
+          '/api/hubin/deactivate-students',
           {
             userIds: ids,
             category,
@@ -725,7 +726,7 @@ export const SuperUsers: React.FC = () => {
             `${selectedStudentIds.length} siswa berhasil dinonaktifkan sebagai ${category}.`
         );
 
-        await loadSuperUsers({
+        await loadHubinUsers({
           role: roleFilter,
           search,
         });
@@ -790,7 +791,7 @@ export const SuperUsers: React.FC = () => {
             `${ids.length} siswa berhasil dinonaktifkan sebagai ${category}.`
         );
 
-        await loadSuperUsers({
+        await loadHubinUsers({
           role: roleFilter,
           search,
         });
@@ -828,10 +829,10 @@ export const SuperUsers: React.FC = () => {
 
       try {
         await api.patch(
-          `/api/super-admin/users/${userId}/activate`
+          `/api/hubin/users/${userId}/activate`
         );
 
-        await loadSuperUsers({
+        await loadHubinUsers({
           role: roleFilter,
           search,
         });
@@ -888,7 +889,9 @@ export const SuperUsers: React.FC = () => {
               TOMBOL ALUMNI / KELUAR SEKOLAH
               ================================================ */}
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-end gap-2">
+
+            <AcademicYearSelector className="min-w-[180px]" />
 
             <button
               onClick={() =>
@@ -1310,7 +1313,7 @@ export const SuperUsers: React.FC = () => {
                     {/* ACTION */}
 
                     {user.role !==
-                      'super_admin' && (
+                      'hubin' && (
 
                       <div className="flex items-center gap-1.5 shrink-0">
 

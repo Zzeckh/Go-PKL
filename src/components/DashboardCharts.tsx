@@ -258,7 +258,6 @@ const Donut3D: React.FC<{
 
 export const DashboardCharts: React.FC<{
   role:
-    | 'super_admin'
     | 'hubin'
     | 'teacher'
     | 'mentor';
@@ -286,6 +285,9 @@ export const DashboardCharts: React.FC<{
   useEffect(() => {
 
     let cancelled = false;
+
+    // Jika tahun ajaran null, request tanpa academicYearId
+    // agar grafik menampilkan gabungan semua tahun ajaran.
 
     setStats(null);
     setError(false);
@@ -471,7 +473,7 @@ export const DashboardCharts: React.FC<{
   }
 
   /* =====================================================
-     SUPER ADMIN / HUBIN
+     HUBIN
   ===================================================== */
 
   return (

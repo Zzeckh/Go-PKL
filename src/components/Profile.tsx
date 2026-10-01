@@ -1,6 +1,5 @@
 import React from 'react';
 import { UserRole } from '../types';
-import { ProfileSuperAdmin } from './ProfileSuperAdmin';
 import { ProfileMentor } from './ProfileMentor';
 import { ProfileTeacher } from './ProfileTeacher';
 import { ProfileHubin } from './ProfileHubin';
@@ -12,8 +11,6 @@ interface ProfileProps {
 
 export const Profile: React.FC<ProfileProps> = ({ userRole = 'intern' }) => {
   switch (userRole) {
-    case 'super_admin':
-      return <ProfileSuperAdmin />;
     case 'mentor':
       return <ProfileMentor />;
     case 'teacher':

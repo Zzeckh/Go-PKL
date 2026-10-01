@@ -25,6 +25,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const getPageTitle = () => {
     switch (activePage) {
       case 'dashboard':        return 'Dashboard';
+      case 'hubin-summary':    return 'Ringkasan Pengelolaan';
       case 'logbook':          return 'Logbook PKL';
       case 'absensi':          return 'Absensi Harian';
       case 'maps':             return 'Lokasi & Maps';
@@ -38,10 +39,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       // ── Role Hubin ──
       case 'pemetaan':         return 'Pemetaan Industri';
       case 'data':             return 'Kelola Data';
-      // ── Super Admin ──
-      case 'super-classes':    return 'Kelola Kelas';
-      case 'super-users':      return 'Kelola Pengguna';
-      case 'super-companies':  return 'Kelola Perusahaan';
+      // ── Fitur pengelolaan Hubin ──
+      case 'hubin-classes':    return 'Kelola Kelas';
+      case 'hubin-users':      return 'Kelola Pengguna';
+      case 'hubin-companies':  return 'Kelola Perusahaan';
       // Legacy (backward compat)
       case 'data-siswa':       return 'Data Siswa';
       case 'data-pembimbing':  return 'Data Pembimbing';

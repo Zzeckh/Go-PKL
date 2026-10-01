@@ -28,7 +28,7 @@ export const getAllAbsensi = async (req, res, next) => {
     } else if (role === 'mentor') {
       where = { user: { company: { mentorId: id } } };
     }
-    // hubin & super_admin see all
+    // hubin see all
 
     const absensi = await prisma.absensi.findMany({
       where,

@@ -23,13 +23,13 @@ router.get('/', authMiddleware, getCompanies);
 router.post(
   '/import',
   authMiddleware,
-  authorize('hubin', 'super_admin'),
+  authorize('hubin'),
   upload.single('file'),
   importCompanies
 );
 
-router.post('/', authMiddleware, authorize('hubin', 'super_admin'), createCompany);
-router.patch('/:id', authMiddleware, authorize('hubin', 'super_admin'), updateCompany);
+router.post('/', authMiddleware, authorize('hubin'), createCompany);
+router.patch('/:id', authMiddleware, authorize('hubin'), updateCompany);
 router.delete('/:id', authMiddleware, authorize('hubin'), deactivateCompany);
-router.delete('/:id/hard', authMiddleware, authorize('super_admin'), deleteCompany);
+router.delete('/:id/hard', authMiddleware, authorize('hubin'), deleteCompany);
 export default router;

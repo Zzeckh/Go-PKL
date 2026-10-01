@@ -1,19 +1,27 @@
+
 import prisma from '../config/db.js';
+
+/* =====================================================
+   SCOPE SISWA
+===================================================== */
 
 const getScope = (user, academicYearId) => {
   const scope = {
     role: 'student',
   };
 
-  // Filter tahun ajaran
+  // Filter tahun ajaran siswa
   if (academicYearId) {
     scope.academicYearId = academicYearId;
   }
 
+  // Guru hanya melihat siswa bimbingannya
   if (user.role === 'teacher') {
     scope.teacherId = user.id;
   }
 
+  // Mentor hanya melihat siswa dari perusahaan
+  // yang menjadi tanggung jawabnya
   if (user.role === 'mentor') {
     scope.company = {
       mentorId: user.id,
@@ -23,18 +31,20 @@ const getScope = (user, academicYearId) => {
   return scope;
 };
 
-const getCompanyScope = (user, academicYearId) => {
+/* =====================================================
+   SCOPE PERUSAHAAN
+===================================================== */
+
+const getCompanyScope = (user) => {
   const scope = {};
 
-  // Filter tahun ajaran perusahaan
-  if (academicYearId) {
-    scope.academicYearId = academicYearId;
-  }
-
+  // Mentor hanya melihat perusahaan yang dibimbingnya
   if (user.role === 'mentor') {
     scope.mentorId = user.id;
   }
 
+  // Guru hanya melihat perusahaan yang memiliki
+  // siswa bimbingannya
   if (user.role === 'teacher') {
     scope.students = {
       some: {
@@ -44,16 +54,23 @@ const getCompanyScope = (user, academicYearId) => {
     };
   }
 
+  // Hubin dapat melihat seluruh perusahaan.
+  // Filter tahun ajaran tidak diterapkan ke perusahaan
+  // karena academicYearId perusahaan dapat bernilai NULL.
   return scope;
 };
+
+/* =====================================================
+   DASHBOARD STATS
+===================================================== */
 
 export const getDashboardStats = async (req, res, next) => {
   try {
     const { role } = req.user;
 
-    /* =====================================================
-       TAHUN AJARAN
-    ===================================================== */
+    /* ================================================
+       VALIDASI TAHUN AJARAN
+    ================================================ */
 
     const rawAcademicYearId = req.query.academicYearId;
 
@@ -70,23 +87,20 @@ export const getDashboardStats = async (req, res, next) => {
       });
     }
 
-    /* =====================================================
-       SCOPE
-    ===================================================== */
+    /* ================================================
+       SCOPE DATA
+    ================================================ */
 
     const studentWhere = getScope(
       req.user,
       academicYearId
     );
 
-    const companyWhere = getCompanyScope(
-      req.user,
-      academicYearId
-    );
+    const companyWhere = getCompanyScope(req.user);
 
-    /* =====================================================
+    /* ================================================
        FILTER LOKASI
-    ===================================================== */
+    ================================================ */
 
     const location =
       typeof req.query.location === 'string'
@@ -99,9 +113,9 @@ export const getDashboardStats = async (req, res, next) => {
       };
     }
 
-    /* =====================================================
-       AMBIL DATA SISWA + PERUSAHAAN
-    ===================================================== */
+    /* ================================================
+       AMBIL DATA SISWA DAN PERUSAHAAN
+    ================================================ */
 
     const [students, companies] = await Promise.all([
       prisma.user.findMany({
@@ -153,19 +167,20 @@ export const getDashboardStats = async (req, res, next) => {
       }),
     ]);
 
-    /* =====================================================
-       FILTER COMPANY SESUAI TAHUN
-    ===================================================== */
+    /* ================================================
+       PERUSAHAAN YANG BOLEH DITAMPILKAN
+    ================================================ */
 
     const allowedCompanyIds = new Set(
       companies.map((company) => company.id)
     );
 
-    /* =====================================================
+    /* ================================================
        FILTER SISWA
-    ===================================================== */
+    ================================================ */
 
     const scopedStudents = students.filter((student) => {
+      // Tetap filter siswa berdasarkan tahun ajaran
       if (
         academicYearId &&
         student.academicYearId !== academicYearId
@@ -173,18 +188,20 @@ export const getDashboardStats = async (req, res, next) => {
         return false;
       }
 
+      // Siswa yang belum memiliki perusahaan tetap
+      // dihitung dalam statistik siswa pembimbingnya
       if (!student.company) {
         return true;
       }
 
-      return allowedCompanyIds.has(
-        student.company.id
-      );
+      // Siswa dengan perusahaan hanya dihitung jika
+      // perusahaannya masuk dalam scope pengguna
+      return allowedCompanyIds.has(student.company.id);
     });
 
-    /* =====================================================
-       HITUNG SISWA PER PERUSAHAAN
-    ===================================================== */
+    /* ================================================
+       SIAPKAN HITUNGAN SISWA PER PERUSAHAAN
+    ================================================ */
 
     const companyCounts = new Map(
       companies.map((company) => [
@@ -196,9 +213,9 @@ export const getDashboardStats = async (req, res, next) => {
       ])
     );
 
-    /* =====================================================
-       HITUNG LOKASI
-    ===================================================== */
+    /* ================================================
+       HITUNG SISWA DAN LOKASI PERUSAHAAN
+    ================================================ */
 
     const locationCounts = new Map();
 
@@ -210,9 +227,7 @@ export const getDashboardStats = async (req, res, next) => {
         return;
       }
 
-      companyCounts.get(
-        student.company.id
-      ).count += 1;
+      companyCounts.get(student.company.id).count += 1;
 
       const address =
         student.company.address?.trim() ||
@@ -224,9 +239,9 @@ export const getDashboardStats = async (req, res, next) => {
       );
     });
 
-    /* =====================================================
-       SISWA PER PERUSAHAAN
-    ===================================================== */
+    /* ================================================
+       DATA SISWA PER PERUSAHAAN
+    ================================================ */
 
     const studentsPerCompany = [
       ...companyCounts.values(),
@@ -234,9 +249,9 @@ export const getDashboardStats = async (req, res, next) => {
       .filter((item) => item.count > 0)
       .sort((a, b) => b.count - a.count);
 
-    /* =====================================================
+    /* ================================================
        STATUS PERUSAHAAN
-    ===================================================== */
+    ================================================ */
 
     const companyStatus = companies.reduce(
       (result, company) => {
@@ -261,9 +276,9 @@ export const getDashboardStats = async (req, res, next) => {
       }
     );
 
-    /* =====================================================
-       RESULT DASAR
-    ===================================================== */
+    /* ================================================
+       HASIL DASAR DASHBOARD
+    ================================================ */
 
     const result = {
       academicYearId,
@@ -282,9 +297,9 @@ export const getDashboardStats = async (req, res, next) => {
         .sort((a, b) => b.count - a.count),
     };
 
-    /* =====================================================
-       TEACHER
-    ===================================================== */
+    /* ================================================
+       STATISTIK GURU PEMBIMBING
+    ================================================ */
 
     if (role === 'teacher') {
       result.studentStatus = scopedStudents.reduce(
@@ -318,9 +333,9 @@ export const getDashboardStats = async (req, res, next) => {
       );
     }
 
-    /* =====================================================
-       MENTOR
-    ===================================================== */
+    /* ================================================
+       STATISTIK MENTOR PERUSAHAAN
+    ================================================ */
 
     if (role === 'mentor') {
       result.logbookStatus = scopedStudents.reduce(
@@ -328,9 +343,7 @@ export const getDashboardStats = async (req, res, next) => {
           student.logbooks.forEach((logbook) => {
             if (logbook.status === 'approved') {
               status.approved += 1;
-            } else if (
-              logbook.status === 'rejected'
-            ) {
+            } else if (logbook.status === 'rejected') {
               status.revision += 1;
             } else {
               status.pending += 1;
@@ -357,12 +370,17 @@ export const getDashboardStats = async (req, res, next) => {
         .sort((a, b) => b.count - a.count);
     }
 
-    /* =====================================================
-       RESPONSE
-    ===================================================== */
+    /* ================================================
+       KIRIM RESPONSE
+    ================================================ */
 
-    res.json(result);
+    return res.json(result);
   } catch (error) {
-    next(error);
+    console.error(
+      'Gagal mengambil statistik dashboard:',
+      error
+    );
+
+    return next(error);
   }
 };

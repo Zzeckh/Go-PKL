@@ -20,10 +20,10 @@ import { MentorPerizinan } from './components/MentorPerizinan';
 import { HubinDashboard } from './components/HubinDashboard';
 import { HubinData } from './components/HubinKelolaData';
 import { HubinPemetaan } from './components/HubinPemetaan';
-import { SuperAdminDashboard } from './components/SuperAdminDashboard';
-import { SuperClasses } from './components/SuperAdminClasses';
-import { SuperUsers } from './components/SuperAdminUsers';
-import { SuperCompanies } from './components/SuperAdminCompanies';
+import { HubinManagementDashboard } from './components/HubinManagementDashboard';
+import { HubinClasses } from './components/HubinClasses';
+import { HubinUsers } from './components/HubinUsers';
+import { HubinCompanies } from './components/HubinCompanies';
 import { StudentPerizinan } from './components/StudentPerizinan';
 import { Settings } from './components/Settings';
 import { Laporan } from './components/Laporan';
@@ -123,16 +123,16 @@ export default function App() {
           userName={userName}
           userRole={userRole}
         >
-          {/* ── SUPER ADMIN ── */}
-          {activePage === 'dashboard' && userRole === 'super_admin' && (
-            <SuperAdminDashboard 
+          {/* ── FITUR PENGELOLAAN HUBIN ── */}
+          {activePage === 'hubin-summary' && userRole === 'hubin' && (
+            <HubinManagementDashboard 
               userName={userName}
               onNavigate={(page) => setActivePage(page as any)}
             />
           )}
-          {activePage === 'super-classes' && userRole === 'super_admin' && <SuperClasses />}
-          {activePage === 'super-users' && userRole === 'super_admin' && <SuperUsers />}
-          {activePage === 'super-companies' && userRole === 'super_admin' && <SuperCompanies />}
+          {activePage === 'hubin-classes' && userRole === 'hubin' && <HubinClasses />}
+          {activePage === 'hubin-users' && userRole === 'hubin' && <HubinUsers />}
+          {activePage === 'hubin-companies' && userRole === 'hubin' && <HubinCompanies />}
 
 
           {/* ── STUDENT (INTERN) ── */}
@@ -240,7 +240,7 @@ export default function App() {
             <HubinData />
           )}
           {activePage === 'laporan' && (
-            userRole === 'hubin' || userRole === 'teacher' || userRole === 'mentor' || userRole === 'super_admin'
+            userRole === 'hubin' || userRole === 'teacher' || userRole === 'mentor'
           ) && (
             <Laporan />
           )}

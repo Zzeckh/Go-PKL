@@ -25,8 +25,6 @@ export const getLogbooks = async (req, res, next) => {
       where = { user: { company: { mentorId: id } } };
     } else if (role === 'hubin') {
       where = {};
-    } else if (role === 'super_admin') {
-      where = {};
     }
 
     const logbooks = await prisma.logbook.findMany({
@@ -148,7 +146,6 @@ export const updateLogbook = async (req, res, next) => {
     let allowed = false;
     if (role === 'mentor') allowed = logbook.user.company?.mentorId === reviewerId;
     else if (role === 'hubin') allowed = true;
-    else if (role === 'super_admin') allowed = true;
 
     if (!allowed) {
       return res.status(403).json({ error: 'Tidak berhak mengubah logbook ini' });

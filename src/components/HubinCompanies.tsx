@@ -17,9 +17,9 @@ import {
 } from '../utils/leafletHelpers';
 
 /* ══════════════════════════════════════════════════════
-   KELOLA PERUSAHAAN (SUPER ADMIN)
+   KELOLA PERUSAHAAN HUBIN
    ══════════════════════════════════════════════════════ */
-export const SuperCompanies: React.FC = () => {
+export const HubinCompanies: React.FC = () => {
   const { perusahaanList, loadCompanies, addCompany, updateCompany, deleteCompany, isAuthenticated } = useApp();
 
   const [search, setSearch] = useState('');

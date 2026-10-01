@@ -10,7 +10,7 @@ const VALID_LOGBOOK_STATUS = ['pending', 'approved', 'rejected'];
  * - student  : hanya dirinya sendiri, filter lain diabaikan.
  * - teacher  : hanya siswa bimbingannya (User.teacherId).
  * - mentor   : hanya siswa di perusahaan yang dia jadi mentor-nya (User.company.mentorId).
- * - hubin / super_admin : tanpa batasan.
+ * - hubin : tanpa batasan.
  *
  * nested = true  → hasil dibungkus { user: {...} }  (dipakai untuk query Absensi/Logbook)
  * nested = false → hasil langsung field User          (dipakai untuk query User/PKL)

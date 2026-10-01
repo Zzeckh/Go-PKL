@@ -130,7 +130,7 @@ export const SettingsIntern: React.FC = () => {
     userRole === 'intern' ? 'Siswa' :
     userRole === 'teacher' ? 'Guru' :
     userRole === 'mentor' ? 'Mentor' :
-    userRole === 'hubin' ? 'Hubin' : 'Super Admin';
+    userRole === 'hubin' ? 'Hubin' : 'Pengguna';
 
   const themes = [
     { id: 'light' as const, label: 'Terang', gradientStyle: { background: 'linear-gradient(to bottom right, #ffffff, #DADEE8)' }, text: 'text-navy' },

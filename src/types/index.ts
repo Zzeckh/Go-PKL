@@ -14,19 +14,14 @@ export type ActivePage =
   | 'data-pembimbing' 
   | 'pemetaan' 
   | 'data'
-  | 'super-classes'
-  | 'super-users'
-  | 'super-companies'
+  | 'hubin-summary'
+  | 'hubin-classes'
+  | 'hubin-users'
+  | 'hubin-companies'
   | 'laporan';
 
 export type AuthMode = 'login' | 'register';
-export type UserRole = 'intern' | 'mentor' | 'teacher' | 'hubin' | 'super_admin'; // ← TAMBAH super_admin
-
-export interface AcademicYear {
-  id: number;
-  name: string;
-  isActive: boolean;
-}
+export type UserRole = 'intern' | 'mentor' | 'teacher' | 'hubin';
 
 export interface LogEntry {
   id: string;
