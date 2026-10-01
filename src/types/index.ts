@@ -54,6 +54,7 @@ export interface AttendanceRecord {
   id: string;
   date: string;
   checkInTime: string;
+  checkOutTime?: string;
   status: 'Hadir' | 'Izin' | 'Sakit' | 'Alpha';
   userId?: number;
 }

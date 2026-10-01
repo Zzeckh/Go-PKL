@@ -1,4 +1,10 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, {
+  useState,
+  useMemo,
+  useRef,
+  useEffect,
+  useCallback,
+} from 'react';
 
 import {
   MapPin,
@@ -20,13 +26,44 @@ import {
   Calendar,
   ChevronRight,
   Upload,
+  Download,
 } from 'lucide-react';
 
-import { useApp, SiswaItem } from '../context/AppContext';
+import * as XLSX from 'xlsx';
+
+import { useApp, SiswaItem, PerusahaanItem } from '../context/AppContext';
 import { api } from '../utils/api';
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
 
 const normalize = (value: string) =>
   value.toLowerCase().replace(/\s+/g, ' ').trim();
+
+/** Buang gelar/keterangan di belakang koma, mis. "Budi, S.Pd" -> "budi" */
+const baseName = (value?: string) =>
+  normalize((value || '').split(',')[0]);
+
+/** Buang keterangan dalam kurung di akhir, mis. "PT Maju (Bandung)" -> "pt maju" */
+const stripBracket = (value: string) =>
+  normalize(value.replace(/\s*\(.*\)\s*$/, ''));
+
+/** Cari data berdasarkan nama (nama penuh dulu, lalu nama tanpa gelar) */
+const findByName = <T extends { name: string }>(
+  list: T[],
+  name?: string
+): T | undefined => {
+  if (!name || name === '-') return undefined;
+
+  const full = normalize(name);
+  const base = baseName(name);
+
+  return (
+    list.find((item) => normalize(item.name) === full) ||
+    list.find((item) => baseName(item.name) === base)
+  );
+};
 
 type FilterType = 'all' | 'mapped' | 'unmapped';
 
@@ -36,9 +73,22 @@ interface SearchableOption {
   sublabel?: string;
 }
 
-/* =========================================================
+interface ImportError {
+  row: number;
+  name?: string;
+  error: string;
+}
+
+interface ImportResult {
+  total: number;
+  successCount: number;
+  errorCount: number;
+  errors: ImportError[];
+}
+
+/* ============================================================
    SEARCHABLE SELECT
-   ========================================================= */
+   ============================================================ */
 
 interface SearchableSelectProps {
   label: string;
@@ -77,23 +127,17 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
     };
 
     document.addEventListener('mousedown', handler);
-
-    return () => {
-      document.removeEventListener('mousedown', handler);
-    };
+    return () => document.removeEventListener('mousedown', handler);
   }, []);
 
   useEffect(() => {
-    if (open) {
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 50);
-    }
+    if (!open) return;
+
+    const t = setTimeout(() => inputRef.current?.focus(), 50);
+    return () => clearTimeout(t);
   }, [open]);
 
-  const selected = options.find(
-    (o) => String(o.id) === String(value)
-  );
+  const selected = options.find((o) => String(o.id) === String(value));
 
   const filtered = useMemo(() => {
     if (!query) return options;
@@ -103,8 +147,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
     return options.filter(
       (o) =>
         o.label.toLowerCase().includes(q) ||
-        (o.sublabel &&
-          o.sublabel.toLowerCase().includes(q))
+        (o.sublabel && o.sublabel.toLowerCase().includes(q))
     );
   }, [options, query]);
 
@@ -124,11 +167,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
             : 'bg-mist/30 border border-mist text-navy hover:border-steel/50'
         }`}
       >
-        <span
-          className={`truncate ${
-            selected ? 'text-navy' : 'text-navy/40'
-          }`}
-        >
+        <span className={`truncate ${selected ? 'text-navy' : 'text-navy/40'}`}>
           {selected ? selected.label : placeholder}
         </span>
 
@@ -165,8 +204,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
               </div>
             ) : (
               filtered.map((opt) => {
-                const isSelected =
-                  String(opt.id) === String(value);
+                const isSelected = String(opt.id) === String(value);
 
                 return (
                   <button
@@ -186,9 +224,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
                     <div className="min-w-0 flex-1">
                       <p
                         className={`text-sm font-bold truncate ${
-                          isSelected
-                            ? 'text-white'
-                            : 'text-navy'
+                          isSelected ? 'text-white' : 'text-navy'
                         }`}
                       >
                         {opt.label}
@@ -197,9 +233,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
                       {opt.sublabel && (
                         <p
                           className={`text-[11px] font-semibold truncate mt-0.5 ${
-                            isSelected
-                              ? 'text-white/80'
-                              : 'text-navy/50'
+                            isSelected ? 'text-white/80' : 'text-navy/50'
                           }`}
                         >
                           {opt.sublabel}
@@ -227,9 +261,9 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
   );
 };
 
-/* =========================================================
+/* ============================================================
    MAIN COMPONENT
-   ========================================================= */
+   ============================================================ */
 
 export const HubinPemetaan: React.FC = () => {
   const {
@@ -246,114 +280,107 @@ export const HubinPemetaan: React.FC = () => {
   } = useApp();
 
   const [search, setSearch] = useState('');
-  const [filter, setFilter] =
-    useState<FilterType>('all');
+  const [filter, setFilter] = useState<FilterType>('all');
 
-  const [selectedCountry, setSelectedCountry] =
-    useState('');
+  const [selectedCountry, setSelectedCountry] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
 
-  const [selectedCity, setSelectedCity] =
-    useState('');
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
 
-  const [importing, setImporting] =
-    useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [importResult, setImportResult] = useState<{
-    total: number;
-    successCount: number;
-    errorCount: number;
-    errors: Array<{
-      row: number;
-      name?: string;
-      error: string;
-    }>;
-  } | null>(null);
+  const [selectedSiswaId, setSelectedSiswaId] = useState<number | null>(null);
 
-  const fileInputRef =
-    useRef<HTMLInputElement>(null);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
 
-  const [selectedSiswaId, setSelectedSiswaId] =
-    useState<number | null>(null);
+  const [formCompanyId, setFormCompanyId] = useState<number | string>('');
+  const [formGuruId, setFormGuruId] = useState<number | string>('');
+  const [formMentorId, setFormMentorId] = useState<number | string>('');
 
-  const [editing, setEditing] =
-    useState(false);
+  /* timer "Tersimpan" dibersihkan saat unmount */
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [justSaved, setJustSaved] =
-    useState(false);
+  useEffect(() => {
+    return () => {
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    };
+  }, []);
 
-  const [formCompanyId, setFormCompanyId] =
-    useState<number | string>('');
+  /* ============================================================
+     DOWNLOAD TEMPLATE EXCEL (hanya header, tanpa data contoh)
+     ============================================================ */
 
-  const [formGuruId, setFormGuruId] =
-    useState<number | string>('');
+  const handleDownloadTemplate = () => {
+    const headers = [
+      'NIS',
+      'Nama Siswa',
+      'Nama Perusahaan',
+      'Alamat',
+      'Kota',
+      'Negara',
+      'Latitude',
+      'Longitude',
+      'Radius',
+      'Kuota',
+    ];
 
-  const [formMentorId, setFormMentorId] =
-    useState<number | string>('');
+    const worksheet = XLSX.utils.aoa_to_sheet([headers]);
 
-  /* =========================================================
-     TAHUN AJARAN
-     ========================================================= */
+    worksheet['!cols'] = [
+      { wch: 15 },
+      { wch: 30 },
+      { wch: 30 },
+      { wch: 40 },
+      { wch: 20 },
+      { wch: 20 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 12 },
+      { wch: 10 },
+    ];
 
-  const activeYear =
-    academicYears.find(
-      (year) =>
-        year.id === selectedAcademicYearId
-    )?.name || '2026/2027';
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Template Import');
+    XLSX.writeFile(workbook, 'Template_Import_PKL.xlsx');
+  };
 
-  /* =========================================================
-     CHANGE TAHUN AJARAN
-     ========================================================= */
+  /* ============================================================
+     GANTI TAHUN AJARAN
+     ============================================================ */
 
   const handleAcademicYearChange = (
     e: React.ChangeEvent<HTMLSelectElement>
   ) => {
     const id = Number(e.target.value);
-
     if (!id) return;
 
-    selectAcademicYear(id);
-
-    // Reset state pemetaan
+    // reset state yang bergantung pada data tahun ajaran sebelumnya
     setSelectedSiswaId(null);
     setEditing(false);
-    setJustSaved(false);
-
     setSelectedCountry('');
     setSelectedCity('');
-    setSearch('');
-    setFilter('all');
+
+    selectAcademicYear(id);
   };
 
-  /* =========================================================
-     IMPORT EXCEL PERUSAHAAN
-     ========================================================= */
+  /* ============================================================
+     IMPORT EXCEL
+     ============================================================ */
 
   const handleImportExcel = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const file = event.target.files?.[0];
+    const input = event.target;
+    const file = input.files?.[0];
 
     if (!file) return;
 
-    if (
-      !file.name
-        .toLowerCase()
-        .endsWith('.xlsx')
-    ) {
-      alert(
-        'Silakan pilih file Excel (.xlsx)'
-      );
-
-      event.target.value = '';
-      return;
-    }
-
-    if (!selectedAcademicYearId) {
-      alert(
-        'Silakan pilih Tahun Ajaran terlebih dahulu.'
-      );
-
-      event.target.value = '';
+    if (!file.name.toLowerCase().endsWith('.xlsx')) {
+      alert('Silakan pilih file Excel (.xlsx)');
+      input.value = '';
       return;
     }
 
@@ -362,34 +389,19 @@ export const HubinPemetaan: React.FC = () => {
 
     try {
       const formData = new FormData();
-
       formData.append('file', file);
-
-      formData.append(
-        'academicYearId',
-        String(selectedAcademicYearId)
-      );
 
       const result = await api.upload<{
         total: number;
         successCount: number;
         errorCount: number;
-        errors?: Array<{
-          row: number;
-          name?: string;
-          error: string;
-        }>;
-      }>(
-        '/api/companies/import',
-        formData
-      );
+        errors?: ImportError[];
+      }>('/api/companies/import', formData);
 
       setImportResult({
         total: result.total,
-        successCount:
-          result.successCount,
-        errorCount:
-          result.errorCount,
+        successCount: result.successCount,
+        errorCount: result.errorCount,
         errors: result.errors || [],
       });
 
@@ -397,9 +409,8 @@ export const HubinPemetaan: React.FC = () => {
 
       alert(
         `Import selesai!\n\n` +
-        `Tahun Ajaran: ${activeYear}\n` +
-        `Berhasil: ${result.successCount}\n` +
-        `Gagal: ${result.errorCount}`
+          `Berhasil: ${result.successCount}\n` +
+          `Gagal: ${result.errorCount}`
       );
     } catch (error: any) {
       alert(
@@ -409,149 +420,112 @@ export const HubinPemetaan: React.FC = () => {
       );
     } finally {
       setImporting(false);
-
-      event.target.value = '';
+      input.value = '';
     }
   };
 
-  /* =========================================================
-     LOCATION
-     ========================================================= */
+  /* ============================================================
+     MATCH LOCATION
+     ============================================================ */
 
-  const matchLocation = (
-    company?: string
-  ) => {
-    if (
-      !company ||
-      company === '-'
-    ) {
-      return undefined;
-    }
+  const matchLocation = useCallback(
+    (company?: string): PerusahaanItem | undefined => {
+      if (!company || company === '-') return undefined;
 
-    const q = normalize(company);
+      const q = normalize(company);
+      if (!q) return undefined;
 
-    return mapLocations.find(
-      (l) =>
-        normalize(l.name).includes(q) ||
-        q.includes(
-          normalize(
-            l.name
-          )
-            .split('(')[0]
-            .trim()
-        )
-    );
-  };
+      // 1. cocok persis
+      const exact = mapLocations.find((l) => normalize(l.name) === q);
+      if (exact) return exact;
 
-  /* =========================================================
-     MAPPING STATUS
-     ========================================================= */
+      // 2. cocok tanpa keterangan dalam kurung
+      const qBase = stripBracket(company);
 
-  const isMapped = (s: SiswaItem) =>
-    !!(
-      s.perusahaan &&
-      s.perusahaan !== '-' &&
-      matchLocation(s.perusahaan)
-    );
+      return mapLocations.find((l) => {
+        const lFull = normalize(l.name);
+        const lBase = stripBracket(l.name);
 
-  const mappedLocations = siswaList
-    .map((s) =>
-      matchLocation(s.perusahaan)
-    )
-    .filter(Boolean);
-
-  /* =========================================================
-     COUNTRY
-     ========================================================= */
-
-  const countries = Array.from(
-    new Set(
-      mappedLocations
-        .map((loc) => loc?.country)
-        .filter(Boolean)
-    )
+        return (
+          (!!lBase && lBase === qBase) ||
+          lFull.includes(q) ||
+          (!!lBase && q.includes(lBase))
+        );
+      });
+    },
+    [mapLocations]
   );
 
-  /* =========================================================
-     CITY
-     ========================================================= */
-
-  const cities = Array.from(
-    new Set(
-      mappedLocations
-        .filter(
-          (loc) =>
-            !selectedCountry ||
-            loc?.country === selectedCountry
-        )
-        .map((loc) => loc?.city)
-        .filter(Boolean)
-    )
+  const isMapped = useCallback(
+    (s: SiswaItem) =>
+      !!(s.perusahaan && s.perusahaan !== '-' && matchLocation(s.perusahaan)),
+    [matchLocation]
   );
 
-  /* =========================================================
+  /* ============================================================
+     LOCATION FILTER OPTIONS
+     ============================================================ */
+
+  const mappedLocations = useMemo(
+    () =>
+      siswaList
+        .map((s) => matchLocation(s.perusahaan))
+        .filter((loc): loc is PerusahaanItem => !!loc),
+    [siswaList, matchLocation]
+  );
+
+  const countries = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          mappedLocations
+            .map((loc) => loc.country)
+            .filter((c): c is string => !!c)
+        )
+      ).sort(),
+    [mappedLocations]
+  );
+
+  const cities = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          mappedLocations
+            .filter(
+              (loc) => !selectedCountry || loc.country === selectedCountry
+            )
+            .map((loc) => loc.city)
+            .filter((c): c is string => !!c)
+        )
+      ).sort(),
+    [mappedLocations, selectedCountry]
+  );
+
+  /* ============================================================
      FILTER SISWA
-     ========================================================= */
+     ============================================================ */
 
   const filteredSiswa = useMemo(() => {
+    const searchLower = search.toLowerCase();
+
     return siswaList.filter((s) => {
-      const searchValue =
-        search.toLowerCase();
-
       const matchSearch =
-        s.name
-          .toLowerCase()
-          .includes(searchValue) ||
-        s.kelas
-          .toLowerCase()
-          .includes(searchValue);
+        (s.name || '').toLowerCase().includes(searchLower) ||
+        (s.kelas || '').toLowerCase().includes(searchLower);
 
-      if (!matchSearch) {
-        return false;
-      }
+      if (!matchSearch) return false;
 
       const mapped = isMapped(s);
 
-      if (
-        filter === 'mapped' &&
-        !mapped
-      ) {
-        return false;
-      }
+      if (filter === 'mapped' && !mapped) return false;
+      if (filter === 'unmapped' && mapped) return false;
 
-      if (
-        filter === 'unmapped' &&
-        mapped
-      ) {
-        return false;
-      }
+      if (selectedCountry || selectedCity) {
+        const loc = matchLocation(s.perusahaan);
 
-      if (
-        selectedCountry ||
-        selectedCity
-      ) {
-        const loc =
-          matchLocation(
-            s.perusahaan
-          );
-
-        if (!loc) {
-          return false;
-        }
-
-        if (
-          selectedCountry &&
-          loc.country !== selectedCountry
-        ) {
-          return false;
-        }
-
-        if (
-          selectedCity &&
-          loc.city !== selectedCity
-        ) {
-          return false;
-        }
+        if (!loc) return false;
+        if (selectedCountry && loc.country !== selectedCountry) return false;
+        if (selectedCity && loc.city !== selectedCity) return false;
       }
 
       return true;
@@ -562,240 +536,31 @@ export const HubinPemetaan: React.FC = () => {
     filter,
     selectedCountry,
     selectedCity,
-    mapLocations,
+    isMapped,
+    matchLocation,
   ]);
 
-  /* =========================================================
-     SISWA TERPILIH
-     ========================================================= */
+  /* ============================================================
+     SELECTED SISWA
+     ============================================================ */
 
   const selectedSiswa =
-    siswaList.find(
-      (s) =>
-        s.id === selectedSiswaId
-    ) || null;
+    siswaList.find((s) => s.id === selectedSiswaId) || null;
 
-  const selectedLoc =
-    selectedSiswa
-      ? matchLocation(
-          selectedSiswa.perusahaan
-        )
-      : undefined;
+  const selectedLoc = selectedSiswa
+    ? matchLocation(selectedSiswa.perusahaan)
+    : undefined;
 
-  /* =========================================================
+  /* ============================================================
      STATISTICS
-     ========================================================= */
+     ============================================================ */
 
-  const mappedCount =
-    siswaList.filter(
-      isMapped
-    ).length;
+  const mappedCount = useMemo(
+    () => siswaList.filter(isMapped).length,
+    [siswaList, isMapped]
+  );
 
-  const unmappedCount =
-    siswaList.length -
-    mappedCount;
-
-  /* =========================================================
-     OPTIONS
-     ========================================================= */
-
-  const companyOptions: SearchableOption[] =
-    mapLocations.map((loc) => ({
-      id: loc.id,
-      label: loc.name,
-      sublabel: loc.address,
-    }));
-
-  const guruOptions: SearchableOption[] =
-    guruList.map((g) => ({
-      id: g.id,
-      label: g.name,
-      sublabel:
-        g.subject ||
-        'Guru Pembimbing',
-    }));
-
-  const mentorOptions: SearchableOption[] =
-    mentorList.map((m) => ({
-      id: m.id,
-      label: m.name,
-      sublabel:
-        m.perusahaan ||
-        'Mentor Industri',
-    }));
-
-  /* =========================================================
-     SELECT SISWA
-     ========================================================= */
-
-  const handleSelectSiswa = (
-    s: SiswaItem
-  ) => {
-    setSelectedSiswaId(s.id);
-
-    setEditing(false);
-    setJustSaved(false);
-
-    const loc =
-      matchLocation(
-        s.perusahaan
-      );
-
-    const guru =
-      guruList.find(
-        (g) =>
-          g.name.split(',')[0] ===
-          s.guruPembimbing
-            ?.split(',')[0]
-      );
-
-    const mentor =
-      mentorList.find(
-        (m) =>
-          m.name.split(',')[0] ===
-          s.mentor
-            ?.split(',')[0]
-      );
-
-    setFormCompanyId(
-      loc?.id ?? ''
-    );
-
-    setFormGuruId(
-      guru?.id ?? ''
-    );
-
-    setFormMentorId(
-      mentor?.id ?? ''
-    );
-  };
-
-  /* =========================================================
-     EDIT
-     ========================================================= */
-
-  const handleEdit = () => {
-    setEditing(true);
-    setJustSaved(false);
-  };
-
-  /* =========================================================
-     SAVE
-     ========================================================= */
-
-  const handleSave = async () => {
-    if (!selectedSiswa) {
-      return;
-    }
-
-    const loc =
-      mapLocations.find(
-        (l) =>
-          String(l.id) ===
-          String(formCompanyId)
-      );
-
-    const guru =
-      guruList.find(
-        (g) =>
-          String(g.id) ===
-          String(formGuruId)
-      );
-
-    const mentor =
-      mentorList.find(
-        (m) =>
-          String(m.id) ===
-          String(formMentorId)
-      );
-
-    await updateSiswaMapping(
-      selectedSiswa.id,
-      {
-        perusahaan: loc
-          ? loc.name.replace(
-              /\s*\([^)]*\)$/,
-              ''
-            )
-          : selectedSiswa.perusahaan,
-
-        guruPembimbing: guru
-          ? guru.name
-          : selectedSiswa.guruPembimbing,
-
-        mentor: mentor
-          ? mentor.name
-          : selectedSiswa.mentor,
-
-        companyId:
-          formCompanyId,
-
-        teacherId:
-          formGuruId,
-
-        mentorName:
-          mentor
-            ? mentor.name
-            : undefined,
-      }
-    );
-
-    setEditing(false);
-    setJustSaved(true);
-
-    setTimeout(() => {
-      setJustSaved(false);
-    }, 2500);
-  };
-
-  /* =========================================================
-     CANCEL
-     ========================================================= */
-
-  const handleCancel = () => {
-    if (!selectedSiswa) {
-      return;
-    }
-
-    const loc =
-      matchLocation(
-        selectedSiswa.perusahaan
-      );
-
-    const guru =
-      guruList.find(
-        (g) =>
-          g.name.split(',')[0] ===
-          selectedSiswa.guruPembimbing
-            ?.split(',')[0]
-      );
-
-    const mentor =
-      mentorList.find(
-        (m) =>
-          m.name.split(',')[0] ===
-          selectedSiswa.mentor
-            ?.split(',')[0]
-      );
-
-    setFormCompanyId(
-      loc?.id ?? ''
-    );
-
-    setFormGuruId(
-      guru?.id ?? ''
-    );
-
-    setFormMentorId(
-      mentor?.id ?? ''
-    );
-
-    setEditing(false);
-  };
-
-  /* =========================================================
-     STATS
-     ========================================================= */
+  const unmappedCount = siswaList.length - mappedCount;
 
   const stats = [
     {
@@ -815,19 +580,143 @@ export const HubinPemetaan: React.FC = () => {
     },
   ];
 
-  /* =========================================================
-     RETURN
-     ========================================================= */
+  /* ============================================================
+     SELECT OPTIONS
+     ============================================================ */
+
+  const companyOptions: SearchableOption[] = useMemo(
+    () =>
+      mapLocations.map((loc) => ({
+        id: loc.id,
+        label: loc.name,
+        sublabel: loc.address,
+      })),
+    [mapLocations]
+  );
+
+  const guruOptions: SearchableOption[] = useMemo(
+    () =>
+      guruList.map((g) => ({
+        id: g.id,
+        label: g.name,
+        sublabel: g.subject || 'Guru Pembimbing',
+      })),
+    [guruList]
+  );
+
+  const mentorOptions: SearchableOption[] = useMemo(
+    () =>
+      mentorList.map((m) => ({
+        id: m.id,
+        label: m.name,
+        sublabel: m.perusahaan || 'Mentor Industri',
+      })),
+    [mentorList]
+  );
+
+  /* ============================================================
+     SINKRONISASI FORM DARI SISWA
+     ============================================================ */
+
+  const fillFormFromSiswa = (s: SiswaItem) => {
+    const loc = matchLocation(s.perusahaan);
+    const guru = findByName(guruList, s.guruPembimbing);
+    const mentor = findByName(mentorList, s.mentor);
+
+    setFormCompanyId(loc?.id ?? '');
+    setFormGuruId(guru?.id ?? '');
+    setFormMentorId(mentor?.id ?? '');
+  };
+
+  const handleSelectSiswa = (s: SiswaItem) => {
+    setSelectedSiswaId(s.id);
+    setEditing(false);
+    setJustSaved(false);
+    fillFormFromSiswa(s);
+  };
+
+  const handleEdit = () => {
+    setEditing(true);
+    setJustSaved(false);
+  };
+
+  const handleCancel = () => {
+    if (!selectedSiswa) return;
+
+    fillFormFromSiswa(selectedSiswa);
+    setEditing(false);
+  };
+
+  /* ============================================================
+     SAVE
+     ============================================================ */
+
+  const handleSave = async () => {
+    if (!selectedSiswa || saving) return;
+
+    const loc = mapLocations.find(
+      (l) => String(l.id) === String(formCompanyId)
+    );
+
+    const guru = guruList.find((g) => String(g.id) === String(formGuruId));
+
+    const mentor = mentorList.find(
+      (m) => String(m.id) === String(formMentorId)
+    );
+
+    setSaving(true);
+
+    try {
+      await updateSiswaMapping(selectedSiswa.id, {
+        perusahaan: loc
+          ? loc.name.replace(/\s*\(.*\)\s*$/, '')
+          : selectedSiswa.perusahaan,
+
+        guruPembimbing: guru ? guru.name : selectedSiswa.guruPembimbing,
+
+        mentor: mentor ? mentor.name : selectedSiswa.mentor,
+
+        companyId: formCompanyId,
+        teacherId: formGuruId,
+        mentorName: mentor ? mentor.name : undefined,
+      });
+
+      setEditing(false);
+      setJustSaved(true);
+
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+
+      savedTimerRef.current = setTimeout(() => setJustSaved(false), 2500);
+    } catch (error: any) {
+      alert(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Gagal menyimpan pemetaan'
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const getInitials = (name: string) =>
+    (name || '')
+      .split(' ')
+      .filter(Boolean)
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+
+  /* ============================================================
+     RENDER
+     ============================================================ */
 
   return (
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-y-auto custom-scrollbar">
-
       {/* HEADER */}
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
-
+      <div className="flex items-center justify-between gap-3 shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-
           <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[10px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <Compass className="w-5 h-5 md:w-6 md:h-6" />
           </div>
@@ -841,104 +730,85 @@ export const HubinPemetaan: React.FC = () => {
               Atur penempatan siswa ke perusahaan, guru & mentor pembimbing
             </p>
           </div>
-
         </div>
 
         {/* DROPDOWN TAHUN AJARAN */}
 
         <div className="flex items-center gap-2 shrink-0">
-
           <Calendar className="w-4 h-4 text-navy/50 hidden sm:block" />
 
           <select
-            value={
-              selectedAcademicYearId ?? ''
-            }
-            onChange={
-              handleAcademicYearChange
-            }
-            className="bg-white border border-steel/30 text-steel font-bold text-[11px] px-3 py-2 rounded-full outline-none cursor-pointer hover:border-steel transition-all"
+            value={selectedAcademicYearId ?? ''}
+            onChange={handleAcademicYearChange}
+            disabled={academicYears.length === 0}
+            className="bg-white border border-steel/30 text-steel font-bold text-[11px] px-3 py-2 rounded-full outline-none cursor-pointer hover:border-steel transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {academicYears.map(
-              (year) => (
-                <option
-                  key={year.id}
-                  value={year.id}
-                >
+            {academicYears.length === 0 ? (
+              <option value="">Belum ada tahun ajaran</option>
+            ) : (
+              academicYears.map((year) => (
+                <option key={year.id} value={year.id}>
                   TA {year.name}
-                  {year.isActive
-                    ? ' — Aktif'
-                    : ''}
+                  {year.isActive ? ' — Aktif' : ''}
                 </option>
-              )
+              ))
             )}
           </select>
-
         </div>
-
       </div>
 
       {/* IMPORT PERUSAHAAN */}
 
       <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm p-4 md:p-5 shrink-0">
-
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-
           <div className="min-w-0">
-
             <p className="text-[13px] font-bold text-navy">
               Import Data Perusahaan
             </p>
 
             <p className="text-[11px] font-medium text-navy/50 mt-0.5">
-              Upload file Excel (.xlsx) untuk menambahkan perusahaan mitra beserta lokasi geofence.
+              Unduh template Excel terlebih dahulu, isi data perusahaan, lalu
+              import file Excel (.xlsx).
             </p>
-
-            <p className="text-[10px] font-bold text-steel mt-1">
-              Akan masuk ke Tahun Ajaran: {activeYear}
-            </p>
-
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-
             <input
               ref={fileInputRef}
               type="file"
               accept=".xlsx"
-              onChange={
-                handleImportExcel
-              }
+              onChange={handleImportExcel}
               className="hidden"
             />
 
             <button
               type="button"
-              onClick={() =>
-                fileInputRef.current?.click()
-              }
+              onClick={handleDownloadTemplate}
+              disabled={importing}
+              className="flex items-center justify-center gap-2 bg-white border border-steel/30 text-steel font-bold text-xs px-4 py-2.5 rounded-[18px] hover:bg-steel/5 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              <Download className="w-4 h-4" />
+              Download Template
+            </button>
+
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
               disabled={importing}
               className="flex items-center justify-center gap-2 bg-navy text-white font-bold text-xs px-4 py-2.5 rounded-[18px] hover:bg-navy/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               <Upload className="w-4 h-4" />
-
-              {importing
-                ? 'Mengimpor...'
-                : 'Import Excel'}
+              {importing ? 'Mengimpor...' : 'Import Excel'}
             </button>
-
           </div>
-
         </div>
+
+        {/* HASIL IMPORT */}
 
         {importResult && (
           <div className="mt-3 p-3 bg-mist/30 border border-mist/60 rounded-[18px]">
-
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-bold text-navy">
-
-              <span>
-                Total: {importResult.total}
-              </span>
+              <span>Total: {importResult.total}</span>
 
               <span className="text-steel">
                 Berhasil: {importResult.successCount}
@@ -953,61 +823,44 @@ export const HubinPemetaan: React.FC = () => {
               >
                 Gagal: {importResult.errorCount}
               </span>
-
             </div>
 
             {importResult.errors.length > 0 && (
               <div className="mt-3 space-y-1.5">
-
                 <p className="text-[11px] font-bold text-navy">
                   Baris yang gagal:
                 </p>
 
                 <div className="max-h-40 overflow-y-auto custom-scrollbar space-y-1">
-
-                  {importResult.errors.map(
-                    (item, index) => (
-                      <div
-                        key={`${item.row}-${index}`}
-                        className="text-[11px] font-medium text-navy/70 bg-white border border-mist/60 rounded-lg px-2.5 py-1.5"
-                      >
-                        Baris {item.row}
-                        {item.name
-                          ? ` — ${item.name}`
-                          : ''}
-                        : {item.error}
-                      </div>
-                    )
-                  )}
-
+                  {importResult.errors.map((item, index) => (
+                    <div
+                      key={`${item.row}-${index}`}
+                      className="text-[11px] font-medium text-navy/70 bg-white border border-mist/60 rounded-lg px-2.5 py-1.5"
+                    >
+                      Baris {item.row}
+                      {item.name ? ` — ${item.name}` : ''}: {item.error}
+                    </div>
+                  ))}
                 </div>
-
               </div>
             )}
-
           </div>
         )}
-
       </div>
 
       {/* STATS */}
 
       <div className="grid grid-cols-3 gap-3 shrink-0">
-
         {stats.map((s) => (
           <div
             key={s.label}
             className="bg-white border border-mist/60 rounded-[24px] p-4 md:p-5 min-h-[100px] flex flex-col justify-between"
           >
-
             <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
-
               <s.icon className="w-4 h-4 text-white" />
-
             </div>
 
             <div>
-
               <p className="text-3xl font-bold text-navy tabular-nums leading-none">
                 {s.value}
               </p>
@@ -1015,28 +868,20 @@ export const HubinPemetaan: React.FC = () => {
               <p className="text-[11px] font-bold text-navy/60 uppercase tracking-wide mt-2">
                 {s.label}
               </p>
-
             </div>
-
           </div>
         ))}
-
       </div>
 
       {/* MAIN GRID */}
 
       <div className="lg:flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-4 lg:min-h-0">
-
         {/* LEFT */}
 
         <div className="lg:col-span-3 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col overflow-hidden lg:min-h-0">
-
           <div className="px-4 md:px-5 pt-4 pb-3 shrink-0 space-y-3">
-
             <div className="flex items-center justify-between">
-
               <div className="flex items-center gap-2">
-
                 <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center">
                   <GraduationCap className="w-3.5 h-3.5 text-white" />
                 </div>
@@ -1044,27 +889,22 @@ export const HubinPemetaan: React.FC = () => {
                 <p className="text-[13px] font-bold uppercase tracking-widest text-navy/70">
                   Daftar Siswa PKL
                 </p>
-
               </div>
 
               <span className="text-[11px] font-bold text-navy/40 tabular-nums">
                 {filteredSiswa.length} siswa
               </span>
-
             </div>
 
             {/* SEARCH */}
 
             <div className="relative">
-
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-navy/40" />
 
               <input
                 type="text"
                 value={search}
-                onChange={(e) =>
-                  setSearch(e.target.value)
-                }
+                onChange={(e) => setSearch(e.target.value)}
                 placeholder="Cari nama siswa atau kelas..."
                 className="w-full bg-mist/40 border border-mist rounded-[24px] pl-10 pr-10 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
               />
@@ -1072,78 +912,52 @@ export const HubinPemetaan: React.FC = () => {
               {search && (
                 <button
                   type="button"
-                  onClick={() =>
-                    setSearch('')
-                  }
+                  onClick={() => setSearch('')}
                   className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-navy/10 hover:bg-navy/20 flex items-center justify-center transition-colors"
                 >
                   <X className="w-3 h-3 text-navy/60" />
                 </button>
               )}
-
             </div>
 
             {/* FILTER */}
 
             <div className="bg-mist/40 p-1 rounded-[24px] flex gap-1">
+              {(
+                [
+                  { key: 'all', label: 'Semua', count: siswaList.length },
+                  { key: 'mapped', label: 'Terpetakan', count: mappedCount },
+                  { key: 'unmapped', label: 'Belum', count: unmappedCount },
+                ] as const
+              ).map((f) => (
+                <button
+                  key={f.key}
+                  type="button"
+                  onClick={() => setFilter(f.key)}
+                  className={`flex-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    filter === f.key
+                      ? 'bg-steel text-white shadow'
+                      : 'text-navy/60 hover:text-navy'
+                  }`}
+                >
+                  <Filter className="w-3 h-3" />
+                  {f.label}
 
-              {([
-                {
-                  key: 'all',
-                  label: 'Semua',
-                  count: siswaList.length,
-                },
-                {
-                  key: 'mapped',
-                  label: 'Terpetakan',
-                  count: mappedCount,
-                },
-                {
-                  key: 'unmapped',
-                  label: 'Belum',
-                  count: unmappedCount,
-                },
-              ] as const).map(
-                (f) => (
-                  <button
-                    key={f.key}
-                    type="button"
-                    onClick={() =>
-                      setFilter(f.key)
-                    }
-                    className={`flex-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                      filter === f.key
-                        ? 'bg-steel text-white shadow'
-                        : 'text-navy/60 hover:text-navy'
+                  <span
+                    className={`text-[10px] tabular-nums ${
+                      filter === f.key ? 'text-white/80' : 'text-navy/40'
                     }`}
                   >
-
-                    <Filter className="w-3 h-3" />
-
-                    {f.label}
-
-                    <span
-                      className={`text-[10px] tabular-nums ${
-                        filter === f.key
-                          ? 'text-white/80'
-                          : 'text-navy/40'
-                      }`}
-                    >
-                      {f.count}
-                    </span>
-
-                  </button>
-                )
-              )}
-
+                    {f.count}
+                  </span>
+                </button>
+              ))}
             </div>
 
-            {/* LOCATION FILTER */}
+            {/* COUNTRY / CITY */}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-
               <div>
-
                 <label className="text-[10px] font-bold text-navy/50 uppercase tracking-wide mb-1.5 block">
                   Negara
                 </label>
@@ -1151,85 +965,50 @@ export const HubinPemetaan: React.FC = () => {
                 <select
                   value={selectedCountry}
                   onChange={(e) => {
-                    setSelectedCountry(
-                      e.target.value
-                    );
-
+                    setSelectedCountry(e.target.value);
                     setSelectedCity('');
                   }}
                   className="w-full bg-mist/40 border border-mist rounded-[18px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
                 >
+                  <option value="">Semua Negara</option>
 
-                  <option value="">
-                    Semua Negara
-                  </option>
-
-                  {countries.map(
-                    (country) => (
-                      <option
-                        key={country}
-                        value={country}
-                      >
-                        {country}
-                      </option>
-                    )
-                  )}
-
+                  {countries.map((country) => (
+                    <option key={country} value={country}>
+                      {country}
+                    </option>
+                  ))}
                 </select>
-
               </div>
 
               <div>
-
                 <label className="text-[10px] font-bold text-navy/50 uppercase tracking-wide mb-1.5 block">
                   Kota
                 </label>
 
                 <select
                   value={selectedCity}
-                  onChange={(e) =>
-                    setSelectedCity(
-                      e.target.value
-                    )
-                  }
+                  onChange={(e) => setSelectedCity(e.target.value)}
                   className="w-full bg-mist/40 border border-mist rounded-[18px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
                 >
+                  <option value="">Semua Kota</option>
 
-                  <option value="">
-                    Semua Kota
-                  </option>
-
-                  {cities.map(
-                    (city) => (
-                      <option
-                        key={city}
-                        value={city}
-                      >
-                        {city}
-                      </option>
-                    )
-                  )}
-
+                  {cities.map((city) => (
+                    <option key={city} value={city}>
+                      {city}
+                    </option>
+                  ))}
                 </select>
-
               </div>
-
             </div>
-
           </div>
 
           {/* STUDENT LIST */}
 
           <div className="lg:flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 lg:min-h-0 max-h-[50vh] lg:max-h-none">
-
             {filteredSiswa.length === 0 ? (
-
               <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
-
                 <div className="w-14 h-14 rounded-[10px] bg-navy flex items-center justify-center mb-3">
-
                   <Search className="w-6 h-6 text-white" />
-
                 </div>
 
                 <p className="text-sm font-bold text-navy mb-1">
@@ -1241,74 +1020,47 @@ export const HubinPemetaan: React.FC = () => {
                     ? `Tidak ada siswa yang cocok dengan "${search}"`
                     : 'Belum ada data siswa di sistem.'}
                 </p>
-
               </div>
-
             ) : (
-
               filteredSiswa.map((s) => {
-
-                const mapped =
-                  isMapped(s);
-
-                const isSelected =
-                  selectedSiswaId ===
-                  s.id;
+                const mapped = isMapped(s);
+                const isSelected = selectedSiswaId === s.id;
 
                 return (
                   <button
                     key={s.id}
                     type="button"
-                    onClick={() =>
-                      handleSelectSiswa(s)
-                    }
+                    onClick={() => handleSelectSiswa(s)}
                     className={`p-3 rounded-[24px] border transition-all shrink-0 text-left group flex items-center gap-3 ${
                       isSelected
                         ? 'bg-steel/5 border-steel/30 shadow-sm'
                         : 'bg-white border-mist/60 hover:border-steel/30 hover:bg-mist/30'
                     }`}
                   >
-
                     <div className="w-10 h-10 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-md shadow-navy/20">
-
-                      {s.name
-                        .split(' ')
-                        .map((n) => n[0])
-                        .join('')
-                        .toUpperCase()
-                        .slice(0, 2)}
-
+                      {getInitials(s.name)}
                     </div>
 
                     <div className="flex-1 min-w-0">
-
                       <div className="flex items-center gap-2 flex-wrap">
-
                         <p
                           className={`text-sm font-bold truncate ${
-                            isSelected
-                              ? 'text-steel'
-                              : 'text-navy'
+                            isSelected ? 'text-steel' : 'text-navy'
                           }`}
                         >
                           {s.name}
                         </p>
 
-                        {s.kelas &&
-                          s.kelas !== '-' && (
-                            <span className="text-[10px] font-bold text-steel bg-white border border-steel/30 px-2 py-0.5 rounded-md shadow-sm shrink-0">
-                              {s.kelas}
-                            </span>
-                          )}
-
+                        {s.kelas && s.kelas !== '-' && (
+                          <span className="text-[10px] font-bold text-steel bg-white border border-steel/30 px-2 py-0.5 rounded-md shadow-sm shrink-0">
+                            {s.kelas}
+                          </span>
+                        )}
                       </div>
 
                       <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
-                        {mapped
-                          ? s.perusahaan
-                          : 'Belum dipetakan'}
+                        {mapped ? s.perusahaan : 'Belum dipetakan'}
                       </p>
-
                     </div>
 
                     <span
@@ -1318,9 +1070,7 @@ export const HubinPemetaan: React.FC = () => {
                           : 'bg-white text-navy/70 border border-mist/60 shadow-sm'
                       }`}
                     >
-                      {mapped
-                        ? '✓ Terpetakan'
-                        : 'Belum'}
+                      {mapped ? '✓ Terpetakan' : 'Belum'}
                     </span>
 
                     <ChevronRight
@@ -1330,29 +1080,20 @@ export const HubinPemetaan: React.FC = () => {
                           : 'text-navy/20 group-hover:text-steel'
                       } group-hover:translate-x-0.5 transition-all`}
                     />
-
                   </button>
                 );
               })
-
             )}
-
           </div>
-
         </div>
 
         {/* RIGHT */}
 
         <div className="lg:col-span-2 flex flex-col gap-3 lg:min-h-0">
-
           {!selectedSiswa ? (
-
             <div className="flex-1 bg-white rounded-[24px] border border-mist/60 shadow-sm flex flex-col items-center justify-center p-8 text-center">
-
               <div className="w-16 h-16 rounded-[10px] bg-navy flex items-center justify-center mb-4">
-
                 <Map className="w-7 h-7 text-white" />
-
               </div>
 
               <h3 className="text-base font-bold text-navy mb-1">
@@ -1360,200 +1101,95 @@ export const HubinPemetaan: React.FC = () => {
               </h3>
 
               <p className="text-sm text-navy/60 max-w-xs leading-relaxed">
-                Klik salah satu siswa di daftar kiri untuk melihat dan mengatur tempat PKL, guru, serta mentor pembimbingnya.
+                Klik salah satu siswa di daftar kiri untuk melihat dan mengatur
+                tempat PKL, guru, serta mentor pembimbingnya.
               </p>
 
               <div className="mt-6 w-full max-w-xs h-32 relative rounded-[24px] border border-navy/10 overflow-hidden">
-
                 <div className="absolute inset-0 bg-mist/30">
-
                   <svg
                     className="absolute inset-0 h-full w-full"
                     viewBox="0 0 100 100"
                     preserveAspectRatio="none"
                   >
+                    <rect x="36" y="8" width="26" height="22" rx="2" fill="#E7EBF2" />
+                    <rect x="8" y="40" width="22" height="22" rx="2" fill="#E7EBF2" />
+                    <rect x="38" y="40" width="24" height="22" rx="2" fill="#E7EBF2" />
+                    <rect x="70" y="40" width="24" height="20" rx="2" fill="#E7EBF2" />
+                    <rect x="36" y="70" width="26" height="16" rx="2" fill="#E7EBF2" />
 
-                    <rect
-                      x="36"
-                      y="8"
-                      width="26"
-                      height="22"
-                      rx="2"
-                      fill="#E7EBF2"
-                    />
-
-                    <rect
-                      x="8"
-                      y="40"
-                      width="22"
-                      height="22"
-                      rx="2"
-                      fill="#E7EBF2"
-                    />
-
-                    <rect
-                      x="38"
-                      y="40"
-                      width="24"
-                      height="22"
-                      rx="2"
-                      fill="#E7EBF2"
-                    />
-
-                    <rect
-                      x="70"
-                      y="40"
-                      width="24"
-                      height="20"
-                      rx="2"
-                      fill="#E7EBF2"
-                    />
-
-                    <rect
-                      x="36"
-                      y="70"
-                      width="26"
-                      height="16"
-                      rx="2"
-                      fill="#E7EBF2"
-                    />
-
-                    <path
-                      d="M0,34 L100,34"
-                      stroke="#FFFFFF"
-                      strokeWidth="2"
-                      vectorEffect="non-scaling-stroke"
-                    />
-
-                    <path
-                      d="M0,66 L100,66"
-                      stroke="#FFFFFF"
-                      strokeWidth="2"
-                      vectorEffect="non-scaling-stroke"
-                    />
-
-                    <path
-                      d="M32,0 L32,100"
-                      stroke="#FFFFFF"
-                      strokeWidth="2"
-                      vectorEffect="non-scaling-stroke"
-                    />
-
-                    <path
-                      d="M66,0 L66,100"
-                      stroke="#FFFFFF"
-                      strokeWidth="2"
-                      vectorEffect="non-scaling-stroke"
-                    />
-
+                    <path d="M0,34 L100,34" stroke="#FFFFFF" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+                    <path d="M0,66 L100,66" stroke="#FFFFFF" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+                    <path d="M32,0 L32,100" stroke="#FFFFFF" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+                    <path d="M66,0 L66,100" stroke="#FFFFFF" strokeWidth="2" vectorEffect="non-scaling-stroke" />
                   </svg>
-
                 </div>
 
-                {mapLocations
-                  .slice(0, 3)
-                  .map((loc, i) => (
-
+                {mapLocations.slice(0, 3).map((loc, i) => (
+                  <div
+                    key={loc.id}
+                    className="absolute -translate-x-1/2 -translate-y-1/2"
+                    style={{
+                      left: `${20 + i * 30}%`,
+                      top: `${30 + (i % 2) * 30}%`,
+                    }}
+                  >
                     <div
-                      key={loc.id}
-                      className="absolute -translate-x-1/2 -translate-y-1/2"
-                      style={{
-                        left: `${20 + i * 30}%`,
-                        top: `${30 + (i % 2) * 30}%`,
-                      }}
+                      className={`w-5 h-5 rounded-full border-2 border-white shadow-md flex items-center justify-center ${
+                        i === 0 ? 'bg-steel' : 'bg-white'
+                      }`}
                     >
-
-                      <div
-                        className={`w-5 h-5 rounded-full border-2 border-white shadow-md flex items-center justify-center ${
-                          i === 0
-                            ? 'bg-steel'
-                            : 'bg-white'
+                      <MapPin
+                        className={`w-2.5 h-2.5 ${
+                          i === 0 ? 'text-white' : 'text-navy/60'
                         }`}
-                      >
-
-                        <MapPin
-                          className={`w-2.5 h-2.5 ${
-                            i === 0
-                              ? 'text-white'
-                              : 'text-navy/60'
-                          }`}
-                        />
-
-                      </div>
-
+                      />
                     </div>
-
-                  ))}
-
+                  </div>
+                ))}
               </div>
-
             </div>
-
           ) : (
-
             <>
-
               {/* IDENTITAS SISWA */}
 
               <div className="bg-navy rounded-[24px] p-5 shrink-0 relative overflow-hidden shadow-lg shadow-navy/20">
-
                 <div className="relative z-10">
-
                   <div className="flex items-center justify-between mb-3">
-
                     <div className="flex items-center gap-2">
-
                       <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
-
                         <GraduationCap className="w-4 h-4 text-white" />
-
                       </div>
 
                       <p className="text-[11px] font-bold uppercase tracking-widest text-white/60">
                         Siswa Terpilih
                       </p>
-
                     </div>
 
                     {justSaved && (
                       <span className="flex items-center gap-1.5 text-[11px] font-bold bg-steel text-white shadow-sm shadow-steel/30 px-2.5 py-1 rounded-full animate-in fade-in">
-
                         <CheckCircle2 className="w-3 h-3" />
-
                         Tersimpan
-
                       </span>
                     )}
-
                   </div>
 
                   <div className="flex items-center gap-3">
-
                     <div className="w-12 h-12 rounded-[10px] bg-white/15 border border-white/10 flex items-center justify-center font-bold text-sm text-white shrink-0">
-
-                      {selectedSiswa.name
-                        .split(' ')
-                        .map((n) => n[0])
-                        .join('')
-                        .toUpperCase()
-                        .slice(0, 2)}
-
+                      {getInitials(selectedSiswa.name)}
                     </div>
 
                     <div className="min-w-0">
-
                       <h4 className="font-bold text-base text-white leading-tight truncate">
                         {selectedSiswa.name}
                       </h4>
 
                       <div className="flex items-center gap-1.5 mt-1">
-
-                        {selectedSiswa.kelas &&
-                          selectedSiswa.kelas !== '-' && (
-                            <span className="text-[10px] font-bold text-white bg-white/15 px-2 py-0.5 rounded-md">
-                              {selectedSiswa.kelas}
-                            </span>
-                          )}
+                        {selectedSiswa.kelas && selectedSiswa.kelas !== '-' && (
+                          <span className="text-[10px] font-bold text-white bg-white/15 px-2 py-0.5 rounded-md">
+                            {selectedSiswa.kelas}
+                          </span>
+                        )}
 
                         <span className="text-[11px] font-semibold text-white/60 truncate">
                           {selectedSiswa.guruPembimbing &&
@@ -1561,77 +1197,48 @@ export const HubinPemetaan: React.FC = () => {
                             ? `Pembimbing: ${selectedSiswa.guruPembimbing}`
                             : 'Belum ada pembimbing'}
                         </span>
-
                       </div>
-
                     </div>
-
                   </div>
-
                 </div>
-
               </div>
 
               {/* FORM */}
 
               <div className="bg-white rounded-[24px] border border-mist/60 shadow-sm lg:flex-1 flex flex-col overflow-hidden lg:min-h-0">
-
                 <div className="flex items-center justify-between px-4 md:px-5 pt-4 pb-3 shrink-0 border-b border-mist/60">
-
                   <div className="flex items-center gap-2">
-
                     <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center">
-
                       <MapPin className="w-3.5 h-3.5 text-white" />
-
                     </div>
 
                     <p className="text-[13px] font-bold text-navy">
-                      {editing
-                        ? 'Edit Pemetaan'
-                        : 'Detail Pemetaan'}
+                      {editing ? 'Edit Pemetaan' : 'Detail Pemetaan'}
                     </p>
-
                   </div>
 
                   <div className="flex items-center gap-2">
-
                     {editing ? (
-
                       <span className="flex items-center gap-1.5 text-[11px] font-bold text-steel bg-steel/10 px-2.5 py-1 rounded-full">
-
                         <span className="w-1.5 h-1.5 rounded-full bg-steel animate-pulse" />
-
                         Mode Edit
-
                       </span>
-
                     ) : (
-
                       <button
                         type="button"
                         onClick={handleEdit}
                         className="flex items-center gap-1.5 text-[11px] font-bold bg-navy text-white px-3 py-1.5 rounded-lg hover:bg-navy/90 transition-colors"
                       >
-
                         <Pencil className="w-3 h-3" />
-
                         Edit
-
                       </button>
-
                     )}
-
                   </div>
-
                 </div>
 
                 <div className="lg:flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5 lg:min-h-0 max-h-[50vh] lg:max-h-none">
-
                   {!editing ? (
-
                     <div className="space-y-3">
-
                       {/* TEMPAT PKL */}
 
                       <div
@@ -1641,26 +1248,19 @@ export const HubinPemetaan: React.FC = () => {
                             : 'border-mist/60 bg-white'
                         }`}
                       >
-
                         <div className="flex items-center gap-3">
-
                           <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center shrink-0 shadow-md shadow-navy/20">
-
                             <Building2 className="w-4 h-4 text-white" />
-
                           </div>
 
                           <div className="flex-1 min-w-0">
-
                             <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">
                               Tempat PKL
                             </p>
 
                             <p
                               className={`text-sm font-bold truncate mt-0.5 ${
-                                selectedLoc
-                                  ? 'text-steel'
-                                  : 'text-navy/60'
+                                selectedLoc ? 'text-steel' : 'text-navy/60'
                               }`}
                             >
                               {selectedSiswa.perusahaan &&
@@ -1668,31 +1268,23 @@ export const HubinPemetaan: React.FC = () => {
                                 ? selectedSiswa.perusahaan
                                 : 'Belum dipetakan'}
                             </p>
-
                           </div>
 
                           {selectedLoc && (
                             <MapPin className="w-4 h-4 text-steel shrink-0" />
                           )}
-
                         </div>
-
                       </div>
 
                       {/* GURU */}
 
                       <div className="p-3 rounded-[24px] border border-mist/60 bg-white">
-
                         <div className="flex items-center gap-3">
-
                           <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center shrink-0 shadow-md shadow-navy/20">
-
                             <Users className="w-4 h-4 text-white" />
-
                           </div>
 
                           <div className="flex-1 min-w-0">
-
                             <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">
                               Guru Pembimbing
                             </p>
@@ -1703,35 +1295,24 @@ export const HubinPemetaan: React.FC = () => {
                                 ? selectedSiswa.guruPembimbing
                                 : 'Belum ditentukan'}
                             </p>
-
                           </div>
 
                           <span className="text-[10px] font-bold bg-navy text-white px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
-
                             <GraduationCap className="w-3 h-3" />
-
                             GURU
-
                           </span>
-
                         </div>
-
                       </div>
 
                       {/* MENTOR */}
 
                       <div className="p-3 rounded-[24px] border border-mist/60 bg-white">
-
                         <div className="flex items-center gap-3">
-
                           <div className="w-10 h-10 rounded-[10px] bg-navy flex items-center justify-center shrink-0 shadow-md shadow-navy/20">
-
                             <Briefcase className="w-4 h-4 text-white" />
-
                           </div>
 
                           <div className="flex-1 min-w-0">
-
                             <p className="text-[10px] font-bold text-navy/50 uppercase tracking-wide">
                               Mentor Industri
                             </p>
@@ -1742,39 +1323,29 @@ export const HubinPemetaan: React.FC = () => {
                                 ? selectedSiswa.mentor
                                 : 'Belum ditentukan'}
                             </p>
-
                           </div>
 
                           <span className="text-[10px] font-bold bg-navy text-white px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
-
                             <Briefcase className="w-3 h-3" />
-
                             MENTOR
-
                           </span>
-
                         </div>
-
                       </div>
 
                       {/* INFO */}
 
                       <div className="p-3 bg-mist/30 border border-mist/60 rounded-[24px] flex items-start gap-2">
-
                         <ShieldCheck className="w-4 h-4 text-steel shrink-0 mt-0.5" />
 
                         <p className="text-[11px] font-medium text-navy/70 leading-relaxed">
-                          Pemetaan ini menentukan tempat siswa melaksanakan PKL beserta guru dan mentor yang akan membimbing selama periode akademik.
+                          Pemetaan ini menentukan tempat siswa melaksanakan PKL
+                          beserta guru dan mentor yang akan membimbing selama
+                          periode akademik.
                         </p>
-
                       </div>
-
                     </div>
-
                   ) : (
-
                     <div className="space-y-4">
-
                       <SearchableSelect
                         label="Tempat PKL"
                         icon={Building2}
@@ -1806,63 +1377,48 @@ export const HubinPemetaan: React.FC = () => {
                       />
 
                       <div className="p-3 bg-mist/30 border border-mist/60 rounded-[24px] flex items-start gap-2">
-
                         <Plus className="w-4 h-4 text-steel shrink-0 mt-0.5" />
 
                         <p className="text-[11px] font-medium text-navy/70 leading-relaxed">
-                          Data perusahaan, guru, dan mentor dikelola terpisah. Tambah data baru di halaman Data Siswa atau Data Pembimbing.
+                          Data perusahaan, guru, dan mentor dikelola terpisah.
+                          Tambah data baru di halaman Data Siswa atau Data
+                          Pembimbing.
                         </p>
-
                       </div>
-
                     </div>
-
                   )}
-
                 </div>
 
                 {editing && (
-
                   <div className="p-4 md:p-5 pt-3 border-t border-mist/60 flex gap-2 shrink-0">
-
                     <button
                       type="button"
                       onClick={handleCancel}
-                      className="flex-1 flex items-center justify-center gap-1.5 bg-mist/60 text-navy/70 font-bold text-sm py-3 rounded-[24px] hover:bg-mist transition-colors"
+                      disabled={saving}
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-mist/60 text-navy/70 font-bold text-sm py-3 rounded-[24px] hover:bg-mist disabled:opacity-50 transition-colors"
                     >
-
                       <X className="w-4 h-4" />
-
                       Batal
-
                     </button>
 
                     <button
                       type="button"
                       onClick={handleSave}
-                      className="flex-1 flex items-center justify-center gap-1.5 bg-steel text-white font-bold text-sm py-3 rounded-[24px] hover:bg-steel/90 hover:-translate-y-0.5 shadow-lg shadow-steel/25 transition-all"
+                      disabled={saving}
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-steel text-white font-bold text-sm py-3 rounded-[24px] hover:bg-steel/90 hover:-translate-y-0.5 shadow-lg shadow-steel/25 disabled:opacity-50 disabled:hover:translate-y-0 transition-all"
                     >
-
                       <Save className="w-4 h-4" />
-
-                      Simpan
-
+                      {saving ? 'Menyimpan...' : 'Simpan'}
                     </button>
-
                   </div>
-
                 )}
-
               </div>
-
             </>
-
           )}
-
         </div>
-
       </div>
-
     </div>
   );
 };
+
+export default HubinPemetaan;

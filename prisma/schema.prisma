@@ -105,6 +105,7 @@ model User {
   name     String
   email    String  @unique
   password String
+  whatsapp String?
   role     Role    @default(student)
   isActive Boolean @default(true)
 
@@ -152,6 +153,7 @@ model Absensi {
   date        DateTime      @db.Date
   status      AbsensiStatus @default(hadir)
   checkInTime DateTime?
+  checkOutTime DateTime?
   imageUrl    String?
   latitude    Float?
   longitude   Float?

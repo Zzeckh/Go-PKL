@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Camera, CheckCircle2, MapPin, Loader2, Image as ImageIcon, RefreshCw, 
   AlertTriangle, Clock, ShieldCheck, ShieldAlert, Building2, 
-  ScanFace, Sun, History, Calendar
+  ScanFace, Sun, History, Calendar, LogOut
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { AttendanceCalendarModal } from './AttendanceCalendarModal';
@@ -19,6 +19,14 @@ interface AbsensiProps {
   companyLocation: CompanyLocation | null;
   onCheckIn: (imageUrl?: string, latitude?: number, longitude?: number) => Promise<void>;
   hasCheckedIn: boolean;
+
+  /* Absen pulang */
+  onCheckOut: (latitude?: number, longitude?: number) => Promise<void>;
+  hasCheckedOut: boolean;
+  checkOutTime?: string | null;
+
+  /* Status penguncian izin (dikirim dari App; dikontrol di server) */
+  permissionBlockStatus?: 'izin_pending' | 'izin_approved' | null;
 }
 
 const getDistanceInMeters = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -35,12 +43,23 @@ const getDistanceInMeters = (lat1: number, lon1: number, lat2: number, lon2: num
   return Math.round(R * c);
 };
 
+/* Format jam dari ISO timestamp backend → "16.30 WIB" */
+const fmtClock = (iso?: string | null): string => {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return `${d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB`;
+};
+
 export const Absensi: React.FC<AbsensiProps> = ({ 
   companyName,
   companyAddress,
   companyLocation,
   onCheckIn, 
-  hasCheckedIn 
+  hasCheckedIn,
+  onCheckOut,
+  hasCheckedOut,
+  checkOutTime = null,
 }) => {
   const { attendances, userId, userName } = useApp();
   const [showCalendar, setShowCalendar] = useState(false);
@@ -50,6 +69,11 @@ export const Absensi: React.FC<AbsensiProps> = ({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [time, setTime] = useState(new Date());
   const [justCheckedIn, setJustCheckedIn] = useState(false);
+
+  /* Absen pulang */
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [justCheckedOut, setJustCheckedOut] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -135,12 +159,16 @@ export const Absensi: React.FC<AbsensiProps> = ({
     if (!hasCheckedIn) {
       getCurrentLocation();
       if (!imageSrc) startCamera();
+    } else if (!hasCheckedOut) {
+      /* Sudah absen masuk, belum absen pulang → ambil GPS untuk geofence
+         absen pulang (tanpa kamera) */
+      getCurrentLocation();
     }
     return () => {
       stopCamera();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasCheckedIn]);
+  }, [hasCheckedIn, hasCheckedOut]);
 
   const capturePhoto = () => {
     if (videoRef.current && canvasRef.current) {
@@ -189,10 +217,29 @@ export const Absensi: React.FC<AbsensiProps> = ({
   };
 
   const checkedIn = hasCheckedIn || justCheckedIn;
+  const checkedOut = hasCheckedOut || justCheckedOut;
+
+  /* Absen pulang: geofence divalidasi ulang di server */
+  const handleCheckOut = async () => {
+    if (!isWithinRadius || isLoadingLocation) return;
+    setIsCheckingOut(true);
+    setCheckoutError(null);
+
+    try {
+      await onCheckOut(userCoords?.lat, userCoords?.lng);
+      setJustCheckedOut(true);
+    } catch (error: any) {
+      setCheckoutError(
+        error?.message || 'Gagal absen pulang. Silakan coba lagi.'
+      );
+    } finally {
+      setIsCheckingOut(false);
+    }
+  };
 
   if (checkedIn) {
     return (
-      <div className="h-full w-full flex items-center justify-center animate-in fade-in duration-500 p-4">
+      <div className="h-full w-full flex items-center justify-center animate-in fade-in duration-500 p-4 overflow-y-auto custom-scrollbar">
         <div className="bg-white rounded-[24px] border border-mist/60 shadow-xl max-w-sm w-full flex flex-col items-center text-center p-6 sm:p-8">
           <div className="w-20 h-20 bg-navy text-white rounded-[10px] flex items-center justify-center mb-6 shadow-lg shadow-navy/30">
             <CheckCircle2 className="w-10 h-10" />
@@ -208,6 +255,99 @@ export const Absensi: React.FC<AbsensiProps> = ({
             <MapPin className="w-4 h-4 text-steel" />
             <span className="text-xs font-bold text-navy">{companyName} • Geofence Valid</span>
           </div>
+
+          {/* ── ABSEN PULANG ── */}
+          <div className="w-full mt-4 pt-4 border-t border-mist/60">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-navy/50">
+                Absen Pulang
+              </p>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                checkedOut
+                  ? 'bg-steel text-white shadow-sm shadow-steel/30'
+                  : 'bg-mist/60 text-navy/50'
+              }`}>
+                {checkedOut ? 'Selesai' : 'Belum'}
+              </span>
+            </div>
+
+            {checkedOut ? (
+              <div className="w-full p-3.5 bg-[#E4F0F1] border border-[#CBE2E4] rounded-[24px] flex items-center gap-2.5">
+                <CheckCircle2 className="w-5 h-5 text-steel shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-steel">Absen pulang tercatat</p>
+                  <p className="text-[11px] font-semibold text-steel/70 mt-0.5">
+                    Pukul {fmtClock(checkOutTime ?? null)}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className={`w-full p-3 rounded-[24px] border flex items-center gap-2 mb-2 ${
+                  isLoadingLocation
+                    ? 'bg-mist/40 border-mist/60'
+                    : isWithinRadius && !locationError && companyLocation
+                    ? 'bg-steel/5 border-steel/30'
+                    : 'bg-mist/40 border-mist/60'
+                }`}>
+                  {isLoadingLocation ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-navy/50 shrink-0" />
+                  ) : isWithinRadius && !locationError && companyLocation ? (
+                    <ShieldCheck className="w-4 h-4 text-steel shrink-0" />
+                  ) : (
+                    <ShieldAlert className="w-4 h-4 text-navy/50 shrink-0" />
+                  )}
+                  <p className="text-[11px] font-semibold text-navy/70 leading-snug">
+                    {isLoadingLocation
+                      ? 'Mengambil lokasi GPS untuk absen pulang...'
+                      : locationError
+                      ? locationError
+                      : !companyLocation
+                      ? 'Geofence belum diatur. Hubungi admin untuk setup.'
+                      : isWithinRadius
+                      ? `Dalam radius aman • jarak ${distance}m / ${MAX_RADIUS}m`
+                      : `Di luar radius • jarak ${distance}m / ${MAX_RADIUS}m`}
+                  </p>
+                </div>
+
+                {checkoutError && (
+                  <div className="w-full p-2.5 mb-2 bg-rose-50 border border-rose-200 rounded-[16px] flex items-start gap-2">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-rose-600" />
+                    <p className="text-[11px] font-semibold text-rose-700 leading-snug">
+                      {checkoutError}
+                    </p>
+                  </div>
+                )}
+
+                <button
+                  onClick={handleCheckOut}
+                  disabled={
+                    isCheckingOut ||
+                    isLoadingLocation ||
+                    !isWithinRadius ||
+                    !!locationError ||
+                    !companyLocation
+                  }
+                  className={`w-full py-3 rounded-[24px] text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+                    isCheckingOut ||
+                    isLoadingLocation ||
+                    !isWithinRadius ||
+                    !!locationError ||
+                    !companyLocation
+                      ? 'bg-mist text-navy/40 cursor-not-allowed'
+                      : 'bg-steel text-white hover:bg-steel/90 hover:-translate-y-0.5 active:translate-y-0 shadow-lg shadow-steel/20'
+                  }`}
+                >
+                  {isCheckingOut ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Mengirim...</>
+                  ) : (
+                    <><LogOut className="w-4 h-4" /> Absen Pulang</>
+                  )}
+                </button>
+              </>
+            )}
+          </div>
+
           <button
             onClick={() => setShowCalendar(true)}
             className="mt-4 w-full flex items-center justify-center gap-2 bg-navy text-white text-sm font-bold py-3 rounded-[24px] shadow-md shadow-navy/20 hover:bg-navy/90 transition-colors"
@@ -563,7 +703,8 @@ export const Absensi: React.FC<AbsensiProps> = ({
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-bold text-navy leading-tight truncate">{a.date}</p>
                     <p className="text-[11px] font-semibold text-navy/50">
-                      {a.checkInTime ? `Check-in ${a.checkInTime}` : 'Tanpa check-in'}
+                      {a.checkInTime ? `Masuk ${a.checkInTime}` : 'Tanpa check-in'}
+                      {a.checkOutTime ? ` · Pulang ${a.checkOutTime}` : ''}
                     </p>
                   </div>
                   {/* Pill status: Hadir = solid steel, lain = card putih */}

@@ -4,10 +4,13 @@ import {
   Loader2,
   AlertCircle,
   FileText,
+  CalendarDays,
+  SlidersHorizontal,
 } from 'lucide-react';
 
 import { useApp } from '../context/AppContext';
 import { api } from '../utils/api';
+import { RekapHarian } from './RekapHarian';
 
 const ABSENSI_STATUS = [
   { value: '', label: 'Semua Status' },
@@ -130,6 +133,14 @@ export const Laporan: React.FC = () => {
 
   const [pdfLoading, setPdfLoading] =
     useState(false);
+
+  /*
+   * Tab halaman Laporan:
+   * - 'filter' → filter + preview + export (fitur lama)
+   * - 'rekap'  → Rekap Harian per bulan (setara RekapanHarian
+   *              di aplikasi mobile gopkl-student)
+   */
+  const [view, setView] = useState<'filter' | 'rekap'>('filter');
 
   /* ============================================================
      ROLE
@@ -843,14 +854,56 @@ export const Laporan: React.FC = () => {
             </h1>
 
             <p className="text-xs font-semibold text-navy/50 mt-0.5">
-              Preview dan export rekap untuk {roleLabel}
+              {view === 'rekap'
+                ? 'Rekap kehadiran harian: masuk, pulang, dan total jam'
+                : `Preview dan export rekap untuk ${roleLabel}`}
             </p>
+
+          </div>
+
+          {/* ── TAB: FILTER & EXPORT | REKAP HARIAN ── */}
+          <div className="ml-auto flex items-center gap-1 bg-[#F1F4F8] border border-mist rounded-full p-1">
+
+            <button
+              type="button"
+              onClick={() => setView('filter')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-colors ${
+                view === 'filter'
+                  ? 'bg-navy text-white shadow-sm shadow-navy/20'
+                  : 'text-navy/60 hover:text-navy'
+              }`}
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              Filter &amp; Export
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setView('rekap')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-colors ${
+                view === 'rekap'
+                  ? 'bg-navy text-white shadow-sm shadow-navy/20'
+                  : 'text-navy/60 hover:text-navy'
+              }`}
+            >
+              <CalendarDays className="w-3.5 h-3.5" />
+              Rekap Harian
+            </button>
 
           </div>
 
         </div>
 
       </div>
+
+      {/* ============================================================
+          REKAP HARIAN (tab kedua)
+      ============================================================ */}
+
+      {view === 'rekap' && <RekapHarian />}
+
+      {view === 'filter' && (
+      <>
 
       {/* ============================================================
           FILTER
@@ -1717,6 +1770,9 @@ export const Laporan: React.FC = () => {
           )}
 
         </div>
+      )}
+
+      </>
       )}
 
     </div>

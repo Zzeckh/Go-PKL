@@ -184,7 +184,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </span>
             </div>
             <h2 className="text-lg sm:text-2xl md:text-3xl font-bold leading-tight">
-              {checkedInToday ? 'Kerja Bagus! 👋' : 'Saatnya Absen!'}
+              {checkedInToday ? 'Kerja Bagus!' : 'Saatnya Absen!'}
             </h2>
             <p className="text-sm text-white/70 mt-1 flex items-center gap-1.5">
               <MapPin className="w-4 h-4" />
