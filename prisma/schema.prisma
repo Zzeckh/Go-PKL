@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -90,9 +91,15 @@ model Company {
   academicYearId Int?
   academicYear   AcademicYear? @relation(fields: [academicYearId], references: [id])
 
+  // Mentor yang sedang ditugaskan ke perusahaan.
+  // Dipertahankan agar kompatibel dengan data lama.
   mentorId Int?
   mentor   User? @relation("CompanyMentor", fields: [mentorId], references: [id])
 
+  // Daftar mentor yang terdaftar pada perusahaan.
+  registeredMentors CompanyMentor[] @relation("CompanyMentorCompany")
+
+  // Siswa yang ditempatkan di perusahaan.
   students User[] @relation("CompanyStudents")
 
   @@index([academicYearId])
@@ -110,6 +117,10 @@ model User {
   isActive Boolean @default(true)
 
   academicYear String?
+  tefaCategory String? @db.VarChar(20)
+
+  // Relasi pendaftaran mentor ke perusahaan.
+  companyMentorRegistrations CompanyMentor[] @relation("UserMentorCompanies")
 
   inactiveCategory String?
   inactiveReason   String?
@@ -120,16 +131,20 @@ model User {
   academicYearId  Int?
   academicYearRef AcademicYear? @relation(fields: [academicYearId], references: [id])
 
+  // Relasi kelas siswa.
   classId Int?
   class   Class? @relation(fields: [classId], references: [id])
 
+  // Relasi guru pembimbing dengan siswa.
   teacherId Int?
   teacher   User?  @relation("StudentTeacher", fields: [teacherId], references: [id])
   students  User[] @relation("StudentTeacher")
 
+  // Relasi siswa dengan perusahaan PKL.
   companyId Int?
   company   Company? @relation("CompanyStudents", fields: [companyId], references: [id])
 
+  // Perusahaan yang saat ini menggunakan mentor tersebut.
   mentoredCompanies Company[] @relation("CompanyMentor")
 
   absensis    Absensi[]
@@ -146,18 +161,32 @@ model User {
   @@map("user")
 }
 
+model CompanyMentor {
+  id        Int      @id @default(autoincrement())
+  companyId Int
+  mentorId  Int
+  createdAt DateTime @default(now())
+
+  company Company @relation("CompanyMentorCompany", fields: [companyId], references: [id], onDelete: Cascade)
+  mentor  User    @relation("UserMentorCompanies", fields: [mentorId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, mentorId])
+  @@index([mentorId])
+  @@map("company_mentor")
+}
+
 model Absensi {
-  id          Int           @id @default(autoincrement())
-  userId      Int
-  user        User          @relation(fields: [userId], references: [id])
-  date        DateTime      @db.Date
-  status      AbsensiStatus @default(hadir)
-  checkInTime DateTime?
+  id           Int           @id @default(autoincrement())
+  userId       Int
+  user         User          @relation(fields: [userId], references: [id])
+  date         DateTime      @db.Date
+  status       AbsensiStatus @default(hadir)
+  checkInTime  DateTime?
   checkOutTime DateTime?
-  imageUrl    String?
-  latitude    Float?
-  longitude   Float?
-  createdAt   DateTime      @default(now())
+  imageUrl     String?
+  latitude     Float?
+  longitude    Float?
+  createdAt    DateTime      @default(now())
 
   @@unique([userId, date])
   @@map("absensi")

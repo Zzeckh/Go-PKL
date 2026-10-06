@@ -2,7 +2,8 @@ import React from 'react';
 import { 
   LayoutDashboard, BookOpen, MapPin, LogOut, PanelLeftClose, PanelLeftOpen, 
   Camera, Activity, FileCheck, Package, FileDown,
-  School, Users, ShieldCheck, Building2, Award, Settings as SettingsIcon
+  School, Users, ShieldCheck, Building2, Award, FileSpreadsheet,
+  Settings as SettingsIcon, Briefcase,
 } from 'lucide-react';
 import { ActivePage, UserRole } from '../types';
 
@@ -33,7 +34,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'hubin-summary',    icon: ShieldCheck,     label: 'Ringkasan' },
         { id: 'hubin-classes',    icon: School,          label: 'Kelola Kelas' },
         { id: 'hubin-users',      icon: Users,           label: 'Kelola Pengguna' },
+        { id: 'hubin-student-import', icon: FileSpreadsheet, label: 'Import Siswa' },
         { id: 'hubin-companies',  icon: Building2,       label: 'Kelola Perusahaan' },
+        { id: 'hubin-mentor-roster', icon: Briefcase, label: 'Daftar Mentor Perusahaan' },
         { id: 'data',             icon: Package,         label: 'Kelola Data' },
         { id: 'pemetaan',         icon: MapPin,          label: 'Pemetaan' },
         { id: 'laporan',          icon: FileDown,        label: 'Laporan' },
@@ -55,6 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       return [
         { id: 'dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
         { id: 'monitoring', icon: Activity,        label: 'Monitoring' },
+        { id: 'teacher-mentor-mapping', icon: Briefcase, label: 'Pemetaan Mentor' },
         { id: 'attendance', icon: Camera,          label: 'Kehadiran' },
         { id: 'perizinan',  icon: FileCheck,       label: 'Perizinan' },
         { id: 'roster',     icon: Award,           label: 'Penilaian' },

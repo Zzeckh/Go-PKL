@@ -58,7 +58,7 @@ export const MentorPenilaian: React.FC = () => {
     setError(null);
     setLoading(true);
     try {
-      await submitEvaluation(selectedStudent.id, Number(gradeDUDI), Number(selectedStudent.nilaiGuru || '85'), period);
+      await submitEvaluation(selectedStudent.id, Number(gradeDUDI), period);
       setShowEvalModal(false);
     } catch (err: any) {
       setError(err?.data?.error || err?.message || 'Gagal menyimpan evaluasi.');

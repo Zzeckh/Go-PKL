@@ -1,0 +1,5 @@
+Tambahkan field ini di dalam model User pada prisma/schema.prisma:
+
+  tefaCategory String? @db.VarChar(20)
+
+Nilai yang digunakan: 'internal', 'external', atau NULL.

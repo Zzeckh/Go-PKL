@@ -101,7 +101,6 @@ export const getStats = async (req, res, next) => {
   }
 };
 
-
 /* =========================================================
    GET CLASSES
    GET /api/hubin/classes
@@ -744,7 +743,6 @@ export const updateUserRole = async (
     const allowed = [
       'student',
       'teacher',
-      'mentor',
       'hubin',
     ];
 

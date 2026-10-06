@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Users,
   GraduationCap,
@@ -12,6 +12,7 @@ import {
   BookMarked,
   Loader2,
   CalendarDays,
+  Building2,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { DashboardCharts } from './DashboardCharts';
@@ -38,6 +39,7 @@ export const HubinManagementDashboard: React.FC<{
 
     superClasses,
     loadHubinClasses,
+    siswaList,
 
     isAuthenticated,
 
@@ -51,6 +53,9 @@ export const HubinManagementDashboard: React.FC<{
   >('loading');
 
   const [time, setTime] = useState(new Date());
+  const [selectedTefaView, setSelectedTefaView] = useState<'internal' | 'external' | null>(null);
+  const [tefaTableSearch, setTefaTableSearch] = useState('');
+
 
   /* ============================================================
      JAM REALTIME
@@ -160,33 +165,6 @@ export const HubinManagementDashboard: React.FC<{
   );
 
   /* ============================================================
-     MAIN STATS
-  ============================================================ */
-
-  const stats = [
-    {
-      icon: BookMarked,
-      label: 'Total Kelas',
-      value: superStats?.totalClasses ?? 0,
-      page: 'hubin-classes',
-    },
-    {
-      icon: GraduationCap,
-      label: 'Total Siswa',
-      value: superStats?.totalStudents ?? 0,
-      page: 'hubin-users',
-    },
-    {
-      icon: Users,
-      label: 'Total Pembimbing',
-      value:
-        (superStats?.totalTeachers ?? 0) +
-        (superStats?.totalMentors ?? 0),
-      page: 'hubin-users',
-    },
-  ];
-
-  /* ============================================================
      QUICK STATS
   ============================================================ */
 
@@ -237,6 +215,88 @@ export const HubinManagementDashboard: React.FC<{
       (year) =>
         year.id === selectedAcademicYearId
     );
+
+  const yearScopedStudents = useMemo(
+    () =>
+      siswaList.filter(
+        (student) =>
+          !selectedAcademicYearId ||
+          Number(student.academicYearId) === Number(selectedAcademicYearId)
+      ),
+    [siswaList, selectedAcademicYearId]
+  );
+
+  const mappedStudents = useMemo(
+    () =>
+      yearScopedStudents.filter((student) => {
+        const category = student.tefaCategory;
+        const hasCompany = Boolean(
+          student.perusahaan && student.perusahaan.trim() && student.perusahaan !== '-'
+        );
+        return category === 'internal' || (category === 'external' && hasCompany) || hasCompany;
+      }),
+    [yearScopedStudents]
+  );
+
+  const totalTefaInternal = yearScopedStudents.filter(
+    (student) => student.tefaCategory === 'internal'
+  ).length;
+
+  const totalTefaEksternal = yearScopedStudents.filter(
+    (student) => student.tefaCategory === 'external'
+  ).length;
+
+  const tefaTableStudents = useMemo(() => {
+    if (!selectedTefaView) return [];
+    const query = tefaTableSearch.trim().toLowerCase();
+    return yearScopedStudents.filter((student) => {
+      if (student.tefaCategory !== selectedTefaView) return false;
+      if (!query) return true;
+      return (
+        (student.name || '').toLowerCase().includes(query) ||
+        (student.kelas || '').toLowerCase().includes(query) ||
+        (student.perusahaan || '').toLowerCase().includes(query) ||
+        (student.guruPembimbing || '').toLowerCase().includes(query) ||
+        (student.mentor || '').toLowerCase().includes(query)
+      );
+    });
+  }, [yearScopedStudents, selectedTefaView, tefaTableSearch]);
+
+  /* ============================================================
+     MAIN STATS
+  ============================================================ */
+  const stats = [
+    {
+      icon: GraduationCap,
+      label: 'Siswa yang Terpetakan',
+      value: mappedStudents.length,
+      page: 'pemetaan',
+      tefaView: null,
+    },
+    {
+      icon: BookOpen,
+      label: 'TEFA Internal',
+      value: totalTefaInternal,
+      page: 'pemetaan',
+      tefaView: 'internal' as const,
+    },
+    {
+      icon: Building2,
+      label: 'TEFA Eksternal',
+      value: totalTefaEksternal,
+      page: 'pemetaan',
+      tefaView: 'external' as const,
+    },
+    {
+      icon: Users,
+      label: 'Total Pembimbing',
+      value:
+        (superStats?.totalTeachers ?? 0) +
+        (superStats?.totalMentors ?? 0),
+      page: 'hubin-users',
+      tefaView: null,
+    },
+  ];
 
   return (
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-y-auto custom-scrollbar">
@@ -455,15 +515,20 @@ export const HubinManagementDashboard: React.FC<{
               STATS CARDS
           ════════════════════════════════════════════════ */}
 
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 shrink-0">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
 
             {stats.map((s) => (
 
               <button
                 key={s.label}
-                onClick={() =>
-                  onNavigate(s.page)
-                }
+                onClick={() => {
+                  if (s.tefaView) {
+                    setSelectedTefaView(s.tefaView);
+                    setTefaTableSearch('');
+                  } else {
+                    onNavigate(s.page);
+                  }
+                }}
                 className="bg-white border border-mist/60 rounded-[24px] p-4 md:p-5 min-h-[130px] text-left transition-all hover:border-steel/40 hover:-translate-y-0.5 hover:shadow-md group flex flex-col justify-between"
               >
 
@@ -475,7 +540,7 @@ export const HubinManagementDashboard: React.FC<{
 
                   </div>
 
-                  <ChevronRight className="w-4 h-4 text-navy/20 group-hover:text-steel group-hover:translate-x-0.5 transition-all" />
+                  <ChevronRight className={`w-4 h-4 text-navy/20 group-hover:text-steel group-hover:translate-x-0.5 transition-all ${s.tefaView ? 'rotate-90' : ''}`} />
 
                 </div>
 
@@ -488,6 +553,9 @@ export const HubinManagementDashboard: React.FC<{
                   <p className="text-[11px] font-bold text-navy/60 uppercase tracking-wide mt-2">
                     {s.label}
                   </p>
+                  {s.tefaView && (
+                    <p className="text-[10px] font-semibold text-steel mt-1">Klik untuk lihat daftar siswa</p>
+                  )}
 
                 </div>
 
@@ -497,10 +565,101 @@ export const HubinManagementDashboard: React.FC<{
 
           </div>
 
+          {selectedTefaView && (
+            <section className="bg-white rounded-[24px] border border-mist/60 shadow-sm overflow-hidden">
+              <div className="p-4 md:p-5 border-b border-mist/60 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div>
+                  <h3 className="text-base font-bold text-navy">
+                    Daftar Siswa {selectedTefaView === 'internal' ? 'TEFA Internal' : 'TEFA Eksternal'}
+                  </h3>
+                  <p className="text-xs text-navy/50 mt-1">
+                    {selectedTefaView === 'internal'
+                      ? 'Siswa yang melaksanakan TEFA di lingkungan sekolah.'
+                      : 'Siswa yang melaksanakan TEFA di industri/perusahaan.'}
+                    {' '}Total: {tefaTableStudents.length} siswa.
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="text"
+                    value={tefaTableSearch}
+                    onChange={(event) => setTefaTableSearch(event.target.value)}
+                    placeholder="Cari nama, kelas, perusahaan..."
+                    className="w-full sm:w-64 bg-mist/40 border border-mist rounded-[18px] px-3 py-2.5 text-sm text-navy outline-none focus:border-steel"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTefaView(null)}
+                    className="px-4 py-2.5 rounded-[18px] bg-navy text-white text-xs font-bold hover:bg-navy/90 transition-colors"
+                  >
+                    Tutup daftar
+                  </button>
+                </div>
+              </div>
+              <div className="p-3 md:p-4 space-y-2.5 max-h-[65vh] overflow-y-auto custom-scrollbar">
+                {tefaTableStudents.length === 0 ? (
+                  <div className="rounded-[20px] border border-dashed border-mist px-4 py-12 text-center">
+                    <GraduationCap className="w-8 h-8 text-navy/25 mx-auto mb-2" />
+                    <p className="text-sm font-bold text-navy">Belum ada siswa pada kategori ini</p>
+                    <p className="text-xs text-navy/50 mt-1">Coba ubah kata kunci pencarian atau pilih kategori lainnya.</p>
+                  </div>
+                ) : (
+                  tefaTableStudents.map((student) => (
+                    <div
+                      key={student.id}
+                      className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-[22px] border border-mist/70 bg-white p-3 md:p-4 transition-colors hover:border-steel/40 hover:bg-mist/10"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-navy text-white flex items-center justify-center text-xs font-extrabold shrink-0">
+                        {getInitials(student.name)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-navy truncate">{student.name}</p>
+                        <p className="text-[11px] text-navy/55 mt-1 truncate">
+                          {student.kelas || 'Kelas belum tersedia'}
+                          {' · '}
+                          {selectedTefaView === 'internal'
+                            ? 'Di lingkungan sekolah'
+                            : student.perusahaan && student.perusahaan !== '-'
+                              ? student.perusahaan
+                              : 'Tempat belum ditentukan'}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                          <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold ${selectedTefaView === 'internal' ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'}`}>
+                            {selectedTefaView === 'internal' ? 'TEFA Internal' : 'TEFA Eksternal'}
+                          </span>
+                          <span className="inline-flex rounded-full bg-navy text-white px-2.5 py-1 text-[10px] font-bold">
+                            Terpetakan
+                          </span>
+                          <span className="text-[10px] text-navy/50">
+                            Guru: {student.guruPembimbing && student.guruPembimbing !== '-' ? student.guruPembimbing : 'Belum ditentukan'}
+                          </span>
+                          <span className="text-[10px] text-navy/50">
+                            Mentor: {student.mentor && student.mentor !== '-' ? student.mentor : 'Belum ditentukan'}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => onNavigate('pemetaan')}
+                        className="shrink-0 self-start sm:self-center px-3.5 py-2 rounded-xl border border-mist text-xs font-bold text-navy hover:bg-navy hover:text-white transition-colors"
+                      >
+                        Kelola
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+              <div className="px-4 py-3 border-t border-mist/60 text-[11px] font-medium text-navy/50">
+                Kategori TEFA tersimpan di database dan tersinkron dengan data siswa.
+              </div>
+            </section>
+          )}
+
           {/* ════════════════════════════════════════════════
               MAIN CONTENT
           ════════════════════════════════════════════════ */}
 
+          {!selectedTefaView && (
           <div className="lg:flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-4 lg:min-h-0">
 
             {/* ══════════════════════════════════════════════
@@ -517,23 +676,21 @@ export const HubinManagementDashboard: React.FC<{
 
                   <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center">
 
-                    <BookMarked className="w-3.5 h-3.5 text-white" />
+                    <GraduationCap className="w-3.5 h-3.5 text-white" />
 
                   </div>
 
                   <p className="text-[13px] font-bold uppercase tracking-widest text-navy/70">
-                    Kelas Terdaftar
+                    Siswa yang Terpetakan
                   </p>
 
                 </div>
 
                 <button
-                  onClick={() =>
-                    onNavigate('hubin-classes')
-                  }
+                  onClick={() => onNavigate('pemetaan')}
                   className="text-[11px] font-bold bg-steel text-white px-3 py-1.5 rounded-lg hover:bg-steel/90 transition-colors flex items-center gap-1"
                 >
-                  Kelola Kelas
+                  Kelola Pemetaan
 
                   <ChevronRight className="w-3 h-3" />
                 </button>
@@ -544,34 +701,34 @@ export const HubinManagementDashboard: React.FC<{
 
               <div className="lg:flex-1 overflow-y-auto custom-scrollbar px-4 md:px-5 pb-4 flex flex-col gap-2 lg:min-h-0 max-h-[50vh] lg:max-h-none">
 
-                {superClasses.length === 0 ? (
+                {mappedStudents.length === 0 ? (
 
                   <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
 
                     <div className="w-14 h-14 rounded-[10px] bg-navy flex items-center justify-center mb-3">
 
-                      <BookMarked className="w-6 h-6 text-white" />
+                      <GraduationCap className="w-6 h-6 text-white" />
 
                     </div>
 
                     <p className="text-sm font-bold text-navy mb-1">
-                      Belum ada kelas
+                      Belum ada siswa terpetakan
                     </p>
 
                     <p className="text-xs text-navy/50 max-w-xs">
-                      Tambahkan kelas melalui menu Kelola Kelas.
+                      Siswa dengan perusahaan PKL akan tampil di sini.
                     </p>
 
                   </div>
 
                 ) : (
 
-                  superClasses.map((c) => (
+                  mappedStudents.slice(0, 8).map((student) => (
 
                     <button
-                      key={c.id}
+                      key={student.id}
                       onClick={() =>
-                        onNavigate('hubin-classes')
+                        onNavigate('pemetaan')
                       }
                       className="p-3 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 hover:bg-mist/30 transition-all shrink-0 text-left group"
                     >
@@ -579,17 +736,19 @@ export const HubinManagementDashboard: React.FC<{
                       <div className="flex items-center gap-3">
 
                         <div className="w-10 h-10 rounded-[10px] bg-navy text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md shadow-navy/20">
-                          {getInitials(c.name)}
+                          {getInitials(student.name)}
                         </div>
 
                         <div className="flex-1 min-w-0">
 
                           <p className="text-sm font-bold text-navy truncate">
-                            {c.name}
+                            {student.name}
                           </p>
 
                           <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
-                            {c.major || 'Jurusan belum diisi'}
+                            {[student.kelas, student.perusahaan]
+                              .filter((value) => value && value !== '-')
+                              .join(' · ') || 'Kelas atau perusahaan belum tersedia'}
                           </p>
 
                         </div>
@@ -597,7 +756,7 @@ export const HubinManagementDashboard: React.FC<{
                         <div className="flex items-center gap-1.5 shrink-0">
 
                           <span className="text-[10px] font-bold bg-steel text-white shadow-sm shadow-steel/30 px-2.5 py-1 rounded-full tabular-nums">
-                            {c.totalStudents} siswa
+                            Terpetakan
                           </span>
 
                           <ChevronRight className="w-4 h-4 text-navy/20 group-hover:text-steel group-hover:translate-x-0.5 transition-all" />
@@ -867,6 +1026,7 @@ export const HubinManagementDashboard: React.FC<{
             </div>
 
           </div>
+          )}
         </>
       )}
     </div>

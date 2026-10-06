@@ -66,6 +66,16 @@ const findByName = <T extends { name: string }>(
 };
 
 type FilterType = 'all' | 'mapped' | 'unmapped';
+type PlacementCategoryFilter = 'all' | 'internal' | 'eksternal';
+
+/** Kategori penempatan diambil dari field category perusahaan yang sudah ada. */
+const getPlacementCategory = (company?: PerusahaanItem): 'internal' | 'eksternal' | null => {
+  const value = normalize(company?.category || '');
+  if (!value) return null;
+  if (value === 'internal' || value.includes('internal')) return 'internal';
+  if (value === 'eksternal' || value.includes('eksternal') || value.includes('external')) return 'eksternal';
+  return null;
+};
 
 interface SearchableOption {
   id: number | string;
@@ -269,18 +279,20 @@ export const HubinPemetaan: React.FC = () => {
   const {
     perusahaanList: mapLocations,
     siswaList,
+    superClasses,
     guruList,
-    mentorList,
     updateSiswaMapping,
     refreshData,
 
     academicYears,
     selectedAcademicYearId,
-    selectAcademicYear,
+     setSelectedAcademicYearId,
   } = useApp();
 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
+  const [categoryFilter, setCategoryFilter] = useState<PlacementCategoryFilter>('all');
+  const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
 
   const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
@@ -298,7 +310,6 @@ export const HubinPemetaan: React.FC = () => {
 
   const [formCompanyId, setFormCompanyId] = useState<number | string>('');
   const [formGuruId, setFormGuruId] = useState<number | string>('');
-  const [formMentorId, setFormMentorId] = useState<number | string>('');
 
   /* timer "Tersimpan" dibersihkan saat unmount */
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -359,12 +370,33 @@ export const HubinPemetaan: React.FC = () => {
 
     // reset state yang bergantung pada data tahun ajaran sebelumnya
     setSelectedSiswaId(null);
+    setSelectedClassId(null);
     setEditing(false);
     setSelectedCountry('');
     setSelectedCity('');
 
-    selectAcademicYear(id);
+    setSelectedAcademicYearId(id);
   };
+
+  const scopedSiswa = useMemo(() => {
+    let students = siswaList;
+
+    if (selectedAcademicYearId !== null) {
+      students = students.filter(
+        (student) =>
+          Number(student.academicYearId) ===
+          Number(selectedAcademicYearId)
+      );
+    }
+
+    if (selectedClassId !== null) {
+      students = students.filter(
+        (student) => student.classId === selectedClassId
+      );
+    }
+
+    return students;
+  }, [siswaList, selectedAcademicYearId, selectedClassId]);
 
   /* ============================================================
      IMPORT EXCEL
@@ -468,10 +500,10 @@ export const HubinPemetaan: React.FC = () => {
 
   const mappedLocations = useMemo(
     () =>
-      siswaList
+      scopedSiswa
         .map((s) => matchLocation(s.perusahaan))
         .filter((loc): loc is PerusahaanItem => !!loc),
-    [siswaList, matchLocation]
+    [scopedSiswa, matchLocation]
   );
 
   const countries = useMemo(
@@ -508,7 +540,7 @@ export const HubinPemetaan: React.FC = () => {
   const filteredSiswa = useMemo(() => {
     const searchLower = search.toLowerCase();
 
-    return siswaList.filter((s) => {
+    return scopedSiswa.filter((s) => {
       const matchSearch =
         (s.name || '').toLowerCase().includes(searchLower) ||
         (s.kelas || '').toLowerCase().includes(searchLower);
@@ -520,8 +552,12 @@ export const HubinPemetaan: React.FC = () => {
       if (filter === 'mapped' && !mapped) return false;
       if (filter === 'unmapped' && mapped) return false;
 
+      const loc = matchLocation(s.perusahaan);
+      if (categoryFilter !== 'all' && getPlacementCategory(loc) !== categoryFilter) {
+        return false;
+      }
+
       if (selectedCountry || selectedCity) {
-        const loc = matchLocation(s.perusahaan);
 
         if (!loc) return false;
         if (selectedCountry && loc.country !== selectedCountry) return false;
@@ -531,9 +567,10 @@ export const HubinPemetaan: React.FC = () => {
       return true;
     });
   }, [
-    siswaList,
+    scopedSiswa,
     search,
     filter,
+    categoryFilter,
     selectedCountry,
     selectedCity,
     isMapped,
@@ -545,7 +582,7 @@ export const HubinPemetaan: React.FC = () => {
      ============================================================ */
 
   const selectedSiswa =
-    siswaList.find((s) => s.id === selectedSiswaId) || null;
+    scopedSiswa.find((s) => s.id === selectedSiswaId) || null;
 
   const selectedLoc = selectedSiswa
     ? matchLocation(selectedSiswa.perusahaan)
@@ -556,17 +593,17 @@ export const HubinPemetaan: React.FC = () => {
      ============================================================ */
 
   const mappedCount = useMemo(
-    () => siswaList.filter(isMapped).length,
-    [siswaList, isMapped]
+    () => scopedSiswa.filter(isMapped).length,
+    [scopedSiswa, isMapped]
   );
 
-  const unmappedCount = siswaList.length - mappedCount;
+  const unmappedCount = scopedSiswa.length - mappedCount;
 
   const stats = [
     {
       icon: GraduationCap,
       label: 'Total Siswa',
-      value: siswaList.length,
+      value: scopedSiswa.length,
     },
     {
       icon: Building2,
@@ -589,7 +626,7 @@ export const HubinPemetaan: React.FC = () => {
       mapLocations.map((loc) => ({
         id: loc.id,
         label: loc.name,
-        sublabel: loc.address,
+        sublabel: [loc.address, loc.category].filter(Boolean).join(' • '),
       })),
     [mapLocations]
   );
@@ -604,16 +641,6 @@ export const HubinPemetaan: React.FC = () => {
     [guruList]
   );
 
-  const mentorOptions: SearchableOption[] = useMemo(
-    () =>
-      mentorList.map((m) => ({
-        id: m.id,
-        label: m.name,
-        sublabel: m.perusahaan || 'Mentor Industri',
-      })),
-    [mentorList]
-  );
-
   /* ============================================================
      SINKRONISASI FORM DARI SISWA
      ============================================================ */
@@ -621,11 +648,8 @@ export const HubinPemetaan: React.FC = () => {
   const fillFormFromSiswa = (s: SiswaItem) => {
     const loc = matchLocation(s.perusahaan);
     const guru = findByName(guruList, s.guruPembimbing);
-    const mentor = findByName(mentorList, s.mentor);
-
     setFormCompanyId(loc?.id ?? '');
     setFormGuruId(guru?.id ?? '');
-    setFormMentorId(mentor?.id ?? '');
   };
 
   const handleSelectSiswa = (s: SiswaItem) => {
@@ -660,10 +684,6 @@ export const HubinPemetaan: React.FC = () => {
 
     const guru = guruList.find((g) => String(g.id) === String(formGuruId));
 
-    const mentor = mentorList.find(
-      (m) => String(m.id) === String(formMentorId)
-    );
-
     setSaving(true);
 
     try {
@@ -674,11 +694,10 @@ export const HubinPemetaan: React.FC = () => {
 
         guruPembimbing: guru ? guru.name : selectedSiswa.guruPembimbing,
 
-        mentor: mentor ? mentor.name : selectedSiswa.mentor,
+        mentor: selectedSiswa.mentor,
 
         companyId: formCompanyId,
         teacherId: formGuruId,
-        mentorName: mentor ? mentor.name : undefined,
       });
 
       setEditing(false);
@@ -896,6 +915,29 @@ export const HubinPemetaan: React.FC = () => {
               </span>
             </div>
 
+            <div>
+              <label className="text-[10px] font-bold text-navy/50 uppercase tracking-wide mb-1.5 block">
+                Kelas
+              </label>
+              <select
+                value={selectedClassId ?? ''}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setSelectedClassId(value ? Number(value) : null);
+                  setSelectedSiswaId(null);
+                  setEditing(false);
+                }}
+                className="w-full bg-mist/40 border border-mist rounded-[18px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
+              >
+                <option value="">Semua Kelas</option>
+                {superClasses.map((schoolClass) => (
+                  <option key={schoolClass.id} value={schoolClass.id}>
+                    {schoolClass.name}{schoolClass.major ? ` - ${schoolClass.major}` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* SEARCH */}
 
             <div className="relative">
@@ -956,7 +998,22 @@ export const HubinPemetaan: React.FC = () => {
 
             {/* COUNTRY / CITY */}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div>
+                <label className="text-[10px] font-bold text-navy/50 uppercase tracking-wide mb-1.5 block">
+                  Kategori PKL
+                </label>
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value as PlacementCategoryFilter)}
+                  className="w-full bg-mist/40 border border-mist rounded-[18px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
+                >
+                  <option value="all">Internal & Eksternal</option>
+                  <option value="internal">Internal</option>
+                  <option value="eksternal">Eksternal</option>
+                </select>
+              </div>
+
               <div>
                 <label className="text-[10px] font-bold text-navy/50 uppercase tracking-wide mb-1.5 block">
                   Negara
@@ -1054,6 +1111,15 @@ export const HubinPemetaan: React.FC = () => {
                         {s.kelas && s.kelas !== '-' && (
                           <span className="text-[10px] font-bold text-steel bg-white border border-steel/30 px-2 py-0.5 rounded-md shadow-sm shrink-0">
                             {s.kelas}
+                          </span>
+                        )}
+                        {getPlacementCategory(matchLocation(s.perusahaan)) && (
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
+                            getPlacementCategory(matchLocation(s.perusahaan)) === 'internal'
+                              ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                              : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                          }`}>
+                            {getPlacementCategory(matchLocation(s.perusahaan)) === 'internal' ? 'Internal' : 'Eksternal'}
                           </span>
                         )}
                       </div>
@@ -1338,9 +1404,9 @@ export const HubinPemetaan: React.FC = () => {
                         <ShieldCheck className="w-4 h-4 text-steel shrink-0 mt-0.5" />
 
                         <p className="text-[11px] font-medium text-navy/70 leading-relaxed">
-                          Pemetaan ini menentukan tempat siswa melaksanakan PKL
-                          beserta guru dan mentor yang akan membimbing selama
-                          periode akademik.
+                          Pemetaan ini menentukan tempat PKL dan Guru Pembimbing.
+                          Penetapan mentor perusahaan dilakukan oleh Guru Pembimbing
+                          melalui menu Pemetaan Mentor.
                         </p>
                       </div>
                     </div>
@@ -1366,23 +1432,13 @@ export const HubinPemetaan: React.FC = () => {
                         emptyText="Belum ada guru pembimbing."
                       />
 
-                      <SearchableSelect
-                        label="Mentor Industri"
-                        icon={Briefcase}
-                        value={formMentorId}
-                        options={mentorOptions}
-                        onChange={setFormMentorId}
-                        placeholder="— Pilih Mentor Industri —"
-                        emptyText="Belum ada mentor industri."
-                      />
-
                       <div className="p-3 bg-mist/30 border border-mist/60 rounded-[24px] flex items-start gap-2">
                         <Plus className="w-4 h-4 text-steel shrink-0 mt-0.5" />
 
                         <p className="text-[11px] font-medium text-navy/70 leading-relaxed">
-                          Data perusahaan, guru, dan mentor dikelola terpisah.
-                          Tambah data baru di halaman Data Siswa atau Data
-                          Pembimbing.
+                          Hubin mengatur data siswa, perusahaan, dan Guru Pembimbing.
+                          Daftar mentor yang tersedia dikelola pada menu Daftar Mentor
+                          Perusahaan; penetapan mentor dilakukan oleh Guru Pembimbing.
                         </p>
                       </div>
                     </div>

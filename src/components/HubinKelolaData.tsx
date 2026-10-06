@@ -7,15 +7,11 @@ import {
   Search,
   X,
   Plus,
-  MapPin,
-  ShieldCheck,
   UserPlus,
   Building as BuildingIcon,
-  UserCog,
   Package,
   MapPinned,
   CheckCircle2,
-  ChevronDown,
 } from 'lucide-react';
 
 import { useApp } from '../context/AppContext';
@@ -317,21 +313,25 @@ export const HubinData: React.FC = () => {
 
   const stats = [
     {
+      key: 'siswa' as const,
       icon: GraduationCap,
       label: 'Total Siswa',
       value: filteredSiswaByYear.length,
     },
     {
+      key: 'guru' as const,
       icon: Users,
       label: 'Total Guru',
       value: filteredGuruByYear.length,
     },
     {
+      key: 'perusahaan' as const,
       icon: Building2,
       label: 'Perusahaan Mitra',
       value: filteredPerusahaanByYear.length,
     },
     {
+      key: 'mentor' as const,
       icon: Briefcase,
       label: 'Mentor DUDI',
       value: filteredMentorByYear.length,
@@ -523,19 +523,9 @@ export const HubinData: React.FC = () => {
      SISWA LOG
   ========================================================= */
 
-  const getSiswaLogs = (
-    siswaName: string
-  ) =>
+  const getSiswaLogs = (siswaId: number) =>
     logEntries
-      .filter((l: any) =>
-        (l.title || '')
-          .toLowerCase()
-          .includes(
-            (siswaName || '')
-              .split(' ')[0]
-              .toLowerCase()
-          )
-      )
+      .filter((entry) => entry.userId === siswaId)
       .slice(0, 3);
 
   /* =========================================================
@@ -586,6 +576,19 @@ export const HubinData: React.FC = () => {
           </div>
 
         </div>
+
+      <div className="shrink-0 bg-mist/40 p-1 rounded-[24px] flex gap-1 overflow-x-auto">
+        {stats.map((item) => (
+          <TabButton
+            key={item.key}
+            active={activeTab === item.key}
+            onClick={() => changeTab(item.key)}
+            icon={item.icon}
+            label={item.label}
+            count={item.value}
+          />
+        ))}
+      </div>
 
         {/* ===================================================
             CONTENT
@@ -1036,6 +1039,13 @@ export const HubinData: React.FC = () => {
 
             </div>
 
+          </div>
+
+          <div className="mt-5">
+            <h4 className="text-[11px] font-bold text-navy/50 uppercase mb-2">
+              Logbook Terbaru
+            </h4>
+            <LogPreviewList logs={getSiswaLogs(detailSiswa.id)} />
           </div>
 
         </DetailModal>

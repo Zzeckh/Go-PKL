@@ -285,9 +285,22 @@ export const exportPklPdf = async (req, res) => {
       ...buildUserScope(req, req.query, { nested: false }),
     };
 
+    if (req.query.academicYearId) {
+      const academicYearId = Number(req.query.academicYearId);
+      if (!Number.isInteger(academicYearId) || academicYearId <= 0) {
+        return res.status(400).json({ error: 'academicYearId tidak valid.' });
+      }
+      where.academicYearId = academicYearId;
+    }
+
     const data = await prisma.user.findMany({
       where,
-      include: { class: true, teacher: true, company: { include: { mentor: true } } },
+      include: {
+        class: true,
+        teacher: true,
+        academicYearRef: { select: { name: true } },
+        company: { include: { mentor: true } },
+      },
       orderBy: { name: 'asc' },
     });
 
@@ -303,7 +316,7 @@ export const exportPklPdf = async (req, res) => {
       companyName: u.company?.name || '-',
       teacherName: u.teacher?.name || '-',
       mentorName: u.company?.mentor?.name || '-',
-      period: u.academicYear || '-',
+      period: u.academicYearRef?.name || u.academicYear || '-',
       status: u.isActive ? 'Aktif' : 'Nonaktif',
     }));
 

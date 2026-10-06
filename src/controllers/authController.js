@@ -71,40 +71,6 @@ export const login = async (req, res, next) => {
   }
 };
 
-export const register = async (req, res, next) => {
-  try {
-    const { name, email, password, classId } = req.body;
-
-    if (!name || !email || !password) {
-      return res.status(400).json({ error: 'Nama, email, dan password wajib diisi' });
-    }
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'Password minimal 6 karakter' });
-    }
-
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) return res.status(409).json({ error: 'Email sudah terdaftar. Silakan login.' });
-
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: await bcrypt.hash(password, 10),
-        role: 'student',
-        classId: classId ? parseInt(classId) : null,
-      },
-      include: userInclude,
-    });
-
-    res.status(201).json({ token: generateToken(user), user: toFrontendUser(user) });
-  } catch (error) {
-    if (error.code === 'P2002') {
-      return res.status(409).json({ error: 'Email sudah terdaftar' });
-    }
-    next(error);
-  }
-};
-
 export const getMe = async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({

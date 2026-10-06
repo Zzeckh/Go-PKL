@@ -8,7 +8,6 @@ import React, {
 
 import {
   ActivePage,
-  AuthMode,
   UserRole,
   LogEntry,
   PKLMapLocation,
@@ -28,6 +27,7 @@ export interface SiswaItem {
   id: number;
   name: string;
   kelas: string;
+  classId?: number | null;
 
   // ID tahun ajaran untuk filtering Dashboard
   academicYearId: number | null;
@@ -147,9 +147,6 @@ export interface ClassItem {
 interface AppContextType {
   isAuthenticated: boolean;
 
-  authMode: AuthMode;
-  setAuthMode: (mode: AuthMode) => void;
-
   userRole: UserRole;
 
   activePage: ActivePage;
@@ -263,7 +260,6 @@ interface AppContextType {
   submitEvaluation: (
     siswaId: number,
     nilaiDUDI: number,
-    nilaiGuru: number,
     period: string
   ) => Promise<void>;
 
@@ -301,7 +297,6 @@ interface AppContextType {
       mentor: string;
       companyId?: number | string;
       teacherId?: number | string;
-      mentorName?: string;
       academicYear?: string;
     }
   ) => Promise<void>;
@@ -318,17 +313,15 @@ interface AppContextType {
     password: string
   ) => Promise<void>;
 
-  register: (
-    name: string,
-    email: string,
-    password: string,
-    institution?: string,
-    classId?: number
-  ) => Promise<void>;
-
   logout: () => void;
 
-  refreshData: () => Promise<void>;
+    refreshData: () => Promise<void>;
+
+  // Fungsi pemuatan data untuk komponen Hubin
+  loadSiswa: () => Promise<void>;
+  loadGuru: () => Promise<void>;
+  loadMentor: () => Promise<void>;
+  loadPerusahaan: () => Promise<void>;
 
   loadSuperStats: () => Promise<boolean>;
 
@@ -492,9 +485,6 @@ export const AppProvider: React.FC<{
 }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] =
     useState(false);
-
-  const [authMode, setAuthMode] =
-    useState<AuthMode>('login');
 
   const [userRole, setUserRole] =
     useState<UserRole>('intern');
@@ -1015,6 +1005,11 @@ export const AppProvider: React.FC<{
                 kelas:
                   u.class?.name ||
                   '-',
+
+                classId:
+                  u.class?.id ??
+                  u.classId ??
+                  null,
 
                 /*
                  * INI PERBAIKAN UTAMA
@@ -2542,70 +2537,6 @@ export const AppProvider: React.FC<{
 
   /*
    * =======================================================
-   * REGISTER
-   * =======================================================
-   */
-
-  const register = async (
-    name: string,
-    email: string,
-    password: string,
-    _institution?: string,
-    classId?: number
-  ) => {
-    try {
-      const data =
-        await api.post(
-          '/api/auth/register',
-          {
-            name,
-            email,
-            password,
-            classId,
-          }
-        ) as {
-          token: string;
-          user: any;
-        };
-
-      localStorage.setItem(
-        'pkl_token',
-        data.token
-      );
-
-      localStorage.setItem(
-        'pkl_role',
-        mapBackendRoleToUserRole(
-          data.user.role
-        )
-      );
-
-      localStorage.setItem(
-        'pkl_user_name',
-        data.user.name
-      );
-
-      await new Promise(
-        resolve =>
-          setTimeout(
-            resolve,
-            50
-          )
-      );
-
-      setToken(
-        data.token
-      );
-    } catch (error: any) {
-      throw new Error(
-        error.message ||
-        'Registrasi gagal'
-      );
-    }
-  };
-
-  /*
-   * =======================================================
    * ADD LOGBOOK
    * =======================================================
    */
@@ -3065,43 +2996,18 @@ export const AppProvider: React.FC<{
     async (
       siswaId: number,
       nilaiDUDI: number,
-      nilaiGuru: number,
       period: string
     ) => {
       try {
-        await Promise.all([
-          api.post(
-            '/api/evaluations',
-            {
-              studentId:
-                siswaId,
-
-              score:
-                nilaiDUDI,
-
-              type:
-                'dudi',
-
-              period,
-            }
-          ),
-
-          api.post(
-            '/api/evaluations',
-            {
-              studentId:
-                siswaId,
-
-              score:
-                nilaiGuru,
-
-              type:
-                'guru',
-
-              period,
-            }
-          ),
-        ]);
+        await api.post(
+          '/api/evaluations',
+          {
+            studentId: siswaId,
+            score: nilaiDUDI,
+            type: 'dudi',
+            period,
+          }
+        );
 
         await loadSiswa();
       } catch (error: any) {
@@ -3170,7 +3076,7 @@ export const AppProvider: React.FC<{
   ) => {
     try {
       await api.post(
-        '/api/auth/register',
+        '/api/hubin/students',
         {
           name:
             newSiswa.name,
@@ -3268,8 +3174,7 @@ export const AppProvider: React.FC<{
         mentor: string;
         companyId?: number | string;
         teacherId?: number | string;
-        mentorName?: string;
-        academicYear?: string;
+          academicYear?: string;
       }
     ) => {
       try {
@@ -3289,9 +3194,6 @@ export const AppProvider: React.FC<{
                     data.teacherId
                   )
                 : undefined,
-
-            mentorName:
-              data.mentorName,
 
             academicYear:
               data.academicYear !==
@@ -3365,9 +3267,6 @@ export const AppProvider: React.FC<{
       value={{
         isAuthenticated,
 
-        authMode,
-        setAuthMode,
-
         userRole,
 
         activePage,
@@ -3430,10 +3329,15 @@ export const AppProvider: React.FC<{
         updateCompanyLocation,
 
         login,
-        register,
         logout,
 
-        refreshData,
+                refreshData,
+
+        // Fungsi pemuatan data untuk komponen Hubin
+        loadSiswa,
+        loadGuru,
+        loadMentor,
+        loadPerusahaan,
 
         loadSuperStats,
         loadHubinClasses,

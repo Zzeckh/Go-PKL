@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useApp } from './context/AppContext';
-import { AuthScreen } from './components/AuthScreen';
+import { LoginScreen } from './components/LoginScreen';
 import { MainLayout } from './layouts/MainLayout';
 import { Dashboard } from './components/Dashboard';
 import { MentorDashboard } from './components/MentorDashboard';
@@ -24,6 +24,9 @@ import { HubinManagementDashboard } from './components/HubinManagementDashboard'
 import { HubinClasses } from './components/HubinClasses';
 import { HubinUsers } from './components/HubinUsers';
 import { HubinCompanies } from './components/HubinCompanies';
+import { HubinStudentImport } from './components/HubinStudentImport';
+import { HubinMentorRoster } from './components/HubinMentorRoster';
+import { TeacherMentorMapping } from './components/TeacherMentorMapping';
 import { StudentPerizinan } from './components/StudentPerizinan';
 import { Settings } from './components/Settings';
 import { Laporan } from './components/Laporan';
@@ -31,8 +34,6 @@ import { Laporan } from './components/Laporan';
 export default function App() {
   const {
     isAuthenticated,
-    authMode,
-    setAuthMode,
     userRole,
     activePage,
     setActivePage,
@@ -48,7 +49,6 @@ export default function App() {
     checkInAttendance,
     checkOutAttendance,
     login,
-    register,
     logout
   } = useApp();
 
@@ -63,13 +63,9 @@ export default function App() {
     }
   }, [isAuthenticated]);
 
-  const handleAuthSubmit = async (payload: { name: string; email: string; password: string; institution?: string; classId?: number }) => {
+  const handleLoginSubmit = async (payload: { email: string; password: string }) => {
     try {
-      if (authMode === 'login') {
-        await login(payload.email, payload.password);
-      } else {
-        await register(payload.name, payload.email, payload.password, payload.institution, payload.classId);
-      }
+      await login(payload.email, payload.password);
 
       setAuthExiting(true);
       await new Promise((resolve) => setTimeout(resolve, 430));
@@ -100,11 +96,7 @@ export default function App() {
       <div className="h-dvh w-full bg-app-outer p-3 sm:p-6 lg:p-8 flex items-center justify-center font-sans antialiased transition-colors duration-500 overflow-hidden">
         <div className="w-full max-w-7xl h-[calc(100svh-24px)] sm:h-[85vh] sm:min-h-[600px] sm:max-h-[900px] bg-app-bg-2 rounded-[24px] shadow-2xl border border-white/60 relative overflow-hidden flex flex-col transition-colors duration-500">
           <div className={`flex-1 flex flex-col p-2 sm:p-4 ${authExiting ? 'page-exit' : 'page-enter'}`}>
-            <AuthScreen
-              authMode={authMode}
-              setAuthMode={setAuthMode}
-              onSubmit={handleAuthSubmit}
-            />
+            <LoginScreen onSubmit={handleLoginSubmit} />
           </div>
         </div>
       </div>
@@ -133,7 +125,9 @@ export default function App() {
           )}
           {activePage === 'hubin-classes' && userRole === 'hubin' && <HubinClasses />}
           {activePage === 'hubin-users' && userRole === 'hubin' && <HubinUsers />}
+          {activePage === 'hubin-student-import' && userRole === 'hubin' && <HubinStudentImport />}
           {activePage === 'hubin-companies' && userRole === 'hubin' && <HubinCompanies />}
+          {activePage === 'hubin-mentor-roster' && userRole === 'hubin' && <HubinMentorRoster />}
 
 
           {/* ── STUDENT (INTERN) ── */}
@@ -216,6 +210,7 @@ export default function App() {
           {activePage === 'monitoring' && userRole === 'teacher' && (
             <TeacherMonitoring />
           )}
+          {activePage === 'teacher-mentor-mapping' && userRole === 'teacher' && <TeacherMentorMapping />}
           {activePage === 'attendance' && userRole === 'teacher' && (
             <TeacherKehadiran />
           )}

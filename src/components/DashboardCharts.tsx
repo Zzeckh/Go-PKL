@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { BarChart3, Loader2 } from 'lucide-react';
 import { api } from '../utils/api';
 import { useApp } from '../context/AppContext';
@@ -77,7 +77,7 @@ const BarList: React.FC<{
         </p>
       ) : (
         <div
-          className="flex items-end gap-3 min-h-52 max-h-72 overflow-x-auto custom-scrollbar px-2 pb-1"
+          className="flex items-end gap-3 min-h-[20rem] max-h-[24rem] overflow-x-auto custom-scrollbar px-2 pb-1"
           style={{ perspective: '900px' }}
         >
 
@@ -85,14 +85,14 @@ const BarList: React.FC<{
             <div
               key={item.name}
               title={`${item.name}: ${item.count}`}
-              className="h-52 min-w-[58px] flex-1 flex flex-col items-center justify-end gap-1"
+              className="h-80 min-w-[64px] flex-1 flex flex-col items-center justify-end gap-1"
             >
 
               <span className="text-[11px] font-bold text-navy tabular-nums">
                 {item.count}
               </span>
 
-              <div className="relative w-full h-36 flex items-end">
+              <div className="relative w-full h-60 flex items-end">
 
                 <div
                   className="w-full rounded-t-lg transition-all duration-500 hover:-translate-y-1 hover:brightness-110"
@@ -186,10 +186,10 @@ const Donut3D: React.FC<{
 
       ) : (
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
 
           <div
-            className="relative w-32 h-32 shrink-0"
+            className="relative w-40 h-40 shrink-0"
             style={{ perspective: '700px' }}
           >
 
@@ -206,7 +206,7 @@ const Donut3D: React.FC<{
               }}
             />
 
-            <div className="absolute inset-[34px] rounded-full bg-white border-4 border-white/90 flex items-center justify-center text-lg font-bold text-navy shadow-inner">
+            <div className="absolute inset-[42px] rounded-full bg-white border-4 border-white/90 flex items-center justify-center text-xl font-bold text-navy shadow-inner">
               {total}
             </div>
 
@@ -270,6 +270,7 @@ export const DashboardCharts: React.FC<{
 
   const {
     selectedAcademicYearId,
+    siswaList,
   } = useApp();
 
   const [stats, setStats] =
@@ -277,6 +278,61 @@ export const DashboardCharts: React.FC<{
 
   const [error, setError] =
     useState(false);
+
+  const [selectedClassId, setSelectedClassId] = useState('');
+
+  const classOptions = useMemo(() => {
+    const classes = new Map<number, string>();
+
+    siswaList.forEach((student) => {
+      if (
+        student.classId == null ||
+        !student.kelas ||
+        student.kelas === '-' ||
+        (selectedAcademicYearId !== null &&
+          Number(student.academicYearId) !== Number(selectedAcademicYearId))
+      ) {
+        return;
+      }
+
+      classes.set(student.classId, student.kelas);
+    });
+
+    return Array.from(classes, ([id, name]) => ({ id, name })).sort(
+      (left, right) => left.name.localeCompare(right.name, 'id')
+    );
+  }, [siswaList, selectedAcademicYearId]);
+
+  const hubinChartStats = useMemo(() => {
+    if (!stats || role !== 'hubin' || !selectedClassId) return stats;
+
+    const classId = Number(selectedClassId);
+    const classStudents = siswaList.filter(
+      (student) =>
+        student.classId === classId &&
+        student.perusahaan !== '-' &&
+        (selectedAcademicYearId === null ||
+          Number(student.academicYearId) === Number(selectedAcademicYearId))
+    );
+
+    const companyCounts = new Map<string, number>();
+    classStudents.forEach((student) => {
+      companyCounts.set(
+        student.perusahaan,
+        (companyCounts.get(student.perusahaan) || 0) + 1
+      );
+    });
+
+    return {
+      ...stats,
+      studentsPerCompany: Array.from(companyCounts, ([name, count]) => ({ name, count }))
+        .sort((left, right) => right.count - left.count),
+    };
+  }, [stats, role, selectedClassId, siswaList, selectedAcademicYearId]);
+
+  useEffect(() => {
+    setSelectedClassId('');
+  }, [selectedAcademicYearId]);
 
   /* =====================================================
      LOAD CHART DATA
@@ -378,6 +434,8 @@ export const DashboardCharts: React.FC<{
 
   }
 
+  const chartStats = hubinChartStats || stats;
+
   /* =====================================================
      TEACHER
   ===================================================== */
@@ -477,45 +535,35 @@ export const DashboardCharts: React.FC<{
   ===================================================== */
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+    <div className="flex flex-col gap-3">
+
+      <div className="w-full sm:w-64">
+        <label className="text-[10px] font-bold text-navy/50 uppercase tracking-wide mb-1.5 block">
+          Filter Kelas Grafik
+        </label>
+        <select
+          value={selectedClassId}
+          onChange={(event) => setSelectedClassId(event.target.value)}
+          disabled={classOptions.length === 0}
+          className="w-full bg-white border border-mist rounded-[18px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel disabled:opacity-50"
+        >
+          <option value="">Semua Kelas</option>
+          {classOptions.map((schoolClass) => (
+            <option key={schoolClass.id} value={schoolClass.id}>
+              {schoolClass.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
 
       <BarList
         title="Jumlah Siswa per Perusahaan"
-        items={stats.studentsPerCompany}
+        items={chartStats.studentsPerCompany}
       />
 
-      <Donut3D
-        title="Status Perusahaan"
-        values={[
-          {
-            label: 'Aktif',
-            value:
-              stats.companyStatus.active,
-            color: '#2f7f95',
-          },
-          {
-            label: 'Tidak Aktif',
-            value:
-              stats.companyStatus.inactive,
-            color: '#7c8794',
-          },
-          {
-            label: 'Kuota Penuh',
-            value:
-              stats.companyStatus.full,
-            color: '#e0a458',
-          },
-        ]}
-      />
-
-      {role === 'hubin' && (
-
-        <BarList
-          title="Distribusi Siswa berdasarkan Lokasi"
-          items={stats.studentLocations}
-        />
-
-      )}
+      </div>
 
     </div>
   );

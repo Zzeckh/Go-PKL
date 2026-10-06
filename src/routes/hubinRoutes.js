@@ -1,6 +1,11 @@
 import { Router } from 'express';
+import multer from 'multer';
 
 import { authenticate, requireRole } from '../middleware/authMiddleware.js';
+import {
+  downloadStudentImportTemplate,
+  previewStudentImport,
+} from '../controllers/studentImportController.js';
 
 import {
   getStats,
@@ -21,6 +26,10 @@ import {
 } from '../controllers/hubinController.js';
 
 const router = Router();
+const studentImportUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
 
 // Semua route pengelolaan ini hanya dapat diakses oleh Hubin
 router.use(authenticate, requireRole('hubin'));
@@ -30,6 +39,14 @@ router.use(authenticate, requireRole('hubin'));
 // =========================
 
 router.get('/stats', getStats);
+
+// Import siswa hanya melakukan preview; penyimpanan akun belum tersedia.
+router.get('/students/import-template', downloadStudentImportTemplate);
+router.post(
+  '/students/import-preview',
+  studentImportUpload.single('file'),
+  previewStudentImport
+);
 
 // =========================
 // KELOLA KELAS

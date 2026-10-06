@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Building2, Search, Plus, Trash2, MapPin, X, Loader2, Pencil,
   Navigation, MapPinned, SearchX, MousePointer2, Keyboard, Lightbulb,
-  AlertCircle, Check,
+  AlertCircle, Check, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -23,6 +23,7 @@ export const HubinCompanies: React.FC = () => {
   const { perusahaanList, loadCompanies, addCompany, updateCompany, deleteCompany, isAuthenticated } = useApp();
 
   const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<any>(null);
@@ -42,6 +43,24 @@ export const HubinCompanies: React.FC = () => {
     ),
     [perusahaanList, search]
   );
+
+  const itemsPerPage = 10;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+  const paginatedCompanies = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filtered.slice(start, start + itemsPerPage);
+  }, [filtered, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
+
+  const firstItem = filtered.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+  const lastItem = Math.min(currentPage * itemsPerPage, filtered.length);
 
   const handleDelete = async (c: any) => {
     if (!confirm(`Hapus perusahaan "${c.name}" permanen? Tindakan ini tidak dapat dibatalkan.`)) return;
@@ -116,7 +135,7 @@ export const HubinCompanies: React.FC = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-              {filtered.map(c => {
+              {paginatedCompanies.map(c => {
                 const hasCoords = c.latitude != null && c.longitude != null;
                 return (
                   <div key={c.id} className="p-4 rounded-[24px] border border-mist/60 bg-white hover:border-steel/30 hover:shadow-sm transition-all">
@@ -184,6 +203,56 @@ export const HubinCompanies: React.FC = () => {
             </div>
           )}
         </div>
+
+        {!loading && filtered.length > 0 && (
+          <div className="border-t border-mist/60 px-4 md:px-5 py-3 bg-white shrink-0">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+              <p className="text-[11px] font-semibold text-navy/50">
+                Menampilkan <b className="text-navy">{firstItem}</b> -{' '}
+                <b className="text-navy">{lastItem}</b> dari{' '}
+                <b className="text-navy">{filtered.length}</b> perusahaan
+              </p>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  aria-label="Halaman sebelumnya"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                  className="w-9 h-9 rounded-lg border border-mist flex items-center justify-center disabled:opacity-30"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                  <button
+                    key={page}
+                    type="button"
+                    aria-current={currentPage === page ? 'page' : undefined}
+                    onClick={() => setCurrentPage(page)}
+                    className={`w-9 h-9 rounded-lg text-xs font-bold ${
+                      currentPage === page
+                        ? 'bg-navy text-white'
+                        : 'border border-mist text-navy/60'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                <button
+                  type="button"
+                  aria-label="Halaman berikutnya"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                  className="w-9 h-9 rounded-lg border border-mist flex items-center justify-center disabled:opacity-30"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {showForm && (

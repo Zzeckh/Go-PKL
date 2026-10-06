@@ -42,7 +42,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       // ── Fitur pengelolaan Hubin ──
       case 'hubin-classes':    return 'Kelola Kelas';
       case 'hubin-users':      return 'Kelola Pengguna';
+      case 'hubin-student-import': return 'Import Data Siswa';
       case 'hubin-companies':  return 'Kelola Perusahaan';
+      case 'hubin-mentor-roster': return 'Daftar Mentor Perusahaan';
+      case 'teacher-mentor-mapping': return 'Pemetaan Mentor';
       // Legacy (backward compat)
       case 'data-siswa':       return 'Data Siswa';
       case 'data-pembimbing':  return 'Data Pembimbing';

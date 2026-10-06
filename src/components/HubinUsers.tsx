@@ -1357,16 +1357,18 @@ export const HubinUsers: React.FC = () => {
                           className="h-9 bg-white border border-mist/60 rounded-lg px-2 text-xs font-bold text-navy outline-none cursor-pointer"
                         >
 
+                          {user.role === 'mentor' && (
+                            <option value="mentor" disabled>
+                              Mentor
+                            </option>
+                          )}
+
                           <option value="student">
                             Siswa
                           </option>
 
                           <option value="teacher">
                             Guru
-                          </option>
-
-                          <option value="mentor">
-                            Mentor
                           </option>
 
                           <option value="hubin">

@@ -135,7 +135,6 @@ export const updateUser = async (req, res, next) => {
       classId,
       teacherId,
       companyId,
-      mentorName,
       academicYear
     } = req.body;
 
@@ -159,28 +158,6 @@ export const updateUser = async (req, res, next) => {
       academicYear: resolvedAcademicYear,
     };
 
-    if (mentorName) {
-      const mentor = await prisma.user.findFirst({
-        where: {
-          name: mentorName,
-          role: 'mentor'
-        },
-        select: {
-          id: true
-        }
-      });
-
-      if (mentor) {
-        await prisma.company.update({
-          where: {
-            id: data.companyId
-          },
-          data: {
-            mentorId: mentor.id
-          }
-        });
-      }
-    }
 
     const user = await prisma.user.update({
       where: {

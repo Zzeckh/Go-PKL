@@ -18,10 +18,19 @@ export type ActivePage =
   | 'hubin-classes'
   | 'hubin-users'
   | 'hubin-companies'
+  | 'hubin-student-import'
+  | 'hubin-mentor-roster'
+  | 'teacher-mentor-mapping'
   | 'laporan';
 
-export type AuthMode = 'login' | 'register';
 export type UserRole = 'intern' | 'mentor' | 'teacher' | 'hubin';
+
+export interface AcademicYear {
+  id: number;
+  name: string;
+  isActive: boolean;
+  createdAt: string;
+}
 
 export interface LogEntry {
   id: string;

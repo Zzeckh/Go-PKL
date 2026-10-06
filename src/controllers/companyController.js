@@ -66,7 +66,6 @@ export const createCompany = async (req, res, next) => {
       latitude,
       longitude,
       radiusMeters,
-      mentorId,
     } = req.body;
 
     if (!name || !address) {
@@ -82,22 +81,6 @@ export const createCompany = async (req, res, next) => {
       });
     }
 
-    /**
-     * Validasi mentor
-     */
-    if (mentorId) {
-      const mentor = await prisma.user.findUnique({
-        where: {
-          id: Number(mentorId),
-        },
-      });
-
-      if (!mentor || mentor.role !== 'mentor') {
-        return res.status(400).json({
-          error: 'mentorId harus user dengan role mentor',
-        });
-      }
-    }
 
     const company = await prisma.company.create({
       data: {
@@ -110,7 +93,7 @@ export const createCompany = async (req, res, next) => {
         latitude: Number(latitude),
         longitude: Number(longitude),
         radiusMeters: Number(radiusMeters) || 500,
-        mentorId: mentorId ? Number(mentorId) : null,
+        // mentorId sengaja tidak diisi dari Hubin; penetapan dilakukan Guru Pembimbing.
       },
     });
 
@@ -1067,7 +1050,6 @@ export const updateCompany = async (
       latitude,
       longitude,
       radiusMeters,
-      mentorId,
       isActive,
     } = req.body;
 
@@ -1085,32 +1067,6 @@ export const updateCompany = async (
       });
     }
 
-    /**
-     * Validasi mentor jika dikirim.
-     */
-
-    if (
-      mentorId !== undefined &&
-      mentorId !== null &&
-      mentorId !== ''
-    ) {
-      const mentor =
-        await prisma.user.findUnique({
-          where: {
-            id: Number(mentorId),
-          },
-        });
-
-      if (
-        !mentor ||
-        mentor.role !== 'mentor'
-      ) {
-        return res.status(400).json({
-          error:
-            'mentorId harus user dengan role mentor',
-        });
-      }
-    }
 
     const company =
       await prisma.company.update({
@@ -1161,16 +1117,6 @@ export const updateCompany = async (
           radiusMeters:
             radiusMeters !== undefined
               ? Number(radiusMeters)
-              : undefined,
-
-          mentorId:
-            mentorId !== undefined
-              ? (
-                  mentorId === null ||
-                  mentorId === ''
-                    ? null
-                    : Number(mentorId)
-                )
               : undefined,
 
           isActive:

@@ -134,6 +134,9 @@ export const Laporan: React.FC = () => {
   const [pdfLoading, setPdfLoading] =
     useState(false);
 
+  const [mappingPdfLoading, setMappingPdfLoading] =
+    useState(false);
+
   /*
    * Tab halaman Laporan:
    * - 'filter' → filter + preview + export (fitur lama)
@@ -800,6 +803,42 @@ export const Laporan: React.FC = () => {
     }
   };
 
+  const handleExportMappingPDF = async () => {
+    setError(null);
+    setNotice(null);
+
+    if (!reportAcademicYearId) {
+      setError('Silakan pilih tahun ajaran terlebih dahulu.');
+      return;
+    }
+
+    setMappingPdfLoading(true);
+
+    try {
+      const params = new URLSearchParams({
+        academicYearId: reportAcademicYearId,
+      });
+
+      if (classId) params.set('classId', classId);
+      if (companyId) params.set('companyId', companyId);
+
+      await api.download(
+        `/api/reports/pkl/pdf?${params.toString()}`,
+        'laporan-data-pkl.pdf'
+      );
+
+      setNotice('Laporan pemetaan PKL berhasil dibuat dan diunduh.');
+    } catch (err: any) {
+      setError(
+        err?.data?.error ||
+          err?.message ||
+          'Gagal membuat laporan pemetaan PKL.'
+      );
+    } finally {
+      setMappingPdfLoading(false);
+    }
+  };
+
   /* ============================================================
      ROLE LABEL
   ============================================================ */
@@ -1357,7 +1396,8 @@ export const Laporan: React.FC = () => {
             disabled={
               previewLoading ||
               excelLoading ||
-              pdfLoading
+              pdfLoading ||
+              mappingPdfLoading
             }
             className="mt-4 w-full bg-steel text-white py-2.5 rounded-xl text-sm font-bold hover:bg-steel/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
           >
@@ -1372,6 +1412,22 @@ export const Laporan: React.FC = () => {
               ? 'Memuat Preview...'
               : 'Preview Rekap Absensi'}
 
+          </button>
+        )}
+
+        {isHubin && (
+          <button
+            type="button"
+            onClick={handleExportMappingPDF}
+            disabled={mappingPdfLoading || previewLoading || excelLoading || pdfLoading}
+            className="mt-2 w-full bg-navy text-white py-2.5 rounded-xl text-sm font-bold hover:bg-navy/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+          >
+            {mappingPdfLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <FileDown className="w-4 h-4" />
+            )}
+            {mappingPdfLoading ? 'Membuat Laporan Pemetaan...' : 'Export PDF Pemetaan PKL'}
           </button>
         )}
 
@@ -1413,7 +1469,8 @@ export const Laporan: React.FC = () => {
                 disabled={
                   previewLoading ||
                   excelLoading ||
-                  pdfLoading
+                  pdfLoading ||
+                  mappingPdfLoading
                 }
                 className="flex items-center gap-1.5 bg-steel text-white text-xs font-bold px-3 py-2 rounded-xl disabled:opacity-60 hover:bg-steel/90 transition-colors"
               >
@@ -1439,7 +1496,8 @@ export const Laporan: React.FC = () => {
                 disabled={
                   previewLoading ||
                   excelLoading ||
-                  pdfLoading
+                  pdfLoading ||
+                  mappingPdfLoading
                 }
                 className="flex items-center gap-1.5 bg-navy text-white text-xs font-bold px-3 py-2 rounded-xl disabled:opacity-60 hover:bg-navy/90 transition-colors"
               >

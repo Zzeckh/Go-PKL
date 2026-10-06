@@ -28,7 +28,7 @@ router.get('/', authMiddleware, getCompanies);
 router.get(
   '/template',
   authMiddleware,
-  authorize('hubin', 'super_admin'),
+  authorize('hubin'),
   downloadCompanyTemplate
 );
 
@@ -44,12 +44,5 @@ router.post('/', authMiddleware, authorize('hubin'), createCompany);
 router.patch('/:id', authMiddleware, authorize('hubin'), updateCompany);
 router.delete('/:id', authMiddleware, authorize('hubin'), deactivateCompany);
 router.delete('/:id/hard', authMiddleware, authorize('hubin'), deleteCompany);
-router.post('/', authMiddleware, authorize('hubin', 'super_admin'), createCompany);
-
-router.patch('/:id', authMiddleware, authorize('hubin', 'super_admin'), updateCompany);
-
-router.delete('/:id', authMiddleware, authorize('hubin'), deactivateCompany);
-
-router.delete('/:id/hard', authMiddleware, authorize('super_admin'), deleteCompany);
 
 export default router;

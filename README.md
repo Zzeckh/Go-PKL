@@ -1,5 +1,7 @@
 # Go-PKL
 
+> **Peringatan database/migrasi:** schema Prisma aktif memakai MySQL, tetapi migration lock dan migrasi aktif repository masih PostgreSQL. Database lokal MySQL yang diperiksa memiliki migration history berbeda dan schema yang belum sepenuhnya cocok dengan schema Prisma. Jangan menjalankan `prisma migrate`, `prisma db push`, `db:reset`, atau seed sampai baseline MySQL ditinjau, backup penuh diverifikasi, dan migration plan disetujui. Status database production belum diverifikasi.
+
 Go-PKL is a full-stack portal for managing student internships (PKL).
 It supports five roles: Student, Teacher, Mentor, Hubin, and Super Admin,
 with GPS-based attendance, logbook verification, permission requests,
