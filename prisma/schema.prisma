@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -73,20 +73,25 @@ model Class {
 }
 
 model Company {
-  id           Int      @id @default(autoincrement())
-  name         String   @unique
-  address      String
-  city         String?
-  country      String?
-  phone        String?
-  category     String?
-  quota        Int      @default(0)
+  id       Int     @id @default(autoincrement())
+  name     String  @unique
+  address  String
+  city     String?
+  country  String?
+  phone    String?
+  category String?
+
+  // Total kuota perusahaan untuk semua sekolah
+  quotaCompany Int @default(0)
+
+
   latitude     Float?
   longitude    Float?
-  radiusMeters Int      @default(500)
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  radiusMeters Int     @default(500)
+  isActive     Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   academicYearId Int?
   academicYear   AcademicYear? @relation(fields: [academicYearId], references: [id])

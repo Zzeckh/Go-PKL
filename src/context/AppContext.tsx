@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useState,
   useCallback,
+  useRef,
 } from 'react';
 
 import {
@@ -29,9 +30,7 @@ export interface SiswaItem {
   kelas: string;
   classId?: number | null;
 
-  // ID tahun ajaran untuk filtering Dashboard
   academicYearId: number | null;
-
   academicYear: string;
 
   perusahaan: string;
@@ -57,7 +56,6 @@ export interface GuruItem {
   totalSiswa: number;
   totalDUDI: number;
 
-  // ID tahun ajaran
   academicYearId: number | null;
 }
 
@@ -68,7 +66,6 @@ export interface MentorItem {
   role: string;
   totalSiswa: number;
 
-  // ID tahun ajaran
   academicYearId: number | null;
 }
 
@@ -76,11 +73,15 @@ export interface PerizinanItem {
   id: number;
   name: string;
   userId?: number;
+
   company: string;
   date: string;
+
   type: 'Sakit' | 'Izin';
+
   reason: string;
   attachment: string;
+
   status: 'pending' | 'approved' | 'rejected';
 }
 
@@ -100,7 +101,6 @@ export interface DailyStatus {
 
   permissionId?: number | null;
 
-  /* Absensi hari ini (dipakai untuk status absen pulang) */
   attendance?: {
     id: number;
     checkInTime?: string | null;
@@ -127,7 +127,6 @@ export interface PerusahaanItem {
 
   radiusMeters?: number;
 
-  // ID tahun ajaran
   academicYearId: number | null;
 }
 
@@ -181,10 +180,7 @@ interface AppContextType {
   academicYears: AcademicYear[];
 
   selectedAcademicYearId: number | null;
-
-  setSelectedAcademicYearId: (
-    id: number | null
-  ) => void;
+  setSelectedAcademicYearId: (id: number | null) => void;
 
   mapLocations: PKLMapLocation[];
 
@@ -237,13 +233,9 @@ interface AppContextType {
     attachmentUrl?: string;
   }) => Promise<any>;
 
-  deletePermission: (
-    id: number
-  ) => Promise<void>;
+  deletePermission: (id: number) => Promise<void>;
 
-  createAcademicYear: (
-    name: string
-  ) => Promise<void>;
+  createAcademicYear: (name: string) => Promise<void>;
 
   updateAcademicYear: (
     id: number,
@@ -253,9 +245,7 @@ interface AppContextType {
     }
   ) => Promise<void>;
 
-  deleteAcademicYear: (
-    id: number
-  ) => Promise<void>;
+  deleteAcademicYear: (id: number) => Promise<void>;
 
   submitEvaluation: (
     siswaId: number,
@@ -287,6 +277,16 @@ interface AppContextType {
     address: string;
     quota: number;
     mentor: string;
+
+    city?: string;
+    country?: string;
+    category?: string;
+
+    latitude?: number;
+    longitude?: number;
+    radiusMeters?: number;
+
+    mentorId?: number;
   }) => Promise<void>;
 
   updateSiswaMapping: (
@@ -295,8 +295,11 @@ interface AppContextType {
       perusahaan: string;
       guruPembimbing: string;
       mentor: string;
+
       companyId?: number | string;
       teacherId?: number | string;
+      mentorName?: string;
+
       academicYear?: string;
     }
   ) => Promise<void>;
@@ -308,68 +311,67 @@ interface AppContextType {
     radius: number
   ) => Promise<void>;
 
-  login: (
+  login: (email: string, password: string) => Promise<void>;
+
+  register: (
+    name: string,
     email: string,
-    password: string
+    password: string,
+    institution?: string,
+    classId?: number
   ) => Promise<void>;
 
   logout: () => void;
 
-    refreshData: () => Promise<void>;
+  refreshData: () => Promise<void>;
 
-  // Fungsi pemuatan data untuk komponen Hubin
-  loadSiswa: () => Promise<void>;
-  loadGuru: () => Promise<void>;
-  loadMentor: () => Promise<void>;
-  loadPerusahaan: () => Promise<void>;
+  /*
+   * Loader data (dipakai komponen untuk reload manual)
+   */
+  loadSiswa: (yearId?: number | null) => Promise<void>;
+  loadGuru: (yearId?: number | null) => Promise<void>;
+  loadMentor: (yearId?: number | null) => Promise<void>;
+  loadPerusahaan: (yearId?: number | null) => Promise<boolean>;
 
-  loadSuperStats: () => Promise<boolean>;
+  loadSuperStats: (yearId?: number | null) => Promise<boolean>;
 
-  loadHubinClasses: () => Promise<boolean>;
+  loadHubinClasses: (yearId?: number | null) => Promise<boolean>;
 
   createClass: (data: {
     name: string;
     major?: string;
   }) => Promise<any>;
 
-  deleteClass: (
-    id: number
-  ) => Promise<void>;
+  deleteClass: (id: number) => Promise<void>;
 
-  loadClassStudents: (
-    id: number
-  ) => Promise<any>;
+  loadClassStudents: (id: number) => Promise<any>;
 
-  loadHubinUsers: (filters?: {
-    role?: string;
-    search?: string;
-  }) => Promise<boolean>;
+  loadHubinUsers: (
+    filters?: {
+      role?: string;
+      search?: string;
+    },
+    yearId?: number | null
+  ) => Promise<boolean>;
 
-  toggleUser: (
-    id: number
-  ) => Promise<any>;
+  toggleUser: (id: number) => Promise<any>;
 
-  deleteUser: (
-    id: number
-  ) => Promise<any>;
+  deleteUser: (id: number) => Promise<any>;
 
-  updateUserRole: (
-    id: number,
-    role: string
-  ) => Promise<any>;
+  updateUserRole: (id: number, role: string) => Promise<any>;
 
-  resetPassword: (
-    id: number
-  ) => Promise<{
+  resetPassword: (id: number) => Promise<{
     id: number;
     name: string;
     newPassword: string;
   }>;
 
-  loadCompanies: () => Promise<boolean>;
+  loadCompanies: (yearId?: number | null) => Promise<boolean>;
 
   addCompany: (
-    data: Partial<PerusahaanItem>
+    data: Partial<PerusahaanItem> & {
+      mentorId?: number;
+    }
   ) => Promise<any>;
 
   updateCompany: (
@@ -377,18 +379,14 @@ interface AppContextType {
     data: Partial<PerusahaanItem>
   ) => Promise<any>;
 
-  deleteCompany: (
-    id: number
-  ) => Promise<any>;
+  deleteCompany: (id: number) => Promise<any>;
 
   changePassword: (
     currentPassword: string,
     newPassword: string
   ) => Promise<void>;
 
-  deleteAccount: (
-    password: string
-  ) => Promise<void>;
+  deleteAccount: (password: string) => Promise<void>;
 }
 
 /*
@@ -397,20 +395,17 @@ interface AppContextType {
  * =========================================================
  */
 
-const AppContext =
-  createContext<AppContextType | undefined>(
-    undefined
-  );
+const AppContext = createContext<AppContextType | undefined>(
+  undefined
+);
 
 /*
  * =========================================================
- * HELPER
+ * HELPERS
  * =========================================================
  */
 
-const mapBackendRoleToUserRole = (
-  role: string
-): UserRole => {
+const mapBackendRoleToUserRole = (role: string): UserRole => {
   switch (role) {
     case 'student':
       return 'intern';
@@ -443,26 +438,7 @@ const formatDate = (value: string) => {
   });
 };
 
-/*
- * API kadang mengembalikan:
- *
- * [
- *   {...}
- * ]
- *
- * atau:
- *
- * {
- *   data: [...]
- * }
- *
- * Helper ini membuat frontend aman terhadap
- * kedua bentuk response tersebut.
- */
-
-const getArrayResponse = <T,>(
-  response: any
-): T[] => {
+const getArrayResponse = <T,>(response: any): T[] => {
   if (Array.isArray(response)) {
     return response;
   }
@@ -483,186 +459,155 @@ const getArrayResponse = <T,>(
 export const AppProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] =
-    useState(false);
+  /*
+   * -------------------------------------------------------
+   * AUTH
+   * -------------------------------------------------------
+   */
 
-  const [userRole, setUserRole] =
-    useState<UserRole>('intern');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  const [userRole, setUserRole] = useState<UserRole>('intern');
 
   const [activePage, setActivePage] =
     useState<ActivePage>('dashboard');
 
-  const [userName, setUserName] =
+  const [userName, setUserName] = useState('');
+
+  const [userId, setUserId] = useState<number | null>(null);
+
+  const [schoolName, setSchoolName] = useState(
+    'SMK Negeri 1 Nusantara'
+  );
+
+  const [userCompanyName, setUserCompanyName] = useState('');
+
+  const [userCompanyAddress, setUserCompanyAddress] =
     useState('');
 
-  const [userId, setUserId] =
-    useState<number | null>(null);
-
-  const [schoolName, setSchoolName] =
-    useState(
-      'SMK Negeri 1 Nusantara'
-    );
-
-  const [
-    userCompanyName,
-    setUserCompanyName,
-  ] = useState('');
-
-  const [
-    userCompanyAddress,
-    setUserCompanyAddress,
-  ] = useState('');
-
-  const [
-    userCompanyLocation,
-    setUserCompanyLocation,
-  ] = useState<{
+  const [userCompanyLocation, setUserCompanyLocation] = useState<{
     lat: number;
     lng: number;
     radius: number;
   } | null>(null);
 
-  const [token, setToken] =
-    useState<string | null>(
-      () =>
-        localStorage.getItem(
-          'pkl_token'
-        )
-    );
-
-  const [isLoading, setIsLoading] =
-    useState(false);
-
-  const [
-    loadingResources,
-    setLoadingResources,
-  ] = useState<Set<string>>(
-    new Set()
+  const [token, setToken] = useState<string | null>(() =>
+    localStorage.getItem('pkl_token')
   );
 
-  const [siswaList, setSiswaList] =
-    useState<SiswaItem[]>([]);
+  /*
+   * -------------------------------------------------------
+   * LOADING
+   * -------------------------------------------------------
+   */
 
-  const [guruList, setGuruList] =
-    useState<GuruItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [mentorList, setMentorList] =
-    useState<MentorItem[]>([]);
+  const [loadingResources, setLoadingResources] = useState<
+    Set<string>
+  >(new Set());
 
-  const [
-    perusahaanList,
-    setPerusahaanList,
-  ] = useState<PerusahaanItem[]>([]);
+  const startLoading = useCallback((resource: string) => {
+    setLoadingResources((prev) => {
+      const next = new Set(prev);
+      next.add(resource);
+      return next;
+    });
+  }, []);
 
-  const [logEntries, setLogEntries] =
-    useState<LogEntry[]>([]);
+  const stopLoading = useCallback((resource: string) => {
+    setLoadingResources((prev) => {
+      const next = new Set(prev);
+      next.delete(resource);
+      return next;
+    });
+  }, []);
 
-  const [attendances, setAttendances] =
-    useState<AttendanceRecord[]>([]);
+  /*
+   * -------------------------------------------------------
+   * DATA
+   * -------------------------------------------------------
+   */
 
-  const [
-    perizinanList,
-    setPerizinanList,
-  ] = useState<PerizinanItem[]>([]);
+  const [siswaList, setSiswaList] = useState<SiswaItem[]>([]);
+
+  const [guruList, setGuruList] = useState<GuruItem[]>([]);
+
+  const [mentorList, setMentorList] = useState<MentorItem[]>([]);
+
+  const [perusahaanList, setPerusahaanList] = useState<
+    PerusahaanItem[]
+  >([]);
+
+  const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
+
+  const [attendances, setAttendances] = useState<
+    AttendanceRecord[]
+  >([]);
+
+  const [perizinanList, setPerizinanList] = useState<
+    PerizinanItem[]
+  >([]);
 
   const [dailyStatus, setDailyStatus] =
     useState<DailyStatus | null>(null);
 
-  const [
-    academicYears,
-    setAcademicYears,
-  ] = useState<AcademicYear[]>([]);
+  const [academicYears, setAcademicYears] = useState<
+    AcademicYear[]
+  >([]);
+
+  const [mapLocations, setMapLocations] = useState<
+    PKLMapLocation[]
+  >([]);
+
+  const [superStats, setSuperStats] = useState<any>(null);
+
+  const [superClasses, setSuperClasses] = useState<ClassItem[]>(
+    []
+  );
+
+  const [superUsers, setSuperUsers] = useState<any[]>([]);
 
   /*
-   * =======================================================
+   * -------------------------------------------------------
    * SELECTED ACADEMIC YEAR
-   * =======================================================
+   * -------------------------------------------------------
    */
 
   const [
     selectedAcademicYearId,
     setSelectedAcademicYearIdState,
   ] = useState<number | null>(() => {
-    const saved =
-      localStorage.getItem(
-        'selectedAcademicYearId'
-      );
+    const saved = localStorage.getItem('selectedAcademicYearId');
 
-    return saved
-      ? Number(saved)
-      : null;
+    if (!saved) {
+      return null;
+    }
+
+    const parsed = Number(saved);
+
+    return Number.isNaN(parsed) ? null : parsed;
   });
 
-  const [
-    mapLocations,
-    setMapLocations,
-  ] = useState<PKLMapLocation[]>([]);
+  const setSelectedAcademicYearId = useCallback(
+    (id: number | null) => {
+      setSelectedAcademicYearIdState(id);
 
-  const [superStats, setSuperStats] =
-    useState<any>(null);
-
-  const [
-    superClasses,
-    setHubinClasses,
-  ] = useState<ClassItem[]>([]);
-
-  const [superUsers, setHubinUsers] =
-    useState<any[]>([]);
-
-  /*
-   * =======================================================
-   * LOADING
-   * =======================================================
-   */
-
-  const startLoading = useCallback(
-    (resource: string) => {
-      setLoadingResources(prev => {
-        const next = new Set(prev);
-        next.add(resource);
-        return next;
-      });
-    },
-    []
-  );
-
-  const stopLoading = useCallback(
-    (resource: string) => {
-      setLoadingResources(prev => {
-        const next = new Set(prev);
-        next.delete(resource);
-        return next;
-      });
+      if (id === null) {
+        localStorage.removeItem('selectedAcademicYearId');
+      } else {
+        localStorage.setItem('selectedAcademicYearId', String(id));
+      }
     },
     []
   );
 
   /*
-   * =======================================================
-   * SET ACADEMIC YEAR
-   * =======================================================
+   * Saat refreshData/loadSession sedang melakukan reload
+   * berdasarkan year, effect tidak perlu melakukan request
+   * kedua kali.
    */
-
-  const setSelectedAcademicYearId =
-    useCallback(
-      (id: number | null) => {
-        setSelectedAcademicYearIdState(
-          id
-        );
-
-        if (id === null) {
-          localStorage.removeItem(
-            'selectedAcademicYearId'
-          );
-        } else {
-          localStorage.setItem(
-            'selectedAcademicYearId',
-            String(id)
-          );
-        }
-      },
-      []
-    );
+  const skipAcademicYearEffect = useRef(false);
 
   /*
    * =======================================================
@@ -671,29 +616,21 @@ export const AppProvider: React.FC<{
    */
 
   const logout = useCallback(() => {
-    localStorage.removeItem(
-      'pkl_token'
-    );
-
-    localStorage.removeItem(
-      'pkl_role'
-    );
-
-    localStorage.removeItem(
-      'pkl_user_name'
-    );
+    localStorage.removeItem('pkl_token');
+    localStorage.removeItem('pkl_role');
+    localStorage.removeItem('pkl_user_name');
 
     setToken(null);
+
     setUserId(null);
     setIsAuthenticated(false);
 
     setActivePage('dashboard');
+
     setUserRole('intern');
     setUserName('');
 
-    setSchoolName(
-      'SMK Negeri 1 Nusantara'
-    );
+    setSchoolName('SMK Negeri 1 Nusantara');
 
     setUserCompanyName('');
     setUserCompanyAddress('');
@@ -713,8 +650,12 @@ export const AppProvider: React.FC<{
     setMapLocations([]);
 
     setSuperStats(null);
-    setHubinClasses([]);
-    setHubinUsers([]);
+    setSuperClasses([]);
+    setSuperUsers([]);
+
+    setSelectedAcademicYearIdState(null);
+
+    localStorage.removeItem('selectedAcademicYearId');
   }, []);
 
   useEffect(() => {
@@ -727,173 +668,113 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const loadLogEntries =
-    useCallback(async () => {
-      try {
-        startLoading('logbook');
+  const loadLogEntries = useCallback(async () => {
+    try {
+      startLoading('logbook');
 
-        const response =
-          await api.get(
-            '/api/logbook'
-          );
+      const response = await api.get('/api/logbook');
 
-        const items =
-          getArrayResponse<any>(
-            response
-          );
+      const items = getArrayResponse<any>(response);
 
-        const mapped =
-          items.map(
-            (item: any): LogEntry => ({
-              id: `LOG-${item.id}`,
+      const mapped = items.map(
+        (item: any): LogEntry => ({
+          id: `LOG-${item.id}`,
 
-              date: formatDate(
-                item.date
-              ),
+          date: formatDate(item.date),
 
-              title:
-                item.activityTitle,
+          title: item.activityTitle,
 
-              description:
-                item.description,
+          description: item.description,
 
-              hours:
-                item.hours || 8,
+          hours: item.hours || 8,
 
-              category:
-                item.category ||
-                'PKL Activity',
+          category: item.category || 'PKL Activity',
 
-              status:
-                item.status ===
-                'approved'
-                  ? 'approved'
-                  : item.status ===
-                    'rejected'
-                  ? 'revision'
-                  : 'pending',
+          status:
+            item.status === 'approved'
+              ? 'approved'
+              : item.status === 'rejected'
+              ? 'revision'
+              : 'pending',
 
-              feedback:
-                item.feedback,
+          feedback: item.feedback,
 
-              userId:
-                item.user?.id,
+          userId: item.user?.id,
 
-              userName:
-                item.user?.name,
+          userName: item.user?.name,
 
-              userClass:
-                item.user?.class?.name,
-            })
-          );
+          userClass: item.user?.class?.name,
+        })
+      );
 
-        setLogEntries(mapped);
-      } catch (error: any) {
-        console.warn(
-          'Gagal mengambil logbook:',
-          error?.message
-        );
-      } finally {
-        stopLoading('logbook');
-      }
-    }, [
-      startLoading,
-      stopLoading,
-    ]);
+      setLogEntries(mapped);
+    } catch (error: any) {
+      console.warn('Gagal mengambil logbook:', error?.message);
+    } finally {
+      stopLoading('logbook');
+    }
+  }, [startLoading, stopLoading]);
 
   /*
    * =======================================================
-   * ABSENSI
+   * ATTENDANCES
    * =======================================================
    */
 
-  const loadAttendances =
-    useCallback(async () => {
-      try {
-        startLoading('absensi');
+  const loadAttendances = useCallback(async () => {
+    try {
+      startLoading('absensi');
 
-        const response =
-          await api.get(
-            '/api/absensi'
-          );
+      const response = await api.get('/api/absensi');
 
-        const absensi =
-          getArrayResponse<any>(
-            response
-          );
+      const absensi = getArrayResponse<any>(response);
 
-        const mapped =
-          absensi.map(
-            (
-              item: any
-            ): AttendanceRecord => ({
-              id:
-                `ATT-${item.id}`,
+      const mapped = absensi.map(
+        (item: any): AttendanceRecord => ({
+          id: `ATT-${item.id}`,
 
-              date:
-                formatDate(
-                  item.date
-                ),
+          date: formatDate(item.date),
 
-              checkInTime:
-                item.checkInTime
-                  ? new Date(
-                      item.checkInTime
-                    ).toLocaleTimeString(
-                      'id-ID',
-                      {
-                        hour: '2-digit',
-                        minute:
-                          '2-digit',
-                      }
-                    )
-                  : '',
+          checkInTime: item.checkInTime
+            ? new Date(item.checkInTime).toLocaleTimeString(
+                'id-ID',
+                {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }
+              )
+            : '',
 
-              checkOutTime:
-                item.checkOutTime
-                  ? new Date(
-                      item.checkOutTime
-                    ).toLocaleTimeString(
-                      'id-ID',
-                      {
-                        hour: '2-digit',
-                        minute:
-                          '2-digit',
-                      }
-                    )
-                  : '',
+          checkOutTime: item.checkOutTime
+            ? new Date(item.checkOutTime).toLocaleTimeString(
+                'id-ID',
+                {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }
+              )
+            : '',
 
-              status:
-                item.status ===
-                'hadir'
-                  ? 'Hadir'
-                  : item.status ===
-                    'izin'
-                  ? 'Izin'
-                  : item.status ===
-                    'alpha'
-                  ? 'Alpha'
-                  : 'Sakit',
+          status:
+            item.status === 'hadir'
+              ? 'Hadir'
+              : item.status === 'izin'
+              ? 'Izin'
+              : item.status === 'alpha'
+              ? 'Alpha'
+              : 'Sakit',
 
-              userId:
-                item.user?.id ||
-                item.userId,
-            })
-          );
+          userId: item.user?.id ?? item.userId,
+        })
+      );
 
-        setAttendances(mapped);
-      } catch (error: any) {
-        console.warn(
-          'Gagal mengambil absensi:',
-          error?.message
-        );
-      } finally {
-        stopLoading('absensi');
-      }
-    }, [
-      startLoading,
-      stopLoading,
-    ]);
+      setAttendances(mapped);
+    } catch (error: any) {
+      console.warn('Gagal mengambil absensi:', error?.message);
+    } finally {
+      stopLoading('absensi');
+    }
+  }, [startLoading, stopLoading]);
 
   /*
    * =======================================================
@@ -901,176 +782,89 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const loadSiswa =
-    useCallback(async () => {
+  const loadSiswa = useCallback(
+    async (yearId: number | null = selectedAcademicYearId) => {
       try {
         startLoading('siswa');
 
-        const params =
-          new URLSearchParams();
+        const params = new URLSearchParams();
 
-        params.set(
-          'role',
-          'student'
-        );
+        params.set('role', 'student');
 
-        if (
-          selectedAcademicYearId
-        ) {
-          params.set(
-            'academicYearId',
-            String(
-              selectedAcademicYearId
-            )
-          );
+        if (yearId !== null) {
+          params.set('academicYearId', String(yearId));
         }
 
-        const response =
-          await api.get(
-            `/api/users?${params.toString()}`
-          );
+        const response = await api.get(
+          `/api/users?${params.toString()}`
+        );
 
-        const users =
-          getArrayResponse<any>(
-            response
-          );
+        const users = getArrayResponse<any>(response);
 
-        /*
-         * Backend sudah melakukan filter
-         * tahun ajaran.
-         *
-         * Kita tetap simpan academicYearId
-         * agar Dashboard dapat melakukan
-         * filtering juga.
-         */
+        const mapped = users.map((u: any): SiswaItem => {
+          const evals = u.evalAsStudent || [];
 
-        const mapped =
-          users.map(
-            (u: any): SiswaItem => {
-              const evals =
-                u.evalAsStudent || [];
+          const dudiEval = evals.find((e: any) => e.type === 'dudi');
 
-              const dudiEval =
-                evals.find(
-                  (e: any) =>
-                    e.type === 'dudi'
-                );
+          const guruEval = evals.find((e: any) => e.type === 'guru');
 
-              const guruEval =
-                evals.find(
-                  (e: any) =>
-                    e.type === 'guru'
-                );
+          const d = Number(dudiEval?.score) || 0;
 
-              const nilaiDUDI =
-                dudiEval
-                  ? String(
-                      dudiEval.score
-                    )
-                  : '0';
+          const g = Number(guruEval?.score) || 0;
 
-              const nilaiGuru =
-                guruEval
-                  ? String(
-                      guruEval.score
-                    )
-                  : '0';
+          const nilaiDUDI = dudiEval ? String(dudiEval.score) : '0';
 
-              const d =
-                dudiEval
-                  ? dudiEval.score
-                  : 0;
+          const nilaiGuru = guruEval ? String(guruEval.score) : '0';
 
-              const g =
-                guruEval
-                  ? guruEval.score
-                  : 0;
+          const finalNilai =
+            d > 0 && g > 0
+              ? String(Math.round((d + g) / 2))
+              : String(g || d || 0);
 
-              const finalNilai =
-                d && g
-                  ? String(
-                      Math.round(
-                        (d + g) / 2
-                      )
-                    )
-                  : String(
-                      g || d || 0
-                    );
+          return {
+            id: u.id,
 
-              return {
-                id: u.id,
+            name: u.name,
 
-                name: u.name,
+            kelas: u.class?.name || '-',
 
-                kelas:
-                  u.class?.name ||
-                  '-',
+            classId: u.class?.id ?? u.classId ?? null,
 
-                classId:
-                  u.class?.id ??
-                  u.classId ??
-                  null,
+            academicYearId:
+              u.academicYearId ?? u.academicYearRef?.id ?? null,
 
-                /*
-                 * INI PERBAIKAN UTAMA
-                 */
-                academicYearId:
-                  u.academicYearId ??
-                  u.academicYearRef?.id ??
-                  null,
+            academicYear:
+              u.academicYear || u.academicYearRef?.name || '-',
 
-                academicYear:
-                  u.academicYear ||
-                  u.academicYearRef
-                    ?.name ||
-                  '-',
+            perusahaan: u.company?.name || '-',
 
-                perusahaan:
-                  u.company?.name ||
-                  '-',
+            guruPembimbing: u.teacher?.name || '-',
 
-                guruPembimbing:
-                  u.teacher?.name ||
-                  '-',
+            mentor: u.company?.mentor?.name || '-',
 
-                mentor:
-                  u.company?.mentor
-                    ?.name ||
-                  '-',
+            kehadiran: u._count?.absensis ?? 0,
 
-                kehadiran:
-                  u._count?.absensis ||
-                  0,
+            logs: u._count?.logbooks ?? 0,
 
-                logs:
-                  u._count?.logbooks ||
-                  0,
+            nilaiDUDI,
+            nilaiGuru,
+            finalNilai,
 
-                nilaiDUDI,
-                nilaiGuru,
-                finalNilai,
+            berkasPct: 0,
 
-                berkasPct: 0,
-
-                img: '',
-              };
-            }
-          );
+            img: u.avatar || u.image || '',
+          };
+        });
 
         setSiswaList(mapped);
       } catch (error: any) {
-        console.warn(
-          'Gagal mengambil siswa:',
-          error?.message
-        );
+        console.warn('Gagal mengambil siswa:', error?.message);
       } finally {
         stopLoading('siswa');
       }
-    }, [
-      selectedAcademicYearId,
-      startLoading,
-      stopLoading,
-    ]);
+    },
+    [selectedAcademicYearId, startLoading, stopLoading]
+  );
 
   /*
    * =======================================================
@@ -1078,80 +872,54 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const loadGuru =
-    useCallback(async () => {
+  const loadGuru = useCallback(
+    async (yearId: number | null = selectedAcademicYearId) => {
       try {
         startLoading('guru');
 
-        const params =
-          new URLSearchParams();
+        const params = new URLSearchParams();
 
-        params.set(
-          'role',
-          'teacher'
-        );
+        params.set('role', 'teacher');
 
-        if (
-          selectedAcademicYearId
-        ) {
-          params.set(
-            'academicYearId',
-            String(
-              selectedAcademicYearId
-            )
-          );
+        if (yearId !== null) {
+          params.set('academicYearId', String(yearId));
         }
 
-        const response =
-          await api.get(
-            `/api/users?${params.toString()}`
-          );
+        const response = await api.get(
+          `/api/users?${params.toString()}`
+        );
 
-        const users =
-          getArrayResponse<any>(
-            response
-          );
+        const users = getArrayResponse<any>(response);
 
-        const mapped =
-          users.map(
-            (u: any): GuruItem => ({
-              id: u.id,
+        const mapped = users.map(
+          (u: any): GuruItem => ({
+            id: u.id,
 
-              name: u.name,
+            name: u.name,
 
-              subject:
-                'Guru Pembimbing',
+            subject: u.subject || 'Guru Pembimbing',
 
-              totalSiswa:
-                u._count?.students ??
-                0,
+            totalSiswa: u._count?.students ?? 0,
 
-              totalDUDI: 0,
+            totalDUDI: u._count?.companies ?? 0,
 
-              /*
-               * INI PERBAIKAN
-               */
-              academicYearId:
-                u.academicYearId ??
-                u.academicYearRef?.id ??
-                null,
-            })
-          );
+            academicYearId:
+              u.academicYearId ??
+              u.academicYearRef?.id ??
+              yearId ??
+              null,
+          })
+        );
 
         setGuruList(mapped);
       } catch (error: any) {
-        console.warn(
-          'Gagal mengambil guru:',
-          error?.message
-        );
+        console.warn('Gagal mengambil guru:', error?.message);
       } finally {
         stopLoading('guru');
       }
-    }, [
-      selectedAcademicYearId,
-      startLoading,
-      stopLoading,
-    ]);
+    },
+    [selectedAcademicYearId, startLoading, stopLoading]
+  );
 
   /*
    * =======================================================
@@ -1159,139 +927,117 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const loadMentor =
-    useCallback(async () => {
+  const loadMentor = useCallback(
+    async (yearId: number | null = selectedAcademicYearId) => {
       try {
         startLoading('mentor');
 
-        const mentorParams =
-          new URLSearchParams();
+        const mentorParams = new URLSearchParams();
 
-        mentorParams.set(
-          'role',
-          'mentor'
-        );
+        mentorParams.set('role', 'mentor');
 
-        if (
-          selectedAcademicYearId
-        ) {
-          mentorParams.set(
-            'academicYearId',
-            String(
-              selectedAcademicYearId
-            )
-          );
+        if (yearId !== null) {
+          mentorParams.set('academicYearId', String(yearId));
         }
 
-        const mentorResponse =
-          await api.get(
-            `/api/users?${mentorParams.toString()}`
-          );
-
-        const mentors =
-          getArrayResponse<any>(
-            mentorResponse
-          );
-
-        const studentParams =
-          new URLSearchParams();
-
-        studentParams.set(
-          'role',
-          'student'
+        const mentorResponse = await api.get(
+          `/api/users?${mentorParams.toString()}`
         );
 
-        if (
-          selectedAcademicYearId
-        ) {
-          studentParams.set(
-            'academicYearId',
-            String(
-              selectedAcademicYearId
-            )
-          );
-        }
+        const mentors = getArrayResponse<any>(mentorResponse);
 
-        const studentResponse =
-          await api.get(
+        /*
+         * Fallback untuk backend lama.
+         */
+        let students: any[] = [];
+
+        try {
+          const studentParams = new URLSearchParams();
+
+          studentParams.set('role', 'student');
+
+          if (yearId !== null) {
+            studentParams.set('academicYearId', String(yearId));
+          }
+
+          const studentResponse = await api.get(
             `/api/users?${studentParams.toString()}`
           );
 
-        const students =
-          getArrayResponse<any>(
-            studentResponse
+          students = getArrayResponse<any>(studentResponse);
+        } catch {
+          students = [];
+        }
+
+        const mapped = mentors.map((u: any): MentorItem => {
+          const mentoredCompanies = Array.isArray(
+            u.mentoredCompanies
+          )
+            ? u.mentoredCompanies
+            : [];
+
+          let perusahaanNames: string[] = mentoredCompanies
+            .map((company: any) => company?.name)
+            .filter(Boolean);
+
+          const hasCompanyStudentCount = mentoredCompanies.some(
+            (company: any) => company?._count?.students !== undefined
           );
 
-        const mapped =
-          mentors.map(
-            (u: any): MentorItem => {
-              const studentsOfMentor =
-                students.filter(
-                  (student: any) =>
-                    student.company
-                      ?.mentor?.id ===
-                    u.id
-                );
+          let totalSiswa = 0;
 
-              const perusahaanNames =
-                Array.from(
-                  new Set(
-                    studentsOfMentor
-                      .map(
-                        (
-                          student: any
-                        ) =>
-                          student
-                            .company
-                            ?.name
-                      )
-                      .filter(Boolean)
-                  )
-                );
+          if (hasCompanyStudentCount) {
+            totalSiswa = mentoredCompanies.reduce(
+              (total: number, company: any) =>
+                total + Number(company?._count?.students || 0),
+              0
+            );
+          } else {
+            const studentsOfMentor = students.filter(
+              (student: any) => student?.company?.mentor?.id === u.id
+            );
 
-              return {
-                id: u.id,
+            totalSiswa = studentsOfMentor.length;
 
-                name: u.name,
-
-                perusahaan:
-                  u.company?.name ||
-                  perusahaanNames.join(
-                    ', '
-                  ) ||
-                  '-',
-
-                role: 'Mentor',
-
-                totalSiswa:
-                  studentsOfMentor.length,
-
-                /*
-                 * INI PERBAIKAN
-                 */
-                academicYearId:
-                  u.academicYearId ??
-                  u.academicYearRef?.id ??
-                  selectedAcademicYearId ??
-                  null,
-              };
+            if (perusahaanNames.length === 0) {
+              perusahaanNames = studentsOfMentor
+                .map((student: any) => student?.company?.name)
+                .filter(Boolean);
             }
-          );
+          }
+
+          perusahaanNames = Array.from(new Set(perusahaanNames));
+
+          return {
+            id: u.id,
+
+            name: u.name,
+
+            perusahaan:
+              u.company?.name || perusahaanNames.join(', ') || '-',
+
+            role:
+              u.role === 'mentor' ? 'Mentor' : u.role || 'Mentor',
+
+            totalSiswa,
+
+            academicYearId:
+              u.academicYearId ??
+              u.academicYearRef?.id ??
+              yearId ??
+              null,
+          };
+        });
 
         setMentorList(mapped);
       } catch (error: any) {
-        console.warn(
-          'Gagal mengambil mentor:',
-          error?.message
-        );
+        console.warn('Gagal mengambil mentor:', error?.message);
       } finally {
         stopLoading('mentor');
       }
-    }, [
-      selectedAcademicYearId,
-      startLoading,
-      stopLoading,
-    ]);
+    },
+    [selectedAcademicYearId, startLoading, stopLoading]
+  );
 
   /*
    * =======================================================
@@ -1299,75 +1045,50 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const loadPerizinan =
-    useCallback(async () => {
-      try {
-        startLoading(
-          'perizinan'
-        );
+  const loadPerizinan = useCallback(async () => {
+    try {
+      startLoading('perizinan');
 
-        const response =
-          await api.get(
-            '/api/permissions'
-          );
+      const response = await api.get('/api/permissions');
 
-        const permissions =
-          getArrayResponse<any>(
-            response
-          );
+      const permissions = getArrayResponse<any>(response);
 
-        const mapped =
-          permissions.map(
-            (
-              p: any
-            ): PerizinanItem => ({
-              id: p.id,
+      const mapped = permissions.map((p: any): PerizinanItem => {
+        const status =
+          p.status === 'approved' ||
+          p.status === 'rejected' ||
+          p.status === 'pending'
+            ? p.status
+            : 'pending';
 
-              name:
-                p.user?.name ||
-                'Unknown',
+        return {
+          id: p.id,
 
-              userId:
-                p.user?.id ||
-                p.userId,
+          name: p.user?.name || 'Unknown',
 
-              company: '-',
+          userId: p.user?.id ?? p.userId,
 
-              date:
-                formatDate(p.date),
+          company: p.user?.company?.name || '-',
 
-              type:
-                p.type === 'sakit'
-                  ? 'Sakit'
-                  : 'Izin',
+          date: formatDate(p.date),
 
-              reason:
-                p.reason,
+          type: p.type === 'sakit' ? 'Sakit' : 'Izin',
 
-              attachment:
-                p.attachmentUrl ||
-                '',
+          reason: p.reason || '',
 
-              status:
-                p.status,
-            })
-          );
+          attachment: p.attachmentUrl || '',
 
-        setPerizinanList(mapped);
-      } catch (error: any) {
-        console.warn(
-          'Gagal mengambil perizinan:',
-          error?.message
-        );
-      } finally {
-        stopLoading(
-          'perizinan'
-        );
-      }
-    }, [
-      startLoading,
-      stopLoading,
-    ]);
+          status,
+        };
+      });
+
+      setPerizinanList(mapped);
+    } catch (error: any) {
+      console.warn('Gagal mengambil perizinan:', error?.message);
+    } finally {
+      stopLoading('perizinan');
+    }
+  }, [startLoading, stopLoading]);
 
   /*
    * =======================================================
@@ -1375,65 +1096,44 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const loadDailyStatus =
-    useCallback(async () => {
-      try {
-        startLoading(
-          'dailyStatus'
-        );
+  const loadDailyStatus = useCallback(async () => {
+    try {
+      startLoading('dailyStatus');
 
-        const res =
-          await api.get(
-            '/api/absensi/status'
-          ) as any;
+      const res = (await api.get('/api/absensi/status')) as any;
 
-        setDailyStatus({
-          date: res.date,
+      setDailyStatus({
+        date: res.date,
 
-          status:
-            res.status,
+        status: res.status,
 
-          canCheckIn:
-            !!res.canCheckIn,
+        canCheckIn: !!res.canCheckIn,
 
-          canRequestPermission:
-            !!res.canRequestPermission,
+        canRequestPermission: !!res.canRequestPermission,
 
-          canDeletePermission:
-            !!res.canDeletePermission,
+        canDeletePermission: !!res.canDeletePermission,
 
-          permissionId:
-            res.permission?.id ??
-            null,
+        permissionId: res.permission?.id ?? null,
 
-          attendance: res.attendance
-            ? {
-                id: res.attendance.id,
+        attendance: res.attendance
+          ? {
+              id: res.attendance.id,
 
-                checkInTime:
-                  res.attendance.checkInTime ??
-                  null,
+              checkInTime: res.attendance.checkInTime ?? null,
 
-                checkOutTime:
-                  res.attendance.checkOutTime ??
-                  null,
-              }
-            : null,
-        });
-      } catch (error: any) {
-        console.warn(
-          'Gagal mengambil status harian:',
-          error?.message
-        );
-      } finally {
-        stopLoading(
-          'dailyStatus'
-        );
-      }
-    }, [
-      startLoading,
-      stopLoading,
-    ]);
+              checkOutTime: res.attendance.checkOutTime ?? null,
+            }
+          : null,
+      });
+    } catch (error: any) {
+      console.warn(
+        'Gagal mengambil status harian:',
+        error?.message
+      );
+    } finally {
+      stopLoading('dailyStatus');
+    }
+  }, [startLoading, stopLoading]);
 
   /*
    * =======================================================
@@ -1441,192 +1141,191 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const loadAcademicYears =
-    useCallback(async () => {
-      try {
-        startLoading(
-          'academicYears'
-        );
+  const loadAcademicYears = useCallback(async (): Promise<
+    number | null
+  > => {
+    try {
+      startLoading('academicYears');
 
-        const response =
-          await api.get(
-            '/api/academic-years'
-          );
+      const response = await api.get('/api/academic-years');
 
-        const years =
-          getArrayResponse<AcademicYear>(
-            response
-          );
+      const years = getArrayResponse<AcademicYear>(response);
 
-        setAcademicYears(
-          years
-        );
+      setAcademicYears(years);
 
-        const savedId =
-          localStorage.getItem(
-            'selectedAcademicYearId'
-          );
+      const savedId = localStorage.getItem('selectedAcademicYearId');
 
-        if (savedId) {
-          const parsedId =
-            Number(savedId);
+      /*
+       * 1. Gunakan saved year jika masih tersedia.
+       */
+      if (savedId) {
+        const parsedId = Number(savedId);
 
-          const exists =
-            years.some(
-              year =>
-                year.id ===
-                parsedId
-            );
+        const exists = years.some((year) => year.id === parsedId);
 
-          if (exists) {
-            setSelectedAcademicYearIdState(
-              parsedId
-            );
+        if (exists) {
+          setSelectedAcademicYearIdState(parsedId);
 
-            return;
-          }
+          return parsedId;
         }
 
-        const activeYear =
-          years.find(
-            year =>
-              year.isActive
-          );
-
-        if (activeYear) {
-          setSelectedAcademicYearIdState(
-            activeYear.id
-          );
-
-          localStorage.setItem(
-            'selectedAcademicYearId',
-            String(
-              activeYear.id
-            )
-          );
-        }
-      } catch (error: any) {
-        console.warn(
-          'Gagal mengambil data Tahun Ajaran:',
-          error?.message
-        );
-      } finally {
-        stopLoading(
-          'academicYears'
-        );
+        localStorage.removeItem('selectedAcademicYearId');
       }
-    }, [
-      startLoading,
-      stopLoading,
-    ]);
+
+      /*
+       * 2. Jika tidak ada saved year, gunakan tahun aktif.
+       */
+      const activeYear = years.find((year) => year.isActive);
+
+      if (activeYear) {
+        setSelectedAcademicYearIdState(activeYear.id);
+
+        localStorage.setItem(
+          'selectedAcademicYearId',
+          String(activeYear.id)
+        );
+
+        return activeYear.id;
+      }
+
+      /*
+       * 3. Tidak ada tahun aktif.
+       */
+      setSelectedAcademicYearIdState(null);
+
+      return null;
+    } catch (error: any) {
+      console.warn(
+        'Gagal mengambil Tahun Ajaran:',
+        error?.message
+      );
+
+      return selectedAcademicYearId;
+    } finally {
+      stopLoading('academicYears');
+    }
+  }, [selectedAcademicYearId, startLoading, stopLoading]);
 
   /*
    * =======================================================
-   * PERUSAHAAN
+   * COMPANIES
    * =======================================================
    */
 
-  const loadPerusahaan =
-    useCallback(async () => {
+  const loadCompanies = useCallback(
+    async (
+      yearId: number | null = selectedAcademicYearId
+    ): Promise<boolean> => {
+      if (!localStorage.getItem('pkl_token')) {
+        return false;
+      }
+
       try {
-        startLoading(
-          'perusahaan'
+        startLoading('perusahaan');
+
+        const params = new URLSearchParams();
+
+        if (yearId !== null) {
+          params.set('academicYearId', String(yearId));
+        }
+
+        const query = params.toString();
+
+        const response = await api.get(
+          `/api/companies${query ? `?${query}` : ''}`
         );
 
-        const query =
-          selectedAcademicYearId
-            ? `?academicYearId=${selectedAcademicYearId}`
-            : '';
+        const companies = getArrayResponse<any>(response);
 
-        const response =
-          await api.get(
-            `/api/companies${query}`
-          );
+        const mapped = companies.map(
+          (c: any): PerusahaanItem => ({
+            id: c.id,
 
-        const companies =
-          getArrayResponse<any>(
-            response
-          );
+            name: c.name,
 
-        const mapped =
-          companies.map(
-            (
-              c: any
-            ): PerusahaanItem => ({
-              id: c.id,
+            address: c.address || '-',
 
-              name:
-                c.name,
+            city: c.city || undefined,
 
-              address:
-                c.address ||
-                '-',
+            country: c.country || undefined,
 
-              city:
-                c.city ||
-                undefined,
+            category: c.category || undefined,
 
-              country:
-                c.country ||
-                undefined,
+            quota: Number(c.quota) || 0,
 
-              category:
-                c.category ||
-                undefined,
+            filled: Number(c.filled) || 0,
 
-              quota:
-                c.quota ||
-                0,
+            mentor: c.mentor?.name || undefined,
 
-              filled:
-                c.filled ||
-                0,
+            latitude: c.latitude ?? null,
 
-              mentor:
-                c.mentor?.name ||
-                undefined,
+            longitude: c.longitude ?? null,
 
-              latitude:
-                c.latitude ??
-                null,
+            radiusMeters: Number(c.radiusMeters) || 500,
 
-              longitude:
-                c.longitude ??
-                null,
+            academicYearId:
+              c.academicYearId ??
+              c.academicYearRef?.id ??
+              yearId ??
+              null,
+          })
+        );
 
-              radiusMeters:
-                c.radiusMeters ||
-                500,
+        setPerusahaanList(mapped);
 
-              /*
-               * INI PERBAIKAN
-               */
-              academicYearId:
-                c.academicYearId ??
-                c.academicYearRef?.id ??
-                selectedAcademicYearId ??
-                null,
+        /*
+         * Data lokasi untuk map.
+         * Dibentuk sesuai interface PKLMapLocation.
+         */
+        const locations: PKLMapLocation[] = companies
+          .filter(
+            (c: any) =>
+              c.latitude !== null &&
+              c.latitude !== undefined &&
+              c.longitude !== null &&
+              c.longitude !== undefined
+          )
+          .map(
+            (c: any): PKLMapLocation => ({
+              id: String(c.id),
+
+              companyName: c.name,
+
+              address: c.address || '-',
+
+              category: c.category || '-',
+
+              internsCount: Number(c.filled) || 0,
+
+              mentorName: c.mentor?.name || '-',
+
+              coordinates: {
+                x: Number(c.longitude),
+                y: Number(c.latitude),
+              },
+
+              distance: '-',
+
+              status: 'geofenced',
             })
           );
 
-        setPerusahaanList(
-          mapped
-        );
+        setMapLocations(locations);
+
+        return true;
       } catch (error: any) {
         console.warn(
           'Gagal mengambil perusahaan:',
           error?.message
         );
+
+        return false;
       } finally {
-        stopLoading(
-          'perusahaan'
-        );
+        stopLoading('perusahaan');
       }
-    }, [
-      selectedAcademicYearId,
-      startLoading,
-      stopLoading,
-    ]);
+    },
+    [selectedAcademicYearId, startLoading, stopLoading]
+  );
 
   /*
    * =======================================================
@@ -1634,62 +1333,41 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const loadSuperStats =
-    useCallback(
-      async (): Promise<boolean> => {
-        if (
-          !localStorage.getItem(
-            'pkl_token'
-          )
-        ) {
-          return false;
+  const loadSuperStats = useCallback(
+    async (
+      yearId: number | null = selectedAcademicYearId
+    ): Promise<boolean> => {
+      if (!localStorage.getItem('pkl_token')) {
+        return false;
+      }
+
+      try {
+        const params = new URLSearchParams();
+
+        if (yearId !== null) {
+          params.set('academicYearId', String(yearId));
         }
 
-        try {
-          const params =
-            new URLSearchParams();
+        const query = params.toString();
 
-          if (
-            selectedAcademicYearId
-          ) {
-            params.set(
-              'academicYearId',
-              String(
-                selectedAcademicYearId
-              )
-            );
-          }
+        const res = await api.get(
+          `/api/hubin/stats${query ? `?${query}` : ''}`
+        );
 
-          const query =
-            params.toString();
+        setSuperStats(res);
 
-          const res =
-            await api.get(
-              `/api/hubin/stats${
-                query
-                  ? `?${query}`
-                  : ''
-              }`
-            );
+        return true;
+      } catch (error: any) {
+        console.warn(
+          'Gagal mengambil ringkasan hubin:',
+          error?.message
+        );
 
-          setSuperStats(
-            res
-          );
-
-          return true;
-        } catch (error: any) {
-          console.warn(
-            'Gagal mengambil super stats:',
-            error?.message
-          );
-
-          return false;
-        }
-      },
-      [
-        selectedAcademicYearId,
-      ]
-    );
+        return false;
+      }
+    },
+    [selectedAcademicYearId]
+  );
 
   /*
    * =======================================================
@@ -1697,59 +1375,45 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const loadHubinClasses =
-    useCallback(
-      async (): Promise<boolean> => {
-        if (
-          !localStorage.getItem(
-            'pkl_token'
-          )
-        ) {
-          return false;
+  const loadHubinClasses = useCallback(
+    async (
+      yearId: number | null = selectedAcademicYearId
+    ): Promise<boolean> => {
+      if (!localStorage.getItem('pkl_token')) {
+        return false;
+      }
+
+      try {
+        const params = new URLSearchParams();
+
+        // null berarti semua tahun ajaran,
+        // sehingga parameter tahun tidak dikirim.
+        if (yearId !== null) {
+          params.set('academicYearId', String(yearId));
         }
 
-        try {
-          const params =
-            new URLSearchParams();
+        const query = params.toString();
 
-          // null berarti semua tahun ajaran,
-          // sehingga parameter tahun tidak dikirim.
-          if (selectedAcademicYearId !== null) {
-            params.set(
-              'academicYearId',
-              String(selectedAcademicYearId)
-            );
-          }
+        const response = await api.get(
+          `/api/hubin/classes${query ? `?${query}` : ''}`
+        );
 
-          const query = params.toString();
-          const response =
-            await api.get(
-              `/api/hubin/classes${query ? `?${query}` : ''}`
-            );
+        const classes = getArrayResponse<ClassItem>(response);
 
-          const classes =
-            getArrayResponse<ClassItem>(
-              response
-            );
+        setSuperClasses(classes);
 
-          setHubinClasses(
-            classes
-          );
+        return true;
+      } catch (error: any) {
+        console.warn(
+          'Gagal mengambil daftar kelas:',
+          error?.message
+        );
 
-          return true;
-        } catch (error: any) {
-          console.warn(
-            'Gagal mengambil daftar kelas:',
-            error?.message
-          );
-
-          return false;
-        }
-      },
-      [
-        selectedAcademicYearId,
-      ]
-    );
+        return false;
+      }
+    },
+    [selectedAcademicYearId]
+  );
 
   /*
    * =======================================================
@@ -1757,39 +1421,27 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const createClass =
-    async (data: {
-      name: string;
-      major?: string;
-    }) => {
-      if (
-        !selectedAcademicYearId
-      ) {
-        throw new Error(
-          'Pilih Tahun Ajaran terlebih dahulu.'
-        );
-      }
+  const createClass = async (data: {
+    name: string;
+    major?: string;
+  }) => {
+    if (selectedAcademicYearId === null) {
+      throw new Error('Pilih Tahun Ajaran terlebih dahulu.');
+    }
 
-      const res =
-        await api.post(
-          '/api/hubin/classes',
-          {
-            name:
-              data.name,
+    const res = await api.post('/api/hubin/classes', {
+      name: data.name,
 
-            major:
-              data.major,
+      major: data.major,
 
-            academicYearId:
-              selectedAcademicYearId,
-          }
-        );
+      academicYearId: selectedAcademicYearId,
+    });
 
-      await loadHubinClasses();
-      await loadSuperStats();
+    await loadHubinClasses();
+    await loadSuperStats();
 
-      return res;
-    };
+    return res;
+  };
 
   /*
    * =======================================================
@@ -1797,33 +1449,29 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const deleteClass =
-    async (id: number) => {
-      await api.delete(
-        `/api/hubin/classes/${id}`
-      );
+  const deleteClass = async (id: number) => {
+    await api.delete(`/api/hubin/classes/${id}`);
 
-      await loadHubinClasses();
-      await loadSuperStats();
-    };
+    await loadHubinClasses();
+    await loadSuperStats();
+  };
 
   /*
    * =======================================================
-   * CLASS STUDENTS
+   * LOAD CLASS STUDENTS
    * =======================================================
    */
 
-  const loadClassStudents =
-    async (id: number) => {
-      const query =
-        selectedAcademicYearId !== null
-          ? `?academicYearId=${selectedAcademicYearId}`
-          : '';
+  const loadClassStudents = async (id: number) => {
+    const query =
+      selectedAcademicYearId !== null
+        ? `?academicYearId=${selectedAcademicYearId}`
+        : '';
 
-      return await api.get(
-        `/api/hubin/classes/${id}/students${query}`
-      );
-    };
+    return await api.get(
+      `/api/hubin/classes/${id}/students${query}`
+    );
+  };
 
   /*
    * =======================================================
@@ -1831,81 +1479,55 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const loadHubinUsers =
-    useCallback(
-      async (
-        filters?: {
-          role?: string;
-          search?: string;
-        }
-      ): Promise<boolean> => {
-        if (
-          !localStorage.getItem(
-            'pkl_token'
-          )
-        ) {
-          return false;
-        }
-
-        try {
-          const params =
-            new URLSearchParams();
-
-          if (
-            filters?.role &&
-            filters.role !== 'all'
-          ) {
-            params.set(
-              'role',
-              filters.role
-            );
-          }
-
-          if (
-            filters?.search
-          ) {
-            params.set(
-              'search',
-              filters.search
-            );
-          }
-
-          if (selectedAcademicYearId !== null) {
-            params.set(
-              'academicYearId',
-              String(selectedAcademicYearId)
-            );
-          }
-
-          const query = params.toString();
-          const response =
-            await api.get(
-              `/api/hubin/users${query ? `?${query}` : ''}`
-            );
-
-          const users =
-            getArrayResponse<any>(
-              response
-            );
-
-          setHubinUsers(
-            users
-          );
-
-          return true;
-        } catch (error: any) {
-          console.warn(
-            'Gagal mengambil daftar user:',
-            error?.message
-          );
-
-          return false;
-        }
+  const loadHubinUsers = useCallback(
+    async (
+      filters?: {
+        role?: string;
+        search?: string;
       },
-      [
-        selectedAcademicYearId,
-      ]
-    );
+      yearId: number | null = selectedAcademicYearId
+    ): Promise<boolean> => {
+      if (!localStorage.getItem('pkl_token')) {
+        return false;
+      }
+
+      try {
+        const params = new URLSearchParams();
+
+        if (filters?.role && filters.role !== 'all') {
+          params.set('role', filters.role);
+        }
+
+        if (filters?.search) {
+          params.set('search', filters.search);
+        }
+
+        if (yearId !== null) {
+          params.set('academicYearId', String(yearId));
+        }
+
+        const query = params.toString();
+
+        const response = await api.get(
+          `/api/hubin/users${query ? `?${query}` : ''}`
+        );
+
+        const users = getArrayResponse<any>(response);
+
+        setSuperUsers(users);
+
+        return true;
+      } catch (error: any) {
+        console.warn(
+          'Gagal mengambil daftar user:',
+          error?.message
+        );
+
+        return false;
+      }
+    },
+    [selectedAcademicYearId]
+  );
 
   /*
    * =======================================================
@@ -1913,17 +1535,13 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const toggleUser =
-    async (id: number) => {
-      const res =
-        await api.patch(
-          `/api/hubin/users/${id}/toggle`
-        );
+  const toggleUser = async (id: number) => {
+    const res = await api.patch(`/api/hubin/users/${id}/toggle`);
 
-      await loadHubinUsers();
+    await loadHubinUsers();
 
-      return res;
-    };
+    return res;
+  };
 
   /*
    * =======================================================
@@ -1931,40 +1549,30 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const deleteUser =
-    async (id: number) => {
-      const res =
-        await api.delete(
-          `/api/hubin/users/${id}`
-        );
+  const deleteUser = async (id: number) => {
+    const res = await api.delete(`/api/hubin/users/${id}`);
 
-      await loadHubinUsers();
-      await loadSuperStats();
+    await loadHubinUsers();
+    await loadSuperStats();
 
-      return res;
-    };
+    return res;
+  };
 
   /*
    * =======================================================
-   * UPDATE ROLE
+   * UPDATE USER ROLE
    * =======================================================
    */
 
-  const updateUserRole =
-    async (
-      id: number,
-      role: string
-    ) => {
-      const res =
-        await api.patch(
-          `/api/hubin/users/${id}/role`,
-          { role }
-        );
+  const updateUserRole = async (id: number, role: string) => {
+    const res = await api.patch(`/api/hubin/users/${id}/role`, {
+      role,
+    });
 
-      await loadHubinUsers();
+    await loadHubinUsers();
 
-      return res;
-    };
+    return res;
+  };
 
   /*
    * =======================================================
@@ -1972,132 +1580,17 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const resetPassword =
-    async (id: number) => {
-      const res =
-        await api.post(
-          `/api/hubin/users/${id}/reset-password`
-        ) as {
-          id: number;
-          name: string;
-          newPassword: string;
-        };
-
-      return res;
+  const resetPassword = async (id: number) => {
+    const res = (await api.post(
+      `/api/hubin/users/${id}/reset-password`
+    )) as {
+      id: number;
+      name: string;
+      newPassword: string;
     };
 
-  /*
-   * =======================================================
-   * LOAD COMPANIES
-   * =======================================================
-   */
-
-  const loadCompanies =
-    useCallback(
-      async (): Promise<boolean> => {
-        if (
-          !localStorage.getItem(
-            'pkl_token'
-          )
-        ) {
-          return false;
-        }
-
-        try {
-          const query =
-            selectedAcademicYearId
-              ? `?academicYearId=${selectedAcademicYearId}`
-              : '';
-
-          const response =
-            await api.get(
-              `/api/companies${query}`
-            );
-
-          const companies =
-            getArrayResponse<any>(
-              response
-            );
-
-          const mapped =
-            companies.map(
-              (
-                c: any
-              ): PerusahaanItem => ({
-                id: c.id,
-
-                name:
-                  c.name,
-
-                address:
-                  c.address ||
-                  '-',
-
-                city:
-                  c.city ||
-                  undefined,
-
-                country:
-                  c.country ||
-                  undefined,
-
-                category:
-                  c.category ||
-                  undefined,
-
-                quota:
-                  c.quota ||
-                  0,
-
-                filled:
-                  c.filled ||
-                  0,
-
-                mentor:
-                  c.mentor?.name ||
-                  undefined,
-
-                latitude:
-                  c.latitude ??
-                  null,
-
-                longitude:
-                  c.longitude ??
-                  null,
-
-                radiusMeters:
-                  c.radiusMeters ||
-                  500,
-
-                /*
-                 * INI PERBAIKAN
-                 */
-                academicYearId:
-                  c.academicYearId ??
-                  c.academicYearRef?.id ??
-                  selectedAcademicYearId ??
-                  null,
-              })
-            );
-
-          setPerusahaanList(
-            mapped
-          );
-
-          return true;
-        } catch (error: any) {
-          console.warn(
-            'Gagal mengambil daftar perusahaan:',
-            error?.message
-          );
-
-          return false;
-        }
-      },
-      [
-        selectedAcademicYearId,
-      ]
-    );
+    return res;
+  };
 
   /*
    * =======================================================
@@ -2105,56 +1598,74 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const addCompany =
-    async (
-      data: Partial<PerusahaanItem>
-    ) => {
-      if (
-        !selectedAcademicYearId
-      ) {
-        throw new Error(
-          'Pilih Tahun Ajaran terlebih dahulu.'
-        );
-      }
+  const addCompany = async (
+    data: Partial<PerusahaanItem> & {
+      mentorId?: number;
+    }
+  ) => {
+    if (selectedAcademicYearId === null) {
+      throw new Error('Pilih Tahun Ajaran terlebih dahulu.');
+    }
 
-      const res =
-        await api.post(
-          '/api/companies',
-          {
-            name:
-              data.name,
+    if (!data.name?.trim()) {
+      throw new Error('Nama perusahaan wajib diisi.');
+    }
 
-            address:
-              data.address,
+    if (!data.address?.trim()) {
+      throw new Error('Alamat perusahaan wajib diisi.');
+    }
 
-            category:
-              data.category,
+    if (
+      data.latitude === undefined ||
+      data.latitude === null ||
+      data.longitude === undefined ||
+      data.longitude === null
+    ) {
+      throw new Error(
+        'Latitude dan longitude perusahaan wajib diisi.'
+      );
+    }
 
-            quota:
-              Number(
-                data.quota
-              ) || 0,
+    const latitude = Number(data.latitude);
 
-            latitude:
-              data.latitude,
+    const longitude = Number(data.longitude);
 
-            longitude:
-              data.longitude,
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      throw new Error('Latitude dan longitude tidak valid.');
+    }
 
-            radiusMeters:
-              Number(
-                data.radiusMeters
-              ) || 500,
+    const body: any = {
+      name: data.name.trim(),
 
-            academicYearId:
-              selectedAcademicYearId,
-          }
-        );
+      address: data.address.trim(),
 
-      await loadCompanies();
+      city: data.city,
 
-      return res;
+      country: data.country,
+
+      category: data.category,
+
+      quota: Number(data.quota) || 0,
+
+      latitude,
+
+      longitude,
+
+      radiusMeters: Number(data.radiusMeters) || 500,
+
+      academicYearId: selectedAcademicYearId,
     };
+
+    if (data.mentorId !== undefined) {
+      body.mentorId = Number(data.mentorId);
+    }
+
+    const res = await api.post('/api/companies', body);
+
+    await loadCompanies();
+
+    return res;
+  };
 
   /*
    * =======================================================
@@ -2162,52 +1673,54 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const updateCompany =
-    async (
-      id: number,
-      data: Partial<PerusahaanItem>
-    ) => {
-      const res =
-        await api.patch(
-          `/api/companies/${id}`,
-          {
-            name:
-              data.name,
+  const updateCompany = async (
+    id: number,
+    data: Partial<PerusahaanItem>
+  ) => {
+    const body: any = {};
 
-            address:
-              data.address,
+    if (data.name !== undefined) {
+      body.name = data.name;
+    }
 
-            category:
-              data.category,
+    if (data.address !== undefined) {
+      body.address = data.address;
+    }
 
-            quota:
-              data.quota !==
-              undefined
-                ? Number(
-                    data.quota
-                  )
-                : undefined,
+    if (data.city !== undefined) {
+      body.city = data.city;
+    }
 
-            latitude:
-              data.latitude,
+    if (data.country !== undefined) {
+      body.country = data.country;
+    }
 
-            longitude:
-              data.longitude,
+    if (data.category !== undefined) {
+      body.category = data.category;
+    }
 
-            radiusMeters:
-              data.radiusMeters !==
-              undefined
-                ? Number(
-                    data.radiusMeters
-                  )
-                : undefined,
-          }
-        );
+    if (data.quota !== undefined) {
+      body.quota = Number(data.quota);
+    }
 
-      await loadCompanies();
+    if (data.latitude !== undefined) {
+      body.latitude = Number(data.latitude);
+    }
 
-      return res;
-    };
+    if (data.longitude !== undefined) {
+      body.longitude = Number(data.longitude);
+    }
+
+    if (data.radiusMeters !== undefined) {
+      body.radiusMeters = Number(data.radiusMeters);
+    }
+
+    const res = await api.patch(`/api/companies/${id}`, body);
+
+    await loadCompanies();
+
+    return res;
+  };
 
   /*
    * =======================================================
@@ -2215,17 +1728,13 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const deleteCompany =
-    async (id: number) => {
-      const res =
-        await api.delete(
-          `/api/companies/${id}/hard`
-        );
+  const deleteCompany = async (id: number) => {
+    const res = await api.delete(`/api/companies/${id}/hard`);
 
-      await loadCompanies();
+    await loadCompanies();
 
-      return res;
-    };
+    return res;
+  };
 
   /*
    * =======================================================
@@ -2233,19 +1742,15 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const changePassword =
-    async (
-      currentPassword: string,
-      newPassword: string
-    ) => {
-      await api.post(
-        '/api/auth/change-password',
-        {
-          currentPassword,
-          newPassword,
-        }
-      );
-    };
+  const changePassword = async (
+    currentPassword: string,
+    newPassword: string
+  ) => {
+    await api.post('/api/auth/change-password', {
+      currentPassword,
+      newPassword,
+    });
+  };
 
   /*
    * =======================================================
@@ -2253,15 +1758,13 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const deleteAccount =
-    async (password: string) => {
-      await api.post(
-        '/api/auth/delete-account',
-        { password }
-      );
+  const deleteAccount = async (password: string) => {
+    await api.post('/api/auth/delete-account', {
+      password,
+    });
 
-      logout();
-    };
+    logout();
+  };
 
   /*
    * =======================================================
@@ -2269,194 +1772,54 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const refreshData =
-    useCallback(async () => {
-      setIsLoading(true);
-
-      try {
-        await loadAcademicYears();
-
-        await Promise.all([
-          loadLogEntries(),
-          loadAttendances(),
-          loadSiswa(),
-          loadPerizinan(),
-          loadDailyStatus(),
-          loadPerusahaan(),
-          loadGuru(),
-          loadMentor(),
-        ]);
-
-        if (
-          localStorage.getItem(
-            'pkl_role'
-          ) === 'hubin'
-        ) {
-          await Promise.all([
-            loadSuperStats(),
-            loadHubinClasses(),
-            loadHubinUsers(),
-          ]);
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }, [
-      loadAcademicYears,
-      loadLogEntries,
-      loadAttendances,
-      loadSiswa,
-      loadPerizinan,
-      loadDailyStatus,
-      loadPerusahaan,
-      loadGuru,
-      loadMentor,
-      loadSuperStats,
-      loadHubinClasses,
-      loadHubinUsers,
-    ]);
-
-  /*
-   * =======================================================
-   * SESSION
-   * =======================================================
-   */
-
-  const loadSession = async (
-    overrideToken?: string
-  ) => {
-    const tokenToUse =
-      overrideToken || token;
-
-    if (!tokenToUse) {
+  const refreshData = useCallback(async () => {
+    if (!localStorage.getItem('pkl_token')) {
       return;
     }
+
+    setIsLoading(true);
+
+    /*
+     * Hindari duplicate request dari academic-year useEffect.
+     */
+    skipAcademicYearEffect.current = true;
 
     try {
-      startLoading('session');
+      const yearId = await loadAcademicYears();
 
-      const user =
-        await api.get(
-          '/api/auth/me'
-        ) as any;
+      await Promise.all([
+        loadLogEntries(),
+        loadAttendances(),
+        loadSiswa(yearId),
+        loadPerizinan(),
+        loadDailyStatus(),
+        loadCompanies(yearId),
+        loadGuru(yearId),
+        loadMentor(yearId),
+      ]);
 
-      const mappedRole =
-        mapBackendRoleToUserRole(
-          user.role
-        );
-
-      setUserName(
-        user.name
-      );
-
-      setUserRole(
-        mappedRole
-      );
-
-      setUserId(
-        user.id
-      );
-
-      setUserCompanyName(
-        user.companyName ||
-        ''
-      );
-
-      setUserCompanyAddress(
-        user.companyAddress ||
-        ''
-      );
-
-      setUserCompanyLocation(
-        user.companyLocation ||
-        null
-      );
-
-      setIsAuthenticated(
-        true
-      );
-
-      await loadAcademicYears();
-
-      if (
-        mappedRole !==
-        'hubin'
-      ) {
+      if (localStorage.getItem('pkl_role') === 'hubin') {
         await Promise.all([
-          loadLogEntries(),
-          loadAttendances(),
-          loadSiswa(),
-          loadPerizinan(),
-          loadDailyStatus(),
-          loadPerusahaan(),
-          loadGuru(),
-          loadMentor(),
+          loadSuperStats(yearId),
+          loadHubinClasses(yearId),
+          loadHubinUsers(undefined, yearId),
         ]);
       }
-    } catch (error: any) {
-      console.error(
-        'Session load error:',
-        error?.message
-      );
-
-      logout();
     } finally {
-      stopLoading(
-        'session'
-      );
+      skipAcademicYearEffect.current = false;
+
+      setIsLoading(false);
     }
-  };
-
-  /*
-   * =======================================================
-   * RELOAD KETIKA TAHUN AJARAN BERUBAH
-   * =======================================================
-   */
-
-  useEffect(() => {
-    if (
-      !isAuthenticated
-    ) {
-      return;
-    }
-
-    const reloadByAcademicYear =
-      async () => {
-        try {
-          await Promise.all([
-            loadSiswa(),
-            loadGuru(),
-            loadMentor(),
-            loadPerusahaan(),
-          ]);
-
-          if (
-            userRole ===
-            'hubin'
-          ) {
-            await Promise.all([
-              loadSuperStats(),
-              loadHubinClasses(),
-              loadHubinUsers(),
-            ]);
-          }
-        } catch (error: any) {
-          console.warn(
-            'Gagal refresh berdasarkan Tahun Ajaran:',
-            error?.message
-          );
-        }
-      };
-
-    reloadByAcademicYear();
   }, [
-    selectedAcademicYearId,
-    isAuthenticated,
-    userRole,
+    loadAcademicYears,
+    loadLogEntries,
+    loadAttendances,
     loadSiswa,
+    loadPerizinan,
+    loadDailyStatus,
+    loadCompanies,
     loadGuru,
     loadMentor,
-    loadPerusahaan,
     loadSuperStats,
     loadHubinClasses,
     loadHubinUsers,
@@ -2464,7 +1827,171 @@ export const AppProvider: React.FC<{
 
   /*
    * =======================================================
-   * SESSION TOKEN
+   * SESSION
+   * =======================================================
+   */
+
+  const loadSession = useCallback(
+    async (overrideToken?: string) => {
+      const tokenToUse = overrideToken || token;
+
+      if (!tokenToUse) {
+        return;
+      }
+
+      try {
+        startLoading('session');
+
+        const user = (await api.get('/api/auth/me')) as any;
+
+        const mappedRole = mapBackendRoleToUserRole(user.role);
+
+        setUserName(user.name || '');
+
+        setUserRole(mappedRole);
+
+        setUserId(user.id ?? null);
+
+        setSchoolName(
+          user.schoolName ||
+            user.institution ||
+            user.school?.name ||
+            'SMK Negeri 1 Nusantara'
+        );
+
+        setUserCompanyName(
+          user.companyName || user.company?.name || ''
+        );
+
+        setUserCompanyAddress(
+          user.companyAddress || user.company?.address || ''
+        );
+
+        setUserCompanyLocation(user.companyLocation || null);
+
+        setIsAuthenticated(true);
+
+        localStorage.setItem('pkl_role', mappedRole);
+
+        localStorage.setItem('pkl_user_name', user.name || '');
+
+        /*
+         * Hindari duplicate request ketika academic year berubah.
+         */
+        skipAcademicYearEffect.current = true;
+
+        const yearId = await loadAcademicYears();
+
+        if (mappedRole === 'hubin') {
+          await Promise.all([
+            loadSiswa(yearId),
+            loadGuru(yearId),
+            loadMentor(yearId),
+            loadCompanies(yearId),
+            loadSuperStats(yearId),
+            loadHubinClasses(yearId),
+            loadHubinUsers(undefined, yearId),
+          ]);
+        } else {
+          await Promise.all([
+            loadLogEntries(),
+            loadAttendances(),
+            loadSiswa(yearId),
+            loadPerizinan(),
+            loadDailyStatus(),
+            loadCompanies(yearId),
+            loadGuru(yearId),
+            loadMentor(yearId),
+          ]);
+        }
+
+        skipAcademicYearEffect.current = false;
+      } catch (error: any) {
+        console.error('Session load error:', error?.message);
+
+        skipAcademicYearEffect.current = false;
+
+        logout();
+      } finally {
+        stopLoading('session');
+      }
+    },
+    [
+      token,
+      startLoading,
+      stopLoading,
+      logout,
+      loadAcademicYears,
+      loadLogEntries,
+      loadAttendances,
+      loadSiswa,
+      loadPerizinan,
+      loadDailyStatus,
+      loadCompanies,
+      loadGuru,
+      loadMentor,
+      loadSuperStats,
+      loadHubinClasses,
+      loadHubinUsers,
+    ]
+  );
+
+  /*
+   * =======================================================
+   * RELOAD BERDASARKAN TAHUN AJARAN
+   * =======================================================
+   */
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
+    if (skipAcademicYearEffect.current) {
+      return;
+    }
+
+    const reload = async () => {
+      try {
+        await Promise.all([
+          loadSiswa(),
+          loadGuru(),
+          loadMentor(),
+          loadCompanies(),
+        ]);
+
+        if (userRole === 'hubin') {
+          await Promise.all([
+            loadSuperStats(),
+            loadHubinClasses(),
+            loadHubinUsers(),
+          ]);
+        }
+      } catch (error: any) {
+        console.warn(
+          'Gagal refresh berdasarkan Tahun Ajaran:',
+          error?.message
+        );
+      }
+    };
+
+    reload();
+  }, [
+    selectedAcademicYearId,
+    isAuthenticated,
+    userRole,
+    loadSiswa,
+    loadGuru,
+    loadMentor,
+    loadCompanies,
+    loadSuperStats,
+    loadHubinClasses,
+    loadHubinUsers,
+  ]);
+
+  /*
+   * =======================================================
+   * TOKEN SESSION
    * =======================================================
    */
 
@@ -2472,9 +1999,7 @@ export const AppProvider: React.FC<{
     if (token) {
       loadSession();
     }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token, loadSession]);
 
   /*
    * =======================================================
@@ -2482,56 +2007,77 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const login = async (
-    email: string,
-    password: string
-  ) => {
+  const login = async (email: string, password: string) => {
     try {
-      const data =
-        await api.post(
-          '/api/auth/login',
-          {
-            email,
-            password,
-          }
-        ) as {
-          token: string;
-          user: any;
-        };
+      const data = (await api.post('/api/auth/login', {
+        email,
+        password,
+      })) as {
+        token: string;
+        user: any;
+      };
 
-      localStorage.setItem(
-        'pkl_token',
-        data.token
-      );
+      if (!data?.token) {
+        throw new Error('Token login tidak diterima dari server.');
+      }
+
+      localStorage.setItem('pkl_token', data.token);
 
       localStorage.setItem(
         'pkl_role',
-        mapBackendRoleToUserRole(
-          data.user.role
-        )
+        mapBackendRoleToUserRole(data.user.role)
       );
+
+      localStorage.setItem('pkl_user_name', data.user.name || '');
+
+      setToken(data.token);
+    } catch (error: any) {
+      throw new Error(error?.message || 'Login gagal');
+    }
+  };
+
+  /*
+   * =======================================================
+   * REGISTER
+   * =======================================================
+   */
+
+  const register = async (
+    name: string,
+    email: string,
+    password: string,
+    _institution?: string,
+    classId?: number
+  ) => {
+    try {
+      const data = (await api.post('/api/auth/register', {
+        name,
+        email,
+        password,
+        classId,
+      })) as {
+        token: string;
+        user: any;
+      };
+
+      if (!data?.token) {
+        throw new Error(
+          'Token registrasi tidak diterima dari server.'
+        );
+      }
+
+      localStorage.setItem('pkl_token', data.token);
 
       localStorage.setItem(
-        'pkl_user_name',
-        data.user.name
+        'pkl_role',
+        mapBackendRoleToUserRole(data.user.role)
       );
 
-      await new Promise(
-        resolve =>
-          setTimeout(
-            resolve,
-            50
-          )
-      );
+      localStorage.setItem('pkl_user_name', data.user.name || '');
 
-      setToken(
-        data.token
-      );
+      setToken(data.token);
     } catch (error: any) {
-      throw new Error(
-        error.message ||
-        'Login gagal'
-      );
+      throw new Error(error?.message || 'Registrasi gagal');
     }
   };
 
@@ -2542,68 +2088,22 @@ export const AppProvider: React.FC<{
    */
 
   const addLogEntry = async (
-    newLog: Omit<
-      LogEntry,
-      'id' | 'date' | 'status'
-    >
+    newLog: Omit<LogEntry, 'id' | 'date' | 'status'>
   ) => {
     try {
-      const created =
-        await api.post(
-          '/api/logbook',
-          {
-            activity_title:
-              newLog.title,
+      await api.post('/api/logbook', {
+        activity_title: newLog.title,
 
-            description:
-              newLog.description,
+        description: newLog.description,
 
-            hours:
-              newLog.hours,
+        hours: newLog.hours,
 
-            category:
-              newLog.category,
-          }
-        ) as any;
-
-      const entry: LogEntry = {
-        id:
-          `LOG-${created.id}`,
-
-        date:
-          formatDate(
-            created.date
-          ),
-
-        title:
-          created.activityTitle,
-
-        description:
-          created.description,
-
-        hours:
-          created.hours,
-
-        category:
-          created.category,
-
-        status:
-          'pending',
-      };
-
-      setLogEntries(
-        prev => [
-          entry,
-          ...prev,
-        ]
-      );
+        category: newLog.category,
+      });
 
       await loadLogEntries();
     } catch (error: any) {
-      throw new Error(
-        error.message ||
-        'Gagal membuat logbook'
-      );
+      throw new Error(error?.message || 'Gagal membuat logbook');
     }
   };
 
@@ -2613,40 +2113,30 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const updateLogStatus =
-    async (
-      id: string,
-      status:
-        | 'approved'
-        | 'rejected'
-        | 'revision',
-      feedback?: string
-    ) => {
-      try {
-        const logId =
-          parseInt(
-            id.replace(
-              'LOG-',
-              ''
-            )
-          );
+  const updateLogStatus = async (
+    id: string,
+    status: 'approved' | 'rejected' | 'revision',
+    feedback?: string
+  ) => {
+    try {
+      const logId = parseInt(id.replace('LOG-', ''), 10);
 
-        await api.put(
-          `/api/logbook/${logId}`,
-          {
-            status,
-            feedback,
-          }
-        );
-
-        await loadLogEntries();
-      } catch (error: any) {
-        throw new Error(
-          error.message ||
-          'Gagal update status logbook'
-        );
+      if (Number.isNaN(logId)) {
+        throw new Error('ID logbook tidak valid.');
       }
-    };
+
+      await api.put(`/api/logbook/${logId}`, {
+        status,
+        feedback,
+      });
+
+      await loadLogEntries();
+    } catch (error: any) {
+      throw new Error(
+        error?.message || 'Gagal update status logbook'
+      );
+    }
+  };
 
   /*
    * =======================================================
@@ -2654,50 +2144,37 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const updateLogEntry =
-    async (
-      id: string,
-      data: {
-        title: string;
-        description: string;
-        hours: number;
-        category: string;
+  const updateLogEntry = async (
+    id: string,
+    data: {
+      title: string;
+      description: string;
+      hours: number;
+      category: string;
+    }
+  ) => {
+    try {
+      const logId = parseInt(id.replace('LOG-', ''), 10);
+
+      if (Number.isNaN(logId)) {
+        throw new Error('ID logbook tidak valid.');
       }
-    ) => {
-      try {
-        const logId =
-          parseInt(
-            id.replace(
-              'LOG-',
-              ''
-            )
-          );
 
-        await api.put(
-          `/api/logbook/${logId}`,
-          {
-            activity_title:
-              data.title,
+      await api.put(`/api/logbook/${logId}`, {
+        activity_title: data.title,
 
-            description:
-              data.description,
+        description: data.description,
 
-            hours:
-              data.hours,
+        hours: data.hours,
 
-            category:
-              data.category,
-          }
-        );
+        category: data.category,
+      });
 
-        await loadLogEntries();
-      } catch (error: any) {
-        throw new Error(
-          error.message ||
-          'Gagal update logbook'
-        );
-      }
-    };
+      await loadLogEntries();
+    } catch (error: any) {
+      throw new Error(error?.message || 'Gagal update logbook');
+    }
+  };
 
   /*
    * =======================================================
@@ -2705,74 +2182,50 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const checkInAttendance =
-    async (
-      _imageUrl?: string,
-      latitude?: number,
-      longitude?: number
-    ) => {
-      try {
-        await api.post(
-          '/api/absensi',
-          {
-            status:
-              'hadir',
+  const checkInAttendance = async (
+    _imageUrl?: string,
+    latitude?: number,
+    longitude?: number
+  ) => {
+    try {
+      await api.post('/api/absensi', {
+        status: 'hadir',
 
-            location:
-              'Current Location',
+        location: 'Current Location',
 
-            latitude,
-            longitude,
-          }
-        );
+        latitude,
+        longitude,
+      });
 
-        await Promise.all([
-          loadAttendances(),
-          loadDailyStatus(),
-        ]);
-      } catch (error: any) {
-        throw new Error(
-          error.message ||
-          'Gagal melakukan absensi'
-        );
-      }
-    };
+      await Promise.all([loadAttendances(), loadDailyStatus()]);
+    } catch (error: any) {
+      throw new Error(error?.message || 'Gagal melakukan absensi');
+    }
+  };
 
   /*
    * =======================================================
-   * CHECK OUT (ABSEN PULANG)
+   * CHECK OUT
    * =======================================================
-   *
-   * POST /api/absensi/checkout — hanya untuk absensi hari ini
-   * yang sudah check-in dan belum check-out. Geofence divalidasi
-   * di server (sama seperti check-in).
    */
 
-  const checkOutAttendance =
-    async (
-      latitude?: number,
-      longitude?: number
-    ) => {
-      try {
-        await api.post(
-          '/api/absensi/checkout',
-          {
-            latitude,
-            longitude,
-          }
-        );
+  const checkOutAttendance = async (
+    latitude?: number,
+    longitude?: number
+  ) => {
+    try {
+      await api.post('/api/absensi/checkout', {
+        latitude,
+        longitude,
+      });
 
-        await Promise.all([
-          loadAttendances(),
-          loadDailyStatus(),
-        ]);
-      } catch (error: any) {
-        throw new Error(
-          error.message ||
-          'Gagal melakukan absen pulang'
-        );
-      }
-    };
+      await Promise.all([loadAttendances(), loadDailyStatus()]);
+    } catch (error: any) {
+      throw new Error(
+        error?.message || 'Gagal melakukan absen pulang'
+      );
+    }
+  };
 
   /*
    * =======================================================
@@ -2780,32 +2233,28 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const updatePerizinanStatus =
-    async (
-      id: number,
-      status:
-        | 'approved'
-        | 'rejected',
-      rejectReason?: string
-    ) => {
-      try {
-        await api.put(
-          `/api/permissions/${id}`,
-          {
-            status,
-            rejectReason,
-          }
-        );
+  const updatePerizinanStatus = async (
+    id: number,
+    status: 'approved' | 'rejected',
+    rejectReason?: string
+  ) => {
+    try {
+      await api.put(`/api/permissions/${id}`, {
+        status,
+        rejectReason,
+      });
 
-        await loadPerizinan();
-        await loadAttendances();
-      } catch (error: any) {
-        throw new Error(
-          error.message ||
-          'Gagal update status perizinan'
-        );
-      }
-    };
+      await Promise.all([
+        loadPerizinan(),
+        loadAttendances(),
+        loadDailyStatus(),
+      ]);
+    } catch (error: any) {
+      throw new Error(
+        error?.message || 'Gagal update status perizinan'
+      );
+    }
+  };
 
   /*
    * =======================================================
@@ -2813,66 +2262,37 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const createPermission =
-    async (data: {
-      type: string;
-      reason: string;
-      date: string;
-      file?: File | null;
-      attachmentUrl?: string;
-    }) => {
-      try {
-        const formData =
-          new FormData();
+  const createPermission = async (data: {
+    type: string;
+    reason: string;
+    date: string;
+    file?: File | null;
+    attachmentUrl?: string;
+  }) => {
+    try {
+      const formData = new FormData();
 
-        formData.append(
-          'type',
-          data.type
-        );
+      formData.append('type', data.type);
 
-        formData.append(
-          'reason',
-          data.reason
-        );
+      formData.append('reason', data.reason);
 
-        formData.append(
-          'date',
-          data.date
-        );
+      formData.append('date', data.date);
 
-        if (data.file) {
-          formData.append(
-            'file',
-            data.file
-          );
-        } else if (
-          data.attachmentUrl
-        ) {
-          formData.append(
-            'attachmentUrl',
-            data.attachmentUrl
-          );
-        }
-
-        const res =
-          await api.upload(
-            '/api/permissions',
-            formData
-          );
-
-        await Promise.all([
-          loadPerizinan(),
-          loadDailyStatus(),
-        ]);
-
-        return res;
-      } catch (error: any) {
-        throw new Error(
-          error.message ||
-          'Gagal membuat perizinan'
-        );
+      if (data.file) {
+        formData.append('file', data.file);
+      } else if (data.attachmentUrl) {
+        formData.append('attachmentUrl', data.attachmentUrl);
       }
-    };
+
+      const res = await api.upload('/api/permissions', formData);
+
+      await Promise.all([loadPerizinan(), loadDailyStatus()]);
+
+      return res;
+    } catch (error: any) {
+      throw new Error(error?.message || 'Gagal membuat perizinan');
+    }
+  };
 
   /*
    * =======================================================
@@ -2880,24 +2300,17 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const deletePermission =
-    async (id: number) => {
-      try {
-        await api.delete(
-          `/api/permissions/${id}`
-        );
+  const deletePermission = async (id: number) => {
+    try {
+      await api.delete(`/api/permissions/${id}`);
 
-        await Promise.all([
-          loadPerizinan(),
-          loadDailyStatus(),
-        ]);
-      } catch (error: any) {
-        throw new Error(
-          error.message ||
-          'Gagal menghapus perizinan'
-        );
-      }
-    };
+      await Promise.all([loadPerizinan(), loadDailyStatus()]);
+    } catch (error: any) {
+      throw new Error(
+        error?.message || 'Gagal menghapus perizinan'
+      );
+    }
+  };
 
   /*
    * =======================================================
@@ -2905,22 +2318,19 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const createAcademicYear =
-    async (name: string) => {
-      try {
-        await api.post(
-          '/api/academic-years',
-          { name }
-        );
+  const createAcademicYear = async (name: string) => {
+    try {
+      await api.post('/api/academic-years', {
+        name,
+      });
 
-        await loadAcademicYears();
-      } catch (error: any) {
-        throw new Error(
-          error.message ||
-          'Gagal menambah Tahun Ajaran'
-        );
-      }
-    };
+      await loadAcademicYears();
+    } catch (error: any) {
+      throw new Error(
+        error?.message || 'Gagal menambah Tahun Ajaran'
+      );
+    }
+  };
 
   /*
    * =======================================================
@@ -2928,28 +2338,23 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const updateAcademicYear =
-    async (
-      id: number,
-      data: {
-        name?: string;
-        isActive?: boolean;
-      }
-    ) => {
-      try {
-        await api.patch(
-          `/api/academic-years/${id}`,
-          data
-        );
+  const updateAcademicYear = async (
+    id: number,
+    data: {
+      name?: string;
+      isActive?: boolean;
+    }
+  ) => {
+    try {
+      await api.patch(`/api/academic-years/${id}`, data);
 
-        await loadAcademicYears();
-      } catch (error: any) {
-        throw new Error(
-          error.message ||
-          'Gagal mengubah Tahun Ajaran'
-        );
-      }
-    };
+      await loadAcademicYears();
+    } catch (error: any) {
+      throw new Error(
+        error?.message || 'Gagal mengubah Tahun Ajaran'
+      );
+    }
+  };
 
   /*
    * =======================================================
@@ -2957,34 +2362,23 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const deleteAcademicYear =
-    async (id: number) => {
-      try {
-        await api.delete(
-          `/api/academic-years/${id}`
-        );
+  const deleteAcademicYear = async (id: number) => {
+    try {
+      await api.delete(`/api/academic-years/${id}`);
 
-        if (
-          selectedAcademicYearId ===
-          id
-        ) {
-          localStorage.removeItem(
-            'selectedAcademicYearId'
-          );
+      if (selectedAcademicYearId === id) {
+        localStorage.removeItem('selectedAcademicYearId');
 
-          setSelectedAcademicYearIdState(
-            null
-          );
-        }
-
-        await loadAcademicYears();
-      } catch (error: any) {
-        throw new Error(
-          error.message ||
-          'Gagal menghapus Tahun Ajaran'
-        );
+        setSelectedAcademicYearIdState(null);
       }
-    };
+
+      await loadAcademicYears();
+    } catch (error: any) {
+      throw new Error(
+        error?.message || 'Gagal menghapus Tahun Ajaran'
+      );
+    }
+  };
 
   /*
    * =======================================================
@@ -2992,31 +2386,27 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const submitEvaluation =
-    async (
-      siswaId: number,
-      nilaiDUDI: number,
-      period: string
-    ) => {
-      try {
-        await api.post(
-          '/api/evaluations',
-          {
-            studentId: siswaId,
-            score: nilaiDUDI,
-            type: 'dudi',
-            period,
-          }
-        );
+  const submitEvaluation = async (
+    siswaId: number,
+    nilaiDUDI: number,
+    period: string
+  ) => {
+    try {
+      await api.post('/api/evaluations', {
+        studentId: siswaId,
 
-        await loadSiswa();
-      } catch (error: any) {
-        throw new Error(
-          error.message ||
-          'Gagal submit evaluasi'
-        );
-      }
-    };
+        score: nilaiDUDI,
+
+        type: 'dudi',
+
+        period,
+      });
+
+      await loadSiswa();
+    } catch (error: any) {
+      throw new Error(error?.message || 'Gagal submit evaluasi');
+    }
+  };
 
   /*
    * =======================================================
@@ -3024,37 +2414,27 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const submitGuruGrade =
-    async (
-      siswaId: number,
-      nilaiGuru: number,
-      period: string
-    ) => {
-      try {
-        await api.post(
-          '/api/evaluations',
-          {
-            studentId:
-              siswaId,
+  const submitGuruGrade = async (
+    siswaId: number,
+    nilaiGuru: number,
+    period: string
+  ) => {
+    try {
+      await api.post('/api/evaluations', {
+        studentId: siswaId,
 
-            score:
-              nilaiGuru,
+        score: nilaiGuru,
 
-            type:
-              'guru',
+        type: 'guru',
 
-            period,
-          }
-        );
+        period,
+      });
 
-        await loadSiswa();
-      } catch (error: any) {
-        throw new Error(
-          error.message ||
-          'Gagal submit nilai guru'
-        );
-      }
-    };
+      await loadSiswa();
+    } catch (error: any) {
+      throw new Error(error?.message || 'Gagal submit nilai guru');
+    }
+  };
 
   /*
    * =======================================================
@@ -3075,89 +2455,95 @@ export const AppProvider: React.FC<{
     >
   ) => {
     try {
-      await api.post(
-        '/api/hubin/students',
-        {
-          name:
-            newSiswa.name,
+      if (selectedAcademicYearId === null) {
+        throw new Error('Pilih Tahun Ajaran terlebih dahulu.');
+      }
 
-          email:
-            `${newSiswa.name
-              .toLowerCase()
-              .replace(
-                /\s+/g,
-                '.'
-              )}@gopkl.id`,
+      await api.post('/api/hubin/students', {
+        name: newSiswa.name,
 
-          password:
-            'gopkl123',
+        email: `${newSiswa.name
+          .toLowerCase()
+          .replace(/\s+/g, '.')}@gopkl.id`,
 
-          academicYear:
-            newSiswa.academicYear ||
-            undefined,
+        password: 'gopkl123',
 
-          academicYearId:
-            selectedAcademicYearId ||
-            undefined,
-        }
-      );
+        academicYear: newSiswa.academicYear || undefined,
+
+        academicYearId: selectedAcademicYearId,
+      });
 
       await loadSiswa();
     } catch (error: any) {
-      throw new Error(
-        error.message ||
-        'Gagal menambah siswa'
-      );
+      throw new Error(error?.message || 'Gagal menambah siswa');
     }
   };
 
   /*
    * =======================================================
-   * ADD PERUSAHAAN
+   * ADD PERUSAHAAN - LEGACY
    * =======================================================
    */
 
-  const addPerusahaan =
-    async (data: {
-      name: string;
-      address: string;
-      quota: number;
-      mentor: string;
-    }) => {
-      try {
-        if (
-          !selectedAcademicYearId
-        ) {
-          throw new Error(
-            'Pilih Tahun Ajaran terlebih dahulu.'
-          );
-        }
+  const addPerusahaan = async (data: {
+    name: string;
+    address: string;
+    quota: number;
+    mentor: string;
 
-        await api.post(
-          '/api/companies',
-          {
-            name:
-              data.name,
+    city?: string;
+    country?: string;
+    category?: string;
 
-            address:
-              data.address,
+    latitude?: number;
+    longitude?: number;
+    radiusMeters?: number;
 
-            quota:
-              data.quota,
+    mentorId?: number;
+  }) => {
+    try {
+      if (selectedAcademicYearId === null) {
+        throw new Error('Pilih Tahun Ajaran terlebih dahulu.');
+      }
 
-            academicYearId:
-              selectedAcademicYearId,
-          }
-        );
-
-        await loadPerusahaan();
-      } catch (error: any) {
+      if (
+        data.latitude === undefined ||
+        data.latitude === null ||
+        data.longitude === undefined ||
+        data.longitude === null
+      ) {
         throw new Error(
-          error.message ||
-          'Gagal menambah perusahaan'
+          'Latitude dan longitude perusahaan wajib diisi.'
         );
       }
-    };
+
+      await addCompany({
+        name: data.name,
+
+        address: data.address,
+
+        quota: data.quota,
+
+        city: data.city,
+
+        country: data.country,
+
+        category: data.category,
+
+        latitude: data.latitude,
+
+        longitude: data.longitude,
+
+        radiusMeters: data.radiusMeters,
+
+        mentorId: data.mentorId,
+      });
+    } catch (error: any) {
+      throw new Error(
+        error?.message || 'Gagal menambah perusahaan'
+      );
+    }
+  };
 
   /*
    * =======================================================
@@ -3165,96 +2551,89 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const updateSiswaMapping =
-    async (
-      siswaId: number,
-      data: {
-        perusahaan: string;
-        guruPembimbing: string;
-        mentor: string;
-        companyId?: number | string;
-        teacherId?: number | string;
-          academicYear?: string;
-      }
-    ) => {
-      try {
-        await api.patch(
-          `/api/users/${siswaId}`,
-          {
-            companyId:
-              data.companyId
-                ? Number(
-                    data.companyId
-                  )
-                : undefined,
+  const updateSiswaMapping = async (
+    siswaId: number,
+    data: {
+      perusahaan: string;
+      guruPembimbing: string;
+      mentor: string;
 
-            teacherId:
-              data.teacherId
-                ? Number(
-                    data.teacherId
-                  )
-                : undefined,
+      companyId?: number | string;
+      teacherId?: number | string;
+      mentorName?: string;
 
-            academicYear:
-              data.academicYear !==
-              undefined
-                ? data.academicYear
-                : undefined,
+      academicYear?: string;
+    }
+  ) => {
+    try {
+      await api.patch(`/api/users/${siswaId}`, {
+        companyId: data.companyId
+          ? Number(data.companyId)
+          : undefined,
 
-            academicYearId:
-              selectedAcademicYearId ||
-              undefined,
-          }
-        );
+        teacherId: data.teacherId
+          ? Number(data.teacherId)
+          : undefined,
 
-        await loadSiswa();
-        await loadGuru();
-        await loadMentor();
-        await loadPerusahaan();
-      } catch (error: any) {
-        throw new Error(
-          error.message ||
-          'Gagal update pemetaan siswa'
-        );
-      }
-    };
+        mentorName: data.mentorName,
+
+        academicYear:
+          data.academicYear !== undefined
+            ? data.academicYear
+            : undefined,
+
+        academicYearId: selectedAcademicYearId || undefined,
+      });
+
+      await Promise.all([
+        loadSiswa(),
+        loadGuru(),
+        loadMentor(),
+        loadCompanies(),
+      ]);
+    } catch (error: any) {
+      throw new Error(
+        error?.message || 'Gagal update pemetaan siswa'
+      );
+    }
+  };
 
   /*
    * =======================================================
-   * UPDATE COMPANY LOCATION
+   * UPDATE COMPANY LOCATION / GEOFENCE
    * =======================================================
    */
 
-  const updateCompanyLocation =
-    async (
-      companyId: number,
-      lat: number,
-      lng: number,
-      radius: number
-    ) => {
-      try {
-        await api.patch(
-          `/api/companies/${companyId}`,
-          {
-            latitude:
-              lat,
-
-            longitude:
-              lng,
-
-            radiusMeters:
-              radius,
-          }
-        );
-
-        await loadPerusahaan();
-      } catch (error: any) {
-        throw new Error(
-          error.message ||
-          'Gagal update lokasi perusahaan'
-        );
+  const updateCompanyLocation = async (
+    companyId: number,
+    lat: number,
+    lng: number,
+    radius: number
+  ) => {
+    try {
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        throw new Error('Latitude dan longitude tidak valid.');
       }
-    };
+
+      if (!Number.isFinite(radius) || radius <= 0) {
+        throw new Error('Radius harus lebih besar dari 0.');
+      }
+
+      await api.patch(`/api/companies/${companyId}`, {
+        latitude: lat,
+
+        longitude: lng,
+
+        radiusMeters: radius,
+      });
+
+      await loadCompanies();
+    } catch (error: any) {
+      throw new Error(
+        error?.message || 'Gagal update lokasi perusahaan'
+      );
+    }
+  };
 
   /*
    * =======================================================
@@ -3329,15 +2708,16 @@ export const AppProvider: React.FC<{
         updateCompanyLocation,
 
         login,
+        register,
         logout,
 
-                refreshData,
+        refreshData,
 
-        // Fungsi pemuatan data untuk komponen Hubin
+        // loader data (dipakai HubinKelolaData dll.)
         loadSiswa,
         loadGuru,
         loadMentor,
-        loadPerusahaan,
+        loadPerusahaan: loadCompanies,
 
         loadSuperStats,
         loadHubinClasses,
@@ -3374,13 +2754,10 @@ export const AppProvider: React.FC<{
  */
 
 export const useApp = () => {
-  const context =
-    useContext(AppContext);
+  const context = useContext(AppContext);
 
   if (!context) {
-    throw new Error(
-      'useApp must be used within an AppProvider'
-    );
+    throw new Error('useApp must be used within an AppProvider');
   }
 
   return context;

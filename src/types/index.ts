@@ -21,7 +21,8 @@ export type ActivePage =
   | 'hubin-student-import'
   | 'hubin-mentor-roster'
   | 'teacher-mentor-mapping'
-  | 'laporan';
+  | 'laporan'
+  | 'data-mentor';
 
 export type UserRole = 'intern' | 'mentor' | 'teacher' | 'hubin';
 

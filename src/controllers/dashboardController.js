@@ -1,4 +1,3 @@
-
 import prisma from '../config/db.js';
 
 /* =====================================================
@@ -156,8 +155,15 @@ export const getDashboardStats = async (req, res, next) => {
           id: true,
           name: true,
           address: true,
+          city: true,
+          country: true,
           isActive: true,
-          quota: true,
+
+          // IMPORTANT:
+          // Schema Prisma sekarang menggunakan quotaCompany,
+          // bukan quota.
+          quotaCompany: true,
+
           academicYearId: true,
         },
 
@@ -229,6 +235,7 @@ export const getDashboardStats = async (req, res, next) => {
 
       companyCounts.get(student.company.id).count += 1;
 
+      // Gunakan address sebagai nama lokasi
       const address =
         student.company.address?.trim() ||
         'Lokasi tidak diisi';
@@ -255,12 +262,24 @@ export const getDashboardStats = async (req, res, next) => {
 
     const companyStatus = companies.reduce(
       (result, company) => {
+        const studentCount =
+          companyCounts.get(company.id)?.count || 0;
+
+        // Perusahaan nonaktif
         if (!company.isActive) {
           result.inactive += 1;
-        } else if (
-          company.quota > 0 &&
-          (companyCounts.get(company.id)?.count || 0) >=
-            company.quota
+          return result;
+        }
+
+        // Kapasitas perusahaan
+        const quota = Number(
+          company.quotaCompany || 0
+        );
+
+        // Jika quota > 0 dan siswa sudah mencapai quota
+        if (
+          quota > 0 &&
+          studentCount >= quota
         ) {
           result.full += 1;
         } else {
@@ -304,21 +323,31 @@ export const getDashboardStats = async (req, res, next) => {
     if (role === 'teacher') {
       result.studentStatus = scopedStudents.reduce(
         (status, student) => {
+          // Belum ditempatkan
           if (!student.company) {
             status.notPlaced += 1;
-          } else if (
+          }
+
+          // Sakit
+          else if (
             student.absensis.some(
               (item) => item.status === 'sakit'
             )
           ) {
             status.sick += 1;
-          } else if (
+          }
+
+          // Izin
+          else if (
             student.absensis.some(
               (item) => item.status === 'izin'
             )
           ) {
             status.permission += 1;
-          } else {
+          }
+
+          // Aktif
+          else {
             status.active += 1;
           }
 
