@@ -17,6 +17,12 @@ import {
 import { useApp } from '../context/AppContext';
 import { DashboardCharts } from './DashboardCharts';
 
+const normalizeName = (value?: string) =>
+  (value || '').toLowerCase().replace(/\s+/g, ' ').trim();
+
+const stripBracket = (value?: string) =>
+  normalizeName((value || '').replace(/\s*\(.*\)\s*$/, ''));
+
 const getInitials = (name: string) =>
   (name || '?')
     .split(' ')
@@ -40,6 +46,7 @@ export const HubinManagementDashboard: React.FC<{
     superClasses,
     loadHubinClasses,
     siswaList,
+    perusahaanList,
 
     isAuthenticated,
 
@@ -226,31 +233,53 @@ export const HubinManagementDashboard: React.FC<{
     [siswaList, selectedAcademicYearId]
   );
 
+  /**
+   * Kategori TEFA diturunkan dari perusahaan tempat siswa dipetakan:
+   * perusahaan berkategori Internal (sekolah) -> 'internal',
+   * perusahaan lain -> 'external', belum dipetakan -> null.
+   */
+  const getTefaCategory = (
+    student: { perusahaan?: string }
+  ): 'internal' | 'external' | null => {
+    const name = normalizeName(student.perusahaan);
+    if (!name || name === '-') return null;
+
+    const base = stripBracket(student.perusahaan);
+
+    const company =
+      perusahaanList.find((c) => normalizeName(c.name) === name) ||
+      perusahaanList.find((c) => stripBracket(c.name) === base);
+
+    if (!company) return null;
+
+    return normalizeName(company.category).includes('internal')
+      ? 'internal'
+      : 'external';
+  };
+
   const mappedStudents = useMemo(
-    () =>
-      yearScopedStudents.filter((student) => {
-        const category = student.tefaCategory;
-        const hasCompany = Boolean(
-          student.perusahaan && student.perusahaan.trim() && student.perusahaan !== '-'
-        );
-        return category === 'internal' || (category === 'external' && hasCompany) || hasCompany;
-      }),
-    [yearScopedStudents]
+    () => yearScopedStudents.filter((student) => getTefaCategory(student) !== null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [yearScopedStudents, perusahaanList]
   );
 
-  const totalTefaInternal = yearScopedStudents.filter(
-    (student) => student.tefaCategory === 'internal'
-  ).length;
+  const totalTefaInternal = useMemo(
+    () => yearScopedStudents.filter((student) => getTefaCategory(student) === 'internal').length,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [yearScopedStudents, perusahaanList]
+  );
 
-  const totalTefaEksternal = yearScopedStudents.filter(
-    (student) => student.tefaCategory === 'external'
-  ).length;
+  const totalTefaEksternal = useMemo(
+    () => yearScopedStudents.filter((student) => getTefaCategory(student) === 'external').length,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [yearScopedStudents, perusahaanList]
+  );
 
   const tefaTableStudents = useMemo(() => {
     if (!selectedTefaView) return [];
     const query = tefaTableSearch.trim().toLowerCase();
     return yearScopedStudents.filter((student) => {
-      if (student.tefaCategory !== selectedTefaView) return false;
+      if (getTefaCategory(student) !== selectedTefaView) return false;
       if (!query) return true;
       return (
         (student.name || '').toLowerCase().includes(query) ||
@@ -260,7 +289,8 @@ export const HubinManagementDashboard: React.FC<{
         (student.mentor || '').toLowerCase().includes(query)
       );
     });
-  }, [yearScopedStudents, selectedTefaView, tefaTableSearch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [yearScopedStudents, perusahaanList, selectedTefaView, tefaTableSearch]);
 
   /* ============================================================
      MAIN STATS
@@ -650,7 +680,7 @@ export const HubinManagementDashboard: React.FC<{
                 )}
               </div>
               <div className="px-4 py-3 border-t border-mist/60 text-[11px] font-medium text-navy/50">
-                Kategori TEFA tersimpan di database dan tersinkron dengan data siswa.
+                Kategori TEFA mengikuti kategori perusahaan tempat siswa dipetakan (Internal / Eksternal).
               </div>
             </section>
           )}

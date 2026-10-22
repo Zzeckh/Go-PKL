@@ -298,6 +298,7 @@ interface AppContextType {
       companyId?: number | string;
       teacherId?: number | string;
       academicYear?: string;
+      placementType?: 'internal' | 'eksternal';
     }
   ) => Promise<void>;
 
@@ -3175,6 +3176,7 @@ export const AppProvider: React.FC<{
         companyId?: number | string;
         teacherId?: number | string;
           academicYear?: string;
+        placementType?: 'internal' | 'eksternal';
       }
     ) => {
       try {
@@ -3200,6 +3202,9 @@ export const AppProvider: React.FC<{
               undefined
                 ? data.academicYear
                 : undefined,
+
+            placementType:
+              data.placementType,
 
             academicYearId:
               selectedAcademicYearId ||

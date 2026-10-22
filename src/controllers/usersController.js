@@ -135,8 +135,54 @@ export const updateUser = async (req, res, next) => {
       classId,
       teacherId,
       companyId,
-      academicYear
+      academicYear,
+      placementType
     } = req.body;
+
+    // Validasi jenis PKL: Internal = otomatis perusahaan sekolah (kategori
+    // Internal); Eksternal = tidak boleh perusahaan sekolah.
+    let resolvedCompanyId = companyId;
+    if (placementType !== undefined) {
+      if (!['internal', 'eksternal'].includes(placementType)) {
+        return res.status(400).json({ error: 'Jenis PKL tidak valid' });
+      }
+
+      const isInternalCategory = (c) =>
+        String(c || '').toLowerCase().includes('internal');
+
+      if (placementType === 'internal') {
+        const candidates = await prisma.company.findMany({
+          where: { category: { not: null } },
+          select: { id: true, category: true },
+          orderBy: { id: 'asc' }
+        });
+        const school = candidates.find((c) => isInternalCategory(c.category));
+        if (!school) {
+          return res.status(400).json({
+            error: 'Perusahaan sekolah (kategori Internal) belum dibuat'
+          });
+        }
+        resolvedCompanyId = school.id;
+      } else {
+        if (!companyId) {
+          return res.status(400).json({
+            error: 'Pilih perusahaan untuk PKL Eksternal'
+          });
+        }
+        const chosen = await prisma.company.findUnique({
+          where: { id: parseInt(companyId) },
+          select: { category: true }
+        });
+        if (!chosen) {
+          return res.status(404).json({ error: 'Perusahaan tidak ditemukan' });
+        }
+        if (isInternalCategory(chosen.category)) {
+          return res.status(400).json({
+            error: 'PKL Eksternal tidak boleh memilih perusahaan sekolah'
+          });
+        }
+      }
+    }
 
     // academicYear adalah kolom string biasa pada User (Model AcademicYear
     // TIDAK ada di schema / database). Kirim string kosong / null untuk
@@ -154,7 +200,7 @@ export const updateUser = async (req, res, next) => {
       name: name ?? undefined,
       classId: classId ? parseInt(classId) : undefined,
       teacherId: teacherId ? parseInt(teacherId) : undefined,
-      companyId: companyId ? parseInt(companyId) : undefined,
+      companyId: resolvedCompanyId ? parseInt(resolvedCompanyId) : undefined,
       academicYear: resolvedAcademicYear,
     };
 

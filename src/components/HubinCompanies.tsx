@@ -292,7 +292,12 @@ const CompanyFormModal: React.FC<{
   const [form, setForm] = useState({
     name: company?.name || '',
     address: company?.address || '',
-    category: company?.category || '',
+    category: (() => {
+      const v = String(company?.category || '').toLowerCase();
+      if (v.includes('internal')) return 'Internal';
+      if (v.includes('eksternal') || v.includes('external')) return 'Eksternal';
+      return '';
+    })(),
     quota: company?.quota || 5,
   });
 
@@ -502,12 +507,15 @@ const CompanyFormModal: React.FC<{
             </div>
             <div>
               <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">Kategori</label>
-              <input
+              <select
                 value={form.category}
                 onChange={e => setForm({ ...form, category: e.target.value })}
-                placeholder="Contoh: IT"
-                className="w-full bg-mist/30 border border-mist rounded-[24px] px-3.5 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
-              />
+                className="w-full bg-mist/30 border border-mist rounded-[24px] px-3.5 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
+              >
+                <option value="">— Pilih Kategori —</option>
+                <option value="Internal">Internal (PKL di sekolah)</option>
+                <option value="Eksternal">Eksternal (perusahaan mitra)</option>
+              </select>
             </div>
             <div>
               <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">Kuota Siswa</label>
