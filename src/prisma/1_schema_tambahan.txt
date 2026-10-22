@@ -1,0 +1,23 @@
+Tambahkan field berikut ke prisma/schema.prisma (jangan hapus field lama):
+
+model Company {
+  ...
+  quota         Int      @default(0)   // tetap ada = quotaSchool + quotaCompany (dijaga server)
+  quotaSchool   Int      @default(0)   // BARU: kuota jalur sekolah
+  quotaCompany  Int      @default(0)   // BARU: kuota jalur perusahaan
+  ...
+}
+
+model User {
+  ...
+  tefaCategory     String? @db.VarChar(20)
+  placementSource  String? @db.VarChar(20)   // BARU: 'sekolah' | 'perusahaan'
+  ...
+}
+
+Lalu jalankan:
+  npx prisma migrate dev --name kuota_dua_jalur --create-only
+Ganti isi migration.sql yang dihasilkan dengan isi file 2_migration.sql,
+kemudian:
+  npx prisma migrate dev
+  npx prisma generate

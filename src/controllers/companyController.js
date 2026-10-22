@@ -1,5 +1,12 @@
 import prisma from '../config/db.js';
 import XLSX from 'xlsx';
+import {
+  SOURCE_LABEL,
+  isInternalCategory,
+  normalizeSource,
+  resolveQuotas,
+  getFilledBySource,
+} from '../services/quotaService.js';
 
 /**
  * Helper
@@ -38,12 +45,36 @@ export const getCompanies = async (req, res, next) => {
       },
     });
 
+    // Jumlah siswa per perusahaan per jalur (sekolah / perusahaan)
+    const grouped = await prisma.user.groupBy({
+      by: ['companyId', 'placementSource'],
+      where: { companyId: { not: null } },
+      _count: { _all: true },
+    });
+
+    const filledMap = new Map();
+
+    for (const g of grouped) {
+      const cur = filledMap.get(g.companyId) || { sekolah: 0, perusahaan: 0 };
+      if (g.placementSource === 'perusahaan') {
+        cur.perusahaan += g._count._all;
+      } else {
+        cur.sekolah += g._count._all;
+      }
+      filledMap.set(g.companyId, cur);
+    }
+
     res.json({
-      data: companies.map(({ _count, mentor, ...rest }) => ({
-        ...rest,
-        filled: _count.students,
-        mentor,
-      })),
+      data: companies.map(({ _count, mentor, ...rest }) => {
+        const f = filledMap.get(rest.id) || { sekolah: 0, perusahaan: 0 };
+        return {
+          ...rest,
+          filled: _count.students,
+          filledSchool: f.sekolah,
+          filledCompany: f.perusahaan,
+          mentor,
+        };
+      }),
     });
   } catch (error) {
     next(error);
@@ -62,11 +93,20 @@ export const createCompany = async (req, res, next) => {
       city,
       country,
       category,
-      quota,
       latitude,
       longitude,
       radiusMeters,
     } = req.body;
+
+    const quotas = resolveQuotas(req.body) || {
+      quotaSchool: 0,
+      quotaCompany: 0,
+      quota: 0,
+    };
+
+    if (quotas.error) {
+      return res.status(400).json({ error: quotas.error });
+    }
 
     if (!name || !address) {
       return res.status(400).json({
@@ -89,7 +129,9 @@ export const createCompany = async (req, res, next) => {
         city: city ? String(city).trim() : null,
         country: country ? String(country).trim() : null,
         category: category ? String(category).trim() : null,
-        quota: Number(quota) || 0,
+        quota: quotas.quota,
+        quotaSchool: quotas.quotaSchool,
+        quotaCompany: quotas.quotaCompany,
         latitude: Number(latitude),
         longitude: Number(longitude),
         radiusMeters: Number(radiusMeters) || 500,
@@ -139,7 +181,10 @@ export const downloadCompanyTemplate = async (req, res, next) => {
         Latitude: '',
         Longitude: '',
         Radius: '',
-        Kuota: '',
+        'Kuota Sekolah': '',
+        'Kuota Perusahaan': '',
+        Jalur: '',
+        'Guru Pembimbing': '',
       },
     ];
 
@@ -155,7 +200,10 @@ export const downloadCompanyTemplate = async (req, res, next) => {
       { wch: 15 },
       { wch: 15 },
       { wch: 15 },
-      { wch: 12 },
+      { wch: 15 },
+      { wch: 18 },
+      { wch: 14 },
+      { wch: 30 },
     ];
 
     const workbook = XLSX.utils.book_new();
@@ -276,6 +324,7 @@ export const importCompanies = async (req, res, next) => {
         email: true,
         companyId: true,
         teacherId: true,
+        placementSource: true,
       },
     });
 
@@ -345,7 +394,8 @@ export const importCompanies = async (req, res, next) => {
     const companyCache = new Map();
 
     /**
-     * Menyimpan jumlah siswa per perusahaan selama import.
+     * Menyimpan jumlah siswa per perusahaan per jalur selama import:
+     * { sekolah, perusahaan }
      */
     const companyFilled = new Map();
 
@@ -380,11 +430,10 @@ export const importCompanies = async (req, res, next) => {
         company &&
         !companyFilled.has(company.id)
       ) {
-        const filled = await prisma.user.count({
-          where: {
-            companyId: company.id,
-          },
-        });
+        const filled = await getFilledBySource(
+          prisma,
+          company.id
+        );
 
         companyFilled.set(
           company.id,
@@ -499,17 +548,58 @@ export const importCompanies = async (req, res, next) => {
        * ----------------------------------------------------------
        */
 
-      const quotaValue =
-        row['Kuota'] ??
-        row['kuota'] ??
-        row['Quota'] ??
-        row['quota'];
+      const readQuota = (...keys) => {
+        for (const key of keys) {
+          const v = row[key];
+          if (v !== undefined && v !== null && v !== '') {
+            return Number(v);
+          }
+        }
+        return undefined;
+      };
 
-      const quota =
-        quotaValue === '' ||
-        quotaValue == null
-          ? 6
-          : Number(quotaValue);
+      const quotaSchoolRaw = readQuota(
+        'Kuota Sekolah',
+        'kuota sekolah',
+        'KuotaSekolah',
+        'quotaSchool'
+      );
+      const quotaCompanyRaw = readQuota(
+        'Kuota Perusahaan',
+        'kuota perusahaan',
+        'KuotaPerusahaan',
+        'quotaCompany'
+      );
+      // kolom lama "Kuota" = Kuota Sekolah
+      const legacyQuotaRaw = readQuota(
+        'Kuota',
+        'kuota',
+        'Quota',
+        'quota'
+      );
+
+      // Nilai untuk perusahaan BARU (default lama: 6 kuota sekolah)
+      const quotaSchool =
+        quotaSchoolRaw ??
+        legacyQuotaRaw ??
+        (quotaCompanyRaw !== undefined ? 0 : 6);
+      const quotaCompany = quotaCompanyRaw ?? 0;
+      const quota = quotaSchool + quotaCompany;
+
+      /**
+       * ----------------------------------------------------------
+       * Jalur penempatan
+       * ----------------------------------------------------------
+       */
+
+      const jalurText = String(
+        row['Jalur'] ??
+          row['jalur'] ??
+          row['Jalur Penempatan'] ??
+          ''
+      ).trim();
+
+      const placementSource = normalizeSource(jalurText);
 
       /**
        * ----------------------------------------------------------
@@ -630,15 +720,27 @@ export const importCompanies = async (req, res, next) => {
       }
 
       if (
-        !Number.isFinite(quota) ||
-        quota <= 0 ||
-        !Number.isInteger(quota)
+        ![quotaSchool, quotaCompany].every(
+          (n) => Number.isInteger(n) && n >= 0
+        ) ||
+        quota <= 0
       ) {
         errors.push({
           row: rowNumber,
           name: studentName || undefined,
           error:
-            'Kuota harus berupa bilangan bulat lebih dari 0',
+            'Kuota Sekolah / Kuota Perusahaan harus bilangan bulat 0 atau lebih dan totalnya lebih dari 0',
+        });
+
+        continue;
+      }
+
+      if (jalurText && !placementSource) {
+        errors.push({
+          row: rowNumber,
+          name: studentName || undefined,
+          error:
+            'Jalur harus diisi "Sekolah" atau "Perusahaan"',
         });
 
         continue;
@@ -753,6 +855,8 @@ export const importCompanies = async (req, res, next) => {
                 city,
                 country,
                 quota,
+                quotaSchool,
+                quotaCompany,
                 latitude,
                 longitude,
                 radiusMeters,
@@ -767,7 +871,7 @@ export const importCompanies = async (req, res, next) => {
 
           companyFilled.set(
             company.id,
-            0
+            { sekolah: 0, perusahaan: 0 }
           );
         } else {
           /**
@@ -780,17 +884,41 @@ export const importCompanies = async (req, res, next) => {
           const filled =
             companyFilled.get(
               company.id
-            ) ?? 0;
+            ) ?? { sekolah: 0, perusahaan: 0 };
 
-          if (quota < filled) {
-            errors.push({
-              row: rowNumber,
-              name: student.name,
-              error:
-                `Kuota ${quota} lebih kecil dari jumlah siswa yang sudah terpetakan (${filled})`,
-            });
+          // Hanya kuota yang diisi di Excel yang ditimpa;
+          // yang kosong tetap memakai nilai di database.
+          const effSchool =
+            quotaSchoolRaw ??
+            legacyQuotaRaw ??
+            company.quotaSchool;
+          const effCompany =
+            quotaCompanyRaw ??
+            company.quotaCompany;
 
-            continue;
+          // Perusahaan sekolah (Internal) tidak dibatasi kuota.
+          if (!isInternalCategory(company.category)) {
+            if (effSchool < filled.sekolah) {
+              errors.push({
+                row: rowNumber,
+                name: student.name,
+                error:
+                  `Kuota Sekolah ${effSchool} lebih kecil dari siswa jalur sekolah yang sudah terpetakan (${filled.sekolah})`,
+              });
+
+              continue;
+            }
+
+            if (effCompany < filled.perusahaan) {
+              errors.push({
+                row: rowNumber,
+                name: student.name,
+                error:
+                  `Kuota Perusahaan ${effCompany} lebih kecil dari siswa jalur perusahaan yang sudah terpetakan (${filled.perusahaan})`,
+              });
+
+              continue;
+            }
           }
 
           /**
@@ -834,7 +962,9 @@ export const importCompanies = async (req, res, next) => {
                 address,
                 city,
                 country,
-                quota,
+                quota: effSchool + effCompany,
+                quotaSchool: effSchool,
+                quotaCompany: effCompany,
                 latitude,
                 longitude,
                 radiusMeters,
@@ -875,25 +1005,53 @@ export const importCompanies = async (req, res, next) => {
         const oldCompanyId =
           student.companyId;
 
-        /**
-         * Kalau siswa memang belum berada
-         * di perusahaan tersebut.
-         */
+        const internalCompany =
+          isInternalCategory(company.category);
 
-        if (
-          oldCompanyId !== company.id
-        ) {
+        const currentSource =
+          student.placementSource === 'perusahaan'
+            ? 'perusahaan'
+            : 'sekolah';
+
+        /**
+         * Jalur yang dipakai:
+         * - perusahaan sekolah (Internal) -> selalu jalur sekolah
+         * - kolom Jalur diisi             -> sesuai Excel
+         * - kosong, siswa sudah di sini   -> jalur lama dipertahankan
+         * - kosong, siswa baru            -> sekolah
+         */
+        const targetSource = internalCompany
+          ? 'sekolah'
+          : placementSource ||
+            (oldCompanyId === company.id
+              ? currentSource
+              : 'sekolah');
+
+        const moved =
+          oldCompanyId !== company.id ||
+          currentSource !== targetSource;
+
+        if (moved) {
           const filled =
             companyFilled.get(
               company.id
-            ) ?? 0;
+            ) ?? { sekolah: 0, perusahaan: 0 };
 
-          if (filled >= quota) {
+          const capacity =
+            targetSource === 'perusahaan'
+              ? company.quotaCompany
+              : company.quotaSchool;
+
+          // Perusahaan sekolah (Internal) tidak dibatasi kuota.
+          if (
+            !internalCompany &&
+            filled[targetSource] >= capacity
+          ) {
             errors.push({
               row: rowNumber,
               name: student.name,
               error:
-                `Kuota perusahaan "${companyName}" sudah penuh (${filled}/${quota})`,
+                `Kuota ${SOURCE_LABEL[targetSource]} perusahaan "${companyName}" sudah penuh (${filled[targetSource]}/${capacity})`,
             });
 
             continue;
@@ -904,8 +1062,9 @@ export const importCompanies = async (req, res, next) => {
            * 14. UPDATE SISWA
            * ======================================================
            *
-           * companyId = perusahaan
-           * teacherId = guru pembimbing perusahaan
+           * companyId       = perusahaan
+           * teacherId       = guru pembimbing perusahaan
+           * placementSource = jalur kuota yang dipakai
            */
 
           await prisma.user.update({
@@ -915,45 +1074,39 @@ export const importCompanies = async (req, res, next) => {
             data: {
               companyId: company.id,
               teacherId: teacher.id,
+              placementSource: targetSource,
             },
           });
 
-          /**
-           * Update jumlah siswa perusahaan baru.
-           */
-
-          companyFilled.set(
-            company.id,
-            filled + 1
-          );
+          companyFilled.set(company.id, {
+            ...filled,
+            [targetSource]: filled[targetSource] + 1,
+          });
 
           /**
-           * Kalau sebelumnya punya perusahaan lain,
-           * kurangi jumlah perusahaan lama.
+           * Kurangi hitungan tempat/jalur lama siswa.
+           * (Kalau perusahaan sama, ini mengurangi jalur lamanya.)
            */
-
           if (oldCompanyId) {
             const oldFilled =
               companyFilled.get(
                 oldCompanyId
               );
 
-            if (
-              oldFilled != null
-            ) {
-              companyFilled.set(
-                oldCompanyId,
-                Math.max(
+            if (oldFilled) {
+              companyFilled.set(oldCompanyId, {
+                ...oldFilled,
+                [currentSource]: Math.max(
                   0,
-                  oldFilled - 1
-                )
-              );
+                  oldFilled[currentSource] - 1
+                ),
+              });
             }
           }
         } else {
           /**
            * ======================================================
-           * Kalau siswa sudah berada di perusahaan yang sama,
+           * Siswa sudah di perusahaan & jalur yang sama,
            * tetap pastikan Guru Pembimbing diperbarui.
            * ======================================================
            */
@@ -986,6 +1139,7 @@ export const importCompanies = async (req, res, next) => {
           companyName: company.name,
           teacherId: teacher.id,
           teacherName: teacher.name,
+          placementSource: targetSource,
         });
       } catch (error) {
         errors.push({
@@ -1046,7 +1200,6 @@ export const updateCompany = async (
       city,
       country,
       category,
-      quota,
       latitude,
       longitude,
       radiusMeters,
@@ -1067,6 +1220,35 @@ export const updateCompany = async (
       });
     }
 
+
+    // Kuota dua jalur. null = tidak ada perubahan kuota.
+    const quotas = resolveQuotas(req.body, existing);
+
+    if (quotas?.error) {
+      return res.status(400).json({ error: quotas.error });
+    }
+
+    if (quotas) {
+      const finalCategory =
+        category !== undefined ? category : existing.category;
+
+      // Perusahaan sekolah (Internal) tidak dibatasi kuota.
+      if (!isInternalCategory(finalCategory)) {
+        const filled = await getFilledBySource(prisma, id);
+
+        if (quotas.quotaSchool < filled.sekolah) {
+          return res.status(400).json({
+            error: `Kuota Sekolah (${quotas.quotaSchool}) lebih kecil dari siswa jalur sekolah yang sudah terpetakan (${filled.sekolah})`,
+          });
+        }
+
+        if (quotas.quotaCompany < filled.perusahaan) {
+          return res.status(400).json({
+            error: `Kuota Perusahaan (${quotas.quotaCompany}) lebih kecil dari siswa jalur perusahaan yang sudah terpetakan (${filled.perusahaan})`,
+          });
+        }
+      }
+    }
 
     const company =
       await prisma.company.update({
@@ -1099,10 +1281,11 @@ export const updateCompany = async (
               ? category
               : undefined,
 
-          quota:
-            quota !== undefined
-              ? Number(quota)
-              : undefined,
+          quota: quotas ? quotas.quota : undefined,
+
+          quotaSchool: quotas ? quotas.quotaSchool : undefined,
+
+          quotaCompany: quotas ? quotas.quotaCompany : undefined,
 
           latitude:
             latitude !== undefined

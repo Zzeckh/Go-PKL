@@ -312,6 +312,9 @@ export const HubinPemetaan: React.FC = () => {
   const [formPlacementType, setFormPlacementType] = useState<
     '' | 'internal' | 'eksternal'
   >('');
+  const [formPlacementSource, setFormPlacementSource] = useState<
+    '' | 'sekolah' | 'perusahaan'
+  >('');
   const [formGuruId, setFormGuruId] = useState<number | string>('');
 
   /* timer "Tersimpan" dibersihkan saat unmount */
@@ -338,7 +341,10 @@ export const HubinPemetaan: React.FC = () => {
       'Latitude',
       'Longitude',
       'Radius',
-      'Kuota',
+      'Kuota Sekolah',
+      'Kuota Perusahaan',
+      'Jalur',
+      'Guru Pembimbing',
     ];
 
     const worksheet = XLSX.utils.aoa_to_sheet([headers]);
@@ -353,7 +359,10 @@ export const HubinPemetaan: React.FC = () => {
       { wch: 15 },
       { wch: 15 },
       { wch: 12 },
-      { wch: 10 },
+      { wch: 15 },
+      { wch: 18 },
+      { wch: 14 },
+      { wch: 30 },
     ];
 
     const workbook = XLSX.utils.book_new();
@@ -669,6 +678,57 @@ export const HubinPemetaan: React.FC = () => {
           : 'eksternal'
         : ''
     );
+    setFormPlacementSource(
+      loc ? s.placementSource || 'sekolah' : ''
+    );
+  };
+
+  /** Perusahaan yang sedang dipilih di form (eksternal). */
+  const formLoc =
+    formPlacementType === 'eksternal' && formCompanyId
+      ? mapLocations.find((l) => String(l.id) === String(formCompanyId))
+      : undefined;
+
+  /**
+   * Sisa kuota sebuah jalur pada perusahaan yang dipilih.
+   * Slot milik siswa ini sendiri (kalau dia sudah di perusahaan & jalur itu)
+   * tidak dihitung terisi, supaya menyimpan ulang tidak dianggap penuh.
+   */
+  const remainingQuota = (source: 'sekolah' | 'perusahaan') => {
+    if (!formLoc) return 0;
+
+    const quota =
+      source === 'perusahaan'
+        ? formLoc.quotaCompany ?? 0
+        : formLoc.quotaSchool ?? 0;
+
+    const filled =
+      source === 'perusahaan'
+        ? formLoc.filledCompany ?? 0
+        : formLoc.filledSchool ?? 0;
+
+    const ownSlot =
+      selectedSiswa &&
+      selectedLoc &&
+      selectedLoc.id === formLoc.id &&
+      (selectedSiswa.placementSource || 'sekolah') === source
+        ? 1
+        : 0;
+
+    return quota - (filled - ownSlot);
+  };
+
+  const handleCompanyChange = (id: number | string) => {
+    setFormCompanyId(id);
+
+    const sameAsCurrent =
+      !!selectedLoc && String(selectedLoc.id) === String(id);
+
+    setFormPlacementSource(
+      sameAsCurrent && selectedSiswa?.placementSource
+        ? selectedSiswa.placementSource
+        : ''
+    );
   };
 
   const handlePlacementTypeChange = (
@@ -676,6 +736,7 @@ export const HubinPemetaan: React.FC = () => {
   ) => {
     const type = e.target.value as '' | 'internal' | 'eksternal';
     setFormPlacementType(type);
+    setFormPlacementSource(type === 'internal' ? 'sekolah' : '');
 
     if (type === 'internal') {
       // otomatis perusahaan sekolah, tidak bisa pilih perusahaan lain
@@ -739,6 +800,18 @@ export const HubinPemetaan: React.FC = () => {
         alert('PKL Eksternal tidak boleh memilih perusahaan sekolah.');
         return;
       }
+      if (!formPlacementSource) {
+        alert('Pilih jalur kuota: Sekolah atau Perusahaan.');
+        return;
+      }
+      if (remainingQuota(formPlacementSource) <= 0) {
+        alert(
+          `Kuota ${
+            formPlacementSource === 'perusahaan' ? 'Perusahaan' : 'Sekolah'
+          } di "${loc.name}" sudah penuh. Pilih jalur lain atau perusahaan lain.`
+        );
+        return;
+      }
     }
 
     const finalCompanyId =
@@ -762,6 +835,10 @@ export const HubinPemetaan: React.FC = () => {
         companyId: finalCompanyId,
         teacherId: formGuruId,
         placementType: formPlacementType,
+        placementSource:
+          formPlacementType === 'internal'
+            ? 'sekolah'
+            : (formPlacementSource as 'sekolah' | 'perusahaan'),
       });
 
       setEditing(false);
@@ -1522,10 +1599,45 @@ export const HubinPemetaan: React.FC = () => {
                           icon={Building2}
                           value={formCompanyId}
                           options={externalCompanyOptions}
-                          onChange={setFormCompanyId}
+                          onChange={handleCompanyChange}
                           placeholder="— Pilih Perusahaan —"
                           emptyText="Belum ada perusahaan eksternal. Tambah di halaman Data Perusahaan."
                         />
+                      )}
+
+                      {formPlacementType === 'eksternal' && formLoc && (
+                        <div>
+                          <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide flex items-center gap-1.5 mb-2">
+                            <Users className="w-3.5 h-3.5" />
+                            Jalur Kuota
+                          </label>
+                          <select
+                            value={formPlacementSource}
+                            onChange={(e) =>
+                              setFormPlacementSource(
+                                e.target.value as '' | 'sekolah' | 'perusahaan'
+                              )
+                            }
+                            className="w-full bg-mist/30 border border-mist rounded-[24px] px-3.5 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
+                          >
+                            <option value="">— Pilih Jalur Kuota —</option>
+                            <option
+                              value="sekolah"
+                              disabled={remainingQuota('sekolah') <= 0}
+                            >
+                              Kuota Sekolah (sisa {Math.max(0, remainingQuota('sekolah'))} dari {formLoc.quotaSchool ?? 0})
+                            </option>
+                            <option
+                              value="perusahaan"
+                              disabled={remainingQuota('perusahaan') <= 0}
+                            >
+                              Kuota Perusahaan (sisa {Math.max(0, remainingQuota('perusahaan'))} dari {formLoc.quotaCompany ?? 0})
+                            </option>
+                          </select>
+                          <p className="text-[10px] text-navy/45 mt-1 px-1">
+                            Sekolah: ditempatkan oleh sekolah. Perusahaan: direkrut langsung oleh perusahaan.
+                          </p>
+                        </div>
                       )}
 
                       <SearchableSelect

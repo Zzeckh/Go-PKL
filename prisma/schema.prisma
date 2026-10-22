@@ -1,10 +1,9 @@
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -80,7 +79,17 @@ model Company {
   country      String?
   phone        String?
   category     String?
+
+  // Total kuota = quotaSchool + quotaCompany (dijaga oleh server,
+  // supaya dashboard & laporan lama yang membaca `quota` tetap benar).
   quota        Int      @default(0)
+
+  // Kuota jalur sekolah: siswa yang ditempatkan oleh sekolah (Hubin).
+  quotaSchool  Int      @default(0)
+
+  // Kuota jalur perusahaan: siswa yang direkrut/diterima langsung perusahaan.
+  quotaCompany Int      @default(0)
+
   latitude     Float?
   longitude    Float?
   radiusMeters Int      @default(500)
@@ -118,6 +127,10 @@ model User {
 
   academicYear String?
   tefaCategory String? @db.VarChar(20)
+
+  // Jalur kuota perusahaan yang dipakai siswa: 'sekolah' | 'perusahaan'.
+  // Siswa lama tanpa nilai dianggap jalur sekolah.
+  placementSource String? @db.VarChar(20)
 
   // Relasi pendaftaran mentor ke perusahaan.
   companyMentorRegistrations CompanyMentor[] @relation("UserMentorCompanies")

@@ -817,7 +817,9 @@ export const HubinData: React.FC = () => {
                             </span>
 
                             <span className="text-[11px] font-bold text-navy">
-                              {count} / {c.quota}
+                              {String(c.category || '').toLowerCase().includes('internal')
+                                ? `${count} siswa • tanpa batas`
+                                : `Sekolah ${c.filledSchool ?? 0}/${c.quotaSchool ?? 0} • Perusahaan ${c.filledCompany ?? 0}/${c.quotaCompany ?? 0}`}
                             </span>
 
                           </div>
@@ -1100,6 +1102,12 @@ export const HubinData: React.FC = () => {
             />
 
           </div>
+
+          <p className="text-[11px] font-semibold text-navy/60 -mt-3 mb-5">
+            {String(detailPerusahaan.category || '').toLowerCase().includes('internal')
+              ? 'Perusahaan sekolah: tanpa batas kuota'
+              : `Sekolah ${detailPerusahaan.filledSchool ?? 0}/${detailPerusahaan.quotaSchool ?? 0} • Perusahaan ${detailPerusahaan.filledCompany ?? 0}/${detailPerusahaan.quotaCompany ?? 0}`}
+          </p>
 
           <div className="grid grid-cols-2 gap-2 mb-5">
 
@@ -1630,7 +1638,8 @@ const AddDataModal: React.FC<
     useState({
       name: '',
       address: '',
-      quota: 5,
+      quotaSchool: 5,
+      quotaCompany: 0,
       mentor: '',
     });
 
@@ -1699,9 +1708,12 @@ const AddDataModal: React.FC<
           name: formPerusahaan.name,
           address:
             formPerusahaan.address,
-          quota: Number(
-            formPerusahaan.quota
-          ),
+          quotaSchool: Number(
+            formPerusahaan.quotaSchool
+          ) || 0,
+          quotaCompany: Number(
+            formPerusahaan.quotaCompany
+          ) || 0,
           mentor:
             formPerusahaan.mentor,
 
@@ -1924,16 +1936,31 @@ const AddDataModal: React.FC<
               />
 
               <FormInput
-                label="Kuota Siswa"
+                label="Kuota Sekolah"
                 type="number"
                 value={
-                  formPerusahaan.quota
+                  formPerusahaan.quotaSchool
                 }
                 onChange={(v) =>
                   setFormPerusahaan({
                     ...formPerusahaan,
-                    quota:
-                      Number(v) || 0,
+                    quotaSchool:
+                      Math.max(0, Math.floor(Number(v) || 0)),
+                  })
+                }
+              />
+
+              <FormInput
+                label="Kuota Perusahaan"
+                type="number"
+                value={
+                  formPerusahaan.quotaCompany
+                }
+                onChange={(v) =>
+                  setFormPerusahaan({
+                    ...formPerusahaan,
+                    quotaCompany:
+                      Math.max(0, Math.floor(Number(v) || 0)),
                   })
                 }
               />

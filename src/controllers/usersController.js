@@ -1,4 +1,13 @@
 import prisma from '../config/db.js';
+import {
+  SOURCE_LABEL,
+  isInternalCategory,
+  normalizeSource,
+  getFilledBySource
+} from '../services/quotaService.js';
+
+const httpError = (status, message) =>
+  Object.assign(new Error(message), { status });
 
 export const getUsers = async (req, res, next) => {
   try {
@@ -136,19 +145,37 @@ export const updateUser = async (req, res, next) => {
       teacherId,
       companyId,
       academicYear,
-      placementType
+      placementType,
+      placementSource
     } = req.body;
 
+    // academicYear adalah kolom string biasa pada User (Model AcademicYear
+    // TIDAK ada di schema / database). Kirim string kosong / null untuk
+    // mengosongkan Tahun Ajaran siswa.
+    let resolvedAcademicYear;
+    if (academicYear !== undefined) {
+      if (academicYear === null || String(academicYear).trim() === '') {
+        resolvedAcademicYear = null;
+      } else {
+        resolvedAcademicYear = String(academicYear).trim();
+      }
+    }
+
+    let resolvedCompanyId = companyId ? parseInt(companyId) : undefined;
+
+    // Jalur kuota yang dipakai siswa: 'sekolah' | 'perusahaan'.
+    // undefined = tidak diubah.
+    let resolvedSource;
+
+    // true bila penempatan di perusahaan sekolah (Internal): tanpa batas kuota.
+    let isInternalPlacement = false;
+
     // Validasi jenis PKL: Internal = otomatis perusahaan sekolah (kategori
-    // Internal); Eksternal = tidak boleh perusahaan sekolah.
-    let resolvedCompanyId = companyId;
+    // Internal); Eksternal = tidak boleh perusahaan sekolah, wajib pilih jalur.
     if (placementType !== undefined) {
       if (!['internal', 'eksternal'].includes(placementType)) {
         return res.status(400).json({ error: 'Jenis PKL tidak valid' });
       }
-
-      const isInternalCategory = (c) =>
-        String(c || '').toLowerCase().includes('internal');
 
       if (placementType === 'internal') {
         const candidates = await prisma.company.findMany({
@@ -163,14 +190,17 @@ export const updateUser = async (req, res, next) => {
           });
         }
         resolvedCompanyId = school.id;
+        resolvedSource = 'sekolah';
+        isInternalPlacement = true;
       } else {
-        if (!companyId) {
+        if (!resolvedCompanyId) {
           return res.status(400).json({
             error: 'Pilih perusahaan untuk PKL Eksternal'
           });
         }
+
         const chosen = await prisma.company.findUnique({
-          where: { id: parseInt(companyId) },
+          where: { id: resolvedCompanyId },
           select: { category: true }
         });
         if (!chosen) {
@@ -181,18 +211,13 @@ export const updateUser = async (req, res, next) => {
             error: 'PKL Eksternal tidak boleh memilih perusahaan sekolah'
           });
         }
-      }
-    }
 
-    // academicYear adalah kolom string biasa pada User (Model AcademicYear
-    // TIDAK ada di schema / database). Kirim string kosong / null untuk
-    // mengosongkan Tahun Ajaran siswa.
-    let resolvedAcademicYear;
-    if (academicYear !== undefined) {
-      if (academicYear === null || String(academicYear).trim() === '') {
-        resolvedAcademicYear = null;
-      } else {
-        resolvedAcademicYear = String(academicYear).trim();
+        resolvedSource = normalizeSource(placementSource);
+        if (!resolvedSource) {
+          return res.status(400).json({
+            error: 'Pilih jalur kuota: Sekolah atau Perusahaan'
+          });
+        }
       }
     }
 
@@ -200,35 +225,70 @@ export const updateUser = async (req, res, next) => {
       name: name ?? undefined,
       classId: classId ? parseInt(classId) : undefined,
       teacherId: teacherId ? parseInt(teacherId) : undefined,
-      companyId: resolvedCompanyId ? parseInt(resolvedCompanyId) : undefined,
+      companyId: resolvedCompanyId,
+      placementSource: resolvedSource,
       academicYear: resolvedAcademicYear,
     };
 
-
-    const user = await prisma.user.update({
-      where: {
-        id
+    const include = {
+      class: {
+        select: {
+          name: true
+        }
       },
 
-      data,
-
-      include: {
-        class: {
-          select: {
-            name: true
-          }
-        },
-
-        teacher: {
-          select: {
-            name: true
-          }
+      teacher: {
+        select: {
+          name: true
         }
       }
+    };
+
+    const user = await prisma.$transaction(async (tx) => {
+      // Cek kuota jalur hanya untuk penempatan eksternal.
+      if (resolvedCompanyId && resolvedSource && !isInternalPlacement) {
+        // Kunci baris perusahaan: dua penyimpanan bersamaan untuk
+        // perusahaan yang sama dijalankan bergantian, sehingga kuota
+        // tidak bisa terlewati.
+        await tx.$queryRaw`SELECT id FROM company WHERE id = ${resolvedCompanyId} FOR UPDATE`;
+
+        const company = await tx.company.findUnique({
+          where: { id: resolvedCompanyId },
+          select: { name: true, quotaSchool: true, quotaCompany: true }
+        });
+
+        if (!company) {
+          throw httpError(404, 'Perusahaan tidak ditemukan');
+        }
+
+        // Hitung tanpa siswa ini, agar menyimpan ulang penempatan
+        // yang sama tidak dianggap menambah isi.
+        const filled = await getFilledBySource(tx, resolvedCompanyId, id);
+        const capacity =
+          resolvedSource === 'perusahaan'
+            ? company.quotaCompany
+            : company.quotaSchool;
+
+        if (filled[resolvedSource] >= capacity) {
+          throw httpError(
+            400,
+            `Kuota ${SOURCE_LABEL[resolvedSource]} di "${company.name}" sudah penuh (${filled[resolvedSource]}/${capacity})`
+          );
+        }
+      }
+
+      return tx.user.update({
+        where: { id },
+        data,
+        include
+      });
     });
 
     res.json(user);
   } catch (error) {
+    if (error?.status) {
+      return res.status(error.status).json({ error: error.message });
+    }
     next(error);
   }
 };

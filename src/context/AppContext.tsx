@@ -38,6 +38,9 @@ export interface SiswaItem {
   guruPembimbing: string;
   mentor: string;
 
+  // Jalur kuota perusahaan yang dipakai siswa
+  placementSource?: 'sekolah' | 'perusahaan' | null;
+
   kehadiran: number;
   logs: number;
 
@@ -119,6 +122,12 @@ export interface PerusahaanItem {
 
   quota: number;
   filled: number;
+
+  // Kuota dua jalur (quota = quotaSchool + quotaCompany)
+  quotaSchool?: number;
+  quotaCompany?: number;
+  filledSchool?: number;
+  filledCompany?: number;
 
   mentor?: string;
 
@@ -285,7 +294,8 @@ interface AppContextType {
   addPerusahaan: (data: {
     name: string;
     address: string;
-    quota: number;
+    quotaSchool: number;
+    quotaCompany: number;
     mentor: string;
   }) => Promise<void>;
 
@@ -299,6 +309,7 @@ interface AppContextType {
       teacherId?: number | string;
       academicYear?: string;
       placementType?: 'internal' | 'eksternal';
+      placementSource?: 'sekolah' | 'perusahaan';
     }
   ) => Promise<void>;
 
@@ -1053,6 +1064,15 @@ export const AppProvider: React.FC<{
 
                 berkasPct: 0,
 
+                placementSource:
+                  u.placementSource ===
+                  'perusahaan'
+                    ? 'perusahaan'
+                    : u.companyId ||
+                      u.company
+                    ? 'sekolah'
+                    : null,
+
                 img: '',
               };
             }
@@ -1583,6 +1603,38 @@ export const AppProvider: React.FC<{
                 c.filled ||
                 0,
 
+
+              quotaSchool:
+
+                c.quotaSchool ??
+
+                c.quota ??
+
+                0,
+
+
+              quotaCompany:
+
+                c.quotaCompany ??
+
+                0,
+
+
+              filledSchool:
+
+                c.filledSchool ??
+
+                c.filled ??
+
+                0,
+
+
+              filledCompany:
+
+                c.filledCompany ??
+
+                0,
+
               mentor:
                 c.mentor?.name ||
                 undefined,
@@ -2054,6 +2106,38 @@ export const AppProvider: React.FC<{
                   c.filled ||
                   0,
 
+
+                quotaSchool:
+
+                  c.quotaSchool ??
+
+                  c.quota ??
+
+                  0,
+
+
+                quotaCompany:
+
+                  c.quotaCompany ??
+
+                  0,
+
+
+                filledSchool:
+
+                  c.filledSchool ??
+
+                  c.filled ??
+
+                  0,
+
+
+                filledCompany:
+
+                  c.filledCompany ??
+
+                  0,
+
                 mentor:
                   c.mentor?.name ||
                   undefined,
@@ -2131,9 +2215,14 @@ export const AppProvider: React.FC<{
             category:
               data.category,
 
-            quota:
+            quotaSchool:
               Number(
-                data.quota
+                data.quotaSchool
+              ) || 0,
+
+            quotaCompany:
+              Number(
+                data.quotaCompany
               ) || 0,
 
             latitude:
@@ -2181,11 +2270,19 @@ export const AppProvider: React.FC<{
             category:
               data.category,
 
-            quota:
-              data.quota !==
+            quotaSchool:
+              data.quotaSchool !==
               undefined
                 ? Number(
-                    data.quota
+                    data.quotaSchool
+                  )
+                : undefined,
+
+            quotaCompany:
+              data.quotaCompany !==
+              undefined
+                ? Number(
+                    data.quotaCompany
                   )
                 : undefined,
 
@@ -3122,7 +3219,8 @@ export const AppProvider: React.FC<{
     async (data: {
       name: string;
       address: string;
-      quota: number;
+      quotaSchool: number;
+      quotaCompany: number;
       mentor: string;
     }) => {
       try {
@@ -3143,8 +3241,11 @@ export const AppProvider: React.FC<{
             address:
               data.address,
 
-            quota:
-              data.quota,
+            quotaSchool:
+              data.quotaSchool,
+
+            quotaCompany:
+              data.quotaCompany,
 
             academicYearId:
               selectedAcademicYearId,
@@ -3177,6 +3278,7 @@ export const AppProvider: React.FC<{
         teacherId?: number | string;
           academicYear?: string;
         placementType?: 'internal' | 'eksternal';
+        placementSource?: 'sekolah' | 'perusahaan';
       }
     ) => {
       try {
@@ -3205,6 +3307,9 @@ export const AppProvider: React.FC<{
 
             placementType:
               data.placementType,
+
+            placementSource:
+              data.placementSource,
 
             academicYearId:
               selectedAcademicYearId ||
