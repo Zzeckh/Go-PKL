@@ -6,6 +6,7 @@ import {
   safeFilename,
   streamPdfReport,
 } from '../utils/pdfReport.js';
+import { formatStudentUsername } from '../utils/userIdentity.js';
 
 const REPORT_TYPES = new Set([
   'mentor',
@@ -543,7 +544,7 @@ export const getReportData = async (
           id: student.id,
 
           username:
-            student.email,
+            formatStudentUsername(student),
 
           name:
             student.name,

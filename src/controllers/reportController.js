@@ -1,5 +1,6 @@
 import prisma from '../config/db.js';
 import { streamPdfReport, labelStatus, formatDateID, formatTimeID, safeFilename } from '../utils/pdfReport.js';
+import { formatStudentUsername } from '../utils/userIdentity.js';
 
 const VALID_ABSENSI_STATUS = ['hadir', 'izin', 'sakit', 'alpha'];
 const VALID_LOGBOOK_STATUS = ['pending', 'approved', 'rejected'];
@@ -57,7 +58,7 @@ function buildDateWhere(query, field = 'date') {
 function studentIdentity(user) {
   return {
     name: user?.name || '-',
-    username: user?.email || '-',
+    username: formatStudentUsername(user),
     className: user?.class?.name || '-',
     companyName: user?.company?.name || '-',
     teacherName: user?.teacher?.name || '-',
@@ -311,7 +312,7 @@ export const exportPklPdf = async (req, res) => {
     const rows = data.map((u, idx) => ({
       no: idx + 1,
       name: u.name,
-      username: u.email,
+      username: formatStudentUsername(u),
       className: u.class?.name || '-',
       companyName: u.company?.name || '-',
       teacherName: u.teacher?.name || '-',
@@ -412,7 +413,7 @@ export const getAttendanceReport = async (req, res) => {
       if (!grouped.has(item.userId)) grouped.set(item.userId, {
         id: item.userId,
         name: item.user.name,
-        username: item.user.email,
+        username: formatStudentUsername(item.user),
         className: item.user.class?.name || '-',
         companyName: item.user.company?.name || '-',
         teacherName: item.user.teacher?.name || '-',

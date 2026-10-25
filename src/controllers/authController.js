@@ -54,7 +54,14 @@ export const login = async (req, res, next) => {
       return res.status(400).json({ error: 'Email dan password harus diisi' });
     }
 
-    const user = await prisma.user.findUnique({ where: { email }, include: userInclude });
+    const normalizedEmail = String(email)
+      .trim()
+      .toLowerCase();
+
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      include: userInclude,
+    });
     if (!user) return res.status(401).json({ error: 'Email atau password salah' });
 
     // Tolak akun legacy yang role-nya akan dihapus saat migrasi.
