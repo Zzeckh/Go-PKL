@@ -21,6 +21,7 @@ import hubinRoutes from './src/routes/hubinRoutes.js';
 import reportRoutes from './src/routes/reportRoutes.js';
 import dashboardRoutes from './src/routes/dashboardRoutes.js';
 import academicYearRoutes from './src/routes/academicYearRoutes.js';
+import mentorMappingRoutes from './src/routes/mentorMappingRoutes.js';
 
 const app = express();
 app.set('trust proxy', 1);
@@ -41,6 +42,7 @@ app.use('/api/hubin', hubinRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/academic-years', academicYearRoutes);
+app.use('/api/mentor-mapping', mentorMappingRoutes);
 
 app.use((req, res) => res.status(404).json({ error: `Route tidak ditemukan: ${req.method} ${req.path}` }));
 app.use(errorHandler);
