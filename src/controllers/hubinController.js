@@ -10,92 +10,102 @@ export const getStats = async (req, res, next) => {
   try {
     const { academicYearId } = req.query;
 
-    const yearId = academicYearId
+    const parsedYearId = academicYearId
       ? Number(academicYearId)
       : null;
 
-    const yearFilter =
-      yearId &&
-      Number.isInteger(yearId) &&
-      yearId > 0
-        ? { academicYearId: yearId }
-        : {};
+    // Filter tahun ajaran hanya berlaku untuk data yang memang
+    // terikat tahun ajaran (kelas, siswa, dan aktivitas siswa).
+    // Guru, mentor, dan hubin adalah data global.
+    const yearId =
+      parsedYearId &&
+      Number.isInteger(parsedYearId) &&
+      parsedYearId > 0
+        ? parsedYearId
+        : null;
 
-    const [
-      totalClasses,
-      totalStudents,
-      totalTeachers,
-      totalMentors,
-      totalHubins,
-    ] = await Promise.all([
-      prisma.class.count({
-        where: yearFilter,
-      }),
+    // Satu query untuk semua statistik. Di Vercel serverless,
+    // beberapa query terpisah ke Supabase bisa memakan >10 detik
+    // karena latency region dan connection_limit=1.
+    const [stats] = await prisma.$queryRaw`
+      SELECT
+        (
+          SELECT COUNT(*)::int
+          FROM "class"
+          WHERE (${yearId}::int IS NULL OR "academicYearId" = ${yearId}::int)
+        ) AS "totalClasses",
 
-      prisma.user.count({
-        where: {
-          role: 'student',
-          ...yearFilter,
-        },
-      }),
+        (
+          SELECT COUNT(*)::int
+          FROM "user"
+          WHERE "role" = 'student'
+            AND (${yearId}::int IS NULL OR "academicYearId" = ${yearId}::int)
+        ) AS "totalStudents",
 
-      prisma.user.count({
-        where: {
-          role: 'teacher',
-          ...yearFilter,
-        },
-      }),
+        (
+          SELECT COUNT(*)::int
+          FROM "user"
+          WHERE "role" = 'teacher'
+        ) AS "totalTeachers",
 
-      prisma.user.count({
-        where: {
-          role: 'mentor',
-          ...yearFilter,
-        },
-      }),
+        (
+          SELECT COUNT(*)::int
+          FROM "user"
+          WHERE "role" = 'mentor'
+        ) AS "totalMentors",
 
-      prisma.user.count({
-        where: {
-          role: 'hubin',
-          ...yearFilter,
-        },
-      }),
-    ]);
+        (
+          SELECT COUNT(*)::int
+          FROM "user"
+          WHERE "role" = 'hubin'
+        ) AS "totalHubins",
 
-    const [
-      totalAbsensi,
-      totalLogbooks,
-      totalPermissions,
-    ] = await Promise.all([
-      prisma.absensi.count({
-        where: {
-          user: yearFilter,
-        },
-      }),
+        (
+          SELECT COUNT(*)::int
+          FROM "company"
+        ) AS "totalCompanies",
 
-      prisma.logbook.count({
-        where: {
-          user: yearFilter,
-        },
-      }),
+        (
+          SELECT COUNT(*)::int
+          FROM "absensi"
+          WHERE (
+            ${yearId}::int IS NULL
+            OR "userId" IN (
+              SELECT "id"
+              FROM "user"
+              WHERE "academicYearId" = ${yearId}::int
+            )
+          )
+        ) AS "totalAbsensi",
 
-      prisma.permission.count({
-        where: {
-          user: yearFilter,
-        },
-      }),
-    ]);
+        (
+          SELECT COUNT(*)::int
+          FROM "logbook"
+          WHERE (
+            ${yearId}::int IS NULL
+            OR "userId" IN (
+              SELECT "id"
+              FROM "user"
+              WHERE "academicYearId" = ${yearId}::int
+            )
+          )
+        ) AS "totalLogbooks",
 
-    res.json({
-      totalClasses,
-      totalStudents,
-      totalTeachers,
-      totalMentors,
-      totalHubins,
-      totalCompanies: 0,
-      totalAbsensi,
-      totalLogbooks,
-      totalPermissions,
-    });
+        (
+          SELECT COUNT(*)::int
+          FROM "permission"
+          WHERE (
+            ${yearId}::int IS NULL
+            OR "userId" IN (
+              SELECT "id"
+              FROM "user"
+              WHERE "academicYearId" = ${yearId}::int
+            )
+          )
+        ) AS "totalPermissions"
+    `;
+
+    res.json(stats);
   } catch (error) {
     next(error);
   }
