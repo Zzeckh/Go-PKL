@@ -1279,6 +1279,7 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
     guruList,
     mentorList,
     perusahaanList,
+    superClasses,
     selectedAcademicYearId,
     academicYears,
   } = useApp();
@@ -1287,6 +1288,7 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
 
   const [formSiswa, setFormSiswa] = useState({
     name: '',
+    nis: '',
     kelas: '',
     guruPembimbing: '',
     perusahaan: '',
@@ -1320,38 +1322,69 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
       /* SISWA */
 
       if (formTab === 'siswa') {
+        const selectedClass = superClasses.find(
+          (kelas: any) => kelas.name === formSiswa.kelas
+        );
+
+        if (!formSiswa.name.trim() || !formSiswa.nis.trim()) {
+          alert('Nama dan NIS siswa wajib diisi.');
+          return;
+        }
+
+        if (!selectedClass) {
+          alert('Pilih kelas siswa terlebih dahulu.');
+          return;
+        }
+
+        const guru = guruList.find(
+          (item: any) => item.name === formSiswa.guruPembimbing
+        );
+
+        const perusahaan = perusahaanList.find(
+          (item: any) => item.name === formSiswa.perusahaan
+        );
+
         await addSiswa({
           name: formSiswa.name,
-          kelas: formSiswa.kelas || '-',
-          perusahaan: formSiswa.perusahaan || '-',
-          guruPembimbing: formSiswa.guruPembimbing || '-',
-          mentor: '-',
-
-          // PENTING
+          nis: formSiswa.nis,
+          classId: selectedClass.id,
+          teacherId: guru?.id ?? null,
+          companyId: perusahaan?.id ?? null,
           academicYearId: selectedAcademicYearId,
-
-          // fallback untuk kode lama
           academicYear: selectedYearName,
         });
       } else if (formTab === 'perusahaan') {
         /* PERUSAHAAN */
+
+        if (
+          !formPerusahaan.name.trim() ||
+          !formPerusahaan.address.trim()
+        ) {
+          alert('Nama dan alamat perusahaan wajib diisi.');
+          return;
+        }
+
+        const mentor = mentorList.find(
+          (item: any) => item.name === formPerusahaan.mentor
+        );
 
         await addPerusahaan({
           name: formPerusahaan.name,
           address: formPerusahaan.address,
           quota: Number(formPerusahaan.quota),
           mentor: formPerusahaan.mentor,
-
-          // PENTING
-          academicYearId: selectedAcademicYearId,
+          mentorId: mentor?.id,
         });
       }
 
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Gagal menambah data:', error);
 
-      alert('Gagal menambahkan data. Periksa koneksi backend.');
+      alert(
+        error?.message ||
+          'Gagal menambahkan data. Periksa koneksi backend.'
+      );
     }
   };
 
@@ -1439,12 +1472,20 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
               />
 
               <FormInput
+                label="NIS"
+                value={formSiswa.nis}
+                onChange={(v) => setFormSiswa({ ...formSiswa, nis: v })}
+                required
+                placeholder="Contoh: 1234567890"
+              />
+
+              <FormSelect
                 label="Kelas"
                 value={formSiswa.kelas}
                 onChange={(v) =>
                   setFormSiswa({ ...formSiswa, kelas: v })
                 }
-                placeholder="Contoh: XII RPL 2"
+                options={superClasses.map((kelas: any) => kelas.name)}
               />
 
               <FormSelect
@@ -1511,6 +1552,11 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
                 }
                 options={mentorList.map((m: any) => m.name)}
               />
+
+              <p className="text-[11px] font-medium text-navy/50 leading-relaxed">
+                Lokasi dan radius perusahaan dapat dilengkapi nanti
+                melalui halaman Data Perusahaan.
+              </p>
             </>
           )}
         </form>
@@ -1528,7 +1574,6 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
 
           <button
             type="submit"
-            onClick={handleSubmit}
             className="flex-1 bg-steel text-white font-bold text-sm py-3 rounded-[24px] shadow-lg shadow-steel/25 flex items-center justify-center gap-1.5"
           >
             <Plus className="w-4 h-4" />

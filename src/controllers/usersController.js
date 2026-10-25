@@ -17,9 +17,26 @@ export const getUsers = async (req, res, next) => {
     let where = {};
 
     if (role === 'teacher') {
-      where = {
-        teacherId: id,
-      };
+      if (filterRole === 'mentor') {
+        // Guru hanya melihat mentor aktif pada perusahaan
+        // tempat ia membimbing siswa.
+        where = {
+          mentoredCompanies: {
+            some: {
+              students: {
+                some: {
+                  role: 'student',
+                  teacherId: id,
+                },
+              },
+            },
+          },
+        };
+      } else {
+        where = {
+          teacherId: id,
+        };
+      }
     } else if (role === 'student') {
       where = {
         id,
@@ -391,7 +408,13 @@ export const getUserById = async (req, res, next) => {
 
 export const createMentor = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
+    const {
+      name,
+      email,
+      password,
+      whatsapp,
+      companyId,
+    } = req.body;
 
     // ============================================================
     // VALIDASI
@@ -415,6 +438,49 @@ export const createMentor = async (req, res, next) => {
       });
     }
 
+    const companyIdNumber = Number(companyId);
+
+    if (
+      !Number.isInteger(companyIdNumber) ||
+      companyIdNumber <= 0
+    ) {
+      return res.status(400).json({
+        error: 'Perusahaan wajib dipilih.',
+      });
+    }
+
+    const company = await prisma.company.findFirst({
+      where: {
+        id: companyIdNumber,
+        students: {
+          some: {
+            role: 'student',
+            teacherId: req.user.id,
+          },
+        },
+      },
+
+      select: {
+        id: true,
+        name: true,
+        mentorId: true,
+        academicYearId: true,
+      },
+    });
+
+    if (!company) {
+      return res.status(403).json({
+        error:
+          'Perusahaan tidak ditemukan atau bukan perusahaan bimbingan Anda.',
+      });
+    }
+
+    if (company.mentorId) {
+      return res.status(409).json({
+        error: 'Perusahaan ini sudah memiliki mentor aktif.',
+      });
+    }
+
     const cleanName = String(name).trim();
     const cleanEmail = String(email).trim().toLowerCase();
 
@@ -426,6 +492,7 @@ export const createMentor = async (req, res, next) => {
       where: {
         email: cleanEmail,
       },
+      select: { id: true },
     });
 
     if (existingUser) {
@@ -444,32 +511,74 @@ export const createMentor = async (req, res, next) => {
     );
 
     // ============================================================
-    // BUAT MENTOR
+    // BUAT MENTOR + HUBUNGKAN KE PERUSAHAAN
     // ============================================================
 
-    const mentor = await prisma.user.create({
-      data: {
-        name: cleanName,
-        email: cleanEmail,
-        password: hashedPassword,
-        role: 'mentor',
-      },
+    const mentor = await prisma.$transaction(async (tx) => {
+      const created = await tx.user.create({
+        data: {
+          name: cleanName,
+          email: cleanEmail,
+          password: hashedPassword,
+          role: 'mentor',
+          whatsapp:
+            whatsapp !== undefined &&
+            whatsapp !== null &&
+            String(whatsapp).trim() !== ''
+              ? String(whatsapp).trim()
+              : null,
+          companyId: company.id,
+          academicYearId: company.academicYearId ?? null,
+        },
 
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        academicYearId: true,
-      },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          whatsapp: true,
+          companyId: true,
+          academicYearId: true,
+        },
+      });
+
+      await tx.company.update({
+        where: { id: company.id },
+        data: { mentorId: created.id },
+      });
+
+      await tx.companyMentor.upsert({
+        where: {
+          companyId_mentorId: {
+            companyId: company.id,
+            mentorId: created.id,
+          },
+        },
+        update: {},
+        create: {
+          companyId: company.id,
+          mentorId: created.id,
+        },
+      });
+
+      return created;
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: 'Mentor berhasil dibuat.',
-      data: mentor,
+      data: {
+        ...mentor,
+        companyName: company.name,
+      },
     });
   } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(409).json({
+        error: 'Email sudah digunakan.',
+      });
+    }
+
     next(error);
   }
 };
@@ -544,7 +653,30 @@ export const updateUser = async (req, res, next) => {
       companyId,
       mentorName,
       academicYear,
+      academicYearId,
     } = req.body;
+
+    const hasField = (key) =>
+      Object.prototype.hasOwnProperty.call(
+        req.body,
+        key
+      );
+
+    const parseNullableId = (value, fieldName) => {
+      if (value === null || value === '') {
+        return { value: null };
+      }
+
+      const parsed = Number(value);
+
+      if (!Number.isInteger(parsed) || parsed <= 0) {
+        return {
+          error: `${fieldName} tidak valid.`,
+        };
+      }
+
+      return { value: parsed };
+    };
 
     // ============================================================
     // ACADEMIC YEAR
@@ -565,9 +697,87 @@ export const updateUser = async (req, res, next) => {
       }
     }
 
+    let resolvedAcademicYearId;
+
+    if (isHubin && hasField('academicYearId')) {
+      const parsed = parseNullableId(
+        academicYearId,
+        'academicYearId'
+      );
+
+      if (parsed.error) {
+        return res.status(400).json({
+          error: parsed.error,
+        });
+      }
+
+      resolvedAcademicYearId = parsed.value;
+
+      if (resolvedAcademicYearId) {
+        const year = await prisma.academicYear.findUnique({
+          where: { id: resolvedAcademicYearId },
+          select: { name: true },
+        });
+
+        if (!year) {
+          return res.status(400).json({
+            error: 'Tahun ajaran tidak ditemukan.',
+          });
+        }
+
+        if (academicYear === undefined) {
+          resolvedAcademicYear = year.name;
+        }
+      } else if (academicYear === undefined) {
+        resolvedAcademicYear = null;
+      }
+    }
+
     // ============================================================
     // DATA USER
     // ============================================================
+
+    let resolvedClassId;
+    let resolvedTeacherId;
+    let resolvedCompanyId;
+
+    // Mapping hanya boleh diubah oleh Hubin. Nilai null/'' berarti
+    // melepas pemetaan, bukan "field tidak dikirim".
+    if (isHubin && hasField('classId')) {
+      const parsed = parseNullableId(classId, 'classId');
+
+      if (parsed.error) {
+        return res.status(400).json({ error: parsed.error });
+      }
+
+      resolvedClassId = parsed.value;
+    }
+
+    if (isHubin && hasField('teacherId')) {
+      const parsed = parseNullableId(
+        teacherId,
+        'teacherId'
+      );
+
+      if (parsed.error) {
+        return res.status(400).json({ error: parsed.error });
+      }
+
+      resolvedTeacherId = parsed.value;
+    }
+
+    if (isHubin && hasField('companyId')) {
+      const parsed = parseNullableId(
+        companyId,
+        'companyId'
+      );
+
+      if (parsed.error) {
+        return res.status(400).json({ error: parsed.error });
+      }
+
+      resolvedCompanyId = parsed.value;
+    }
 
     const data = {
       name:
@@ -575,32 +785,18 @@ export const updateUser = async (req, res, next) => {
           ? String(name).trim()
           : undefined,
 
-      classId:
-        isHubin &&
-        classId !== undefined &&
-        classId !== null &&
-        classId !== ''
-          ? Number(classId)
-          : undefined,
+      classId: resolvedClassId,
 
-      teacherId:
-        isHubin &&
-        teacherId !== undefined &&
-        teacherId !== null &&
-        teacherId !== ''
-          ? Number(teacherId)
-          : undefined,
+      teacherId: resolvedTeacherId,
 
-      companyId:
-        isHubin &&
-        companyId !== undefined &&
-        companyId !== null &&
-        companyId !== ''
-          ? Number(companyId)
-          : undefined,
+      companyId: resolvedCompanyId,
 
       academicYear: isHubin
         ? resolvedAcademicYear
+        : undefined,
+
+      academicYearId: isHubin
+        ? resolvedAcademicYearId
         : undefined,
     };
 
@@ -627,6 +823,20 @@ export const updateUser = async (req, res, next) => {
           },
 
           data: {
+            mentorId: mentor.id,
+          },
+        });
+
+        await prisma.companyMentor.upsert({
+          where: {
+            companyId_mentorId: {
+              companyId: data.companyId,
+              mentorId: mentor.id,
+            },
+          },
+          update: {},
+          create: {
+            companyId: data.companyId,
             mentorId: mentor.id,
           },
         });

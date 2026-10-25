@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { api } from '../utils/api';
 
 interface MentoredCompany {
   id: number;
@@ -58,28 +59,9 @@ export function DataMentor() {
       setLoading(true);
       setError('');
 
-      const token = localStorage.getItem('pkl_token');
-
-      if (!token) {
-        throw new Error('Token tidak ditemukan');
-      }
-
-      const response = await fetch(
-        'http://localhost:5000/api/users?role=mentor',
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const result = await api.get<Mentor[]>(
+        '/api/users?role=mentor'
       );
-
-      const result = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        throw new Error(
-          result?.error || 'Gagal mengambil data mentor'
-        );
-      }
 
       setMentors(Array.isArray(result) ? result : []);
     } catch (err) {
@@ -103,33 +85,11 @@ export function DataMentor() {
     try {
       setLoadingCompanies(true);
 
-      const token = localStorage.getItem('pkl_token');
-
-      if (!token) {
-        throw new Error('Token tidak ditemukan');
-      }
-
-      const response = await fetch(
-        'http://localhost:5000/api/users/teacher-companies',
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const result = await api.get<TeacherCompany[]>(
+        '/api/users/teacher-companies'
       );
 
-      const result = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        throw new Error(
-          result?.error ||
-            'Gagal mengambil perusahaan bimbingan guru'
-        );
-      }
-
       setCompanies(Array.isArray(result) ? result : []);
-
-      console.log('PERUSAHAAN GURU:', result);
     } catch (err) {
       console.error('Gagal mengambil perusahaan guru:', err);
 
@@ -166,12 +126,6 @@ export function DataMentor() {
       setError('');
       setSuccess('');
 
-      const token = localStorage.getItem('pkl_token');
-
-      if (!token) {
-        throw new Error('Token tidak ditemukan');
-      }
-
       if (!form.name.trim()) {
         throw new Error('Nama mentor wajib diisi');
       }
@@ -194,34 +148,16 @@ export function DataMentor() {
         throw new Error('Perusahaan tidak valid');
       }
 
-      const response = await fetch(
-        'http://localhost:5000/api/users/mentor',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            name: form.name.trim(),
-            email: form.email.trim(),
-            password: form.password,
-            whatsapp: form.whatsapp.trim() || null,
-            companyId: companyId,
-          }),
-        }
-      );
-
-      const result = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        throw new Error(
-          result?.error ||
-            'Gagal membuat akun mentor'
-        );
-      }
-
-      console.log('MENTOR BERHASIL DIBUAT:', result);
+      const result = await api.post<{
+        success: boolean;
+        data?: { companyName?: string };
+      }>('/api/users/mentor', {
+        name: form.name.trim(),
+        email: form.email.trim(),
+        password: form.password,
+        whatsapp: form.whatsapp.trim() || null,
+        companyId: companyId,
+      });
 
       setSuccess(
         `Akun mentor berhasil dibuat dan ditugaskan ke ${result?.data?.companyName || 'perusahaan'}.`

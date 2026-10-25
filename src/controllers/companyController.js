@@ -108,6 +108,7 @@ export const createCompany = async (req, res, next) => {
       radiusMeters,
       mentorId,
       isActive,
+      academicYearId,
     } = req.body;
 
     /**
@@ -155,34 +156,51 @@ export const createCompany = async (req, res, next) => {
      * ========================================================
      */
 
-    if (latitude == null || longitude == null) {
-      return res.status(400).json({
-        error:
-          'Koordinat geofence (latitude/longitude) wajib diisi',
-      });
-    }
+    const hasLatitude =
+      latitude !== undefined &&
+      latitude !== null &&
+      latitude !== '';
 
-    const latitudeNumber = Number(latitude);
-    const longitudeNumber = Number(longitude);
+    const hasLongitude =
+      longitude !== undefined &&
+      longitude !== null &&
+      longitude !== '';
 
-    if (
-      !Number.isFinite(latitudeNumber) ||
-      latitudeNumber < -90 ||
-      latitudeNumber > 90
-    ) {
-      return res.status(400).json({
-        error: 'Latitude tidak valid',
-      });
-    }
+    // Koordinat boleh dikosongkan saat quick-add. Lokasi dapat
+    // dilengkapi kemudian melalui halaman Data Perusahaan.
+    let latitudeNumber = null;
+    let longitudeNumber = null;
 
-    if (
-      !Number.isFinite(longitudeNumber) ||
-      longitudeNumber < -180 ||
-      longitudeNumber > 180
-    ) {
-      return res.status(400).json({
-        error: 'Longitude tidak valid',
-      });
+    if (hasLatitude || hasLongitude) {
+      if (!hasLatitude || !hasLongitude) {
+        return res.status(400).json({
+          error:
+            'Latitude dan longitude harus diisi bersamaan',
+        });
+      }
+
+      latitudeNumber = Number(latitude);
+      longitudeNumber = Number(longitude);
+
+      if (
+        !Number.isFinite(latitudeNumber) ||
+        latitudeNumber < -90 ||
+        latitudeNumber > 90
+      ) {
+        return res.status(400).json({
+          error: 'Latitude tidak valid',
+        });
+      }
+
+      if (
+        !Number.isFinite(longitudeNumber) ||
+        longitudeNumber < -180 ||
+        longitudeNumber > 180
+      ) {
+        return res.status(400).json({
+          error: 'Longitude tidak valid',
+        });
+      }
     }
 
     /**
@@ -203,6 +221,44 @@ export const createCompany = async (req, res, next) => {
       return res.status(400).json({
         error: 'Radius harus lebih dari 0',
       });
+    }
+
+    /**
+     * ========================================================
+     * VALIDASI TAHUN AJARAN
+     * ========================================================
+     */
+
+    let academicYearIdValue = null;
+
+    if (
+      academicYearId !== undefined &&
+      academicYearId !== null &&
+      academicYearId !== ''
+    ) {
+      const parsedYearId = Number(academicYearId);
+
+      if (
+        !Number.isInteger(parsedYearId) ||
+        parsedYearId <= 0
+      ) {
+        return res.status(400).json({
+          error: 'academicYearId tidak valid',
+        });
+      }
+
+      const year = await prisma.academicYear.findUnique({
+        where: { id: parsedYearId },
+        select: { id: true },
+      });
+
+      if (!year) {
+        return res.status(400).json({
+          error: 'Tahun ajaran tidak ditemukan',
+        });
+      }
+
+      academicYearIdValue = parsedYearId;
     }
 
     /**
@@ -301,6 +357,8 @@ export const createCompany = async (req, res, next) => {
             ? Boolean(isActive)
             : true,
 
+        academicYearId: academicYearIdValue,
+
         mentorId: selectedMentor
           ? selectedMentor.id
           : null,
@@ -333,6 +391,22 @@ export const createCompany = async (req, res, next) => {
 
         data: {
           companyId: company.id,
+        },
+      });
+
+      // Mentor aktif juga harus masuk roster agar muncul di
+      // halaman pengelolaan mentor perusahaan.
+      await prisma.companyMentor.upsert({
+        where: {
+          companyId_mentorId: {
+            companyId: company.id,
+            mentorId: selectedMentor.id,
+          },
+        },
+        update: {},
+        create: {
+          companyId: company.id,
+          mentorId: selectedMentor.id,
         },
       });
     }
@@ -1863,11 +1937,7 @@ export const updateCompany = async (
      * ========================================================
      */
 
-    if (
-      newMentorId &&
-      newMentorId !==
-        existing.mentorId
-    ) {
+    if (newMentorId) {
       await prisma.user.update({
         where: {
           id: newMentorId,
@@ -1875,6 +1945,22 @@ export const updateCompany = async (
 
         data: {
           companyId: id,
+        },
+      });
+
+      // Pastikan mentor aktif selalu ada di roster, termasuk
+      // untuk data lama yang belum memiliki baris company_mentor.
+      await prisma.companyMentor.upsert({
+        where: {
+          companyId_mentorId: {
+            companyId: id,
+            mentorId: newMentorId,
+          },
+        },
+        update: {},
+        create: {
+          companyId: id,
+          mentorId: newMentorId,
         },
       });
     }

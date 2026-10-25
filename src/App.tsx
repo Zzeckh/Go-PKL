@@ -56,11 +56,9 @@ export default function App() {
     checkInAttendance,
     checkOutAttendance,
     login,
-    register,
     logout,
   } = useApp();
 
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [authExiting, setAuthExiting] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isJournalModalOpen, setIsJournalModalOpen] = useState(false);
@@ -77,26 +75,13 @@ export default function App() {
   }, [isAuthenticated]);
 
   /*
-   * LOGIN / REGISTER
+   * LOGIN
    */
   const handleAuthSubmit = async (payload: {
-    name: string;
     email: string;
     password: string;
-    institution?: string;
-    classId?: number;
   }) => {
-    if (authMode === 'login') {
-      await login(payload.email, payload.password);
-    } else {
-      await register(
-        payload.name,
-        payload.email,
-        payload.password,
-        payload.institution,
-        payload.classId
-      );
-    }
+    await login(payload.email, payload.password);
 
     setAuthExiting(true);
     await new Promise((resolve) => setTimeout(resolve, 430));
@@ -137,11 +122,7 @@ export default function App() {
               authExiting ? 'page-exit' : 'page-enter'
             }`}
           >
-            <AuthScreen
-              authMode={authMode}
-              setAuthMode={setAuthMode}
-              onSubmit={handleAuthSubmit}
-            />
+            <AuthScreen onSubmit={handleAuthSubmit} />
           </div>
         </div>
       </div>

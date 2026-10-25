@@ -106,6 +106,233 @@ export const getStats = async (req, res, next) => {
 };
 
 /* =========================================================
+   CREATE STUDENT
+   POST /api/hubin/students
+   ========================================================= */
+
+export const createStudent = async (req, res, next) => {
+  try {
+    const {
+      name,
+      nis,
+      classId,
+      teacherId,
+      companyId,
+      academicYearId,
+      academicYear,
+    } = req.body;
+
+    if (!name || !String(name).trim()) {
+      return res.status(400).json({
+        error: 'Nama siswa wajib diisi.',
+      });
+    }
+
+    const cleanNis = String(nis ?? '').trim();
+
+    if (!/^\d{4,30}$/.test(cleanNis)) {
+      return res.status(400).json({
+        error: 'NIS harus berupa 4-30 digit angka.',
+      });
+    }
+
+    const email = `${cleanNis}@gopkl.id`;
+
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true },
+    });
+
+    if (existingUser) {
+      return res.status(409).json({
+        error: 'NIS sudah terdaftar.',
+      });
+    }
+
+    const classIdNumber = Number(classId);
+
+    if (!Number.isInteger(classIdNumber) || classIdNumber <= 0) {
+      return res.status(400).json({
+        error: 'Kelas wajib dipilih.',
+      });
+    }
+
+    const classData = await prisma.class.findUnique({
+      where: { id: classIdNumber },
+      select: {
+        id: true,
+        academicYearId: true,
+      },
+    });
+
+    if (!classData) {
+      return res.status(400).json({
+        error: 'Kelas tidak ditemukan.',
+      });
+    }
+
+    let yearId = classData.academicYearId ?? null;
+
+    if (
+      academicYearId !== undefined &&
+      academicYearId !== null &&
+      academicYearId !== ''
+    ) {
+      const parsedYearId = Number(academicYearId);
+
+      if (
+        !Number.isInteger(parsedYearId) ||
+        parsedYearId <= 0
+      ) {
+        return res.status(400).json({
+          error: 'academicYearId tidak valid.',
+        });
+      }
+
+      if (
+        classData.academicYearId &&
+        classData.academicYearId !== parsedYearId
+      ) {
+        return res.status(400).json({
+          error: 'Kelas tidak sesuai dengan tahun ajaran.',
+        });
+      }
+
+      yearId = parsedYearId;
+    }
+
+    let resolvedYear = null;
+
+    if (yearId) {
+      resolvedYear = await prisma.academicYear.findUnique({
+        where: { id: yearId },
+        select: { id: true, name: true },
+      });
+
+      if (!resolvedYear) {
+        return res.status(400).json({
+          error: 'Tahun ajaran tidak ditemukan.',
+        });
+      }
+    }
+
+    let teacherIdValue = null;
+
+    if (
+      teacherId !== undefined &&
+      teacherId !== null &&
+      teacherId !== ''
+    ) {
+      const parsedTeacherId = Number(teacherId);
+
+      if (
+        !Number.isInteger(parsedTeacherId) ||
+        parsedTeacherId <= 0
+      ) {
+        return res.status(400).json({
+          error: 'teacherId tidak valid.',
+        });
+      }
+
+      const teacher = await prisma.user.findUnique({
+        where: { id: parsedTeacherId },
+        select: { id: true, role: true },
+      });
+
+      if (!teacher || teacher.role !== 'teacher') {
+        return res.status(400).json({
+          error: 'Guru pembimbing tidak valid.',
+        });
+      }
+
+      teacherIdValue = teacher.id;
+    }
+
+    let companyIdValue = null;
+
+    if (
+      companyId !== undefined &&
+      companyId !== null &&
+      companyId !== ''
+    ) {
+      const parsedCompanyId = Number(companyId);
+
+      if (
+        !Number.isInteger(parsedCompanyId) ||
+        parsedCompanyId <= 0
+      ) {
+        return res.status(400).json({
+          error: 'companyId tidak valid.',
+        });
+      }
+
+      const company = await prisma.company.findUnique({
+        where: { id: parsedCompanyId },
+        select: { id: true },
+      });
+
+      if (!company) {
+        return res.status(400).json({
+          error: 'Perusahaan tidak ditemukan.',
+        });
+      }
+
+      companyIdValue = company.id;
+    }
+
+    const hashedPassword = await bcrypt.hash('gopkl123', 10);
+
+    const student = await prisma.user.create({
+      data: {
+        name: String(name).trim(),
+        email,
+        password: hashedPassword,
+        role: 'student',
+        isActive: true,
+        classId: classData.id,
+        teacherId: teacherIdValue,
+        companyId: companyIdValue,
+        academicYearId: yearId,
+        academicYear:
+          resolvedYear?.name ??
+          (academicYear !== undefined &&
+          academicYear !== null &&
+          String(academicYear).trim() !== ''
+            ? String(academicYear).trim()
+            : null),
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        classId: true,
+        teacherId: true,
+        companyId: true,
+        academicYearId: true,
+        academicYear: true,
+      },
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Siswa berhasil ditambahkan.',
+      data: student,
+      initialPassword: 'gopkl123',
+    });
+  } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(409).json({
+        error: 'NIS sudah terdaftar.',
+      });
+    }
+
+    next(error);
+  }
+};
+
+/* =========================================================
    GET CLASSES
    GET /api/hubin/classes
    Filter berdasarkan Tahun Ajaran

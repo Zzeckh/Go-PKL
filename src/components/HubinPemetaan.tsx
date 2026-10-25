@@ -206,6 +206,18 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
           </div>
 
           <div className="overflow-y-auto custom-scrollbar max-h-60 p-1">
+            <button
+              type="button"
+              onClick={() => {
+                onChange('');
+                setOpen(false);
+                setQuery('');
+              }}
+              className="w-full text-left px-3 py-2 rounded-lg transition-all text-xs font-bold text-navy/50 hover:bg-mist/30 hover:text-navy"
+            >
+              — Kosongkan —
+            </button>
+
             {filtered.length === 0 ? (
               <div className="py-6 text-center">
                 <p className="text-xs font-semibold text-navy/40">

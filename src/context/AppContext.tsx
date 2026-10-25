@@ -259,18 +259,15 @@ interface AppContextType {
     period: string
   ) => Promise<void>;
 
-  addSiswa: (
-    newSiswa: Omit<
-      SiswaItem,
-      | 'id'
-      | 'kehadiran'
-      | 'logs'
-      | 'nilaiDUDI'
-      | 'nilaiGuru'
-      | 'finalNilai'
-      | 'berkasPct'
-    >
-  ) => Promise<void>;
+  addSiswa: (newSiswa: {
+    name: string;
+    nis: string;
+    classId: number;
+    teacherId?: number | null;
+    companyId?: number | null;
+    academicYearId?: number | null;
+    academicYear?: string;
+  }) => Promise<void>;
 
   addPerusahaan: (data: {
     name: string;
@@ -312,14 +309,6 @@ interface AppContextType {
   ) => Promise<void>;
 
   login: (email: string, password: string) => Promise<void>;
-
-  register: (
-    name: string,
-    email: string,
-    password: string,
-    institution?: string,
-    classId?: number
-  ) => Promise<void>;
 
   logout: () => void;
 
@@ -1615,23 +1604,35 @@ export const AppProvider: React.FC<{
       throw new Error('Alamat perusahaan wajib diisi.');
     }
 
-    if (
-      data.latitude === undefined ||
-      data.latitude === null ||
-      data.longitude === undefined ||
-      data.longitude === null
-    ) {
-      throw new Error(
-        'Latitude dan longitude perusahaan wajib diisi.'
-      );
-    }
+    const hasLatitude =
+      data.latitude !== undefined &&
+      data.latitude !== null &&
+      String(data.latitude) !== '';
 
-    const latitude = Number(data.latitude);
+    const hasLongitude =
+      data.longitude !== undefined &&
+      data.longitude !== null &&
+      String(data.longitude) !== '';
 
-    const longitude = Number(data.longitude);
+    let latitude: number | undefined;
+    let longitude: number | undefined;
 
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-      throw new Error('Latitude dan longitude tidak valid.');
+    if (hasLatitude || hasLongitude) {
+      if (!hasLatitude || !hasLongitude) {
+        throw new Error(
+          'Latitude dan longitude harus diisi bersamaan.'
+        );
+      }
+
+      latitude = Number(data.latitude);
+      longitude = Number(data.longitude);
+
+      if (
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude)
+      ) {
+        throw new Error('Latitude dan longitude tidak valid.');
+      }
     }
 
     const body: any = {
@@ -1647,14 +1648,15 @@ export const AppProvider: React.FC<{
 
       quota: Number(data.quota) || 0,
 
-      latitude,
-
-      longitude,
-
       radiusMeters: Number(data.radiusMeters) || 500,
 
       academicYearId: selectedAcademicYearId,
     };
+
+    if (latitude !== undefined && longitude !== undefined) {
+      body.latitude = latitude;
+      body.longitude = longitude;
+    }
 
     if (data.mentorId !== undefined) {
       body.mentorId = Number(data.mentorId);
@@ -1662,7 +1664,7 @@ export const AppProvider: React.FC<{
 
     const res = await api.post('/api/companies', body);
 
-    await loadCompanies();
+    await Promise.all([loadCompanies(), loadSuperStats()]);
 
     return res;
   };
@@ -2038,51 +2040,6 @@ export const AppProvider: React.FC<{
 
   /*
    * =======================================================
-   * REGISTER
-   * =======================================================
-   */
-
-  const register = async (
-    name: string,
-    email: string,
-    password: string,
-    _institution?: string,
-    classId?: number
-  ) => {
-    try {
-      const data = (await api.post('/api/auth/register', {
-        name,
-        email,
-        password,
-        classId,
-      })) as {
-        token: string;
-        user: any;
-      };
-
-      if (!data?.token) {
-        throw new Error(
-          'Token registrasi tidak diterima dari server.'
-        );
-      }
-
-      localStorage.setItem('pkl_token', data.token);
-
-      localStorage.setItem(
-        'pkl_role',
-        mapBackendRoleToUserRole(data.user.role)
-      );
-
-      localStorage.setItem('pkl_user_name', data.user.name || '');
-
-      setToken(data.token);
-    } catch (error: any) {
-      throw new Error(error?.message || 'Registrasi gagal');
-    }
-  };
-
-  /*
-   * =======================================================
    * ADD LOGBOOK
    * =======================================================
    */
@@ -2442,38 +2399,45 @@ export const AppProvider: React.FC<{
    * =======================================================
    */
 
-  const addSiswa = async (
-    newSiswa: Omit<
-      SiswaItem,
-      | 'id'
-      | 'kehadiran'
-      | 'logs'
-      | 'nilaiDUDI'
-      | 'nilaiGuru'
-      | 'finalNilai'
-      | 'berkasPct'
-    >
-  ) => {
+  const addSiswa = async (newSiswa: {
+    name: string;
+    nis: string;
+    classId: number;
+    teacherId?: number | null;
+    companyId?: number | null;
+    academicYearId?: number | null;
+    academicYear?: string;
+  }) => {
     try {
       if (selectedAcademicYearId === null) {
         throw new Error('Pilih Tahun Ajaran terlebih dahulu.');
       }
 
+      if (!newSiswa.nis?.trim()) {
+        throw new Error('NIS wajib diisi.');
+      }
+
+      if (!Number.isInteger(newSiswa.classId)) {
+        throw new Error('Kelas wajib dipilih.');
+      }
+
       await api.post('/api/hubin/students', {
-        name: newSiswa.name,
-
-        email: `${newSiswa.name
-          .toLowerCase()
-          .replace(/\s+/g, '.')}@gopkl.id`,
-
-        password: 'gopkl123',
-
-        academicYear: newSiswa.academicYear || undefined,
-
-        academicYearId: selectedAcademicYearId,
+        name: newSiswa.name.trim(),
+        nis: newSiswa.nis.trim(),
+        classId: newSiswa.classId,
+        teacherId: newSiswa.teacherId ?? null,
+        companyId: newSiswa.companyId ?? null,
+        academicYearId:
+          newSiswa.academicYearId ?? selectedAcademicYearId,
+        academicYear: newSiswa.academicYear,
       });
 
-      await loadSiswa();
+      await Promise.all([
+        loadSiswa(),
+        loadCompanies(),
+        loadSuperStats(),
+        loadHubinClasses(),
+      ]);
     } catch (error: any) {
       throw new Error(error?.message || 'Gagal menambah siswa');
     }
@@ -2504,17 +2468,6 @@ export const AppProvider: React.FC<{
     try {
       if (selectedAcademicYearId === null) {
         throw new Error('Pilih Tahun Ajaran terlebih dahulu.');
-      }
-
-      if (
-        data.latitude === undefined ||
-        data.latitude === null ||
-        data.longitude === undefined ||
-        data.longitude === null
-      ) {
-        throw new Error(
-          'Latitude dan longitude perusahaan wajib diisi.'
-        );
       }
 
       await addCompany({
@@ -2566,14 +2519,31 @@ export const AppProvider: React.FC<{
     }
   ) => {
     try {
-      await api.patch(`/api/users/${siswaId}`, {
-        companyId: data.companyId
-          ? Number(data.companyId)
-          : undefined,
+      const companyId =
+        data.companyId === undefined ||
+        data.companyId === null ||
+        data.companyId === ''
+          ? undefined
+          : Number(data.companyId);
 
-        teacherId: data.teacherId
-          ? Number(data.teacherId)
-          : undefined,
+      const teacherId =
+        data.teacherId === undefined ||
+        data.teacherId === null ||
+        data.teacherId === ''
+          ? undefined
+          : Number(data.teacherId);
+
+      await api.patch(`/api/users/${siswaId}`, {
+        // undefined = jangan ubah, null = lepaskan pemetaan.
+        companyId:
+          data.companyId === undefined
+            ? undefined
+            : companyId ?? null,
+
+        teacherId:
+          data.teacherId === undefined
+            ? undefined
+            : teacherId ?? null,
 
         mentorName: data.mentorName,
 
@@ -2582,7 +2552,10 @@ export const AppProvider: React.FC<{
             ? data.academicYear
             : undefined,
 
-        academicYearId: selectedAcademicYearId || undefined,
+        academicYearId:
+          selectedAcademicYearId !== null
+            ? selectedAcademicYearId
+            : undefined,
       });
 
       await Promise.all([
@@ -2708,7 +2681,6 @@ export const AppProvider: React.FC<{
         updateCompanyLocation,
 
         login,
-        register,
         logout,
 
         refreshData,

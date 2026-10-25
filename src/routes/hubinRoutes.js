@@ -9,6 +9,7 @@ import {
 
 import {
   getStats,
+  createStudent,
   getClasses,
   createClass,
   deleteClass,
@@ -39,6 +40,9 @@ router.use(authenticate, requireRole('hubin'));
 // =========================
 
 router.get('/stats', getStats);
+
+// Tambah satu siswa secara manual.
+router.post('/students', createStudent);
 
 // Import siswa hanya melakukan preview; penyimpanan akun belum tersedia.
 router.get('/students/import-template', downloadStudentImportTemplate);
