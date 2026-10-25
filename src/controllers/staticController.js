@@ -2,7 +2,32 @@ import prisma from '../config/db.js';
 
 export const getPerizinan = async (req, res, next) => {
   try {
+    const { id, role } = req.user;
+
+    const where = {};
+
+    if (role === 'student') {
+      where.userId = id;
+    } else if (role === 'teacher') {
+      // Guru hanya melihat perizinan siswa bimbingannya.
+      where.user = {
+        teacherId: id,
+      };
+    } else if (role === 'mentor') {
+      // Mentor hanya melihat perizinan siswa di perusahaannya.
+      where.user = {
+        company: {
+          mentorId: id,
+        },
+      };
+    } else if (role !== 'hubin') {
+      return res.status(403).json({
+        error: 'Akses ditolak untuk role Anda.',
+      });
+    }
+
     const permissions = await prisma.permission.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
       include: { user: { select: { name: true, class: { select: { name: true } } } } },
     });

@@ -216,6 +216,44 @@ export const checkoutAbsensi = async (req, res, next) => {
 export const getAbsensiByUser = async (req, res, next) => {
   try {
     const userId = Number(req.params.userId);
+
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(400).json({ error: 'ID user tidak valid' });
+    }
+
+    const requester = req.user;
+    const isSelf = requester.id === userId;
+    const isHubin = requester.role === 'hubin';
+
+    if (!isSelf && !isHubin) {
+      const target = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          teacherId: true,
+          company: { select: { mentorId: true } },
+        },
+      });
+
+      if (!target) {
+        return res.status(404).json({ error: 'User tidak ditemukan' });
+      }
+
+      const isTeacherOfTarget =
+        requester.role === 'teacher' &&
+        target.teacherId === requester.id;
+
+      const isMentorOfTarget =
+        requester.role === 'mentor' &&
+        target.company?.mentorId === requester.id;
+
+      if (!isTeacherOfTarget && !isMentorOfTarget) {
+        return res.status(403).json({
+          error: 'Anda tidak memiliki akses ke absensi user ini.',
+        });
+      }
+    }
+
     const absensi = await prisma.absensi.findMany({
       where: { userId },
       include: { user: { select: { id: true, name: true } } },

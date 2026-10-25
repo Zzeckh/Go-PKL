@@ -1,5 +1,9 @@
 ﻿import prisma from '../config/db.js';
 import bcrypt from 'bcryptjs';
+import {
+  getUserDeletionBlockers,
+  buildDeletionBlockedMessage,
+} from '../services/userDeletionService.js';
 
 // ============================================================
 // GET USERS
@@ -167,6 +171,9 @@ export const getUsers = async (req, res, next) => {
     // ============================================================
 
     const formattedUsers = users.map((user) => {
+      // Jangan pernah kirim hash password ke client.
+      const { password: _password, ...safeUser } = user;
+
       const formattedCompany = user.company
         ? {
             ...user.company,
@@ -185,7 +192,7 @@ export const getUsers = async (req, res, next) => {
         })) ?? [];
 
       return {
-        ...user,
+        ...safeUser,
         company: formattedCompany,
         mentoredCompanies: formattedMentoredCompanies,
       };
@@ -358,8 +365,11 @@ export const getUserById = async (req, res, next) => {
       });
     }
 
+    // Jangan pernah kirim hash password ke client.
+    const { password: _password, ...safeUser } = user;
+
     const result = {
-      ...user,
+      ...safeUser,
 
       company: user.company
         ? {
@@ -489,12 +499,39 @@ export const updateUser = async (req, res, next) => {
 
     const requesterRole = req.user.role;
 
-    const isPrivileged =
-      requesterRole === 'hubin' || requesterRole === 'teacher';
-
     const isSelf = req.user.id === id;
 
-    if (!isPrivileged && !isSelf) {
+    // ============================================================
+    // TARGET & BATASAN AKSES
+    // ------------------------------------------------------------
+    // - hubin  : boleh mengelola semua user
+    // - guru   : hanya boleh mengubah nama siswa bimbingannya
+    // - lainnya: hanya boleh mengubah nama sendiri
+    // ============================================================
+
+    const target = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        role: true,
+        teacherId: true,
+      },
+    });
+
+    if (!target) {
+      return res.status(404).json({
+        error: 'User tidak ditemukan.',
+      });
+    }
+
+    const isHubin = requesterRole === 'hubin';
+
+    const isTeacherOfTarget =
+      requesterRole === 'teacher' &&
+      target.role === 'student' &&
+      target.teacherId === req.user.id;
+
+    if (!isHubin && !isTeacherOfTarget && !isSelf) {
       return res.status(403).json({
         error: 'Anda tidak memiliki akses untuk mengubah user ini.',
       });
@@ -539,7 +576,7 @@ export const updateUser = async (req, res, next) => {
           : undefined,
 
       classId:
-        isPrivileged &&
+        isHubin &&
         classId !== undefined &&
         classId !== null &&
         classId !== ''
@@ -547,7 +584,7 @@ export const updateUser = async (req, res, next) => {
           : undefined,
 
       teacherId:
-        isPrivileged &&
+        isHubin &&
         teacherId !== undefined &&
         teacherId !== null &&
         teacherId !== ''
@@ -555,14 +592,14 @@ export const updateUser = async (req, res, next) => {
           : undefined,
 
       companyId:
-        isPrivileged &&
+        isHubin &&
         companyId !== undefined &&
         companyId !== null &&
         companyId !== ''
           ? Number(companyId)
           : undefined,
 
-      academicYear: isPrivileged
+      academicYear: isHubin
         ? resolvedAcademicYear
         : undefined,
     };
@@ -571,7 +608,7 @@ export const updateUser = async (req, res, next) => {
     // PASANG MENTOR KE PERUSAHAAN
     // ============================================================
 
-    if (isPrivileged && mentorName && data.companyId) {
+    if (isHubin && mentorName && data.companyId) {
       const mentor = await prisma.user.findFirst({
         where: {
           name: String(mentorName).trim(),
@@ -656,8 +693,11 @@ export const updateUser = async (req, res, next) => {
     // FORMAT RESPONSE
     // ============================================================
 
+    // Jangan pernah kirim hash password ke client.
+    const { password: _password, ...safeUser } = user;
+
     const result = {
-      ...user,
+      ...safeUser,
 
       company: user.company
         ? {
@@ -700,6 +740,25 @@ export const deleteUser = async (req, res, next) => {
     if (!existing) {
       return res.status(404).json({
         error: 'User tidak ditemukan',
+      });
+    }
+
+    // ============================================================
+    // CEK DEPENDENSI
+    // ============================================================
+
+    const blockers = await getUserDeletionBlockers(id);
+
+    if (blockers === null) {
+      return res.status(404).json({
+        error: 'User tidak ditemukan',
+      });
+    }
+
+    if (blockers.length) {
+      return res.status(409).json({
+        error: buildDeletionBlockedMessage(blockers),
+        blockers,
       });
     }
 

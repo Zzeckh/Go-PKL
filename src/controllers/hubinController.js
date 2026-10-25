@@ -1,5 +1,9 @@
 import prisma from '../config/db.js';
 import bcrypt from 'bcryptjs';
+import {
+  getUserDeletionBlockers,
+  buildDeletionBlockedMessage,
+} from '../services/userDeletionService.js';
 
 /* =========================================================
    STATS GLOBAL
@@ -706,6 +710,30 @@ export const deleteUser = async (
       return res.status(403).json({
         error:
           'Tidak dapat menghapus akun sendiri.',
+      });
+    }
+
+    // ============================================================
+    // CEK DEPENDENSI
+    // ------------------------------------------------------------
+    // Hard delete hanya aman untuk akun yang belum punya data.
+    // Akun dengan riwayat PKL harus dinonaktifkan agar data tidak
+    // hilang dan relasi foreign key tidak error.
+    // ============================================================
+
+    const blockers = await getUserDeletionBlockers(id);
+
+    if (blockers === null) {
+      return res.status(404).json({
+        error:
+          'User tidak ditemukan.',
+      });
+    }
+
+    if (blockers.length) {
+      return res.status(409).json({
+        error: buildDeletionBlockedMessage(blockers),
+        blockers,
       });
     }
 
