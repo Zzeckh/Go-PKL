@@ -1,12 +1,16 @@
 import prisma from '../config/db.js';
 import XLSX from 'xlsx';
+import {
+  SOURCE_LABEL,
+  isInternalCategory,
+  normalizeSource,
+  resolveQuotas,
+  getFilledBySource,
+} from '../services/quotaService.js';
 
 /**
- * ============================================================
- * HELPER
- * ============================================================
+ * Helper
  */
-
 const normalize = (value) =>
   String(value ?? '')
     .trim()
@@ -19,63 +23,58 @@ const normalizeNis = (value) =>
     .replace(/\.0$/, '');
 
 /**
- * ============================================================
  * GET /api/companies
- * ============================================================
- *
- * quotaCompany = kapasitas maksimal perusahaan
- * filled       = jumlah siswa yang sudah terhubung
- *
- * Sisa kuota:
- * quotaCompany - filled
- * ============================================================
+ * Semua role login bisa melihat perusahaan
  */
-
 export const getCompanies = async (req, res, next) => {
   try {
     const companies = await prisma.company.findMany({
-      orderBy: {
-        name: 'asc',
-      },
-
+      orderBy: { name: 'asc' },
       include: {
         mentor: {
           select: {
             id: true,
             name: true,
-            email: true,
-            role: true,
-            companyId: true,
           },
         },
-
-        students: {
-          where: {
-            role: 'student',
-          },
-
+        _count: {
           select: {
-            id: true,
+            students: true,
           },
         },
       },
     });
 
-    const data = companies.map(({ students, ...company }) => ({
-      ...company,
+    // Jumlah siswa per perusahaan per jalur (sekolah / perusahaan)
+    const grouped = await prisma.user.groupBy({
+      by: ['companyId', 'placementSource'],
+      where: { companyId: { not: null } },
+      _count: { _all: true },
+    });
 
-      // Jumlah siswa yang sedang terpetakan
-      filled: students.length,
+    const filledMap = new Map();
 
-      // Sisa kapasitas
-      remainingQuota: Math.max(
-        0,
-        company.quotaCompany - students.length
-      ),
-    }));
+    for (const g of grouped) {
+      const cur = filledMap.get(g.companyId) || { sekolah: 0, perusahaan: 0 };
+      if (g.placementSource === 'perusahaan') {
+        cur.perusahaan += g._count._all;
+      } else {
+        cur.sekolah += g._count._all;
+      }
+      filledMap.set(g.companyId, cur);
+    }
 
-    return res.json({
-      data,
+    res.json({
+      data: companies.map(({ _count, mentor, ...rest }) => {
+        const f = filledMap.get(rest.id) || { sekolah: 0, perusahaan: 0 };
+        return {
+          ...rest,
+          filled: _count.students,
+          filledSchool: f.sekolah,
+          filledCompany: f.perusahaan,
+          mentor,
+        };
+      }),
     });
   } catch (error) {
     next(error);
@@ -83,16 +82,9 @@ export const getCompanies = async (req, res, next) => {
 };
 
 /**
- * ============================================================
  * POST /api/companies
- * ============================================================
- *
- * Membuat perusahaan secara manual.
- *
- * quotaCompany = kapasitas maksimal siswa perusahaan
- * ============================================================
+ * Membuat perusahaan secara manual
  */
-
 export const createCompany = async (req, res, next) => {
   try {
     const {
@@ -101,321 +93,53 @@ export const createCompany = async (req, res, next) => {
       city,
       country,
       category,
-      quotaCompany,
-      quota,
       latitude,
       longitude,
       radiusMeters,
-      mentorId,
-      isActive,
-      academicYearId,
     } = req.body;
 
-    /**
-     * ========================================================
-     * VALIDASI NAMA & ALAMAT
-     * ========================================================
-     */
+    const quotas = resolveQuotas(req.body) || {
+      quotaSchool: 0,
+      quotaCompany: 0,
+      quota: 0,
+    };
 
-    if (!name || !String(name).trim()) {
+    if (quotas.error) {
+      return res.status(400).json({ error: quotas.error });
+    }
+
+    if (!name || !address) {
       return res.status(400).json({
-        error: 'Nama perusahaan wajib diisi',
+        error: 'Nama dan alamat perusahaan wajib diisi',
       });
     }
 
-    if (!address || !String(address).trim()) {
-      return res.status(400).json({
-        error: 'Alamat perusahaan wajib diisi',
-      });
-    }
-
-    /**
-     * ========================================================
-     * VALIDASI KUOTA
-     * ========================================================
-     */
-
-    const quotaValue =
-      quotaCompany !== undefined
-        ? Number(quotaCompany)
-        : Number(quota);
-
-    if (
-      !Number.isInteger(quotaValue) ||
-      quotaValue <= 0
-    ) {
+    if (latitude == null || longitude == null) {
       return res.status(400).json({
         error:
-          'Kuota perusahaan harus berupa bilangan bulat lebih dari 0',
+          'Koordinat geofence (latitude/longitude) wajib diisi',
       });
     }
 
-    /**
-     * ========================================================
-     * VALIDASI KOORDINAT
-     * ========================================================
-     */
-
-    const hasLatitude =
-      latitude !== undefined &&
-      latitude !== null &&
-      latitude !== '';
-
-    const hasLongitude =
-      longitude !== undefined &&
-      longitude !== null &&
-      longitude !== '';
-
-    // Koordinat boleh dikosongkan saat quick-add. Lokasi dapat
-    // dilengkapi kemudian melalui halaman Data Perusahaan.
-    let latitudeNumber = null;
-    let longitudeNumber = null;
-
-    if (hasLatitude || hasLongitude) {
-      if (!hasLatitude || !hasLongitude) {
-        return res.status(400).json({
-          error:
-            'Latitude dan longitude harus diisi bersamaan',
-        });
-      }
-
-      latitudeNumber = Number(latitude);
-      longitudeNumber = Number(longitude);
-
-      if (
-        !Number.isFinite(latitudeNumber) ||
-        latitudeNumber < -90 ||
-        latitudeNumber > 90
-      ) {
-        return res.status(400).json({
-          error: 'Latitude tidak valid',
-        });
-      }
-
-      if (
-        !Number.isFinite(longitudeNumber) ||
-        longitudeNumber < -180 ||
-        longitudeNumber > 180
-      ) {
-        return res.status(400).json({
-          error: 'Longitude tidak valid',
-        });
-      }
-    }
-
-    /**
-     * ========================================================
-     * VALIDASI RADIUS
-     * ========================================================
-     */
-
-    const radiusNumber =
-      radiusMeters == null || radiusMeters === ''
-        ? 500
-        : Number(radiusMeters);
-
-    if (
-      !Number.isFinite(radiusNumber) ||
-      radiusNumber <= 0
-    ) {
-      return res.status(400).json({
-        error: 'Radius harus lebih dari 0',
-      });
-    }
-
-    /**
-     * ========================================================
-     * VALIDASI TAHUN AJARAN
-     * ========================================================
-     */
-
-    let academicYearIdValue = null;
-
-    if (
-      academicYearId !== undefined &&
-      academicYearId !== null &&
-      academicYearId !== ''
-    ) {
-      const parsedYearId = Number(academicYearId);
-
-      if (
-        !Number.isInteger(parsedYearId) ||
-        parsedYearId <= 0
-      ) {
-        return res.status(400).json({
-          error: 'academicYearId tidak valid',
-        });
-      }
-
-      const year = await prisma.academicYear.findUnique({
-        where: { id: parsedYearId },
-        select: { id: true },
-      });
-
-      if (!year) {
-        return res.status(400).json({
-          error: 'Tahun ajaran tidak ditemukan',
-        });
-      }
-
-      academicYearIdValue = parsedYearId;
-    }
-
-    /**
-     * ========================================================
-     * VALIDASI MENTOR
-     * ========================================================
-     */
-
-    let selectedMentor = null;
-
-    if (
-      mentorId !== undefined &&
-      mentorId !== null &&
-      mentorId !== ''
-    ) {
-      const mentorIdNumber = Number(mentorId);
-
-      if (!Number.isInteger(mentorIdNumber)) {
-        return res.status(400).json({
-          error: 'mentorId tidak valid',
-        });
-      }
-
-      selectedMentor = await prisma.user.findUnique({
-        where: {
-          id: mentorIdNumber,
-        },
-
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          companyId: true,
-        },
-      });
-
-      if (
-        !selectedMentor ||
-        selectedMentor.role !== 'mentor'
-      ) {
-        return res.status(400).json({
-          error:
-            'mentorId harus user dengan role mentor',
-        });
-      }
-
-      if (selectedMentor.companyId !== null) {
-        return res.status(400).json({
-          error:
-            'Mentor tersebut sudah terhubung dengan perusahaan lain',
-        });
-      }
-    }
-
-    /**
-     * ========================================================
-     * BUAT PERUSAHAAN
-     * ========================================================
-     */
 
     const company = await prisma.company.create({
       data: {
         name: String(name).trim(),
-
         address: String(address).trim(),
-
-        city:
-          city !== undefined &&
-          city !== ''
-            ? String(city).trim()
-            : null,
-
-        country:
-          country !== undefined &&
-          country !== ''
-            ? String(country).trim()
-            : null,
-
-        category:
-          category !== undefined &&
-          category !== ''
-            ? String(category).trim()
-            : null,
-
-        quotaCompany: quotaValue,
-
-        latitude: latitudeNumber,
-
-        longitude: longitudeNumber,
-
-        radiusMeters: radiusNumber,
-
-        isActive:
-          isActive !== undefined
-            ? Boolean(isActive)
-            : true,
-
-        academicYearId: academicYearIdValue,
-
-        mentorId: selectedMentor
-          ? selectedMentor.id
-          : null,
-      },
-
-      include: {
-        mentor: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-            companyId: true,
-          },
-        },
+        city: city ? String(city).trim() : null,
+        country: country ? String(country).trim() : null,
+        category: category ? String(category).trim() : null,
+        quota: quotas.quota,
+        quotaSchool: quotas.quotaSchool,
+        quotaCompany: quotas.quotaCompany,
+        latitude: Number(latitude),
+        longitude: Number(longitude),
+        radiusMeters: Number(radiusMeters) || 500,
+        // mentorId sengaja tidak diisi dari Hubin; penetapan dilakukan Guru Pembimbing.
       },
     });
 
-    /**
-     * ========================================================
-     * HUBUNGKAN COMPANY ID KE MENTOR
-     * ========================================================
-     */
-
-    if (selectedMentor) {
-      await prisma.user.update({
-        where: {
-          id: selectedMentor.id,
-        },
-
-        data: {
-          companyId: company.id,
-        },
-      });
-
-      // Mentor aktif juga harus masuk roster agar muncul di
-      // halaman pengelolaan mentor perusahaan.
-      await prisma.companyMentor.upsert({
-        where: {
-          companyId_mentorId: {
-            companyId: company.id,
-            mentorId: selectedMentor.id,
-          },
-        },
-        update: {},
-        create: {
-          companyId: company.id,
-          mentorId: selectedMentor.id,
-        },
-      });
-    }
-
-    return res.status(201).json({
-      ...company,
-      filled: 0,
-      remainingQuota: quotaValue,
-    });
+    res.status(201).json(company);
   } catch (error) {
     if (error.code === 'P2002') {
       return res.status(409).json({
@@ -428,15 +152,11 @@ export const createCompany = async (req, res, next) => {
 };
 
 /**
- * ============================================================
  * GET /api/companies/template
- * ============================================================
  *
- * Download template Excel.
+ * Download template Excel kosong untuk import mapping.
  *
- * Tidak ada quotaSchool lagi.
- *
- * Kolom:
+ * Format:
  * NIS
  * Nama Siswa
  * Nama Perusahaan
@@ -446,16 +166,9 @@ export const createCompany = async (req, res, next) => {
  * Latitude
  * Longitude
  * Radius
- * Kuota Perusahaan
- * Guru Pembimbing
- * ============================================================
+ * Kuota
  */
-
-export const downloadCompanyTemplate = async (
-  req,
-  res,
-  next
-) => {
+export const downloadCompanyTemplate = async (req, res, next) => {
   try {
     const templateData = [
       {
@@ -468,13 +181,14 @@ export const downloadCompanyTemplate = async (
         Latitude: '',
         Longitude: '',
         Radius: '',
+        'Kuota Sekolah': '',
         'Kuota Perusahaan': '',
+        Jalur: '',
         'Guru Pembimbing': '',
       },
     ];
 
-    const worksheet =
-      XLSX.utils.json_to_sheet(templateData);
+    const worksheet = XLSX.utils.json_to_sheet(templateData);
 
     worksheet['!cols'] = [
       { wch: 15 },
@@ -486,12 +200,13 @@ export const downloadCompanyTemplate = async (
       { wch: 15 },
       { wch: 15 },
       { wch: 15 },
-      { wch: 20 },
+      { wch: 15 },
+      { wch: 18 },
+      { wch: 14 },
       { wch: 30 },
     ];
 
-    const workbook =
-      XLSX.utils.book_new();
+    const workbook = XLSX.utils.book_new();
 
     XLSX.utils.book_append_sheet(
       workbook,
@@ -514,43 +229,44 @@ export const downloadCompanyTemplate = async (
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     );
 
-    return res.send(buffer);
+    res.send(buffer);
   } catch (error) {
     next(error);
   }
 };
 
 /**
- * ============================================================
  * POST /api/companies/import
- * ============================================================
  *
- * Import Excel mapping siswa ke perusahaan.
+ * Import Excel mapping:
  *
- * SATU BARIS = SATU SISWA.
+ * NIS
+ * Nama Siswa
+ * Nama Perusahaan
+ * Alamat
+ * Kota
+ * Negara
+ * Latitude
+ * Longitude
+ * Radius
+ * Kuota
+ * Guru Pembimbing
  *
- * quotaCompany = kapasitas global perusahaan.
+ * Konsep:
+ * 1 perusahaan
+ *    -> banyak siswa
+ *    -> guru pembimbing dapat digunakan untuk siswa
  *
- * filled = jumlah siswa yang sudah terhubung.
- *
- * Siswa baru hanya boleh masuk jika:
- *
- * filled < quotaCompany
- *
- * Tidak ada quotaSchool.
- * ============================================================
+ * Mentor TIDAK diambil dari Excel.
+ * Mentor perusahaan tetap mengikuti data perusahaan
+ * yang sudah tersimpan di database.
  */
-
-export const importCompanies = async (
-  req,
-  res,
-  next
-) => {
+export const importCompanies = async (req, res, next) => {
   try {
     /**
-     * ========================================================
+     * ============================================================
      * 1. CEK FILE
-     * ========================================================
+     * ============================================================
      */
 
     if (!req.file) {
@@ -560,85 +276,68 @@ export const importCompanies = async (
     }
 
     /**
-     * ========================================================
+     * ============================================================
      * 2. BACA EXCEL
-     * ========================================================
+     * ============================================================
      */
 
-    const workbook = XLSX.read(
-      req.file.buffer,
-      {
-        type: 'buffer',
-      }
-    );
+    const workbook = XLSX.read(req.file.buffer, {
+      type: 'buffer',
+    });
 
-    const sheetName =
-      workbook.SheetNames[0];
+    const sheetName = workbook.SheetNames[0];
 
     if (!sheetName) {
       return res.status(400).json({
-        error:
-          'File Excel tidak memiliki sheet',
+        error: 'File Excel tidak memiliki sheet',
       });
     }
 
-    const worksheet =
-      workbook.Sheets[sheetName];
+    const worksheet = workbook.Sheets[sheetName];
 
-    const rows =
-      XLSX.utils.sheet_to_json(
-        worksheet,
-        {
-          defval: '',
-        }
-      );
+    const rows = XLSX.utils.sheet_to_json(worksheet, {
+      defval: '',
+    });
 
     if (!rows.length) {
       return res.status(400).json({
-        error:
-          'File Excel tidak memiliki data',
+        error: 'File Excel tidak memiliki data',
       });
     }
 
     /**
-     * ========================================================
-     * 3. AMBIL SISWA
-     * ========================================================
+     * ============================================================
+     * 3. AMBIL SEMUA SISWA
+     * ============================================================
+     *
+     * NIS pada project sekarang berasal dari bagian sebelum "@"
+     * pada email user.
      */
 
-    const students =
-      await prisma.user.findMany({
-        where: {
-          role: 'student',
-        },
+    const students = await prisma.user.findMany({
+      where: {
+        role: 'student',
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        companyId: true,
+        teacherId: true,
+        placementSource: true,
+      },
+    });
 
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          companyId: true,
-          teacherId: true,
-        },
-      });
-
-    const studentByNis =
-      new Map();
-
-    const studentByName =
-      new Map();
+    const studentByNis = new Map();
+    const studentByName = new Map();
 
     for (const student of students) {
       const nis = normalizeNis(
-        String(
-          student.email || ''
-        ).split('@')[0]
+        String(student.email || '').split('@')[0]
       );
 
       if (nis) {
-        studentByNis.set(
-          nis,
-          student
-        );
+        studentByNis.set(nis, student);
       }
 
       studentByName.set(
@@ -648,25 +347,22 @@ export const importCompanies = async (
     }
 
     /**
-     * ========================================================
-     * 4. AMBIL GURU
-     * ========================================================
+     * ============================================================
+     * 4. AMBIL SEMUA GURU
+     * ============================================================
      */
 
-    const teachers =
-      await prisma.user.findMany({
-        where: {
-          role: 'teacher',
-        },
+    const teachers = await prisma.user.findMany({
+      where: {
+        role: 'teacher',
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
 
-        select: {
-          id: true,
-          name: true,
-        },
-      });
-
-    const teacherByName =
-      new Map();
+    const teacherByName = new Map();
 
     for (const teacher of teachers) {
       teacherByName.set(
@@ -676,169 +372,162 @@ export const importCompanies = async (
     }
 
     /**
-     * ========================================================
-     * 5. CACHE
-     * ========================================================
+     * ============================================================
+     * 5. HASIL IMPORT
+     * ============================================================
      */
 
     const success = [];
     const errors = [];
 
-    const processedStudentIds =
-      new Set();
-
-    const companyCache =
-      new Map();
-
     /**
-     * Jumlah siswa aktual per perusahaan.
+     * Siswa yang sudah diproses di Excel.
+     *
+     * Tujuannya supaya satu siswa tidak muncul dua kali.
      */
-    const companyFilled =
-      new Map();
+    const processedStudentIds = new Set();
 
     /**
-     * Guru pembimbing per perusahaan
-     * selama proses Excel.
+     * Cache perusahaan supaya perusahaan yang sama
+     * tidak dicari berulang kali.
      */
-    const companyAssignment =
-      new Map();
+    const companyCache = new Map();
 
     /**
-     * ========================================================
+     * Menyimpan jumlah siswa per perusahaan per jalur selama import:
+     * { sekolah, perusahaan }
+     */
+    const companyFilled = new Map();
+
+    /**
+     * Menyimpan guru yang sudah dipasang
+     * pada perusahaan tertentu.
+     */
+    const companyAssignment = new Map();
+
+    /**
+     * ============================================================
      * 6. HELPER CARI PERUSAHAAN
-     * ========================================================
+     * ============================================================
      */
 
-    const getCompany =
-      async (companyName) => {
-        const normalizedName =
-          normalize(companyName);
+    const getCompany = async (companyName) => {
+      const key = normalize(companyName);
 
-        if (
-          companyCache.has(
-            normalizedName
-          )
-        ) {
-          return companyCache.get(
-            normalizedName
-          );
-        }
+      if (companyCache.has(key)) {
+        return companyCache.get(key);
+      }
 
-        const company =
-          await prisma.company.findFirst({
-            where: {
-              name: companyName,
-            },
-          });
+      const company = await prisma.company.findUnique({
+        where: {
+          name: companyName,
+        },
+      });
 
-        companyCache.set(
-          normalizedName,
-          company || null
+      companyCache.set(key, company || null);
+
+      if (
+        company &&
+        !companyFilled.has(company.id)
+      ) {
+        const filled = await getFilledBySource(
+          prisma,
+          company.id
         );
 
-        if (
-          company &&
-          !companyFilled.has(
-            company.id
-          )
-        ) {
-          const filled =
-            await prisma.user.count({
-              where: {
-                companyId:
-                  company.id,
-                role: 'student',
-              },
-            });
+        companyFilled.set(
+          company.id,
+          filled
+        );
+      }
 
-          companyFilled.set(
-            company.id,
-            filled
-          );
-        }
-
-        return company || null;
-      };
+      return company || null;
+    };
 
     /**
-     * ========================================================
-     * 7. PROSES EXCEL
-     * ========================================================
+     * ============================================================
+     * 7. PROSES SATU PER SATU BARIS EXCEL
+     * ============================================================
      */
 
-    for (
-      let i = 0;
-      i < rows.length;
-      i++
-    ) {
+    for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
 
+      /**
+       * Excel:
+       * Baris pertama = header
+       * Maka data pertama = baris 2
+       */
       const rowNumber = i + 2;
 
       /**
-       * ======================================================
-       * AMBIL DATA
-       * ======================================================
+       * ----------------------------------------------------------
+       * Ambil data siswa
+       * ----------------------------------------------------------
        */
 
-      const nis =
-        normalizeNis(
-          row['NIS'] ??
-            row['nis'] ??
-            ''
-        );
+      const nis = normalizeNis(
+        row['NIS'] ??
+          row['nis'] ??
+          ''
+      );
 
-      const studentName =
-        String(
-          row['Nama Siswa'] ??
-            row['nama siswa'] ??
-            ''
-        ).trim();
-
-      const companyName =
-        String(
-          row['Nama Perusahaan'] ??
-            row['nama perusahaan'] ??
-            ''
-        ).trim();
-
-      const address =
-        String(
-          row['Alamat'] ??
-            row['alamat'] ??
-            ''
-        ).trim();
-
-      const city =
-        String(
-          row['Kota'] ??
-            row['kota'] ??
-            ''
-        ).trim();
-
-      const country =
-        String(
-          row['Negara'] ??
-            row['negara'] ??
-            ''
-        ).trim();
-
-      const latitude =
-        Number(
-          row['Latitude'] ??
-            row['latitude']
-        );
-
-      const longitude =
-        Number(
-          row['Longitude'] ??
-            row['longitude']
-        );
+      const studentName = String(
+        row['Nama Siswa'] ??
+          row['nama siswa'] ??
+          ''
+      ).trim();
 
       /**
-       * ======================================================
-       * RADIUS
-       * ======================================================
+       * ----------------------------------------------------------
+       * Ambil data perusahaan
+       * ----------------------------------------------------------
+       */
+
+      const companyName = String(
+        row['Nama Perusahaan'] ??
+          row['nama perusahaan'] ??
+          ''
+      ).trim();
+
+      const address = String(
+        row['Alamat'] ??
+          row['alamat'] ??
+          ''
+      ).trim();
+
+      const city = String(
+        row['Kota'] ??
+          row['kota'] ??
+          ''
+      ).trim();
+
+      const country = String(
+        row['Negara'] ??
+          row['negara'] ??
+          ''
+      ).trim();
+
+      /**
+       * ----------------------------------------------------------
+       * Koordinat
+       * ----------------------------------------------------------
+       */
+
+      const latitude = Number(
+        row['Latitude'] ??
+          row['latitude']
+      );
+
+      const longitude = Number(
+        row['Longitude'] ??
+          row['longitude']
+      );
+
+      /**
+       * ----------------------------------------------------------
+       * Radius
+       * ----------------------------------------------------------
        */
 
       const radiusValue =
@@ -854,38 +543,82 @@ export const importCompanies = async (
           : Number(radiusValue);
 
       /**
-       * ======================================================
-       * KUOTA PERUSAHAAN
-       * ======================================================
+       * ----------------------------------------------------------
+       * Kuota
+       * ----------------------------------------------------------
        */
 
-      const quotaCompanyValue =
-        row['Kuota Perusahaan'] ??
-        row['kuota perusahaan'] ??
-        row['Quota Perusahaan'] ??
-        row['quota perusahaan'] ??
-        row['quotaCompany'] ??
-        row['QuotaCompany'];
+      const readQuota = (...keys) => {
+        for (const key of keys) {
+          const v = row[key];
+          if (v !== undefined && v !== null && v !== '') {
+            return Number(v);
+          }
+        }
+        return undefined;
+      };
+
+      const quotaSchoolRaw = readQuota(
+        'Kuota Sekolah',
+        'kuota sekolah',
+        'KuotaSekolah',
+        'quotaSchool'
+      );
+      const quotaCompanyRaw = readQuota(
+        'Kuota Perusahaan',
+        'kuota perusahaan',
+        'KuotaPerusahaan',
+        'quotaCompany'
+      );
+      // kolom lama "Kuota" = Kuota Sekolah
+      const legacyQuotaRaw = readQuota(
+        'Kuota',
+        'kuota',
+        'Quota',
+        'quota'
+      );
+
+      // Nilai untuk perusahaan BARU (default lama: 6 kuota sekolah)
+      const quotaSchool =
+        quotaSchoolRaw ??
+        legacyQuotaRaw ??
+        (quotaCompanyRaw !== undefined ? 0 : 6);
+      const quotaCompany = quotaCompanyRaw ?? 0;
+      const quota = quotaSchool + quotaCompany;
 
       /**
-       * ======================================================
-       * GURU
-       * ======================================================
+       * ----------------------------------------------------------
+       * Jalur penempatan
+       * ----------------------------------------------------------
        */
 
-      const teacherName =
-        String(
-          row['Guru Pembimbing'] ??
-            row['guru pembimbing'] ??
-            row['Nama Guru'] ??
-            row['nama guru'] ??
-            ''
-        ).trim();
+      const jalurText = String(
+        row['Jalur'] ??
+          row['jalur'] ??
+          row['Jalur Penempatan'] ??
+          ''
+      ).trim();
+
+      const placementSource = normalizeSource(jalurText);
 
       /**
-       * ======================================================
-       * VALIDASI WAJIB
-       * ======================================================
+       * ----------------------------------------------------------
+       * Guru Pembimbing
+       * ----------------------------------------------------------
+       */
+
+      const teacherName = String(
+        row['Guru Pembimbing'] ??
+          row['guru pembimbing'] ??
+          row['Nama Guru'] ??
+          row['nama guru'] ??
+          ''
+      ).trim();
+
+      /**
+       * ==========================================================
+       * 8. VALIDASI WAJIB
+       * ==========================================================
        */
 
       if (!nis && !studentName) {
@@ -901,9 +634,7 @@ export const importCompanies = async (
       if (!companyName) {
         errors.push({
           row: rowNumber,
-          name:
-            studentName ||
-            undefined,
+          name: studentName || undefined,
           error:
             'Nama Perusahaan wajib diisi',
         });
@@ -914,9 +645,7 @@ export const importCompanies = async (
       if (!address) {
         errors.push({
           row: rowNumber,
-          name:
-            studentName ||
-            undefined,
+          name: studentName || undefined,
           error:
             'Alamat wajib diisi',
         });
@@ -927,9 +656,7 @@ export const importCompanies = async (
       if (!city) {
         errors.push({
           row: rowNumber,
-          name:
-            studentName ||
-            undefined,
+          name: studentName || undefined,
           error:
             'Kota wajib diisi',
         });
@@ -940,9 +667,7 @@ export const importCompanies = async (
       if (!country) {
         errors.push({
           row: rowNumber,
-          name:
-            studentName ||
-            undefined,
+          name: studentName || undefined,
           error:
             'Negara wajib diisi',
         });
@@ -950,24 +675,14 @@ export const importCompanies = async (
         continue;
       }
 
-      /**
-       * ======================================================
-       * VALIDASI KOORDINAT
-       * ======================================================
-       */
-
       if (
-        !Number.isFinite(
-          latitude
-        ) ||
+        !Number.isFinite(latitude) ||
         latitude < -90 ||
         latitude > 90
       ) {
         errors.push({
           row: rowNumber,
-          name:
-            studentName ||
-            undefined,
+          name: studentName || undefined,
           error:
             'Latitude tidak valid',
         });
@@ -976,17 +691,13 @@ export const importCompanies = async (
       }
 
       if (
-        !Number.isFinite(
-          longitude
-        ) ||
+        !Number.isFinite(longitude) ||
         longitude < -180 ||
         longitude > 180
       ) {
         errors.push({
           row: rowNumber,
-          name:
-            studentName ||
-            undefined,
+          name: studentName || undefined,
           error:
             'Longitude tidak valid',
         });
@@ -994,23 +705,13 @@ export const importCompanies = async (
         continue;
       }
 
-      /**
-       * ======================================================
-       * VALIDASI RADIUS
-       * ======================================================
-       */
-
       if (
-        !Number.isFinite(
-          radiusMeters
-        ) ||
+        !Number.isFinite(radiusMeters) ||
         radiusMeters <= 0
       ) {
         errors.push({
           row: rowNumber,
-          name:
-            studentName ||
-            undefined,
+          name: studentName || undefined,
           error:
             'Radius harus lebih dari 0',
         });
@@ -1018,18 +719,37 @@ export const importCompanies = async (
         continue;
       }
 
-      /**
-       * ======================================================
-       * VALIDASI GURU
-       * ======================================================
-       */
+      if (
+        ![quotaSchool, quotaCompany].every(
+          (n) => Number.isInteger(n) && n >= 0
+        ) ||
+        quota <= 0
+      ) {
+        errors.push({
+          row: rowNumber,
+          name: studentName || undefined,
+          error:
+            'Kuota Sekolah / Kuota Perusahaan harus bilangan bulat 0 atau lebih dan totalnya lebih dari 0',
+        });
+
+        continue;
+      }
+
+      if (jalurText && !placementSource) {
+        errors.push({
+          row: rowNumber,
+          name: studentName || undefined,
+          error:
+            'Jalur harus diisi "Sekolah" atau "Perusahaan"',
+        });
+
+        continue;
+      }
 
       if (!teacherName) {
         errors.push({
           row: rowNumber,
-          name:
-            studentName ||
-            undefined,
+          name: studentName || undefined,
           error:
             'Guru Pembimbing wajib diisi',
         });
@@ -1038,14 +758,17 @@ export const importCompanies = async (
       }
 
       /**
-       * ======================================================
-       * CARI SISWA
-       * ======================================================
+       * ==========================================================
+       * 9. CARI SISWA
+       * ==========================================================
+       *
+       * Prioritas:
+       * 1. NIS
+       * 2. Nama
        */
 
       const student =
-        (nis &&
-          studentByNis.get(nis)) ||
+        (nis && studentByNis.get(nis)) ||
         studentByName.get(
           normalize(studentName)
         );
@@ -1053,9 +776,7 @@ export const importCompanies = async (
       if (!student) {
         errors.push({
           row: rowNumber,
-          name:
-            studentName ||
-            undefined,
+          name: studentName || undefined,
           error:
             `Siswa tidak ditemukan${
               nis
@@ -1068,15 +789,11 @@ export const importCompanies = async (
       }
 
       /**
-       * ======================================================
-       * DUPLIKAT SISWA
-       * ======================================================
+       * Cegah siswa yang sama diproses dua kali.
        */
 
       if (
-        processedStudentIds.has(
-          student.id
-        )
+        processedStudentIds.has(student.id)
       ) {
         errors.push({
           row: rowNumber,
@@ -1089,9 +806,9 @@ export const importCompanies = async (
       }
 
       /**
-       * ======================================================
-       * CARI GURU
-       * ======================================================
+       * ==========================================================
+       * 10. CARI GURU
+       * ==========================================================
        */
 
       const teacher =
@@ -1111,68 +828,39 @@ export const importCompanies = async (
       }
 
       /**
-       * ======================================================
-       * CARI / BUAT PERUSAHAAN
-       * ======================================================
+       * ==========================================================
+       * 11. CARI / BUAT PERUSAHAAN
+       * ==========================================================
        */
 
       try {
         let company =
-          await getCompany(
-            companyName
-          );
+          await getCompany(companyName);
 
         /**
-         * ====================================================
-         * PERUSAHAAN BARU
-         * ====================================================
+         * --------------------------------------------------------
+         * Kalau perusahaan belum ada → buat baru
+         * --------------------------------------------------------
+         *
+         * Mentor sengaja tidak diisi dari Excel.
+         * Perusahaan baru akan memiliki mentor null.
          */
 
         if (!company) {
-          const newQuotaCompany =
-            Number(
-              quotaCompanyValue
-            );
-
-          if (
-            !Number.isInteger(
-              newQuotaCompany
-            ) ||
-            newQuotaCompany <= 0
-          ) {
-            errors.push({
-              row: rowNumber,
-              name: student.name,
-              error:
-                'Kuota Perusahaan wajib berupa bilangan bulat lebih dari 0',
-            });
-
-            continue;
-          }
-
           company =
             await prisma.company.create({
               data: {
-                name:
-                  companyName,
-
+                name: companyName,
                 address,
-
                 city,
-
                 country,
-
-                quotaCompany:
-                  newQuotaCompany,
-
+                quota,
+                quotaSchool,
+                quotaCompany,
                 latitude,
-
                 longitude,
-
                 radiusMeters,
-
-                mentorId:
-                  null,
+                mentorId: null,
               },
             });
 
@@ -1183,24 +871,59 @@ export const importCompanies = async (
 
           companyFilled.set(
             company.id,
-            0
+            { sekolah: 0, perusahaan: 0 }
           );
         } else {
           /**
-           * ==================================================
-           * PERUSAHAAN SUDAH ADA
-           * ==================================================
+           * ------------------------------------------------------
+           * Kalau perusahaan sudah ada:
+           * UPDATE datanya, bukan buat duplikat.
+           * ------------------------------------------------------
            */
 
           const filled =
             companyFilled.get(
               company.id
-            ) ?? 0;
+            ) ?? { sekolah: 0, perusahaan: 0 };
+
+          // Hanya kuota yang diisi di Excel yang ditimpa;
+          // yang kosong tetap memakai nilai di database.
+          const effSchool =
+            quotaSchoolRaw ??
+            legacyQuotaRaw ??
+            company.quotaSchool;
+          const effCompany =
+            quotaCompanyRaw ??
+            company.quotaCompany;
+
+          // Perusahaan sekolah (Internal) tidak dibatasi kuota.
+          if (!isInternalCategory(company.category)) {
+            if (effSchool < filled.sekolah) {
+              errors.push({
+                row: rowNumber,
+                name: student.name,
+                error:
+                  `Kuota Sekolah ${effSchool} lebih kecil dari siswa jalur sekolah yang sudah terpetakan (${filled.sekolah})`,
+              });
+
+              continue;
+            }
+
+            if (effCompany < filled.perusahaan) {
+              errors.push({
+                row: rowNumber,
+                name: student.name,
+                error:
+                  `Kuota Perusahaan ${effCompany} lebih kecil dari siswa jalur perusahaan yang sudah terpetakan (${filled.perusahaan})`,
+              });
+
+              continue;
+            }
+          }
 
           /**
-           * ==================================================
-           * GURU HARUS KONSISTEN
-           * ==================================================
+           * Cek apakah perusahaan ini sebelumnya
+           * sudah diberi Guru Pembimbing berbeda.
            */
 
           const existingAssignment =
@@ -1224,80 +947,26 @@ export const importCompanies = async (
           }
 
           /**
-           * ==================================================
-           * UPDATE KUOTA JIKA DIISI EXCEL
-           * ==================================================
+           * Update perusahaan.
+           *
+           * Mentor tidak disentuh.
+           * Mentor yang sudah ada tetap aman.
            */
-
-          let newQuotaCompany =
-            company.quotaCompany;
-
-          if (
-            quotaCompanyValue !== '' &&
-            quotaCompanyValue != null
-          ) {
-            newQuotaCompany =
-              Number(
-                quotaCompanyValue
-              );
-
-            if (
-              !Number.isInteger(
-                newQuotaCompany
-              ) ||
-              newQuotaCompany <= 0
-            ) {
-              errors.push({
-                row: rowNumber,
-                name: student.name,
-                error:
-                  'Kuota Perusahaan harus berupa bilangan bulat lebih dari 0',
-              });
-
-              continue;
-            }
-          }
-
-          /**
-           * Jangan mengubah kapasitas
-           * menjadi lebih kecil dari
-           * siswa yang sudah ada.
-           */
-
-          if (
-            newQuotaCompany <
-            filled
-          ) {
-            errors.push({
-              row: rowNumber,
-              name: student.name,
-              error:
-                `Kuota perusahaan ${newQuotaCompany} lebih kecil dari jumlah siswa yang sudah terpetakan (${filled})`,
-            });
-
-            continue;
-          }
 
           company =
             await prisma.company.update({
               where: {
                 id: company.id,
               },
-
               data: {
                 address,
-
                 city,
-
                 country,
-
-                quotaCompany:
-                  newQuotaCompany,
-
+                quota: effSchool + effCompany,
+                quotaSchool: effSchool,
+                quotaCompany: effCompany,
                 latitude,
-
                 longitude,
-
                 radiusMeters,
               },
             });
@@ -1309,243 +978,201 @@ export const importCompanies = async (
         }
 
         /**
-         * ====================================================
-         * SIMPAN GURU PEMBIMBING
-         * ====================================================
+         * ========================================================
+         * 12. SIMPAN ASSIGNMENT PERUSAHAAN
+         * ========================================================
+         *
+         * Satu perusahaan:
+         * - banyak siswa
+         * - satu Guru Pembimbing
+         *
+         * Mentor tidak berasal dari Excel.
          */
 
         companyAssignment.set(
           company.id,
           {
-            teacherId:
-              teacher.id,
+            teacherId: teacher.id,
           }
         );
 
         /**
-         * ====================================================
-         * CEK KUOTA GLOBAL PERUSAHAAN
-         * ====================================================
+         * ========================================================
+         * 13. CEK KUOTA
+         * ========================================================
          */
 
         const oldCompanyId =
           student.companyId;
 
-        /**
-         * Siswa pindah perusahaan.
-         */
+        const internalCompany =
+          isInternalCategory(company.category);
 
-        if (
-          oldCompanyId !==
-          company.id
-        ) {
+        const currentSource =
+          student.placementSource === 'perusahaan'
+            ? 'perusahaan'
+            : 'sekolah';
+
+        /**
+         * Jalur yang dipakai:
+         * - perusahaan sekolah (Internal) -> selalu jalur sekolah
+         * - kolom Jalur diisi             -> sesuai Excel
+         * - kosong, siswa sudah di sini   -> jalur lama dipertahankan
+         * - kosong, siswa baru            -> sekolah
+         */
+        const targetSource = internalCompany
+          ? 'sekolah'
+          : placementSource ||
+            (oldCompanyId === company.id
+              ? currentSource
+              : 'sekolah');
+
+        const moved =
+          oldCompanyId !== company.id ||
+          currentSource !== targetSource;
+
+        if (moved) {
           const filled =
             companyFilled.get(
               company.id
-            ) ?? 0;
+            ) ?? { sekolah: 0, perusahaan: 0 };
 
-          /**
-           * KUOTA PENUH
-           */
+          const capacity =
+            targetSource === 'perusahaan'
+              ? company.quotaCompany
+              : company.quotaSchool;
 
+          // Perusahaan sekolah (Internal) tidak dibatasi kuota.
           if (
-            filled >=
-            company.quotaCompany
+            !internalCompany &&
+            filled[targetSource] >= capacity
           ) {
             errors.push({
               row: rowNumber,
               name: student.name,
               error:
-                `Kuota perusahaan "${companyName}" sudah penuh (${filled}/${company.quotaCompany})`,
+                `Kuota ${SOURCE_LABEL[targetSource]} perusahaan "${companyName}" sudah penuh (${filled[targetSource]}/${capacity})`,
             });
 
             continue;
           }
 
           /**
-           * ==================================================
-           * UPDATE SISWA
-           * ==================================================
+           * ======================================================
+           * 14. UPDATE SISWA
+           * ======================================================
+           *
+           * companyId       = perusahaan
+           * teacherId       = guru pembimbing perusahaan
+           * placementSource = jalur kuota yang dipakai
            */
 
           await prisma.user.update({
             where: {
               id: student.id,
             },
-
             data: {
-              companyId:
-                company.id,
-
-              teacherId:
-                teacher.id,
+              companyId: company.id,
+              teacherId: teacher.id,
+              placementSource: targetSource,
             },
           });
 
-          /**
-           * ==================================================
-           * TAMBAH FILLED
-           * ==================================================
-           */
-
-          companyFilled.set(
-            company.id,
-            filled + 1
-          );
+          companyFilled.set(company.id, {
+            ...filled,
+            [targetSource]: filled[targetSource] + 1,
+          });
 
           /**
-           * ==================================================
-           * KURANGI PERUSAHAAN LAMA
-           * ==================================================
+           * Kurangi hitungan tempat/jalur lama siswa.
+           * (Kalau perusahaan sama, ini mengurangi jalur lamanya.)
            */
-
-          if (
-            oldCompanyId
-          ) {
-            /**
-             * Kalau company lama belum
-             * ada di cache, ambil jumlahnya.
-             */
-
-            if (
-              !companyFilled.has(
-                oldCompanyId
-              )
-            ) {
-              const oldFilled =
-                await prisma.user.count({
-                  where: {
-                    companyId:
-                      oldCompanyId,
-                    role: 'student',
-                  },
-                });
-
-              companyFilled.set(
-                oldCompanyId,
-                oldFilled
-              );
-            }
-
+          if (oldCompanyId) {
             const oldFilled =
               companyFilled.get(
                 oldCompanyId
-              ) ?? 0;
+              );
 
-            companyFilled.set(
-              oldCompanyId,
-              Math.max(
-                0,
-                oldFilled - 1
-              )
-            );
+            if (oldFilled) {
+              companyFilled.set(oldCompanyId, {
+                ...oldFilled,
+                [currentSource]: Math.max(
+                  0,
+                  oldFilled[currentSource] - 1
+                ),
+              });
+            }
           }
         } else {
           /**
-           * ==================================================
-           * SISWA SUDAH DI PERUSAHAAN YANG SAMA
-           * ==================================================
+           * ======================================================
+           * Siswa sudah di perusahaan & jalur yang sama,
+           * tetap pastikan Guru Pembimbing diperbarui.
+           * ======================================================
            */
 
           await prisma.user.update({
             where: {
               id: student.id,
             },
-
             data: {
-              teacherId:
-                teacher.id,
+              teacherId: teacher.id,
             },
           });
         }
 
         /**
-         * ====================================================
-         * BERHASIL
-         * ====================================================
+         * ========================================================
+         * 15. BERHASIL
+         * ========================================================
          */
 
         processedStudentIds.add(
           student.id
         );
 
-        const finalFilled =
-          companyFilled.get(
-            company.id
-          ) ?? 0;
-
         success.push({
           row: rowNumber,
-
-          studentId:
-            student.id,
-
-          studentName:
-            student.name,
-
-          companyId:
-            company.id,
-
-          companyName:
-            company.name,
-
-          teacherId:
-            teacher.id,
-
-          teacherName:
-            teacher.name,
-
-          quotaCompany:
-            company.quotaCompany,
-
-          filled:
-            finalFilled,
-
-          remainingQuota:
-            Math.max(
-              0,
-              company.quotaCompany -
-                finalFilled
-            ),
+          studentId: student.id,
+          studentName: student.name,
+          companyId: company.id,
+          companyName: company.name,
+          teacherId: teacher.id,
+          teacherName: teacher.name,
+          placementSource: targetSource,
         });
       } catch (error) {
         errors.push({
           row: rowNumber,
-
           name:
             studentName ||
             companyName,
-
           error:
             error?.code === 'P2002'
               ? 'Data bentrok dengan data unik yang sudah terdaftar'
-              : error?.message ||
-                'Gagal memproses baris',
+              : (
+                  error?.message ||
+                  'Gagal memproses baris'
+                ),
         });
       }
     }
 
     /**
-     * ========================================================
-     * RESPONSE
-     * ========================================================
+     * ============================================================
+     * 16. RESPONSE
+     * ============================================================
      */
 
     return res.status(200).json({
       message:
         'Import mapping siswa, perusahaan, dan guru selesai',
-
-      total:
-        rows.length,
-
+      total: rows.length,
       successCount:
         success.length,
-
       errorCount:
         errors.length,
-
       success,
-
       errors,
     });
   } catch (error) {
@@ -1554,35 +1181,18 @@ export const importCompanies = async (
 };
 
 /**
- * ============================================================
  * PATCH /api/companies/:id
- * ============================================================
- *
- * Edit perusahaan.
- *
- * quotaCompany = kapasitas maksimal semua sekolah.
- *
- * Tidak ada quotaSchool.
- * ============================================================
+ * Edit perusahaan
  */
-
 export const updateCompany = async (
   req,
   res,
   next
 ) => {
   try {
-    const id =
-      Number(req.params.id);
-
-    if (
-      !Number.isInteger(id)
-    ) {
-      return res.status(400).json({
-        error:
-          'ID perusahaan tidak valid',
-      });
-    }
+    const id = Number(
+      req.params.id
+    );
 
     const {
       name,
@@ -1590,47 +1200,16 @@ export const updateCompany = async (
       city,
       country,
       category,
-      quotaCompany,
-      quota,
       latitude,
       longitude,
       radiusMeters,
-      mentorId,
       isActive,
     } = req.body;
-
-    /**
-     * ========================================================
-     * CARI PERUSAHAAN
-     * ========================================================
-     */
 
     const existing =
       await prisma.company.findUnique({
         where: {
           id,
-        },
-
-        include: {
-          mentor: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              role: true,
-              companyId: true,
-            },
-          },
-
-          students: {
-            where: {
-              role: 'student',
-            },
-
-            select: {
-              id: true,
-            },
-          },
         },
       });
 
@@ -1641,417 +1220,98 @@ export const updateCompany = async (
       });
     }
 
-    /**
-     * ========================================================
-     * HITUNG SISWA TERPAKAI
-     * ========================================================
-     */
 
-    const studentsCount =
-      existing.students.length;
+    // Kuota dua jalur. null = tidak ada perubahan kuota.
+    const quotas = resolveQuotas(req.body, existing);
 
-    /**
-     * ========================================================
-     * VALIDASI KUOTA
-     * ========================================================
-     */
-
-    let newQuotaCompany =
-      existing.quotaCompany;
-
-    const incomingQuota =
-      quotaCompany !== undefined
-        ? quotaCompany
-        : quota;
-
-    if (
-      incomingQuota !== undefined
-    ) {
-      newQuotaCompany =
-        Number(incomingQuota);
-
-      if (
-        !Number.isInteger(
-          newQuotaCompany
-        ) ||
-        newQuotaCompany <= 0
-      ) {
-        return res.status(400).json({
-          error:
-            'Kuota perusahaan harus berupa bilangan bulat lebih dari 0',
-        });
-      }
+    if (quotas?.error) {
+      return res.status(400).json({ error: quotas.error });
     }
 
-    /**
-     * Kuota tidak boleh lebih kecil
-     * dari siswa yang sudah terpetakan.
-     */
+    if (quotas) {
+      const finalCategory =
+        category !== undefined ? category : existing.category;
 
-    if (
-      studentsCount >
-      newQuotaCompany
-    ) {
-      return res.status(400).json({
-        error:
-          `Kuota perusahaan baru (${newQuotaCompany}) tidak boleh lebih kecil dari jumlah siswa yang sudah terpetakan (${studentsCount})`,
-      });
-    }
+      // Perusahaan sekolah (Internal) tidak dibatasi kuota.
+      if (!isInternalCategory(finalCategory)) {
+        const filled = await getFilledBySource(prisma, id);
 
-    /**
-     * ========================================================
-     * VALIDASI KOORDINAT
-     * ========================================================
-     */
-
-    let newLatitude =
-      existing.latitude;
-
-    let newLongitude =
-      existing.longitude;
-
-    if (
-      latitude !== undefined
-    ) {
-      newLatitude =
-        Number(latitude);
-
-      if (
-        !Number.isFinite(
-          newLatitude
-        ) ||
-        newLatitude < -90 ||
-        newLatitude > 90
-      ) {
-        return res.status(400).json({
-          error:
-            'Latitude tidak valid',
-        });
-      }
-    }
-
-    if (
-      longitude !== undefined
-    ) {
-      newLongitude =
-        Number(longitude);
-
-      if (
-        !Number.isFinite(
-          newLongitude
-        ) ||
-        newLongitude < -180 ||
-        newLongitude > 180
-      ) {
-        return res.status(400).json({
-          error:
-            'Longitude tidak valid',
-        });
-      }
-    }
-
-    /**
-     * ========================================================
-     * VALIDASI RADIUS
-     * ========================================================
-     */
-
-    let newRadius =
-      existing.radiusMeters;
-
-    if (
-      radiusMeters !== undefined
-    ) {
-      newRadius =
-        Number(radiusMeters);
-
-      if (
-        !Number.isFinite(
-          newRadius
-        ) ||
-        newRadius <= 0
-      ) {
-        return res.status(400).json({
-          error:
-            'Radius harus lebih dari 0',
-        });
-      }
-    }
-
-    /**
-     * ========================================================
-     * VALIDASI MENTOR
-     * ========================================================
-     */
-
-    let newMentorId =
-      existing.mentorId;
-
-    if (
-      mentorId !== undefined
-    ) {
-      if (
-        mentorId === null ||
-        mentorId === ''
-      ) {
-        newMentorId = null;
-      } else {
-        const mentorIdNumber =
-          Number(mentorId);
-
-        if (
-          !Number.isInteger(
-            mentorIdNumber
-          )
-        ) {
+        if (quotas.quotaSchool < filled.sekolah) {
           return res.status(400).json({
-            error:
-              'mentorId tidak valid',
+            error: `Kuota Sekolah (${quotas.quotaSchool}) lebih kecil dari siswa jalur sekolah yang sudah terpetakan (${filled.sekolah})`,
           });
         }
 
-        const mentor =
-          await prisma.user.findUnique({
-            where: {
-              id: mentorIdNumber,
-            },
-
-            select: {
-              id: true,
-              name: true,
-              role: true,
-              companyId: true,
-            },
-          });
-
-        if (
-          !mentor ||
-          mentor.role !== 'mentor'
-        ) {
+        if (quotas.quotaCompany < filled.perusahaan) {
           return res.status(400).json({
-            error:
-              'Mentor yang dipilih harus user dengan role mentor',
+            error: `Kuota Perusahaan (${quotas.quotaCompany}) lebih kecil dari siswa jalur perusahaan yang sudah terpetakan (${filled.perusahaan})`,
           });
         }
-
-        if (
-          mentor.companyId !== null &&
-          mentor.companyId !== id
-        ) {
-          return res.status(400).json({
-            error:
-              'Mentor tersebut sudah terhubung dengan perusahaan lain',
-          });
-        }
-
-        newMentorId =
-          mentor.id;
       }
     }
 
-    /**
-     * ========================================================
-     * UPDATE COMPANY
-     * ========================================================
-     */
-
-    await prisma.company.update({
-      where: {
-        id,
-      },
-
-      data: {
-        name:
-          name !== undefined
-            ? String(name).trim()
-            : undefined,
-
-        address:
-          address !== undefined
-            ? String(address).trim()
-            : undefined,
-
-        city:
-          city !== undefined
-            ? city
-            : undefined,
-
-        country:
-          country !== undefined
-            ? country
-            : undefined,
-
-        category:
-          category !== undefined
-            ? category
-            : undefined,
-
-        quotaCompany:
-          newQuotaCompany,
-
-        latitude:
-          newLatitude,
-
-        longitude:
-          newLongitude,
-
-        radiusMeters:
-          newRadius,
-
-        mentorId:
-          newMentorId,
-
-        isActive:
-          isActive !== undefined
-            ? Boolean(isActive)
-            : undefined,
-      },
-    });
-
-    /**
-     * ========================================================
-     * LEPASKAN MENTOR LAMA
-     * ========================================================
-     */
-
-    if (
-      existing.mentorId &&
-      existing.mentorId !==
-        newMentorId
-    ) {
-      await prisma.user.update({
-        where: {
-          id:
-            existing.mentorId,
-        },
-
-        data: {
-          companyId: null,
-        },
-      });
-    }
-
-    /**
-     * ========================================================
-     * HUBUNGKAN MENTOR BARU
-     * ========================================================
-     */
-
-    if (newMentorId) {
-      await prisma.user.update({
-        where: {
-          id: newMentorId,
-        },
-
-        data: {
-          companyId: id,
-        },
-      });
-
-      // Pastikan mentor aktif selalu ada di roster, termasuk
-      // untuk data lama yang belum memiliki baris company_mentor.
-      await prisma.companyMentor.upsert({
-        where: {
-          companyId_mentorId: {
-            companyId: id,
-            mentorId: newMentorId,
-          },
-        },
-        update: {},
-        create: {
-          companyId: id,
-          mentorId: newMentorId,
-        },
-      });
-    }
-
-    /**
-     * ========================================================
-     * AMBIL DATA TERBARU
-     * ========================================================
-     */
-
-    const result =
-      await prisma.company.findUnique({
+    const company =
+      await prisma.company.update({
         where: {
           id,
         },
+        data: {
+          name:
+            name !== undefined
+              ? String(name).trim()
+              : undefined,
 
-        include: {
-          mentor: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              role: true,
-              companyId: true,
-            },
-          },
+          address:
+            address !== undefined
+              ? String(address).trim()
+              : undefined,
 
-          students: {
-            where: {
-              role: 'student',
-            },
+          city:
+            city !== undefined
+              ? city
+              : undefined,
 
-            select: {
-              id: true,
-            },
-          },
+          country:
+            country !== undefined
+              ? country
+              : undefined,
+
+          category:
+            category !== undefined
+              ? category
+              : undefined,
+
+          quota: quotas ? quotas.quota : undefined,
+
+          quotaSchool: quotas ? quotas.quotaSchool : undefined,
+
+          quotaCompany: quotas ? quotas.quotaCompany : undefined,
+
+          latitude:
+            latitude !== undefined
+              ? Number(latitude)
+              : undefined,
+
+          longitude:
+            longitude !== undefined
+              ? Number(longitude)
+              : undefined,
+
+          radiusMeters:
+            radiusMeters !== undefined
+              ? Number(radiusMeters)
+              : undefined,
+
+          isActive:
+            isActive !== undefined
+              ? Boolean(isActive)
+              : undefined,
         },
       });
 
-    const filled =
-      result.students.length;
-
-    return res.json({
-      id: result.id,
-      name: result.name,
-      address: result.address,
-      city: result.city,
-      country: result.country,
-      phone: result.phone,
-      category: result.category,
-
-      quotaCompany:
-        result.quotaCompany,
-
-      filled,
-
-      remainingQuota:
-        Math.max(
-          0,
-          result.quotaCompany -
-            filled
-        ),
-
-      latitude:
-        result.latitude,
-
-      longitude:
-        result.longitude,
-
-      radiusMeters:
-        result.radiusMeters,
-
-      isActive:
-        result.isActive,
-
-      createdAt:
-        result.createdAt,
-
-      updatedAt:
-        result.updatedAt,
-
-      academicYearId:
-        result.academicYearId,
-
-      mentor:
-        result.mentor,
-    });
+    res.json(company);
   } catch (error) {
-    if (
-      error?.code === 'P2002'
-    ) {
+    if (error.code === 'P2002') {
       return res.status(409).json({
         error:
           'Nama perusahaan sudah terdaftar',
@@ -2063,158 +1323,83 @@ export const updateCompany = async (
 };
 
 /**
- * ============================================================
  * DELETE /api/companies/:id
  * Soft delete
- * ============================================================
  */
+export const deactivateCompany = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const company =
+      await prisma.company.update({
+        where: {
+          id: Number(req.params.id),
+        },
+        data: {
+          isActive: false,
+        },
+      });
 
-export const deactivateCompany =
-  async (
-    req,
-    res,
-    next
-  ) => {
-    try {
-      const id =
-        Number(req.params.id);
-
-      if (
-        !Number.isInteger(id)
-      ) {
-        return res.status(400).json({
-          error:
-            'ID perusahaan tidak valid',
-        });
-      }
-
-      const company =
-        await prisma.company.update({
-          where: {
-            id,
-          },
-
-          data: {
-            isActive: false,
-          },
-        });
-
-      return res.json(
-        company
-      );
-    } catch (error) {
-      next(error);
-    }
-  };
+    res.json(company);
+  } catch (error) {
+    next(error);
+  }
+};
 
 /**
- * ============================================================
  * DELETE /api/companies/:id/hard
  * Hard delete
- * ============================================================
  */
+export const deleteCompany = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const id = Number(
+      req.params.id
+    );
 
-export const deleteCompany =
-  async (
-    req,
-    res,
-    next
-  ) => {
-    try {
-      const id =
-        Number(req.params.id);
-
-      if (
-        !Number.isInteger(id)
-      ) {
-        return res.status(400).json({
-          error:
-            'ID perusahaan tidak valid',
-        });
-      }
-
-      /**
-       * ======================================================
-       * CARI COMPANY
-       * ======================================================
-       */
-
-      const existing =
-        await prisma.company.findUnique({
-          where: {
-            id,
-          },
-        });
-
-      if (!existing) {
-        return res.status(404).json({
-          error:
-            'Perusahaan tidak ditemukan',
-        });
-      }
-
-      /**
-       * ======================================================
-       * CEK SISWA
-       * ======================================================
-       */
-
-      const studentsCount =
-        await prisma.user.count({
-          where: {
-            companyId: id,
-            role: 'student',
-          },
-        });
-
-      if (
-        studentsCount > 0
-      ) {
-        return res.status(400).json({
-          error:
-            `Perusahaan masih memiliki ${studentsCount} siswa. Pindahkan siswa terlebih dahulu.`,
-        });
-      }
-
-      /**
-       * ======================================================
-       * LEPASKAN MENTOR
-       * ======================================================
-       */
-
-      if (
-        existing.mentorId
-      ) {
-        await prisma.user.update({
-          where: {
-            id:
-              existing.mentorId,
-          },
-
-          data: {
-            companyId: null,
-          },
-        });
-      }
-
-      /**
-       * ======================================================
-       * HAPUS COMPANY
-       * ======================================================
-       */
-
-      await prisma.company.delete({
+    const existing =
+      await prisma.company.findUnique({
         where: {
           id,
         },
       });
 
-      return res.json({
-        success: true,
-        message:
-          'Perusahaan berhasil dihapus',
+    if (!existing) {
+      return res.status(404).json({
+        error:
+          'Perusahaan tidak ditemukan',
       });
-    } catch (error) {
-      next(error);
     }
-  };
+
+    const studentsCount =
+      await prisma.user.count({
+        where: {
+          companyId: id,
+        },
+      });
+
+    if (studentsCount > 0) {
+      return res.status(400).json({
+        error:
+          `Perusahaan masih memiliki ${studentsCount} siswa. Pindahkan siswa terlebih dahulu.`,
+      });
+    }
+
+    await prisma.company.delete({
+      where: {
+        id,
+      },
+    });
+
+    res.json({
+      success: true,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

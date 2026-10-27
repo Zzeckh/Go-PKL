@@ -6,7 +6,6 @@ import {
   safeFilename,
   streamPdfReport,
 } from '../utils/pdfReport.js';
-import { formatStudentUsername } from '../utils/userIdentity.js';
 
 const REPORT_TYPES = new Set([
   'mentor',
@@ -544,7 +543,7 @@ export const getReportData = async (
           id: student.id,
 
           username:
-            formatStudentUsername(student),
+            student.email,
 
           name:
             student.name,
@@ -934,120 +933,62 @@ export const exportReportPreviewPdf =
       }
 
       /* ========================================================
-         PDF ROWS
+         PDF ROWS — SELARAS DENGAN EXPORT EXCEL
       ======================================================== */
 
-      const rows =
-        data.rows.flatMap(
-          (student) =>
-            student.attendance
-              .length
-              ? student.attendance.map(
-                  (item) => ({
-                    name:
-                      student.name,
+      const rows = data.rows.flatMap((student) => {
+        const common = {
+          academicYear:
+            data.academicYear || student.academicYear || '-',
+          username: student.username || '-',
+          name: student.name || '-',
+          className: student.className || '-',
+          companyName: student.companyName || '-',
+          tefa: String(student.companyCategory || '').toLowerCase().includes('internal')
+            ? 'TEFA Internal'
+            : student.companyCategory && student.companyCategory !== '-'
+              ? 'TEFA Eksternal'
+              : '-',
+          teacherName: student.teacherName || '-',
+          mentorName: student.mentorName || '-',
+        };
 
-                    username:
-                      student.username,
+        if (student.attendance && student.attendance.length > 0) {
+          return student.attendance.map((item) => ({
+            ...common,
+            date: item.date || '-',
+            status: item.status || '-',
+            reason: item.reason || '-',
+            checkIn: item.checkIn || '-',
+          }));
+        }
 
-                    className:
-                      student.className,
-
-                    companyName:
-                      student.companyName,
-
-                    date:
-                      item.date,
-
-                    status:
-                      labelStatus(
-                        item.status
-                      ),
-
-                    checkIn:
-                      item.checkIn,
-
-                    reason:
-                      item.reason,
-                  })
-                )
-              : [
-                  {
-                    name:
-                      student.name,
-
-                    username:
-                      student.username,
-
-                    className:
-                      student.className,
-
-                    companyName:
-                      student.companyName,
-
-                    date: '-',
-
-                    status: '-',
-
-                    checkIn: '-',
-
-                    reason: '-',
-                  },
-                ]
-        );
+        return [{
+          ...common,
+          date: '-',
+          status: 'Belum ada absensi',
+          reason: 'Siswa belum memiliki data kehadiran.',
+          checkIn: '-',
+        }];
+      });
 
       /* ========================================================
-         COLUMNS
+         COLUMNS — URUTAN DAN LABEL SAMA DENGAN EXPORT EXCEL
       ======================================================== */
 
       const columns = [
-        {
-          key: 'name',
-          label: 'Nama Siswa',
-          width: 82,
-        },
-
-        {
-          key: 'username',
-          label: 'NIS / Username',
-          width: 72,
-        },
-
-        {
-          key: 'className',
-          label: 'Kelas',
-          width: 42,
-        },
-
-        {
-          key: 'companyName',
-          label: 'Perusahaan',
-          width: 75,
-        },
-
-        {
-          key: 'date',
-          label: 'Tanggal',
-          width: 58,
-        },
-
-        {
-          key: 'status',
-          label: 'Status',
-          width: 42,
-        },
-
-        {
-          key: 'checkIn',
-          label: 'Check In',
-          width: 42,
-        },
-
-        {
-          key: 'reason',
-          label: 'Keterangan',
-          width: 80,
-        },
+        { key: 'academicYear', label: 'Tahun Ajaran', width: 48 },
+        { key: 'username', label: 'NIS / Username', width: 48 },
+        { key: 'name', label: 'Nama Siswa', width: 58 },
+        { key: 'className', label: 'Kelas', width: 32 },
+        { key: 'companyName', label: 'Perusahaan', width: 52 },
+        { key: 'tefa', label: 'TEFA', width: 52 },
+        { key: 'teacherName', label: 'Guru Pembimbing', width: 52 },
+        { key: 'mentorName', label: 'Mentor', width: 44 },
+        { key: 'date', label: 'Tanggal', width: 44 },
+        { key: 'status', label: 'Status', width: 42 },
+        { key: 'reason', label: 'Keterangan', width: 72 },
+        { key: 'checkIn', label: 'Check In', width: 40 },
       ];
 
       /* ========================================================

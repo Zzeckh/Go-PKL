@@ -17,6 +17,12 @@ import {
 import { useApp } from '../context/AppContext';
 import { DashboardCharts } from './DashboardCharts';
 
+const normalizeName = (value?: string) =>
+  (value || '').toLowerCase().replace(/\s+/g, ' ').trim();
+
+const stripBracket = (value?: string) =>
+  normalizeName((value || '').replace(/\s*\(.*\)\s*$/, ''));
+
 const getInitials = (name: string) =>
   (name || '?')
     .split(' ')
@@ -40,6 +46,8 @@ export const HubinManagementDashboard: React.FC<{
     superClasses,
     loadHubinClasses,
     siswaList,
+    loadSiswa,
+    perusahaanList,
 
     isAuthenticated,
 
@@ -99,6 +107,9 @@ export const HubinManagementDashboard: React.FC<{
     run();
 
     loadHubinClasses();
+    // Pastikan data siswa/pemetaan tersedia di Dashboard Hubin.
+    // Tanpa pemanggilan ini, siswaList bisa kosong sehingga tabel TEFA kosong.
+    loadSiswa();
 
     return () => {
       cancelled = true;
@@ -107,6 +118,7 @@ export const HubinManagementDashboard: React.FC<{
     isAuthenticated,
     loadSuperStats,
     loadHubinClasses,
+    loadSiswa,
     selectedAcademicYearId,
   ]);
 
@@ -216,6 +228,15 @@ export const HubinManagementDashboard: React.FC<{
         year.id === selectedAcademicYearId
     );
 
+  const getStudentAcademicYear = (student: { academicYear?: string; academicYearId?: number | null }) => {
+    const storedYear = (student.academicYear || '').trim();
+    if (storedYear && storedYear !== '-') return storedYear;
+    const matchedYear = academicYears?.find(
+      (year) => Number(year.id) === Number(student.academicYearId)
+    );
+    return matchedYear?.name || selectedAcademicYear?.name || 'Tahun ajaran belum tersedia';
+  };
+
   const yearScopedStudents = useMemo(
     () =>
       siswaList.filter(
@@ -226,31 +247,70 @@ export const HubinManagementDashboard: React.FC<{
     [siswaList, selectedAcademicYearId]
   );
 
+  /**
+   * Kategori TEFA diturunkan dari perusahaan tempat siswa dipetakan:
+   * perusahaan berkategori Internal (sekolah) -> 'internal',
+   * perusahaan lain -> 'external', belum dipetakan -> null.
+   */
+  const getTefaCategory = (
+    student: { perusahaan?: string; placementSource?: 'sekolah' | 'perusahaan' | null }
+  ): 'internal' | 'external' | null => {
+    const rawName = (student.perusahaan || '').trim();
+    const name = normalizeName(rawName);
+    if (!name || name === '-') {
+      // Gunakan jalur penempatan sebagai cadangan jika nama tempat belum terisi.
+      if (student.placementSource === 'sekolah') return 'internal';
+      if (student.placementSource === 'perusahaan') return 'external';
+      return null;
+    }
+
+    const base = stripBracket(rawName);
+    const company =
+      perusahaanList.find((c) => normalizeName(c.name) === name) ||
+      perusahaanList.find((c) => stripBracket(c.name) === base) ||
+      perusahaanList.find((c) => {
+        const companyName = normalizeName(c.name);
+        return companyName && (companyName.includes(name) || name.includes(companyName));
+      });
+
+    const category = normalizeName(company?.category || '');
+    if (category.includes('internal')) return 'internal';
+    if (category.includes('eksternal') || category.includes('external')) return 'external';
+
+    // Cadangan untuk data pemetaan lama atau perusahaan yang tidak cocok namanya.
+    // Jalur sekolah dihitung sebagai TEFA Internal dan jalur perusahaan sebagai Eksternal.
+    if (student.placementSource === 'sekolah') return 'internal';
+    if (student.placementSource === 'perusahaan') return 'external';
+
+    // Jika nama tempat sendiri menyebut kategori, gunakan sebagai petunjuk terakhir.
+    if (name.includes('internal') || name.includes('sekolah')) return 'internal';
+    if (name.includes('eksternal') || name.includes('external')) return 'external';
+    return null;
+  };
+
   const mappedStudents = useMemo(
-    () =>
-      yearScopedStudents.filter((student) => {
-        const category = student.tefaCategory;
-        const hasCompany = Boolean(
-          student.perusahaan && student.perusahaan.trim() && student.perusahaan !== '-'
-        );
-        return category === 'internal' || (category === 'external' && hasCompany) || hasCompany;
-      }),
-    [yearScopedStudents]
+    () => yearScopedStudents.filter((student) => getTefaCategory(student) !== null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [yearScopedStudents, perusahaanList]
   );
 
-  const totalTefaInternal = yearScopedStudents.filter(
-    (student) => student.tefaCategory === 'internal'
-  ).length;
+  const totalTefaInternal = useMemo(
+    () => yearScopedStudents.filter((student) => getTefaCategory(student) === 'internal').length,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [yearScopedStudents, perusahaanList]
+  );
 
-  const totalTefaEksternal = yearScopedStudents.filter(
-    (student) => student.tefaCategory === 'external'
-  ).length;
+  const totalTefaEksternal = useMemo(
+    () => yearScopedStudents.filter((student) => getTefaCategory(student) === 'external').length,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [yearScopedStudents, perusahaanList]
+  );
 
   const tefaTableStudents = useMemo(() => {
     if (!selectedTefaView) return [];
     const query = tefaTableSearch.trim().toLowerCase();
     return yearScopedStudents.filter((student) => {
-      if (student.tefaCategory !== selectedTefaView) return false;
+      if (getTefaCategory(student) !== selectedTefaView) return false;
       if (!query) return true;
       return (
         (student.name || '').toLowerCase().includes(query) ||
@@ -260,7 +320,8 @@ export const HubinManagementDashboard: React.FC<{
         (student.mentor || '').toLowerCase().includes(query)
       );
     });
-  }, [yearScopedStudents, selectedTefaView, tefaTableSearch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [yearScopedStudents, perusahaanList, selectedTefaView, tefaTableSearch]);
 
   /* ============================================================
      MAIN STATS
@@ -529,7 +590,7 @@ export const HubinManagementDashboard: React.FC<{
                     onNavigate(s.page);
                   }
                 }}
-                className="bg-white border border-mist/60 rounded-[24px] p-4 md:p-5 min-h-[130px] text-left transition-all hover:border-steel/40 hover:-translate-y-0.5 hover:shadow-md group flex flex-col justify-between"
+                className={`bg-white border rounded-[24px] p-4 md:p-5 min-h-[130px] text-left transition-all hover:border-steel/40 hover:-translate-y-0.5 hover:shadow-md group flex flex-col justify-between ${s.tefaView && selectedTefaView === s.tefaView ? 'border-steel ring-2 ring-steel/20 shadow-md' : 'border-mist/60'}`}
               >
 
                 <div className="flex items-center justify-between">
@@ -554,7 +615,7 @@ export const HubinManagementDashboard: React.FC<{
                     {s.label}
                   </p>
                   {s.tefaView && (
-                    <p className="text-[10px] font-semibold text-steel mt-1">Klik untuk lihat daftar siswa</p>
+                    <p className="text-[10px] font-semibold text-steel mt-1">Klik untuk menampilkan tabel siswa di bawah tombol</p>
                   )}
 
                 </div>
@@ -596,61 +657,75 @@ export const HubinManagementDashboard: React.FC<{
                   </button>
                 </div>
               </div>
-              <div className="p-3 md:p-4 space-y-2.5 max-h-[65vh] overflow-y-auto custom-scrollbar">
+              <div className="max-h-[65vh] overflow-auto custom-scrollbar">
                 {tefaTableStudents.length === 0 ? (
-                  <div className="rounded-[20px] border border-dashed border-mist px-4 py-12 text-center">
+                  <div className="px-4 py-12 text-center">
                     <GraduationCap className="w-8 h-8 text-navy/25 mx-auto mb-2" />
                     <p className="text-sm font-bold text-navy">Belum ada siswa pada kategori ini</p>
-                    <p className="text-xs text-navy/50 mt-1">Coba ubah kata kunci pencarian atau pilih kategori lainnya.</p>
+                    <p className="text-xs text-navy/50 mt-1">
+                      {tefaTableSearch
+                        ? 'Coba ubah kata kunci pencarian.'
+                        : 'Belum ada data siswa yang cocok untuk kategori ini pada tahun ajaran terpilih. Pastikan siswa sudah dipetakan dan kategori tempatnya sudah diatur sebagai Internal atau Eksternal.'}
+                    </p>
                   </div>
                 ) : (
-                  tefaTableStudents.map((student) => (
-                    <div
-                      key={student.id}
-                      className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-[22px] border border-mist/70 bg-white p-3 md:p-4 transition-colors hover:border-steel/40 hover:bg-mist/10"
-                    >
-                      <div className="w-10 h-10 rounded-xl bg-navy text-white flex items-center justify-center text-xs font-extrabold shrink-0">
-                        {getInitials(student.name)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-navy truncate">{student.name}</p>
-                        <p className="text-[11px] text-navy/55 mt-1 truncate">
-                          {student.kelas || 'Kelas belum tersedia'}
-                          {' · '}
-                          {selectedTefaView === 'internal'
-                            ? 'Di lingkungan sekolah'
-                            : student.perusahaan && student.perusahaan !== '-'
-                              ? student.perusahaan
-                              : 'Tempat belum ditentukan'}
-                        </p>
-                        <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                          <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold ${selectedTefaView === 'internal' ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'}`}>
-                            {selectedTefaView === 'internal' ? 'TEFA Internal' : 'TEFA Eksternal'}
-                          </span>
-                          <span className="inline-flex rounded-full bg-navy text-white px-2.5 py-1 text-[10px] font-bold">
-                            Terpetakan
-                          </span>
-                          <span className="text-[10px] text-navy/50">
-                            Guru: {student.guruPembimbing && student.guruPembimbing !== '-' ? student.guruPembimbing : 'Belum ditentukan'}
-                          </span>
-                          <span className="text-[10px] text-navy/50">
-                            Mentor: {student.mentor && student.mentor !== '-' ? student.mentor : 'Belum ditentukan'}
-                          </span>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => onNavigate('pemetaan')}
-                        className="shrink-0 self-start sm:self-center px-3.5 py-2 rounded-xl border border-mist text-xs font-bold text-navy hover:bg-navy hover:text-white transition-colors"
-                      >
-                        Kelola
-                      </button>
-                    </div>
-                  ))
+                  <table className="w-full min-w-[1050px] border-collapse text-left">
+                    <thead className="sticky top-0 z-10 bg-mist/70">
+                      <tr className="text-[10px] uppercase tracking-wider text-navy/65">
+                        <th className="px-4 py-3 font-extrabold">No.</th>
+                        <th className="px-4 py-3 font-extrabold">Nama Siswa</th>
+                        <th className="px-4 py-3 font-extrabold">Kelas</th>
+                        <th className="px-4 py-3 font-extrabold">Kategori TEFA</th>
+                        <th className="px-4 py-3 font-extrabold">Tempat Pelaksanaan</th>
+                        <th className="px-4 py-3 font-extrabold">Guru Pembimbing</th>
+                        <th className="px-4 py-3 font-extrabold">Mentor</th>
+                        <th className="px-4 py-3 font-extrabold">Tahun Ajaran</th>
+                        <th className="px-4 py-3 font-extrabold">Status</th>
+                        <th className="px-4 py-3 font-extrabold">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-mist/70">
+                      {tefaTableStudents.map((student, index) => (
+                        <tr key={student.id} className="text-xs text-navy hover:bg-mist/20 transition-colors">
+                          <td className="px-4 py-3.5 text-navy/55">{index + 1}</td>
+                          <td className="px-4 py-3.5">
+                            <div className="flex items-center gap-2.5 min-w-[180px]">
+                              <div className="w-8 h-8 rounded-lg bg-navy text-white flex items-center justify-center text-[10px] font-extrabold shrink-0">
+                                {getInitials(student.name)}
+                              </div>
+                              <span className="font-bold">{student.name || 'Nama belum tersedia'}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3.5 whitespace-nowrap">{student.kelas || 'Kelas belum tersedia'}</td>
+                          <td className="px-4 py-3.5 whitespace-nowrap">
+                            <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold ${selectedTefaView === 'internal' ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'}`}>
+                              {selectedTefaView === 'internal' ? 'TEFA Internal' : 'TEFA Eksternal'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5 min-w-[170px]">{selectedTefaView === 'internal' ? (student.perusahaan && student.perusahaan !== '-' ? student.perusahaan : 'Sekolah') : (student.perusahaan && student.perusahaan !== '-' ? student.perusahaan : 'Tempat belum ditentukan')}</td>
+                          <td className="px-4 py-3.5 min-w-[150px]">{student.guruPembimbing && student.guruPembimbing !== '-' ? student.guruPembimbing : 'Belum ditentukan'}</td>
+                          <td className="px-4 py-3.5 min-w-[150px]">{student.mentor && student.mentor !== '-' ? student.mentor : 'Belum ditentukan'}</td>
+                          <td className="px-4 py-3.5 whitespace-nowrap">{getStudentAcademicYear(student)}</td>
+                          <td className="px-4 py-3.5 whitespace-nowrap">
+                            <span className="inline-flex rounded-full bg-emerald-50 text-emerald-700 px-2.5 py-1 text-[10px] font-bold">Terpetakan</span>
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <button
+                              type="button"
+                              onClick={() => onNavigate('pemetaan')}
+                              className="px-3 py-2 rounded-lg border border-mist text-[10px] font-bold text-navy hover:bg-navy hover:text-white transition-colors whitespace-nowrap"
+                            >
+                              Kelola
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 )}
               </div>
               <div className="px-4 py-3 border-t border-mist/60 text-[11px] font-medium text-navy/50">
-                Kategori TEFA tersimpan di database dan tersinkron dengan data siswa.
+                Kategori TEFA mengikuti kategori perusahaan tempat siswa dipetakan (Internal / Eksternal).
               </div>
             </section>
           )}
@@ -749,6 +824,9 @@ export const HubinManagementDashboard: React.FC<{
                             {[student.kelas, student.perusahaan]
                               .filter((value) => value && value !== '-')
                               .join(' · ') || 'Kelas atau perusahaan belum tersedia'}
+                          </p>
+                          <p className="text-[10px] font-semibold text-steel mt-1">
+                            Tahun Ajaran: {getStudentAcademicYear(student)}
                           </p>
 
                         </div>

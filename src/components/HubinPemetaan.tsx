@@ -206,18 +206,6 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
           </div>
 
           <div className="overflow-y-auto custom-scrollbar max-h-60 p-1">
-            <button
-              type="button"
-              onClick={() => {
-                onChange('');
-                setOpen(false);
-                setQuery('');
-              }}
-              className="w-full text-left px-3 py-2 rounded-lg transition-all text-xs font-bold text-navy/50 hover:bg-mist/30 hover:text-navy"
-            >
-              — Kosongkan —
-            </button>
-
             {filtered.length === 0 ? (
               <div className="py-6 text-center">
                 <p className="text-xs font-semibold text-navy/40">
@@ -321,6 +309,12 @@ export const HubinPemetaan: React.FC = () => {
   const [justSaved, setJustSaved] = useState(false);
 
   const [formCompanyId, setFormCompanyId] = useState<number | string>('');
+  const [formPlacementType, setFormPlacementType] = useState<
+    '' | 'internal' | 'eksternal'
+  >('');
+  const [formPlacementSource, setFormPlacementSource] = useState<
+    '' | 'sekolah' | 'perusahaan'
+  >('');
   const [formGuruId, setFormGuruId] = useState<number | string>('');
 
   /* timer "Tersimpan" dibersihkan saat unmount */
@@ -347,7 +341,10 @@ export const HubinPemetaan: React.FC = () => {
       'Latitude',
       'Longitude',
       'Radius',
-      'Kuota',
+      'Kuota Sekolah',
+      'Kuota Perusahaan',
+      'Jalur',
+      'Guru Pembimbing',
     ];
 
     const worksheet = XLSX.utils.aoa_to_sheet([headers]);
@@ -362,7 +359,10 @@ export const HubinPemetaan: React.FC = () => {
       { wch: 15 },
       { wch: 15 },
       { wch: 12 },
-      { wch: 10 },
+      { wch: 15 },
+      { wch: 18 },
+      { wch: 14 },
+      { wch: 30 },
     ];
 
     const workbook = XLSX.utils.book_new();
@@ -633,13 +633,22 @@ export const HubinPemetaan: React.FC = () => {
      SELECT OPTIONS
      ============================================================ */
 
-  const companyOptions: SearchableOption[] = useMemo(
+  /** Perusahaan "sekolah" = perusahaan berkategori Internal. */
+  const schoolCompany = useMemo(
+    () => mapLocations.find((l) => getPlacementCategory(l) === 'internal'),
+    [mapLocations]
+  );
+
+  /** Dropdown perusahaan hanya berisi perusahaan non-internal. */
+  const externalCompanyOptions: SearchableOption[] = useMemo(
     () =>
-      mapLocations.map((loc) => ({
-        id: loc.id,
-        label: loc.name,
-        sublabel: [loc.address, loc.category].filter(Boolean).join(' • '),
-      })),
+      mapLocations
+        .filter((loc) => getPlacementCategory(loc) !== 'internal')
+        .map((loc) => ({
+          id: loc.id,
+          label: loc.name,
+          sublabel: [loc.address, loc.category].filter(Boolean).join(' • '),
+        })),
     [mapLocations]
   );
 
@@ -662,6 +671,80 @@ export const HubinPemetaan: React.FC = () => {
     const guru = findByName(guruList, s.guruPembimbing);
     setFormCompanyId(loc?.id ?? '');
     setFormGuruId(guru?.id ?? '');
+    setFormPlacementType(
+      loc
+        ? getPlacementCategory(loc) === 'internal'
+          ? 'internal'
+          : 'eksternal'
+        : ''
+    );
+    setFormPlacementSource(
+      loc ? s.placementSource || 'sekolah' : ''
+    );
+  };
+
+  /** Perusahaan yang sedang dipilih di form (eksternal). */
+  const formLoc =
+    formPlacementType === 'eksternal' && formCompanyId
+      ? mapLocations.find((l) => String(l.id) === String(formCompanyId))
+      : undefined;
+
+  /**
+   * Sisa kuota sebuah jalur pada perusahaan yang dipilih.
+   * Slot milik siswa ini sendiri (kalau dia sudah di perusahaan & jalur itu)
+   * tidak dihitung terisi, supaya menyimpan ulang tidak dianggap penuh.
+   */
+  const remainingQuota = (source: 'sekolah' | 'perusahaan') => {
+    if (!formLoc) return 0;
+
+    const quota =
+      source === 'perusahaan'
+        ? formLoc.quotaCompany ?? 0
+        : formLoc.quotaSchool ?? 0;
+
+    const filled =
+      source === 'perusahaan'
+        ? formLoc.filledCompany ?? 0
+        : formLoc.filledSchool ?? 0;
+
+    const ownSlot =
+      selectedSiswa &&
+      selectedLoc &&
+      selectedLoc.id === formLoc.id &&
+      (selectedSiswa.placementSource || 'sekolah') === source
+        ? 1
+        : 0;
+
+    return quota - (filled - ownSlot);
+  };
+
+  const handleCompanyChange = (id: number | string) => {
+    setFormCompanyId(id);
+
+    const sameAsCurrent =
+      !!selectedLoc && String(selectedLoc.id) === String(id);
+
+    setFormPlacementSource(
+      sameAsCurrent && selectedSiswa?.placementSource
+        ? selectedSiswa.placementSource
+        : ''
+    );
+  };
+
+  const handlePlacementTypeChange = (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    const type = e.target.value as '' | 'internal' | 'eksternal';
+    setFormPlacementType(type);
+    setFormPlacementSource(type === 'internal' ? 'sekolah' : '');
+
+    if (type === 'internal') {
+      // otomatis perusahaan sekolah, tidak bisa pilih perusahaan lain
+      setFormCompanyId(schoolCompany?.id ?? '');
+    } else {
+      // jangan sampai perusahaan sekolah ikut tersimpan sebagai eksternal
+      setFormCompanyId('');
+    }
   };
 
   const handleSelectSiswa = (s: SiswaItem) => {
@@ -696,20 +779,66 @@ export const HubinPemetaan: React.FC = () => {
 
     const guru = guruList.find((g) => String(g.id) === String(formGuruId));
 
+    if (!formPlacementType) {
+      alert('Pilih jenis PKL (Internal atau Eksternal) terlebih dahulu.');
+      return;
+    }
+
+    if (formPlacementType === 'internal' && !schoolCompany) {
+      alert(
+        'Belum ada perusahaan sekolah. Buat dulu di Data Perusahaan dengan kategori Internal.'
+      );
+      return;
+    }
+
+    if (formPlacementType === 'eksternal') {
+      if (!formCompanyId || !loc) {
+        alert('Pilih perusahaan tempat PKL untuk PKL Eksternal.');
+        return;
+      }
+      if (getPlacementCategory(loc) === 'internal') {
+        alert('PKL Eksternal tidak boleh memilih perusahaan sekolah.');
+        return;
+      }
+      if (!formPlacementSource) {
+        alert('Pilih jalur kuota: Sekolah atau Perusahaan.');
+        return;
+      }
+      if (remainingQuota(formPlacementSource) <= 0) {
+        alert(
+          `Kuota ${
+            formPlacementSource === 'perusahaan' ? 'Perusahaan' : 'Sekolah'
+          } di "${loc.name}" sudah penuh. Pilih jalur lain atau perusahaan lain.`
+        );
+        return;
+      }
+    }
+
+    const finalCompanyId =
+      formPlacementType === 'internal' ? schoolCompany!.id : formCompanyId;
+
+    const finalLoc =
+      formPlacementType === 'internal' ? schoolCompany : loc;
+
     setSaving(true);
 
     try {
       await updateSiswaMapping(selectedSiswa.id, {
-        perusahaan: loc
-          ? loc.name.replace(/\s*\(.*\)\s*$/, '')
+        perusahaan: finalLoc
+          ? finalLoc.name.replace(/\s*\(.*\)\s*$/, '')
           : selectedSiswa.perusahaan,
 
         guruPembimbing: guru ? guru.name : selectedSiswa.guruPembimbing,
 
         mentor: selectedSiswa.mentor,
 
-        companyId: formCompanyId,
+        companyId: finalCompanyId,
         teacherId: formGuruId,
+        placementType: formPlacementType,
+        placementSource:
+          formPlacementType === 'internal'
+            ? 'sekolah'
+            : (formPlacementSource as 'sekolah' | 'perusahaan'),
       });
 
       setEditing(false);
@@ -1424,15 +1553,92 @@ export const HubinPemetaan: React.FC = () => {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      <SearchableSelect
-                        label="Tempat PKL"
-                        icon={Building2}
-                        value={formCompanyId}
-                        options={companyOptions}
-                        onChange={setFormCompanyId}
-                        placeholder="— Pilih Tempat PKL —"
-                        emptyText="Belum ada perusahaan. Tambah di halaman Data Perusahaan."
-                      />
+                      <div>
+                        <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide flex items-center gap-1.5 mb-2">
+                          <Compass className="w-3.5 h-3.5" />
+                          Jenis PKL
+                        </label>
+                        <select
+                          value={formPlacementType}
+                          onChange={handlePlacementTypeChange}
+                          className="w-full bg-mist/30 border border-mist rounded-[24px] px-3.5 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
+                        >
+                          <option value="">— Pilih Jenis PKL —</option>
+                          <option value="internal">Internal (di sekolah)</option>
+                          <option value="eksternal">Eksternal (perusahaan mitra)</option>
+                        </select>
+                      </div>
+
+                      {formPlacementType === 'internal' && (
+                        <div>
+                          <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide flex items-center gap-1.5 mb-2">
+                            <Building2 className="w-3.5 h-3.5" />
+                            Tempat PKL
+                          </label>
+                          <div className="w-full bg-mist/50 border border-mist rounded-[24px] px-3.5 py-2.5 text-sm font-semibold text-navy flex items-center justify-between gap-2">
+                            <span className="truncate">
+                              {schoolCompany
+                                ? schoolCompany.name
+                                : 'Perusahaan sekolah belum dibuat'}
+                            </span>
+                            <span className="text-[10px] font-bold bg-navy text-white px-2 py-0.5 rounded-full shrink-0">
+                              OTOMATIS
+                            </span>
+                          </div>
+                          {!schoolCompany && (
+                            <p className="text-[11px] font-medium text-red-600 mt-1.5">
+                              Buat dulu perusahaan sekolah di Data Perusahaan dengan kategori Internal.
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {formPlacementType === 'eksternal' && (
+                        <SearchableSelect
+                          label="Tempat PKL"
+                          icon={Building2}
+                          value={formCompanyId}
+                          options={externalCompanyOptions}
+                          onChange={handleCompanyChange}
+                          placeholder="— Pilih Perusahaan —"
+                          emptyText="Belum ada perusahaan eksternal. Tambah di halaman Data Perusahaan."
+                        />
+                      )}
+
+                      {formPlacementType === 'eksternal' && formLoc && (
+                        <div>
+                          <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide flex items-center gap-1.5 mb-2">
+                            <Users className="w-3.5 h-3.5" />
+                            Jalur Kuota
+                          </label>
+                          <select
+                            value={formPlacementSource}
+                            onChange={(e) =>
+                              setFormPlacementSource(
+                                e.target.value as '' | 'sekolah' | 'perusahaan'
+                              )
+                            }
+                            className="w-full bg-mist/30 border border-mist rounded-[24px] px-3.5 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
+                          >
+                            <option value="">— Pilih Jalur Kuota —</option>
+                            <option
+                              value="sekolah"
+                              disabled={remainingQuota('sekolah') <= 0}
+                            >
+                              Kuota Sekolah (sisa {Math.max(0, remainingQuota('sekolah'))} dari {formLoc.quotaSchool ?? 0})
+                            </option>
+                            <option
+                              value="perusahaan"
+                              disabled={remainingQuota('perusahaan') <= 0}
+                            >
+                              Kuota Perusahaan (sisa {Math.max(0, remainingQuota('perusahaan'))} dari {formLoc.quotaCompany ?? 0})
+                            </option>
+                          </select>
+                          <p className="text-[10px] text-navy/45 mt-1 px-1">
+                            Sekolah: ditempatkan oleh sekolah. Perusahaan: direkrut langsung oleh perusahaan.
+                          </p>
+                        </div>
+                      )}
 
                       <SearchableSelect
                         label="Guru Pembimbing"

@@ -32,6 +32,7 @@ export const HubinClasses: React.FC = () => {
     loadClassStudents,
     isAuthenticated,
     selectedAcademicYearId,
+    academicYears,
   } = useApp();
 
   const [showAdd, setShowAdd] = useState(false);
@@ -39,6 +40,11 @@ export const HubinClasses: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [detail, setDetail] = useState<any>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+
+  const selectedAcademicYear = academicYears?.find(
+    (year) => Number(year.id) === Number(selectedAcademicYearId)
+  );
+  const selectedYearLabel = selectedAcademicYear?.name || 'Tahun ajaran belum tersedia';
 
   /* ══════════════════════════════════════════════════════
      LOAD KELAS SESUAI TAHUN AJARAN
@@ -267,6 +273,9 @@ export const HubinClasses: React.FC = () => {
 
                       <p className="text-[11px] text-navy/50 truncate mt-0.5">
                         {c.major || 'Jurusan belum diisi'}
+                      </p>
+                      <p className="text-[10px] font-bold text-steel mt-1 flex items-center gap-1">
+                        <span>Tahun Ajaran:</span> {selectedYearLabel}
                       </p>
 
                     </button>
@@ -623,6 +632,9 @@ const ClassDetailModal: React.FC<{
 
                     <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">
                       {s.email} · {s.perusahaan || '-'}
+                    </p>
+                    <p className="text-[10px] font-semibold text-steel mt-1">
+                      Tahun Ajaran: {s.academicYear || s.academicYearRef?.name || selectedYearLabel}
                     </p>
 
                     <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">

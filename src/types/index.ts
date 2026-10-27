@@ -14,15 +14,13 @@ export type ActivePage =
   | 'data-pembimbing' 
   | 'pemetaan' 
   | 'data'
-  | 'hubin-summary'
   | 'hubin-classes'
   | 'hubin-users'
   | 'hubin-companies'
   | 'hubin-student-import'
   | 'hubin-mentor-roster'
   | 'teacher-mentor-mapping'
-  | 'laporan'
-  | 'data-mentor';
+  | 'laporan';
 
 export type UserRole = 'intern' | 'mentor' | 'teacher' | 'hubin';
 

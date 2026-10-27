@@ -30,8 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     // Hubin mendapatkan seluruh fitur pengelolaan yang sebelumnya ada di panel pengelolaan.
     if (userRole === 'hubin') {
       return [
-        { id: 'dashboard',        icon: LayoutDashboard, label: 'Dashboard' },
-        { id: 'hubin-summary',    icon: ShieldCheck,     label: 'Ringkasan' },
+        { id: 'dashboard',        icon: ShieldCheck,     label: 'Dashboard' },
         { id: 'hubin-classes',    icon: School,          label: 'Kelola Kelas' },
         { id: 'hubin-users',      icon: Users,           label: 'Kelola Pengguna' },
         { id: 'hubin-student-import', icon: FileSpreadsheet, label: 'Import Siswa' },
@@ -56,15 +55,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
     if (userRole === 'teacher') {
       return [
-        { id: 'dashboard',              icon: LayoutDashboard, label: 'Dashboard' },
-        { id: 'monitoring',             icon: Activity,        label: 'Monitoring' },
-        { id: 'teacher-mentor-mapping', icon: Briefcase,       label: 'Pemetaan Mentor' },
-        { id: 'attendance',             icon: Camera,          label: 'Kehadiran' },
-        { id: 'perizinan',              icon: FileCheck,       label: 'Perizinan' },
-        { id: 'roster',                 icon: Award,           label: 'Penilaian' },
-        { id: 'data-mentor',            icon: Users,           label: 'Data Mentor' },
-        { id: 'laporan',                icon: FileDown,        label: 'Laporan' },
-        { id: 'settings',               icon: SettingsIcon,    label: 'Pengaturan' }
+        { id: 'dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
+        { id: 'monitoring', icon: Activity,        label: 'Monitoring' },
+        { id: 'teacher-mentor-mapping', icon: Briefcase, label: 'Pemetaan Mentor' },
+        { id: 'attendance', icon: Camera,          label: 'Kehadiran' },
+        { id: 'perizinan',  icon: FileCheck,       label: 'Perizinan' },
+        { id: 'roster',     icon: Award,           label: 'Penilaian' },
+        { id: 'laporan',    icon: FileDown,        label: 'Laporan' },
+        { id: 'settings',   icon: SettingsIcon,    label: 'Pengaturan' }
       ];
     }
     return [

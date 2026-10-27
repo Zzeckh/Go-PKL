@@ -12,14 +12,6 @@ import { useApp } from '../context/AppContext';
 import { api } from '../utils/api';
 import { RekapHarian } from './RekapHarian';
 
-const ABSENSI_STATUS = [
-  { value: '', label: 'Semua Status' },
-  { value: 'hadir', label: 'Hadir' },
-  { value: 'izin', label: 'Izin' },
-  { value: 'sakit', label: 'Sakit' },
-  { value: 'alpha', label: 'Alpha' },
-];
-
 type AttendancePreview = {
   reportType?: string;
   title?: string;
@@ -42,6 +34,7 @@ type AttendancePreview = {
     username: string;
     className: string;
     companyName: string;
+    companyCategory?: string;
     teacherName: string;
     mentorName: string;
 
@@ -83,11 +76,6 @@ export const Laporan: React.FC = () => {
   /* ============================================================
      STATE
   ============================================================ */
-
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-
-  const [absensiStatus, setAbsensiStatus] = useState('');
 
   const [companyId, setCompanyId] = useState('');
   const [classId, setClassId] = useState('');
@@ -389,24 +377,6 @@ export const Laporan: React.FC = () => {
       new URLSearchParams();
 
     /* ========================================================
-       TANGGAL
-    ======================================================== */
-
-    if (startDate) {
-      params.set(
-        'startDate',
-        startDate
-      );
-    }
-
-    if (endDate) {
-      params.set(
-        'endDate',
-        endDate
-      );
-    }
-
-    /* ========================================================
        TAHUN AJARAN
     ======================================================== */
 
@@ -557,9 +527,7 @@ export const Laporan: React.FC = () => {
         return;
       }
 
-      const qs = buildQuery({
-        status: absensiStatus,
-      });
+      const qs = buildQuery();
 
       const result =
         await api.get<AttendancePreview>(
@@ -631,6 +599,13 @@ export const Laporan: React.FC = () => {
                   Perusahaan:
                     student.companyName || '-',
 
+                  TEFA:
+                    (student.companyCategory || '').toLowerCase().includes('internal')
+                      ? 'TEFA Internal'
+                      : student.companyCategory && student.companyCategory !== '-'
+                        ? 'TEFA Eksternal'
+                        : '-',
+
                   'Guru Pembimbing':
                     student.teacherName || '-',
 
@@ -675,6 +650,13 @@ export const Laporan: React.FC = () => {
                 Perusahaan:
                   student.companyName || '-',
 
+                TEFA:
+                  (student.companyCategory || '').toLowerCase().includes('internal')
+                    ? 'TEFA Internal'
+                    : student.companyCategory && student.companyCategory !== '-'
+                      ? 'TEFA Eksternal'
+                      : '-',
+
                 'Guru Pembimbing':
                   student.teacherName || '-',
 
@@ -715,6 +697,7 @@ export const Laporan: React.FC = () => {
         { wch: 30 },
         { wch: 15 },
         { wch: 30 },
+        { wch: 18 },
         { wch: 25 },
         { wch: 25 },
         { wch: 15 },
@@ -780,9 +763,7 @@ export const Laporan: React.FC = () => {
         return;
       }
 
-      const qs = buildQuery({
-        status: absensiStatus,
-      });
+      const qs = buildQuery();
 
       await api.download(
         `/api/reports/preview/pdf?${qs}`,
@@ -1071,53 +1052,6 @@ export const Laporan: React.FC = () => {
             </select>
 
           </div>
-
-          {/* ======================================================
-              TANGGAL MULAI
-          ====================================================== */}
-
-          <div>
-
-            <label className="text-[11px] font-bold text-navy/60 block mb-1.5">
-              Tanggal Mulai
-            </label>
-
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) =>
-                setStartDate(
-                  e.target.value
-                )
-              }
-              className="w-full bg-[#F1F4F8] border border-mist rounded-xl px-3 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel transition-all"
-            />
-
-          </div>
-
-          {/* ======================================================
-              TANGGAL AKHIR
-          ====================================================== */}
-
-          <div>
-
-            <label className="text-[11px] font-bold text-navy/60 block mb-1.5">
-              Tanggal Akhir
-            </label>
-
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) =>
-                setEndDate(
-                  e.target.value
-                )
-              }
-              className="w-full bg-[#F1F4F8] border border-mist rounded-xl px-3 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel transition-all"
-            />
-
-          </div>
-
           {/* ======================================================
               PERUSAHAAN
           ====================================================== */}
@@ -1296,43 +1230,6 @@ export const Laporan: React.FC = () => {
 
             </div>
           )}
-
-          {/* ======================================================
-              STATUS
-          ====================================================== */}
-
-          <div>
-
-            <label className="text-[11px] font-bold text-navy/60 block mb-1.5">
-              Status Kehadiran
-            </label>
-
-            <select
-              value={absensiStatus}
-              onChange={(e) => {
-                setAbsensiStatus(
-                  e.target.value
-                );
-
-                setPreview(null);
-              }}
-              className="w-full bg-[#F1F4F8] border border-mist rounded-xl px-3 py-2.5 text-sm font-medium text-navy outline-none focus:border-steel transition-all"
-            >
-
-              {ABSENSI_STATUS.map(
-                (status) => (
-                  <option
-                    key={status.value}
-                    value={status.value}
-                  >
-                    {status.label}
-                  </option>
-                )
-              )}
-
-            </select>
-
-          </div>
 
         </div>
 

@@ -2,10 +2,6 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../config/db.js';
 import { JWT_SECRET } from '../config/jwt.js';
-import {
-  getUserDeletionBlockers,
-  buildDeletionBlockedMessage,
-} from '../services/userDeletionService.js';
 
 const generateToken = (user) =>
   jwt.sign(
@@ -54,14 +50,7 @@ export const login = async (req, res, next) => {
       return res.status(400).json({ error: 'Email dan password harus diisi' });
     }
 
-    const normalizedEmail = String(email)
-      .trim()
-      .toLowerCase();
-
-    const user = await prisma.user.findUnique({
-      where: { email: normalizedEmail },
-      include: userInclude,
-    });
+    const user = await prisma.user.findUnique({ where: { email }, include: userInclude });
     if (!user) return res.status(401).json({ error: 'Email atau password salah' });
 
     // Tolak akun legacy yang role-nya akan dihapus saat migrasi.
@@ -243,20 +232,6 @@ export const deleteAccount = async (req, res, next) => {
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
       return res.status(401).json({ error: 'Password salah' });
-    }
-
-    // Akun dengan riwayat PKL tidak boleh dihapus permanen.
-    const blockers = await getUserDeletionBlockers(user.id);
-
-    if (blockers === null) {
-      return res.status(404).json({ error: 'User tidak ditemukan' });
-    }
-
-    if (blockers.length) {
-      return res.status(409).json({
-        error: buildDeletionBlockedMessage(blockers, { self: true }),
-        blockers,
-      });
     }
 
     await prisma.user.delete({ where: { id: user.id } });

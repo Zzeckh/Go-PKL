@@ -1,9 +1,5 @@
 import prisma from '../config/db.js';
 import bcrypt from 'bcryptjs';
-import {
-  getUserDeletionBlockers,
-  buildDeletionBlockedMessage,
-} from '../services/userDeletionService.js';
 
 /* =========================================================
    STATS GLOBAL
@@ -14,330 +10,93 @@ export const getStats = async (req, res, next) => {
   try {
     const { academicYearId } = req.query;
 
-    const parsedYearId = academicYearId
+    const yearId = academicYearId
       ? Number(academicYearId)
       : null;
 
-    // Filter tahun ajaran hanya berlaku untuk data yang memang
-    // terikat tahun ajaran (kelas, siswa, dan aktivitas siswa).
-    // Guru, mentor, dan hubin adalah data global.
-    const yearId =
-      parsedYearId &&
-      Number.isInteger(parsedYearId) &&
-      parsedYearId > 0
-        ? parsedYearId
-        : null;
+    const yearFilter =
+      yearId &&
+      Number.isInteger(yearId) &&
+      yearId > 0
+        ? { academicYearId: yearId }
+        : {};
 
-    // Satu query untuk semua statistik. Di Vercel serverless,
-    // beberapa query terpisah ke Supabase bisa memakan >10 detik
-    // karena latency region dan connection_limit=1.
-    const [stats] = await prisma.$queryRaw`
-      SELECT
-        (
-          SELECT COUNT(*)::int
-          FROM "class"
-          WHERE (${yearId}::int IS NULL OR "academicYearId" = ${yearId}::int)
-        ) AS "totalClasses",
+    const [
+      totalClasses,
+      totalStudents,
+      totalTeachers,
+      totalMentors,
+      totalHubins,
+    ] = await Promise.all([
+      prisma.class.count({
+        where: yearFilter,
+      }),
 
-        (
-          SELECT COUNT(*)::int
-          FROM "user"
-          WHERE "role" = 'student'
-            AND (${yearId}::int IS NULL OR "academicYearId" = ${yearId}::int)
-        ) AS "totalStudents",
+      prisma.user.count({
+        where: {
+          role: 'student',
+          ...yearFilter,
+        },
+      }),
 
-        (
-          SELECT COUNT(*)::int
-          FROM "user"
-          WHERE "role" = 'teacher'
-        ) AS "totalTeachers",
+      prisma.user.count({
+        where: {
+          role: 'teacher',
+          ...yearFilter,
+        },
+      }),
 
-        (
-          SELECT COUNT(*)::int
-          FROM "user"
-          WHERE "role" = 'mentor'
-        ) AS "totalMentors",
+      prisma.user.count({
+        where: {
+          role: 'mentor',
+          ...yearFilter,
+        },
+      }),
 
-        (
-          SELECT COUNT(*)::int
-          FROM "user"
-          WHERE "role" = 'hubin'
-        ) AS "totalHubins",
+      prisma.user.count({
+        where: {
+          role: 'hubin',
+          ...yearFilter,
+        },
+      }),
+    ]);
 
-        (
-          SELECT COUNT(*)::int
-          FROM "company"
-        ) AS "totalCompanies",
+    const [
+      totalAbsensi,
+      totalLogbooks,
+      totalPermissions,
+    ] = await Promise.all([
+      prisma.absensi.count({
+        where: {
+          user: yearFilter,
+        },
+      }),
 
-        (
-          SELECT COUNT(*)::int
-          FROM "absensi"
-          WHERE (
-            ${yearId}::int IS NULL
-            OR "userId" IN (
-              SELECT "id"
-              FROM "user"
-              WHERE "academicYearId" = ${yearId}::int
-            )
-          )
-        ) AS "totalAbsensi",
+      prisma.logbook.count({
+        where: {
+          user: yearFilter,
+        },
+      }),
 
-        (
-          SELECT COUNT(*)::int
-          FROM "logbook"
-          WHERE (
-            ${yearId}::int IS NULL
-            OR "userId" IN (
-              SELECT "id"
-              FROM "user"
-              WHERE "academicYearId" = ${yearId}::int
-            )
-          )
-        ) AS "totalLogbooks",
+      prisma.permission.count({
+        where: {
+          user: yearFilter,
+        },
+      }),
+    ]);
 
-        (
-          SELECT COUNT(*)::int
-          FROM "permission"
-          WHERE (
-            ${yearId}::int IS NULL
-            OR "userId" IN (
-              SELECT "id"
-              FROM "user"
-              WHERE "academicYearId" = ${yearId}::int
-            )
-          )
-        ) AS "totalPermissions"
-    `;
-
-    res.json(stats);
-  } catch (error) {
-    next(error);
-  }
-};
-
-/* =========================================================
-   CREATE STUDENT
-   POST /api/hubin/students
-   ========================================================= */
-
-export const createStudent = async (req, res, next) => {
-  try {
-    const {
-      name,
-      nis,
-      classId,
-      teacherId,
-      companyId,
-      academicYearId,
-      academicYear,
-    } = req.body;
-
-    if (!name || !String(name).trim()) {
-      return res.status(400).json({
-        error: 'Nama siswa wajib diisi.',
-      });
-    }
-
-    const cleanNis = String(nis ?? '').trim();
-
-    if (!/^\d{4,30}$/.test(cleanNis)) {
-      return res.status(400).json({
-        error: 'NIS harus berupa 4-30 digit angka.',
-      });
-    }
-
-    const email = `${cleanNis}@gopkl.id`;
-
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-      select: { id: true },
-    });
-
-    if (existingUser) {
-      return res.status(409).json({
-        error: 'NIS sudah terdaftar.',
-      });
-    }
-
-    const classIdNumber = Number(classId);
-
-    if (!Number.isInteger(classIdNumber) || classIdNumber <= 0) {
-      return res.status(400).json({
-        error: 'Kelas wajib dipilih.',
-      });
-    }
-
-    const classData = await prisma.class.findUnique({
-      where: { id: classIdNumber },
-      select: {
-        id: true,
-        academicYearId: true,
-      },
-    });
-
-    if (!classData) {
-      return res.status(400).json({
-        error: 'Kelas tidak ditemukan.',
-      });
-    }
-
-    let yearId = classData.academicYearId ?? null;
-
-    if (
-      academicYearId !== undefined &&
-      academicYearId !== null &&
-      academicYearId !== ''
-    ) {
-      const parsedYearId = Number(academicYearId);
-
-      if (
-        !Number.isInteger(parsedYearId) ||
-        parsedYearId <= 0
-      ) {
-        return res.status(400).json({
-          error: 'academicYearId tidak valid.',
-        });
-      }
-
-      if (
-        classData.academicYearId &&
-        classData.academicYearId !== parsedYearId
-      ) {
-        return res.status(400).json({
-          error: 'Kelas tidak sesuai dengan tahun ajaran.',
-        });
-      }
-
-      yearId = parsedYearId;
-    }
-
-    let resolvedYear = null;
-
-    if (yearId) {
-      resolvedYear = await prisma.academicYear.findUnique({
-        where: { id: yearId },
-        select: { id: true, name: true },
-      });
-
-      if (!resolvedYear) {
-        return res.status(400).json({
-          error: 'Tahun ajaran tidak ditemukan.',
-        });
-      }
-    }
-
-    let teacherIdValue = null;
-
-    if (
-      teacherId !== undefined &&
-      teacherId !== null &&
-      teacherId !== ''
-    ) {
-      const parsedTeacherId = Number(teacherId);
-
-      if (
-        !Number.isInteger(parsedTeacherId) ||
-        parsedTeacherId <= 0
-      ) {
-        return res.status(400).json({
-          error: 'teacherId tidak valid.',
-        });
-      }
-
-      const teacher = await prisma.user.findUnique({
-        where: { id: parsedTeacherId },
-        select: { id: true, role: true },
-      });
-
-      if (!teacher || teacher.role !== 'teacher') {
-        return res.status(400).json({
-          error: 'Guru pembimbing tidak valid.',
-        });
-      }
-
-      teacherIdValue = teacher.id;
-    }
-
-    let companyIdValue = null;
-
-    if (
-      companyId !== undefined &&
-      companyId !== null &&
-      companyId !== ''
-    ) {
-      const parsedCompanyId = Number(companyId);
-
-      if (
-        !Number.isInteger(parsedCompanyId) ||
-        parsedCompanyId <= 0
-      ) {
-        return res.status(400).json({
-          error: 'companyId tidak valid.',
-        });
-      }
-
-      const company = await prisma.company.findUnique({
-        where: { id: parsedCompanyId },
-        select: { id: true },
-      });
-
-      if (!company) {
-        return res.status(400).json({
-          error: 'Perusahaan tidak ditemukan.',
-        });
-      }
-
-      companyIdValue = company.id;
-    }
-
-    const hashedPassword = await bcrypt.hash('gopkl123', 10);
-
-    const student = await prisma.user.create({
-      data: {
-        name: String(name).trim(),
-        email,
-        password: hashedPassword,
-        role: 'student',
-        isActive: true,
-        classId: classData.id,
-        teacherId: teacherIdValue,
-        companyId: companyIdValue,
-        academicYearId: yearId,
-        academicYear:
-          resolvedYear?.name ??
-          (academicYear !== undefined &&
-          academicYear !== null &&
-          String(academicYear).trim() !== ''
-            ? String(academicYear).trim()
-            : null),
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        isActive: true,
-        classId: true,
-        teacherId: true,
-        companyId: true,
-        academicYearId: true,
-        academicYear: true,
-      },
-    });
-
-    return res.status(201).json({
-      success: true,
-      message: 'Siswa berhasil ditambahkan.',
-      data: student,
-      initialPassword: 'gopkl123',
+    res.json({
+      totalClasses,
+      totalStudents,
+      totalTeachers,
+      totalMentors,
+      totalHubins,
+      totalCompanies: 0,
+      totalAbsensi,
+      totalLogbooks,
+      totalPermissions,
     });
   } catch (error) {
-    if (error.code === 'P2002') {
-      return res.status(409).json({
-        error: 'NIS sudah terdaftar.',
-      });
-    }
-
     next(error);
   }
 };
@@ -947,30 +706,6 @@ export const deleteUser = async (
       return res.status(403).json({
         error:
           'Tidak dapat menghapus akun sendiri.',
-      });
-    }
-
-    // ============================================================
-    // CEK DEPENDENSI
-    // ------------------------------------------------------------
-    // Hard delete hanya aman untuk akun yang belum punya data.
-    // Akun dengan riwayat PKL harus dinonaktifkan agar data tidak
-    // hilang dan relasi foreign key tidak error.
-    // ============================================================
-
-    const blockers = await getUserDeletionBlockers(id);
-
-    if (blockers === null) {
-      return res.status(404).json({
-        error:
-          'User tidak ditemukan.',
-      });
-    }
-
-    if (blockers.length) {
-      return res.status(409).json({
-        error: buildDeletionBlockedMessage(blockers),
-        blockers,
       });
     }
 

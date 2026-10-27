@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  FileCheck, Plus, X, Loader2, Calendar, CheckCircle2, AlertCircle, Hourglass, FileText, Trash2, Stethoscope
+  FileCheck, Plus, X, Loader2, Calendar, CheckCircle2, AlertCircle, Hourglass, FileText, Trash2
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -10,7 +10,6 @@ const getInitials = (name: string) =>
 export const StudentPerizinan: React.FC = () => {
   const { perizinanList, createPermission, deletePermission } = useApp();
   const [showModal, setShowModal] = useState(false);
-  const [filter, setFilter] = useState<'all' | 'izin' | 'sakit'>('all');
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
@@ -29,20 +28,6 @@ export const StudentPerizinan: React.FC = () => {
   const pending = perizinanList.filter(p => p.status === 'pending').length;
   const approved = perizinanList.filter(p => p.status === 'approved').length;
   const rejected = perizinanList.filter(p => p.status === 'rejected').length;
-
-  const izinCount = perizinanList.filter(p => p.type === 'Izin').length;
-  const sakitCount = perizinanList.filter(p => p.type === 'Sakit').length;
-  const filteredList = filter === 'all'
-    ? perizinanList
-    : perizinanList.filter(p => p.type.toLowerCase() === filter);
-
-  /* ✅ Badge kategori SOLID: Izin (steel) / Sakit (navy) */
-  const categoryBadge = (type: string) => {
-    if (type === 'Sakit') {
-      return { cls: 'bg-navy text-white shadow-sm shadow-navy/20', label: 'Sakit', icon: Stethoscope };
-    }
-    return { cls: 'bg-steel text-white shadow-sm shadow-steel/20', label: 'Izin', icon: FileText };
-  };
 
   /* ✅ Badge status SOLID — tidak ada tint transparan */
   const statusBadge = (status: string) => {
@@ -110,57 +95,23 @@ export const StudentPerizinan: React.FC = () => {
         </div>
       </div>
 
-      {/* ── FILTER KATEGORI: Semua / Izin / Sakit ── */}
-      <div className="shrink-0 flex items-center gap-2 flex-wrap">
-        {([
-          { key: 'all' as const, label: 'Semua', count: perizinanList.length },
-          { key: 'izin' as const, label: 'Izin', count: izinCount },
-          { key: 'sakit' as const, label: 'Sakit', count: sakitCount },
-        ]).map(({ key, label, count }) => {
-          const active = filter === key;
-          return (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setFilter(key)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-[24px] border text-xs font-bold transition-all ${
-                active
-                  ? 'bg-navy border-navy text-white shadow-md shadow-navy/20'
-                  : 'bg-white border-mist/60 text-navy/60 hover:text-navy hover:border-navy/20'
-              }`}
-            >
-              {label}
-              <span className={`tabular-nums ${active ? 'text-white/70' : 'text-navy/40'}`}>{count}</span>
-            </button>
-          );
-        })}
-      </div>
-
       <div className="lg:flex-1 bg-white rounded-[24px] border border-mist/60 shadow-sm overflow-hidden flex flex-col lg:min-h-0">
         <div className="lg:flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5 max-h-[65vh] lg:max-h-none">
-          {filteredList.length === 0 ? (
+          {perizinanList.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="w-14 h-14 rounded-[10px] bg-navy flex items-center justify-center mb-3">
                 <FileCheck className="w-6 h-6 text-white" />
               </div>
-              <p className="text-sm font-bold text-navy mb-1">
-                {perizinanList.length === 0
-                  ? 'Belum ada perizinan'
-                  : `Belum ada perizinan ${filter === 'sakit' ? 'sakit' : 'izin'}`}
-              </p>
+              <p className="text-sm font-bold text-navy mb-1">Belum ada perizinan</p>
               <p className="text-xs text-navy/50 max-w-xs">
-                {perizinanList.length === 0
-                  ? 'Ajukan izin bila kamu berhalangan hadir di tempat PKL.'
-                  : 'Coba pilih kategori lain atau ajukan perizinan baru.'}
+                Ajukan izin bila kamu berhalangan hadir di tempat PKL.
               </p>
             </div>
           ) : (
             <div className="space-y-2">
-              {filteredList.map((p) => {
+              {perizinanList.map((p) => {
                 const badge = statusBadge(p.status);
                 const Icon = badge.icon;
-                const cat = categoryBadge(p.type);
-                const CatIcon = cat.icon;
                 return (
                   <div key={p.id} className="p-3.5 rounded-[24px] border border-mist/60 bg-white flex items-center gap-3">
                     {/* ✅ FIX: avatar inisial siswa = NAVY solid (bukan steel) */}
@@ -169,14 +120,12 @@ export const StudentPerizinan: React.FC = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shrink-0 ${cat.cls}`}>
-                          <CatIcon className="w-3 h-3" /> {cat.label}
-                        </span>
+                        <p className="text-[13px] font-bold text-navy truncate capitalize">{p.type}</p>
                         <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shrink-0 ${badge.cls}`}>
                           <Icon className="w-3 h-3" /> {badge.label}
                         </span>
                       </div>
-                      <p className="text-[13px] font-bold text-navy truncate mt-1">{p.reason}</p>
+                      <p className="text-[11px] font-semibold text-navy/50 truncate mt-0.5">{p.reason}</p>
                       <div className="flex items-center gap-3 mt-1.5">
                         <span className="flex items-center gap-1 text-[10px] font-bold text-navy/50">
                           <Calendar className="w-3 h-3" /> {p.date}
