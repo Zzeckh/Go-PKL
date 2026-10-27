@@ -223,6 +223,15 @@ export const HubinManagementDashboard: React.FC<{
         year.id === selectedAcademicYearId
     );
 
+  const getStudentAcademicYear = (student: { academicYear?: string; academicYearId?: number | null }) => {
+    const storedYear = (student.academicYear || '').trim();
+    if (storedYear && storedYear !== '-') return storedYear;
+    const matchedYear = academicYears?.find(
+      (year) => Number(year.id) === Number(student.academicYearId)
+    );
+    return matchedYear?.name || selectedAcademicYear?.name || 'Tahun ajaran belum tersedia';
+  };
+
   const yearScopedStudents = useMemo(
     () =>
       siswaList.filter(
@@ -653,6 +662,9 @@ export const HubinManagementDashboard: React.FC<{
                               ? student.perusahaan
                               : 'Tempat belum ditentukan'}
                         </p>
+                        <p className="text-[10px] font-semibold text-steel mt-1">
+                          Tahun Ajaran: {getStudentAcademicYear(student)}
+                        </p>
                         <div className="flex flex-wrap items-center gap-1.5 mt-2">
                           <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold ${selectedTefaView === 'internal' ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'}`}>
                             {selectedTefaView === 'internal' ? 'TEFA Internal' : 'TEFA Eksternal'}
@@ -779,6 +791,9 @@ export const HubinManagementDashboard: React.FC<{
                             {[student.kelas, student.perusahaan]
                               .filter((value) => value && value !== '-')
                               .join(' · ') || 'Kelas atau perusahaan belum tersedia'}
+                          </p>
+                          <p className="text-[10px] font-semibold text-steel mt-1">
+                            Tahun Ajaran: {getStudentAcademicYear(student)}
                           </p>
 
                         </div>

@@ -312,6 +312,12 @@ export const HubinUsers: React.FC = () => {
 
         return true;
       }
+    ).sort((a: any, b: any) =>
+      String(a.name || '').localeCompare(
+        String(b.name || ''),
+        'id',
+        { sensitivity: 'base', numeric: true }
+      )
     );
   }, [
     superUsers,
@@ -1265,6 +1271,11 @@ export const HubinUsers: React.FC = () => {
                         {user.class ||
                           '-'}
                       </p>
+                      {String(user.role).toLowerCase() === 'student' && (
+                        <p className="text-[10px] font-semibold text-steel mt-1">
+                          Tahun Ajaran: {user.academicYear || user.academicYearRef?.name || 'Belum diatur'}
+                        </p>
+                      )}
 
                       <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
 
