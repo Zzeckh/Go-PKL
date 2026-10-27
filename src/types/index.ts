@@ -14,7 +14,6 @@ export type ActivePage =
   | 'data-pembimbing' 
   | 'pemetaan' 
   | 'data'
-  | 'hubin-summary'
   | 'hubin-classes'
   | 'hubin-users'
   | 'hubin-companies'

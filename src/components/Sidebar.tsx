@@ -30,8 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     // Hubin mendapatkan seluruh fitur pengelolaan yang sebelumnya ada di panel pengelolaan.
     if (userRole === 'hubin') {
       return [
-        { id: 'dashboard',        icon: LayoutDashboard, label: 'Dashboard' },
-        { id: 'hubin-summary',    icon: ShieldCheck,     label: 'Ringkasan' },
+        { id: 'dashboard',        icon: ShieldCheck,     label: 'Dashboard' },
         { id: 'hubin-classes',    icon: School,          label: 'Kelola Kelas' },
         { id: 'hubin-users',      icon: Users,           label: 'Kelola Pengguna' },
         { id: 'hubin-student-import', icon: FileSpreadsheet, label: 'Import Siswa' },

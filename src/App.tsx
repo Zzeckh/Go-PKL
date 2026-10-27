@@ -117,12 +117,6 @@ export default function App() {
           userRole={userRole}
         >
           {/* ── FITUR PENGELOLAAN HUBIN ── */}
-          {activePage === 'hubin-summary' && userRole === 'hubin' && (
-            <HubinManagementDashboard 
-              userName={userName}
-              onNavigate={(page) => setActivePage(page as any)}
-            />
-          )}
           {activePage === 'hubin-classes' && userRole === 'hubin' && <HubinClasses />}
           {activePage === 'hubin-users' && userRole === 'hubin' && <HubinUsers />}
           {activePage === 'hubin-student-import' && userRole === 'hubin' && <HubinStudentImport />}
@@ -163,10 +157,9 @@ export default function App() {
 
           {/* ── HUBIN ── */}
           {activePage === 'dashboard' && userRole === 'hubin' && (
-            <HubinDashboard 
+            <HubinManagementDashboard
               userName={userName}
-              schoolName={schoolName}
-              onNavigate={(page) => setActivePage(page)}
+              onNavigate={(page) => setActivePage(page as any)}
             />
           )}
 
