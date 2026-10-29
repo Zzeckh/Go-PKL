@@ -123,7 +123,7 @@ export interface PerusahaanItem {
   quota: number;
   filled: number;
 
-  // Kuota dua jalur (quota = quotaSchool + quotaCompany)
+  // Kuota maksimal total praktikan. Field dua jalur dipertahankan untuk kompatibilitas lama.
   quotaSchool?: number;
   quotaCompany?: number;
   filledSchool?: number;

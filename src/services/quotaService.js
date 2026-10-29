@@ -1,29 +1,11 @@
 /**
- * Helper kuota PKL dua jalur.
- *
- * Jalur penempatan siswa (User.placementSource):
- *  - "sekolah"    : ditempatkan oleh sekolah (Hubin) -> memakai Company.quotaSchool
- *  - "perusahaan" : direkrut/diterima perusahaan     -> memakai Company.quotaCompany
- *
- * Company.quota selalu = quotaSchool + quotaCompany (dijaga oleh server)
- * supaya dashboard & laporan lama yang membaca `quota` tetap benar.
- *
- * Perusahaan sekolah (kategori Internal) tidak dibatasi kuota.
+ * Kuota PKL tunggal per tempat. Kolom quotaSchool/quotaCompany masih
+ * dipertahankan hanya untuk kompatibilitas dengan database dan kode lama.
  */
-
 export const SOURCES = ['sekolah', 'perusahaan'];
-
-export const SOURCE_LABEL = {
-  sekolah: 'Sekolah',
-  perusahaan: 'Perusahaan',
-};
-
+export const SOURCE_LABEL = { sekolah: 'Sekolah', perusahaan: 'Perusahaan' };
 export const isInternalCategory = (category) =>
-  String(category ?? '')
-    .toLowerCase()
-    .includes('internal');
-
-/** "Perusahaan" / "perusahaan" -> 'perusahaan'; "Sekolah" -> 'sekolah'; selain itu null */
+  String(category ?? '').toLowerCase().includes('internal');
 export const normalizeSource = (value) => {
   const v = String(value ?? '').trim().toLowerCase();
   if (!v) return null;
@@ -31,82 +13,43 @@ export const normalizeSource = (value) => {
   if (v.includes('sekolah')) return 'sekolah';
   return null;
 };
-
-const readNumber = (v) =>
-  v === undefined || v === null || v === '' ? undefined : Number(v);
+const readNumber = (v) => v === undefined || v === null || v === '' ? undefined : Number(v);
 
 /**
- * Menentukan kuota dari body request.
- *  - quotaSchool / quotaCompany  : cara baru
- *  - quota (lama, total)         : tetap diterima demi kompatibilitas
- *
- * Mengembalikan:
- *  - null                                  : tidak ada field kuota di body (jangan diubah)
- *  - { error }                             : nilai tidak valid
- *  - { quotaSchool, quotaCompany, quota }  : nilai final
+ * Input utama: quota (maksimal praktikan). Payload lama quotaSchool +
+ * quotaCompany tetap diterima dengan cara dijumlahkan.
  */
 export const resolveQuotas = (body = {}, existing) => {
+  const single = readNumber(body.quota);
   const qs = readNumber(body.quotaSchool);
   const qc = readNumber(body.quotaCompany);
-  const legacy = readNumber(body.quota);
-
-  if (qs === undefined && qc === undefined && legacy === undefined) {
-    return null;
+  if (single === undefined && qs === undefined && qc === undefined) return null;
+  let quota;
+  if (single !== undefined) quota = single;
+  else if (qs !== undefined || qc !== undefined) quota = (qs ?? Number(existing?.quotaSchool ?? 0)) + (qc ?? Number(existing?.quotaCompany ?? 0));
+  else quota = Number(existing?.quota ?? 0);
+  if (!Number.isInteger(quota) || quota < 0) {
+    return { error: 'Kuota maksimal praktikan harus berupa bilangan bulat 0 atau lebih' };
   }
-
-  let quotaSchool;
-  let quotaCompany;
-
-  if (qs !== undefined || qc !== undefined) {
-    quotaSchool = qs ?? existing?.quotaSchool ?? 0;
-    quotaCompany = qc ?? existing?.quotaCompany ?? 0;
-  } else {
-    // klien lama: hanya kirim total. Sisanya dialokasikan ke jalur sekolah.
-    quotaCompany = existing?.quotaCompany ?? 0;
-    quotaSchool = Math.max(0, legacy - quotaCompany);
-  }
-
-  if (
-    ![quotaSchool, quotaCompany].every(
-      (n) => Number.isInteger(n) && n >= 0
-    )
-  ) {
-    return {
-      error: 'Kuota Sekolah dan Kuota Perusahaan harus berupa bilangan bulat 0 atau lebih',
-    };
-  }
-
-  return {
-    quotaSchool,
-    quotaCompany,
-    quota: quotaSchool + quotaCompany,
-  };
+  return { quota, quotaSchool: quota, quotaCompany: 0 };
 };
 
-/**
- * Jumlah siswa per jalur pada satu perusahaan.
- * Siswa lama yang belum punya placementSource dihitung sebagai jalur sekolah.
- * excludeUserId: abaikan satu siswa (dipakai saat siswa itu sendiri yang diubah).
- */
+/** Jumlah siswa per jalur lama; total kapasitas harus memakai sekolah + perusahaan. */
 export const getFilledBySource = async (db, companyId, excludeUserId) => {
   const rows = await db.user.groupBy({
     by: ['placementSource'],
-    where: {
-      companyId,
-      ...(excludeUserId ? { id: { not: excludeUserId } } : {}),
-    },
+    where: { companyId, ...(excludeUserId ? { id: { not: excludeUserId } } : {}) },
     _count: { _all: true },
   });
-
   const filled = { sekolah: 0, perusahaan: 0 };
-
   for (const row of rows) {
-    if (row.placementSource === 'perusahaan') {
-      filled.perusahaan += row._count._all;
-    } else {
-      filled.sekolah += row._count._all;
-    }
+    if (row.placementSource === 'perusahaan') filled.perusahaan += row._count._all;
+    else filled.sekolah += row._count._all;
   }
-
   return filled;
+};
+export const getFilledTotal = async (db, companyId, excludeUserId) => {
+  return db.user.count({
+    where: { companyId, ...(excludeUserId ? { id: { not: excludeUserId } } : {}) },
+  });
 };

@@ -69,6 +69,7 @@ export const getCompanies = async (req, res, next) => {
         const f = filledMap.get(rest.id) || { sekolah: 0, perusahaan: 0 };
         return {
           ...rest,
+          quota: Number(rest.quota ?? ((rest.quotaSchool ?? 0) + (rest.quotaCompany ?? 0))),
           filled: _count.students,
           filledSchool: f.sekolah,
           filledCompany: f.perusahaan,
@@ -181,8 +182,7 @@ export const downloadCompanyTemplate = async (req, res, next) => {
         Latitude: '',
         Longitude: '',
         Radius: '',
-        'Kuota Sekolah': '',
-        'Kuota Perusahaan': '',
+        'Kuota Maksimal Praktikan': '',
         Jalur: '',
         'Guru Pembimbing': '',
       },
@@ -558,33 +558,17 @@ export const importCompanies = async (req, res, next) => {
         return undefined;
       };
 
-      const quotaSchoolRaw = readQuota(
-        'Kuota Sekolah',
-        'kuota sekolah',
-        'KuotaSekolah',
-        'quotaSchool'
+      const singleQuotaRaw = readQuota(
+        'Kuota Maksimal Praktikan', 'kuota maksimal praktikan',
+        'Kuota Alokasi Sekolah', 'kuota alokasi sekolah', 'quota'
       );
-      const quotaCompanyRaw = readQuota(
-        'Kuota Perusahaan',
-        'kuota perusahaan',
-        'KuotaPerusahaan',
-        'quotaCompany'
-      );
-      // kolom lama "Kuota" = Kuota Sekolah
-      const legacyQuotaRaw = readQuota(
-        'Kuota',
-        'kuota',
-        'Quota',
-        'quota'
-      );
-
-      // Nilai untuk perusahaan BARU (default lama: 6 kuota sekolah)
-      const quotaSchool =
-        quotaSchoolRaw ??
-        legacyQuotaRaw ??
-        (quotaCompanyRaw !== undefined ? 0 : 6);
-      const quotaCompany = quotaCompanyRaw ?? 0;
-      const quota = quotaSchool + quotaCompany;
+      // Dukungan file Excel lama: dua kuota lama digabung menjadi satu total.
+      const quotaSchoolRaw = readQuota('Kuota Sekolah', 'kuota sekolah', 'KuotaSekolah', 'quotaSchool');
+      const quotaCompanyRaw = readQuota('Kuota Perusahaan', 'kuota perusahaan', 'KuotaPerusahaan', 'quotaCompany');
+      const legacyQuotaRaw = readQuota('Kuota', 'kuota', 'Quota');
+      const quota = singleQuotaRaw ?? legacyQuotaRaw ?? (((quotaSchoolRaw ?? 0) + (quotaCompanyRaw ?? 0)) || 6);
+      const quotaSchool = quota;
+      const quotaCompany = 0;
 
       /**
        * ----------------------------------------------------------
@@ -720,16 +704,13 @@ export const importCompanies = async (req, res, next) => {
       }
 
       if (
-        ![quotaSchool, quotaCompany].every(
-          (n) => Number.isInteger(n) && n >= 0
-        ) ||
-        quota <= 0
+        !Number.isInteger(quota) || quota <= 0
       ) {
         errors.push({
           row: rowNumber,
           name: studentName || undefined,
           error:
-            'Kuota Sekolah / Kuota Perusahaan harus bilangan bulat 0 atau lebih dan totalnya lebih dari 0',
+            'Kuota maksimal praktikan harus bilangan bulat lebih dari 0',
         });
 
         continue;
@@ -886,39 +867,19 @@ export const importCompanies = async (req, res, next) => {
               company.id
             ) ?? { sekolah: 0, perusahaan: 0 };
 
-          // Hanya kuota yang diisi di Excel yang ditimpa;
-          // yang kosong tetap memakai nilai di database.
-          const effSchool =
-            quotaSchoolRaw ??
-            legacyQuotaRaw ??
-            company.quotaSchool;
-          const effCompany =
-            quotaCompanyRaw ??
-            company.quotaCompany;
-
-          // Perusahaan sekolah (Internal) tidak dibatasi kuota.
-          if (!isInternalCategory(company.category)) {
-            if (effSchool < filled.sekolah) {
-              errors.push({
-                row: rowNumber,
-                name: student.name,
-                error:
-                  `Kuota Sekolah ${effSchool} lebih kecil dari siswa jalur sekolah yang sudah terpetakan (${filled.sekolah})`,
-              });
-
-              continue;
-            }
-
-            if (effCompany < filled.perusahaan) {
-              errors.push({
-                row: rowNumber,
-                name: student.name,
-                error:
-                  `Kuota Perusahaan ${effCompany} lebih kecil dari siswa jalur perusahaan yang sudah terpetakan (${filled.perusahaan})`,
-              });
-
-              continue;
-            }
+          // Kuota baru adalah satu total; kolom lama tetap dibaca untuk kompatibilitas.
+          const effQuota = singleQuotaRaw ?? legacyQuotaRaw ??
+            ((quotaSchoolRaw !== undefined || quotaCompanyRaw !== undefined)
+              ? ((quotaSchoolRaw ?? 0) + (quotaCompanyRaw ?? 0))
+              : Number(company.quota ?? ((company.quotaSchool ?? 0) + (company.quotaCompany ?? 0))));
+          const filledTotal = filled.sekolah + filled.perusahaan;
+          if (effQuota < filledTotal) {
+            errors.push({
+              row: rowNumber,
+              name: student.name,
+              error: `Kuota maksimal praktikan ${effQuota} lebih kecil dari siswa yang sudah terpetakan (${filledTotal})`,
+            });
+            continue;
           }
 
           /**
@@ -962,9 +923,9 @@ export const importCompanies = async (req, res, next) => {
                 address,
                 city,
                 country,
-                quota: effSchool + effCompany,
-                quotaSchool: effSchool,
-                quotaCompany: effCompany,
+                quota: effQuota,
+                quotaSchool: effQuota,
+                quotaCompany: 0,
                 latitude,
                 longitude,
                 radiusMeters,
@@ -1037,23 +998,15 @@ export const importCompanies = async (req, res, next) => {
               company.id
             ) ?? { sekolah: 0, perusahaan: 0 };
 
-          const capacity =
-            targetSource === 'perusahaan'
-              ? company.quotaCompany
-              : company.quotaSchool;
+          const capacity = Number(company.quota ?? ((company.quotaSchool ?? 0) + (company.quotaCompany ?? 0)));
+          const filledTotal = filled.sekolah + filled.perusahaan;
 
-          // Perusahaan sekolah (Internal) tidak dibatasi kuota.
-          if (
-            !internalCompany &&
-            filled[targetSource] >= capacity
-          ) {
+          if (oldCompanyId !== company.id && filledTotal >= capacity) {
             errors.push({
               row: rowNumber,
               name: student.name,
-              error:
-                `Kuota ${SOURCE_LABEL[targetSource]} perusahaan "${companyName}" sudah penuh (${filled[targetSource]}/${capacity})`,
+              error: `Kuota maksimal praktikan tempat "${companyName}" sudah penuh (${filledTotal}/${capacity})`,
             });
-
             continue;
           }
 
@@ -1229,24 +1182,12 @@ export const updateCompany = async (
     }
 
     if (quotas) {
-      const finalCategory =
-        category !== undefined ? category : existing.category;
-
-      // Perusahaan sekolah (Internal) tidak dibatasi kuota.
-      if (!isInternalCategory(finalCategory)) {
-        const filled = await getFilledBySource(prisma, id);
-
-        if (quotas.quotaSchool < filled.sekolah) {
-          return res.status(400).json({
-            error: `Kuota Sekolah (${quotas.quotaSchool}) lebih kecil dari siswa jalur sekolah yang sudah terpetakan (${filled.sekolah})`,
-          });
-        }
-
-        if (quotas.quotaCompany < filled.perusahaan) {
-          return res.status(400).json({
-            error: `Kuota Perusahaan (${quotas.quotaCompany}) lebih kecil dari siswa jalur perusahaan yang sudah terpetakan (${filled.perusahaan})`,
-          });
-        }
+      const filled = await getFilledBySource(prisma, id);
+      const filledTotal = filled.sekolah + filled.perusahaan;
+      if (quotas.quota < filledTotal) {
+        return res.status(400).json({
+          error: `Kuota maksimal praktikan (${quotas.quota}) tidak boleh lebih kecil dari jumlah siswa yang sudah terpetakan (${filledTotal}).`,
+        });
       }
     }
 
