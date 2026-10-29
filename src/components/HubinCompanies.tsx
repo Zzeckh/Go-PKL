@@ -168,16 +168,23 @@ export const HubinCompanies: React.FC = () => {
 
                     <div className="space-y-1.5 mt-3">
                       {/* ✅ Row kuota: card putih ber-border */}
-                      <div className="flex justify-between items-center bg-white border border-mist/60 shadow-sm rounded-lg px-2.5 py-1.5">
-                        <span className="text-[11px] font-bold text-navy/60">Maksimal Praktikan</span>
-                        <span className="text-[11px] font-bold text-navy tabular-nums">{c.filled ?? 0}/{c.quota ?? ((c.quotaSchool ?? 0) + (c.quotaCompany ?? 0))} siswa</span>
-                      </div>
-                      <div className="flex justify-between items-center bg-white border border-mist/60 shadow-sm rounded-lg px-2.5 py-1.5">
-                        <span className="text-[11px] font-bold text-navy/60">Status Kuota</span>
-                        <span className={`text-[11px] font-bold ${Number(c.filled ?? 0) >= Number(c.quota ?? ((c.quotaSchool ?? 0) + (c.quotaCompany ?? 0))) ? 'text-red-600' : 'text-emerald-600'}`}>
-                          {Number(c.filled ?? 0) >= Number(c.quota ?? ((c.quotaSchool ?? 0) + (c.quotaCompany ?? 0))) ? 'Penuh' : 'Tersedia'}
-                        </span>
-                      </div>
+                      {String(c.category || '').toLowerCase().includes('internal') ? (
+                        <div className="flex justify-between items-center bg-white border border-mist/60 shadow-sm rounded-lg px-2.5 py-1.5">
+                          <span className="text-[11px] font-bold text-navy/60">Kuota</span>
+                          <span className="text-[11px] font-bold text-navy tabular-nums">{c.filled} siswa • tanpa batas</span>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex justify-between items-center bg-white border border-mist/60 shadow-sm rounded-lg px-2.5 py-1.5">
+                            <span className="text-[11px] font-bold text-navy/60">Kuota Sekolah</span>
+                            <span className="text-[11px] font-bold text-navy tabular-nums">{c.filledSchool ?? 0}/{c.quotaSchool ?? 0}</span>
+                          </div>
+                          <div className="flex justify-between items-center bg-white border border-mist/60 shadow-sm rounded-lg px-2.5 py-1.5">
+                            <span className="text-[11px] font-bold text-navy/60">Kuota Perusahaan</span>
+                            <span className="text-[11px] font-bold text-navy tabular-nums">{c.filledCompany ?? 0}/{c.quotaCompany ?? 0}</span>
+                          </div>
+                        </>
+                      )}
                       {/* ✅ Row kategori: card putih ber-border */}
                       <div className="flex justify-between items-center bg-white border border-mist/60 shadow-sm rounded-lg px-2.5 py-1.5">
                         <span className="text-[11px] font-bold text-navy/60">Kategori</span>
@@ -304,7 +311,8 @@ const CompanyFormModal: React.FC<{
       if (v.includes('eksternal') || v.includes('external')) return 'Eksternal';
       return '';
     })(),
-    quota: Number(company?.quota ?? ((company?.quotaSchool != null || company?.quotaCompany != null) ? (Number(company?.quotaSchool ?? 0) + Number(company?.quotaCompany ?? 0)) : 5)),
+    quotaSchool: Number(company?.quotaSchool ?? company?.quota ?? 5),
+    quotaCompany: Number(company?.quotaCompany ?? 0),
   });
 
   const [lat, setLat] = useState<number | null>(company?.latitude ?? null);
@@ -438,7 +446,8 @@ const CompanyFormModal: React.FC<{
     }
   };
 
-  // Semua tempat PKL, termasuk Internal, memakai satu kuota maksimal praktikan.
+  // Perusahaan sekolah (Internal) tidak dibatasi kuota.
+  const isInternal = form.category === 'Internal';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -446,8 +455,11 @@ const CompanyFormModal: React.FC<{
       setError('Nama dan alamat perusahaan wajib diisi.');
       return;
     }
-    if (!Number.isInteger(Number(form.quota)) || Number(form.quota) <= 0) {
-      setError('Kuota maksimal praktikan wajib berupa bilangan bulat lebih dari 0.');
+    if (
+      !isInternal &&
+      (Number(form.quotaSchool) || 0) + (Number(form.quotaCompany) || 0) <= 0
+    ) {
+      setError('Isi minimal salah satu kuota (Kuota Sekolah atau Kuota Perusahaan).');
       return;
     }
     if (!hasValidCoord) {
@@ -461,7 +473,8 @@ const CompanyFormModal: React.FC<{
         name: form.name,
         address: form.address,
         category: form.category || undefined,
-        quota: Number(form.quota),
+        quotaSchool: isInternal ? 0 : Number(form.quotaSchool) || 0,
+        quotaCompany: isInternal ? 0 : Number(form.quotaCompany) || 0,
         latitude: lat as number,
         longitude: lng as number,
         radiusMeters: radius,
@@ -529,18 +542,43 @@ const CompanyFormModal: React.FC<{
                 <option value="Eksternal">Eksternal (perusahaan mitra)</option>
               </select>
             </div>
-            <div className="sm:col-span-2">
-              <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">Kuota Alokasi Sekolah / Maksimal Praktikan</label>
-              <input
-                type="number"
-                value={form.quota}
-                min={1}
-                step={1}
-                onChange={e => setForm({ ...form, quota: Math.max(0, Math.floor(Number(e.target.value) || 0)) })}
-                className="w-full bg-mist/30 border border-mist rounded-[24px] px-3.5 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
-              />
-              <p className="text-[10px] text-navy/45 mt-1 px-1">Batas total siswa yang boleh ditempatkan di lokasi ini, termasuk PKL Internal.</p>
-            </div>
+            {isInternal ? (
+              <div className="sm:col-span-2">
+                <p className="text-[11px] font-medium text-navy/70 bg-mist/30 border border-mist/60 rounded-[24px] px-3.5 py-2.5">
+                  Perusahaan sekolah (Internal) tidak dibatasi kuota.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">Kuota Sekolah</label>
+                  <input
+                    type="number"
+                    value={form.quotaSchool}
+                    min={0}
+                    onChange={e => setForm({ ...form, quotaSchool: Math.max(0, Math.floor(Number(e.target.value) || 0)) })}
+                    className="w-full bg-mist/30 border border-mist rounded-[24px] px-3.5 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
+                  />
+                  <p className="text-[10px] text-navy/45 mt-1 px-1">Siswa yang ditempatkan sekolah</p>
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">Kuota Perusahaan</label>
+                  <input
+                    type="number"
+                    value={form.quotaCompany}
+                    min={0}
+                    onChange={e => setForm({ ...form, quotaCompany: Math.max(0, Math.floor(Number(e.target.value) || 0)) })}
+                    className="w-full bg-mist/30 border border-mist rounded-[24px] px-3.5 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all"
+                  />
+                  <p className="text-[10px] text-navy/45 mt-1 px-1">Siswa yang direkrut perusahaan</p>
+                </div>
+                <div className="sm:col-span-2">
+                  <p className="text-[11px] font-bold text-navy/60 px-1">
+                    Total kuota: {(Number(form.quotaSchool) || 0) + (Number(form.quotaCompany) || 0)} siswa
+                  </p>
+                </div>
+              </>
+            )}
           </div>
 
           {/* ── LOCATION PICKER (leaflet) ── */}

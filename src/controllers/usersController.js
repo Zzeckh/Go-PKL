@@ -1,5 +1,6 @@
 import prisma from '../config/db.js';
 import {
+  SOURCE_LABEL,
   isInternalCategory,
   normalizeSource,
   getFilledBySource
@@ -166,6 +167,8 @@ export const updateUser = async (req, res, next) => {
     // undefined = tidak diubah.
     let resolvedSource;
 
+    // true bila penempatan di perusahaan sekolah (Internal): tanpa batas kuota.
+    let isInternalPlacement = false;
 
     // Validasi jenis PKL: Internal = otomatis perusahaan sekolah (kategori
     // Internal); Eksternal = tidak boleh perusahaan sekolah, wajib pilih jalur.
@@ -188,6 +191,7 @@ export const updateUser = async (req, res, next) => {
         }
         resolvedCompanyId = school.id;
         resolvedSource = 'sekolah';
+        isInternalPlacement = true;
       } else {
         if (!resolvedCompanyId) {
           return res.status(400).json({
@@ -208,8 +212,12 @@ export const updateUser = async (req, res, next) => {
           });
         }
 
-        // placementSource adalah field kompatibilitas lama, bukan penentu kuota.
-        resolvedSource = normalizeSource(placementSource) || 'sekolah';
+        resolvedSource = normalizeSource(placementSource);
+        if (!resolvedSource) {
+          return res.status(400).json({
+            error: 'Pilih jalur kuota: Sekolah atau Perusahaan'
+          });
+        }
       }
     }
 
@@ -237,8 +245,8 @@ export const updateUser = async (req, res, next) => {
     };
 
     const user = await prisma.$transaction(async (tx) => {
-      // Semua tempat (Internal maupun Eksternal) memakai satu kuota total.
-      if (resolvedCompanyId && resolvedSource) {
+      // Cek kuota jalur hanya untuk penempatan eksternal.
+      if (resolvedCompanyId && resolvedSource && !isInternalPlacement) {
         // Kunci baris perusahaan: dua penyimpanan bersamaan untuk
         // perusahaan yang sama dijalankan bergantian, sehingga kuota
         // tidak bisa terlewati.
@@ -246,7 +254,7 @@ export const updateUser = async (req, res, next) => {
 
         const company = await tx.company.findUnique({
           where: { id: resolvedCompanyId },
-          select: { name: true, quota: true, quotaSchool: true, quotaCompany: true }
+          select: { name: true, quotaSchool: true, quotaCompany: true }
         });
 
         if (!company) {
@@ -256,13 +264,15 @@ export const updateUser = async (req, res, next) => {
         // Hitung tanpa siswa ini, agar menyimpan ulang penempatan
         // yang sama tidak dianggap menambah isi.
         const filled = await getFilledBySource(tx, resolvedCompanyId, id);
-        const filledTotal = filled.sekolah + filled.perusahaan;
-        const capacity = Number(company.quota ?? ((company.quotaSchool ?? 0) + (company.quotaCompany ?? 0)));
+        const capacity =
+          resolvedSource === 'perusahaan'
+            ? company.quotaCompany
+            : company.quotaSchool;
 
-        if (filledTotal >= capacity) {
+        if (filled[resolvedSource] >= capacity) {
           throw httpError(
             400,
-            `Kuota maksimal praktikan di "${company.name}" sudah penuh (${filledTotal}/${capacity})`
+            `Kuota ${SOURCE_LABEL[resolvedSource]} di "${company.name}" sudah penuh (${filled[resolvedSource]}/${capacity})`
           );
         }
       }
