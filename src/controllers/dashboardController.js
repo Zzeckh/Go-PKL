@@ -157,7 +157,7 @@ export const getDashboardStats = async (req, res, next) => {
           name: true,
           address: true,
           isActive: true,
-          quota: true,
+          quotaCompany: true,
           academicYearId: true,
         },
 
@@ -258,9 +258,9 @@ export const getDashboardStats = async (req, res, next) => {
         if (!company.isActive) {
           result.inactive += 1;
         } else if (
-          company.quota > 0 &&
+          company.quotaCompany > 0 &&
           (companyCounts.get(company.id)?.count || 0) >=
-            company.quota
+            company.quotaCompany
         ) {
           result.full += 1;
         } else {

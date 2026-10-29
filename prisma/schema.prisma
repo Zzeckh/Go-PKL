@@ -82,7 +82,9 @@ model Company {
   category String?
 
   // Total kuota perusahaan untuk semua sekolah
+  quotaSchool Int @default(0)
   quotaCompany Int @default(0)
+  quota Int @default(0)
 
 
   latitude     Float?
@@ -161,6 +163,7 @@ model User {
   // Relasi siswa dengan perusahaan PKL.
   companyId Int?
   company   Company? @relation("CompanyStudents", fields: [companyId], references: [id])
+  placementSource String?
 
   // Perusahaan yang saat ini menggunakan mentor tersebut.
   mentoredCompanies Company[] @relation("CompanyMentor")

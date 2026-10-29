@@ -47,7 +47,7 @@ export const getCompanies = async (req, res, next) => {
 
     // Jumlah siswa per perusahaan per jalur (sekolah / perusahaan)
     const grouped = await prisma.user.groupBy({
-      by: ['companyId', 'placementSource'],
+      by: ['companyId'],
       where: { companyId: { not: null } },
       _count: { _all: true },
     });
@@ -56,11 +56,7 @@ export const getCompanies = async (req, res, next) => {
 
     for (const g of grouped) {
       const cur = filledMap.get(g.companyId) || { sekolah: 0, perusahaan: 0 };
-      if (g.placementSource === 'perusahaan') {
-        cur.perusahaan += g._count._all;
-      } else {
-        cur.sekolah += g._count._all;
-      }
+      cur.sekolah += g._count._all;
       filledMap.set(g.companyId, cur);
     }
 
@@ -324,7 +320,6 @@ export const importCompanies = async (req, res, next) => {
         email: true,
         companyId: true,
         teacherId: true,
-        placementSource: true,
       },
     });
 
