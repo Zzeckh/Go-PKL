@@ -16,7 +16,7 @@ const generateToken = (user) =>
   );
 
 const userInclude = {
-  teacher: { select: { name: true } },
+  teacher: { select: { name: true, nip: true } },
   class: { select: { name: true, major: true } },
   company: { select: { name: true, address: true, latitude: true, longitude: true, radiusMeters: true } },
   mentoredCompanies: { take: 1, select: { name: true, address: true, latitude: true, longitude: true, radiusMeters: true } },
@@ -30,6 +30,21 @@ const toFrontendUser = (user) => {
     name: user.name,
     email: user.email,
     whatsapp: user.whatsapp ?? null,
+    nis: user.nis ?? null,
+    gender: user.gender ?? null,
+    birthPlace: user.birthPlace ?? null,
+    birthDate: user.birthDate ?? null,
+    nisn: user.nisn ?? null,
+    nik: user.nik ?? null,
+    religion: user.religion ?? null,
+    concentration: user.concentration ?? null,
+    address: user.address ?? null,
+    parentName: user.parentName ?? null,
+    parentAddress: user.parentAddress ?? null,
+    parentPhone: user.parentPhone ?? null,
+    schoolName: 'SMKN Negeri 11 Bandung',
+    schoolAddress: 'Cilember, Bandung 40175',
+    teacherNip: user.teacher?.nip ?? null,
     role: user.role,
     companyName: company?.name ?? null,
     companyAddress: company?.address ?? null,
@@ -137,10 +152,10 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /* PUT /api/auth/profile — edit email / whatsapp milik sendiri */
 export const updateProfile = async (req, res, next) => {
   try {
-    const { email, whatsapp } = req.body;
+    const { email, whatsapp, gender, birthPlace, birthDate, concentration, address, parentName, parentAddress, parentPhone } = req.body;
 
-    if (email === undefined && whatsapp === undefined) {
-      return res.status(400).json({ error: 'Email atau whatsapp harus diisi' });
+    if ([email, whatsapp, gender, birthPlace, birthDate, concentration, address, parentName, parentAddress, parentPhone].every((v) => v === undefined)) {
+      return res.status(400).json({ error: 'Tidak ada data profile yang diubah' });
     }
 
     const data = {};
@@ -168,6 +183,15 @@ export const updateProfile = async (req, res, next) => {
         });
       }
       data.whatsapp = normalized;
+    }
+
+    for (const [key, raw] of Object.entries({ gender, birthPlace, concentration, address, parentName, parentAddress, parentPhone })) {
+      if (raw !== undefined) data[key] = typeof raw === 'string' ? raw.trim() || null : raw;
+    }
+    if (birthDate !== undefined) {
+      const parsed = birthDate ? new Date(birthDate) : null;
+      if (parsed && Number.isNaN(parsed.getTime())) return res.status(400).json({ error: 'Tanggal lahir tidak valid' });
+      data.birthDate = parsed;
     }
 
     const user = await prisma.user.update({
