@@ -3,7 +3,7 @@ import {
   LayoutDashboard, BookOpen, MapPin, LogOut, PanelLeftClose, PanelLeftOpen, 
   Camera, Activity, FileCheck, Package, FileDown,
   School, Users, ShieldCheck, Building2, Award, FileSpreadsheet,
-  Settings as SettingsIcon, Briefcase,
+  Settings as SettingsIcon, Briefcase, Target, GraduationCap,
 } from 'lucide-react';
 import { ActivePage, UserRole } from '../types';
 
@@ -37,6 +37,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'hubin-companies',  icon: Building2,       label: 'Kelola Perusahaan' },
         { id: 'hubin-mentor-roster', icon: Briefcase, label: 'Daftar Mentor Perusahaan' },
         { id: 'data',             icon: Package,         label: 'Kelola Data' },
+        { id: 'achievements',     icon: GraduationCap,   label: 'Capaian' },
+        { id: 'learning-goals',   icon: Target,          label: 'Tujuan' },
         { id: 'pemetaan',         icon: MapPin,          label: 'Pemetaan' },
         { id: 'laporan',          icon: FileDown,        label: 'Laporan' },
         { id: 'settings',         icon: SettingsIcon,    label: 'Pengaturan' },
@@ -46,6 +48,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       return [
         { id: 'dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
         { id: 'logbook',    icon: BookOpen,        label: 'Logbook' },
+        { id: 'achievements', icon: GraduationCap, label: 'Capaian' },
+        { id: 'learning-goals', icon: Target,      label: 'Tujuan' },
         { id: 'attendance', icon: Camera,          label: 'Kehadiran' },
         { id: 'roster',     icon: Award,           label: 'Penilaian' },
         { id: 'perizinan',  icon: FileCheck,       label: 'Perizinan' },
@@ -57,6 +61,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       return [
         { id: 'dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
         { id: 'monitoring', icon: Activity,        label: 'Monitoring' },
+        { id: 'achievements', icon: GraduationCap, label: 'Capaian' },
+        { id: 'learning-goals', icon: Target,      label: 'Tujuan' },
         { id: 'teacher-mentor-mapping', icon: Briefcase, label: 'Pemetaan Mentor' },
         { id: 'attendance', icon: Camera,          label: 'Kehadiran' },
         { id: 'perizinan',  icon: FileCheck,       label: 'Perizinan' },
@@ -69,6 +75,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       { id: 'dashboard', icon: LayoutDashboard, label: 'Beranda' },
       { id: 'absensi',   icon: Camera,          label: 'Absensi' },
       { id: 'logbook',   icon: BookOpen,        label: 'Logbook' },
+      { id: 'achievements', icon: GraduationCap, label: 'Capaian' },
+      { id: 'learning-goals', icon: Target,     label: 'Tujuan' },
       { id: 'maps',      icon: MapPin,          label: 'Peta' },
       { id: 'perizinan', icon: FileCheck,       label: 'Perizinan' },
       { id: 'settings',  icon: SettingsIcon,    label: 'Pengaturan' }

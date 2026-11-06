@@ -30,6 +30,8 @@ import { TeacherMentorMapping } from './components/TeacherMentorMapping';
 import { StudentPerizinan } from './components/StudentPerizinan';
 import { Settings } from './components/Settings';
 import { Laporan } from './components/Laporan';
+import { LearningAchievements } from './components/LearningAchievements';
+import { LearningGoals } from './components/LearningGoals';
 
 export default function App() {
   const {
@@ -164,6 +166,8 @@ export default function App() {
           )}
 
           {/* ── SHARED PAGES ── */}
+          {activePage === 'achievements' && <LearningAchievements />}
+          {activePage === 'learning-goals' && <LearningGoals />}
           {activePage === 'logbook' && userRole === 'mentor' && <MentorLogbook />}
           {activePage === 'logbook' && userRole !== 'mentor' && (
             <Logbook 

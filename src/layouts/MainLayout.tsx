@@ -26,6 +26,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     switch (activePage) {
       case 'dashboard':        return 'Dashboard';
       case 'logbook':          return 'Logbook PKL';
+      case 'achievements':     return 'Capaian Pembelajaran';
+      case 'learning-goals':   return 'Tujuan Pembelajaran';
       case 'absensi':          return 'Absensi Harian';
       case 'maps':             return 'Lokasi & Maps';
       case 'profile':          return 'Profil';

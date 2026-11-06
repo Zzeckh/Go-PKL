@@ -1,6 +1,8 @@
 export type ActivePage = 
   | 'dashboard' 
   | 'logbook' 
+  | 'achievements'
+  | 'learning-goals'
   | 'maps' 
   | 'profile' 
   | 'settings'
