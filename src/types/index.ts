@@ -26,6 +26,8 @@ export type ActivePage =
 
 export type UserRole = 'intern' | 'mentor' | 'teacher' | 'hubin';
 
+export type AuthMode = 'login' | 'register';
+
 export interface AcademicYear {
   id: number;
   name: string;

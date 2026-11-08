@@ -133,7 +133,10 @@ export const previewStudentImport = async (req, res, next) => {
         select: {
           id: true,
           name: true,
-          major: true,
+          programKeahlianId: true,
+          programKeahlian: { select: { id: true, name: true } },
+          konsentrasiKeahlianId: true,
+          konsentrasiKeahlian: { select: { id: true, name: true } },
           academicYearId: true,
           academicYear: { select: { name: true } },
         },

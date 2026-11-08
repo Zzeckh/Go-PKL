@@ -492,7 +492,12 @@ export const getReportData = async (
       },
 
       include: {
-        class: true,
+        class: {
+          include: {
+            programKeahlian: true,
+            konsentrasiKeahlian: true,
+          },
+        },
 
         teacher: true,
 
@@ -553,7 +558,11 @@ export const getReportData = async (
             '-',
 
           major:
-            student.class?.major ||
+            student.class?.programKeahlian?.name ||
+            '-',
+
+          konsentrasiKeahlian:
+            student.class?.konsentrasiKeahlian?.name ||
             '-',
 
           companyName:

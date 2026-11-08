@@ -37,7 +37,18 @@ export const getUsers = async (req, res, next) => {
           select: {
             id: true,
             name: true,
-            major: true
+            programKeahlian: {
+              select: {
+                id: true,
+                name: true
+              }
+            },
+            konsentrasiKeahlian: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
           }
         },
 
@@ -111,7 +122,18 @@ export const getUserById = async (req, res, next) => {
         class: {
           select: {
             name: true,
-            major: true
+            programKeahlian: {
+              select: {
+                id: true,
+                name: true
+              }
+            },
+            konsentrasiKeahlian: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
           }
         },
 
@@ -233,7 +255,19 @@ export const updateUser = async (req, res, next) => {
     const include = {
       class: {
         select: {
-          name: true
+          name: true,
+          programKeahlian: {
+            select: {
+              id: true,
+              name: true
+            }
+          },
+          konsentrasiKeahlian: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
         }
       },
 

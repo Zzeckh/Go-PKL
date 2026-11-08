@@ -1,5 +1,9 @@
 import prisma from '../config/db.js';
 import bcrypt from 'bcryptjs';
+import {
+  resolveProgramKeahlian,
+  resolveKonsentrasiKeahlian,
+} from '../services/programService.js';
 
 /* =========================================================
    STATS GLOBAL
@@ -140,6 +144,21 @@ export const getClasses = async (req, res, next) => {
             },
           },
 
+          programKeahlian: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+
+          konsentrasiKeahlian: {
+            select: {
+              id: true,
+              name: true,
+              programKeahlianId: true,
+            },
+          },
+
           _count: {
             select: {
               users: true,
@@ -155,7 +174,21 @@ export const getClasses = async (req, res, next) => {
     const mapped = classes.map((c) => ({
       id: c.id,
       name: c.name,
-      major: c.major || '-',
+
+      programKeahlianId:
+        c.programKeahlianId,
+
+      programKeahlian:
+        c.programKeahlian?.name || '-',
+
+      konsentrasiKeahlianId:
+        c.konsentrasiKeahlianId,
+
+      konsentrasiKeahlian:
+        c.konsentrasiKeahlian?.name || '-',
+
+      // Kompatibilitas API lama.
+      major: c.programKeahlian?.name || '-',
 
       academicYearId:
         c.academicYearId,
@@ -188,6 +221,10 @@ export const createClass = async (
     const {
       name,
       major,
+      programKeahlian,
+      programKeahlianId,
+      konsentrasiKeahlian,
+      konsentrasiKeahlianId,
       academicYearId,
     } = req.body;
 
@@ -246,27 +283,79 @@ export const createClass = async (
     }
 
     const created =
-      await prisma.class.create({
-        data: {
-          name,
-          major: major || null,
-          academicYearId: yearId,
-        },
+      await prisma.$transaction(
+        async (tx) => {
+          const program =
+            await resolveProgramKeahlian(tx, {
+              programKeahlianId,
+              programKeahlian,
+              major,
+            });
 
-        include: {
-          academicYear: {
-            select: {
-              id: true,
-              name: true,
+          const concentration =
+            await resolveKonsentrasiKeahlian(tx, {
+              konsentrasiKeahlianId,
+              konsentrasiKeahlian,
+              programKeahlianId:
+                program?.id || null,
+            });
+
+          return tx.class.create({
+            data: {
+              name,
+              programKeahlianId:
+                program?.id || null,
+              konsentrasiKeahlianId:
+                concentration?.id || null,
+              academicYearId: yearId,
             },
-          },
-        },
-      });
+
+            include: {
+              academicYear: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+
+              programKeahlian: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+
+              konsentrasiKeahlian: {
+                select: {
+                  id: true,
+                  name: true,
+                  programKeahlianId: true,
+                },
+              },
+            },
+          });
+        }
+      );
 
     res.status(201).json({
       id: created.id,
       name: created.name,
-      major: created.major || '-',
+
+      programKeahlianId:
+        created.programKeahlianId,
+
+      programKeahlian:
+        created.programKeahlian?.name || '-',
+
+      konsentrasiKeahlianId:
+        created.konsentrasiKeahlianId,
+
+      konsentrasiKeahlian:
+        created.konsentrasiKeahlian?.name || '-',
+
+      // Kompatibilitas API lama.
+      major:
+        created.programKeahlian?.name || '-',
 
       academicYearId:
         created.academicYearId,
@@ -380,6 +469,21 @@ export const getClassStudents = async (
             },
           },
 
+          programKeahlian: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+
+          konsentrasiKeahlian: {
+            select: {
+              id: true,
+              name: true,
+              programKeahlianId: true,
+            },
+          },
+
           users: {
             where: {
               role: 'student',
@@ -448,7 +552,22 @@ export const getClassStudents = async (
     res.json({
       id: foundClass.id,
       name: foundClass.name,
-      major: foundClass.major || '-',
+
+      programKeahlianId:
+        foundClass.programKeahlianId,
+
+      programKeahlian:
+        foundClass.programKeahlian?.name || '-',
+
+      konsentrasiKeahlianId:
+        foundClass.konsentrasiKeahlianId,
+
+      konsentrasiKeahlian:
+        foundClass.konsentrasiKeahlian?.name || '-',
+
+      // Kompatibilitas API lama.
+      major:
+        foundClass.programKeahlian?.name || '-',
 
       academicYearId:
         foundClass.academicYearId,
@@ -540,7 +659,18 @@ export const getUsers = async (
             select: {
               id: true,
               name: true,
-              major: true,
+              programKeahlian: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+              konsentrasiKeahlian: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
 
@@ -583,8 +713,21 @@ export const getUsers = async (
         classId:
           u.class?.id || null,
 
+        programKeahlianId:
+          u.class?.programKeahlian?.id || null,
+
+        programKeahlian:
+          u.class?.programKeahlian?.name || '-',
+
+        konsentrasiKeahlianId:
+          u.class?.konsentrasiKeahlian?.id || null,
+
+        konsentrasiKeahlian:
+          u.class?.konsentrasiKeahlian?.name || '-',
+
+        // Kompatibilitas API lama.
         major:
-          u.class?.major || '-',
+          u.class?.programKeahlian?.name || '-',
 
         academicYear:
           u.academicYearRef?.name ||
@@ -1003,7 +1146,18 @@ export const getStudentsForDeactivation = async (
             select: {
               id: true,
               name: true,
-              major: true,
+              programKeahlian: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+              konsentrasiKeahlian: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
 
@@ -1039,8 +1193,25 @@ export const getStudentsForDeactivation = async (
             student.class?.name ||
             '-',
 
+          programKeahlianId:
+            student.class?.programKeahlian?.id ||
+            null,
+
+          programKeahlian:
+            student.class?.programKeahlian?.name ||
+            '-',
+
+          konsentrasiKeahlianId:
+            student.class?.konsentrasiKeahlian?.id ||
+            null,
+
+          konsentrasiKeahlian:
+            student.class?.konsentrasiKeahlian?.name ||
+            '-',
+
+          // Kompatibilitas API lama.
           major:
-            student.class?.major ||
+            student.class?.programKeahlian?.name ||
             '-',
 
           academicYearId:

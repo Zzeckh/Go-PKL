@@ -68,6 +68,8 @@ type DeactivationStudent = {
   classId: number | null;
   class: string;
   major: string;
+  programKeahlian?: string;
+  konsentrasiKeahlian?: string;
   academicYearId: number | null;
   academicYear: string;
 };
@@ -1958,7 +1960,10 @@ export const HubinUsers: React.FC = () => {
 
                             <span className="text-[10px] text-navy/40 font-semibold">
 
-                              {student.major}
+                              {student.programKeahlian || student.major}
+                              {student.konsentrasiKeahlian
+                                ? ` · ${student.konsentrasiKeahlian}`
+                                : ''}
 
                             </span>
 

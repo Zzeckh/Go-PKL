@@ -45,7 +45,16 @@ const studentSelect = {
   address: true,
   role: true,
   teacherId: true,
-  class: { select: { name: true, major: true } },
+  class: {
+    select: {
+      id: true,
+      name: true,
+      programKeahlianId: true,
+      programKeahlian: { select: { id: true, name: true } },
+      konsentrasiKeahlianId: true,
+      konsentrasiKeahlian: { select: { id: true, name: true } },
+    },
+  },
   company: { select: { id: true, name: true, address: true, mentorId: true } },
   teacher: { select: { id: true, name: true } },
 };
@@ -94,20 +103,33 @@ const assertCanView = async (tx, actor, studentId) => {
   return { student, access };
 };
 
-const serializeStudent = (student) => ({
-  id: student.id,
-  name: student.name,
-  nis: student.nis,
-  concentration: student.concentration,
-  address: student.address,
-  className: student.class?.name ?? null,
-  major: student.class?.major ?? null,
-  companyName: student.company?.name ?? null,
-  companyAddress: student.company?.address ?? null,
-  teacherName: student.teacher?.name ?? null,
-  program: student.concentration || student.class?.major || null,
-  practicePlace: student.company?.name ?? null,
-});
+const serializeStudent = (student) => {
+  const program =
+    student.class?.programKeahlian?.name ??
+    student.class?.major ??
+    null;
+  const concentration =
+    student.concentration ??
+    student.class?.konsentrasiKeahlian?.name ??
+    null;
+
+  return {
+    id: student.id,
+    name: student.name,
+    nis: student.nis,
+    concentration,
+    address: student.address,
+    className: student.class?.name ?? null,
+    major: program,
+    programKeahlian: program,
+    konsentrasiKeahlian: concentration,
+    companyName: student.company?.name ?? null,
+    companyAddress: student.company?.address ?? null,
+    teacherName: student.teacher?.name ?? null,
+    program: concentration || program,
+    practicePlace: student.company?.name ?? null,
+  };
+};
 
 const serializeAchievement = (achievement) => ({
   id: achievement.id,
@@ -141,6 +163,43 @@ const ensureGoalTemplate = async (tx, studentId) => {
   });
 };
 
+/**
+ * Salin template capaian milik Program Keahlian siswa saat siswa belum
+ * punya baris capaian sama sekali. Setelah disalin, baris menjadi milik
+ * siswa dan dapat diisi mentor (bukti, minggu, paraf).
+ */
+const ensureAchievementsFromTemplate = async (tx, student) => {
+  const programId =
+    student.class?.programKeahlianId ??
+    student.class?.programKeahlian?.id ??
+    null;
+
+  if (!programId) return;
+
+  const existing = await tx.learningAchievement.count({
+    where: { studentId: student.id },
+  });
+  if (existing > 0) return;
+
+  const templates = await tx.learningAchievementTemplate.findMany({
+    where: { programKeahlianId: programId },
+    orderBy: [{ orderIndex: 'asc' }, { id: 'asc' }],
+    select: { orderIndex: true, title: true },
+  });
+
+  if (!templates.length) return;
+
+  await tx.learningAchievement.createMany({
+    data: templates.map((template) => ({
+      studentId: student.id,
+      orderIndex: template.orderIndex,
+      title: template.title,
+      weeks: [],
+    })),
+    skipDuplicates: true,
+  });
+};
+
 /** GET /api/learning/students/:studentId/achievements — Fitur Capaian Pembelajaran */
 export const getLearningAchievements = async (req, res, next) => {
   try {
@@ -149,6 +208,8 @@ export const getLearningAchievements = async (req, res, next) => {
 
     const payload = await withActor(req.user, async (tx) => {
       const { student, access } = await assertCanView(tx, req.user, studentId);
+
+      await ensureAchievementsFromTemplate(tx, student);
 
       const achievements = await tx.learningAchievement.findMany({
         where: { studentId },
@@ -458,6 +519,145 @@ export const updateLearningGoals = async (req, res, next) => {
     });
 
     res.json({ goals: goals.map(serializeGoal) });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/* =========================================================
+   TEMPLATE CAPAIAN PEMBELAJARAN PER PROGRAM KEAHLIAN
+   Dikelola oleh Hubin.
+   ========================================================= */
+
+const serializeTemplate = (template) => ({
+  id: template.id,
+  programKeahlianId: template.programKeahlianId,
+  orderIndex: template.orderIndex,
+  title: template.title,
+});
+
+/** GET /api/learning/achievement-templates?programKeahlianId=1 */
+export const getAchievementTemplates = async (req, res, next) => {
+  try {
+    const programKeahlianId = parseId(req.query.programKeahlianId);
+    if (!programKeahlianId) {
+      return res.status(400).json({ error: 'Program Keahlian wajib dipilih.' });
+    }
+
+    const payload = await withActor(req.user, async (tx) => {
+      const program = await tx.programKeahlian.findUnique({
+        where: { id: programKeahlianId },
+        select: { id: true, name: true },
+      });
+      if (!program) throw httpError(404, 'Program Keahlian tidak ditemukan.');
+
+      const templates = await tx.learningAchievementTemplate.findMany({
+        where: { programKeahlianId },
+        orderBy: [{ orderIndex: 'asc' }, { id: 'asc' }],
+      });
+
+      return {
+        program,
+        templates: templates.map(serializeTemplate),
+      };
+    });
+
+    res.json(payload);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/** POST /api/learning/achievement-templates */
+export const createAchievementTemplate = async (req, res, next) => {
+  try {
+    const programKeahlianId = parseId(req.body.programKeahlianId);
+    if (!programKeahlianId) {
+      return res.status(400).json({ error: 'Program Keahlian wajib dipilih.' });
+    }
+
+    const rawTitle = typeof req.body.title === 'string' ? req.body.title.trim() : '';
+
+    const created = await withActor(req.user, async (tx) => {
+      const program = await tx.programKeahlian.findUnique({
+        where: { id: programKeahlianId },
+        select: { id: true },
+      });
+      if (!program) throw httpError(404, 'Program Keahlian tidak ditemukan.');
+
+      const aggregate = await tx.learningAchievementTemplate.aggregate({
+        where: { programKeahlianId },
+        _max: { orderIndex: true },
+      });
+      const orderIndex = (aggregate._max.orderIndex ?? 0) + 1;
+
+      return tx.learningAchievementTemplate.create({
+        data: {
+          programKeahlianId,
+          orderIndex,
+          title: rawTitle || `Capaian pembelajaran ${orderIndex}`,
+        },
+      });
+    });
+
+    res.status(201).json(serializeTemplate(created));
+  } catch (error) {
+    next(error);
+  }
+};
+
+/** PUT /api/learning/achievement-templates/:templateId */
+export const updateAchievementTemplate = async (req, res, next) => {
+  try {
+    const templateId = parseId(req.params.templateId);
+    if (!templateId) {
+      return res.status(400).json({ error: 'ID template tidak valid.' });
+    }
+
+    if (typeof req.body.title !== 'string' || !req.body.title.trim()) {
+      return res.status(400).json({ error: 'Capaian pembelajaran wajib diisi.' });
+    }
+
+    const title = req.body.title.trim();
+
+    const updated = await withActor(req.user, async (tx) => {
+      const existing = await tx.learningAchievementTemplate.findUnique({
+        where: { id: templateId },
+        select: { id: true },
+      });
+      if (!existing) throw httpError(404, 'Template capaian tidak ditemukan.');
+
+      return tx.learningAchievementTemplate.update({
+        where: { id: templateId },
+        data: { title },
+      });
+    });
+
+    res.json(serializeTemplate(updated));
+  } catch (error) {
+    next(error);
+  }
+};
+
+/** DELETE /api/learning/achievement-templates/:templateId */
+export const deleteAchievementTemplate = async (req, res, next) => {
+  try {
+    const templateId = parseId(req.params.templateId);
+    if (!templateId) {
+      return res.status(400).json({ error: 'ID template tidak valid.' });
+    }
+
+    await withActor(req.user, async (tx) => {
+      const existing = await tx.learningAchievementTemplate.findUnique({
+        where: { id: templateId },
+        select: { id: true },
+      });
+      if (!existing) throw httpError(404, 'Template capaian tidak ditemukan.');
+
+      await tx.learningAchievementTemplate.delete({ where: { id: templateId } });
+    });
+
+    res.json({ success: true });
   } catch (error) {
     next(error);
   }

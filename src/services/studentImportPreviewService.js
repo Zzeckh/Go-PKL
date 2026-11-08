@@ -112,7 +112,7 @@ export const previewStudentImportRows = ({
 
     const identity = [
       normalizeText(schoolClass.name),
-      normalizeText(schoolClass.major),
+      normalizeText(schoolClass.programKeahlian?.name ?? schoolClass.major),
       normalizeText(yearName),
     ].join('|');
     const matches = classesByIdentity.get(identity) || [];

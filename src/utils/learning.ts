@@ -15,6 +15,8 @@ export interface LearningStudent {
   address: string | null;
   className: string | null;
   major: string | null;
+  programKeahlian: string | null;
+  konsentrasiKeahlian: string | null;
   companyName: string | null;
   companyAddress: string | null;
   teacherName: string | null;

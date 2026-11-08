@@ -17,7 +17,6 @@ import { MentorLogbook } from './components/MentorLogbook';
 import { MentorKehadiran } from './components/MentorKehadiran';
 import { MentorPenilaian } from './components/MentorPenilaian';
 import { MentorPerizinan } from './components/MentorPerizinan';
-import { HubinDashboard } from './components/HubinDashboard';
 import { HubinData } from './components/HubinKelolaData';
 import { HubinPemetaan } from './components/HubinPemetaan';
 import { HubinManagementDashboard } from './components/HubinManagementDashboard';

@@ -24,6 +24,7 @@ import {
   WEEKS,
 } from '../utils/learning';
 import { LearningStudentSelector } from './LearningStudentSelector';
+import { LearningAchievementTemplates } from './LearningAchievementTemplates';
 
 type Notice = { type: 'success' | 'error'; message: string };
 
@@ -85,6 +86,11 @@ export const LearningAchievements: React.FC = () => {
       active = false;
     };
   }, [selectedStudentId, reloadKey]);
+
+  // Hubin mengelola template capaian per Program Keahlian.
+  if (userRole === 'hubin') {
+    return <LearningAchievementTemplates />;
+  }
 
   const updateAchievementLocal = (id: number, patch: Partial<Achievement>) => {
     setData((current) =>
@@ -256,8 +262,6 @@ export const LearningAchievements: React.FC = () => {
               ? 'Mentor'
               : userRole === 'teacher'
               ? 'Guru'
-              : userRole === 'hubin'
-              ? 'Hubin · lihat saja'
               : 'Siswa · lihat saja'}
           </span>
         </div>

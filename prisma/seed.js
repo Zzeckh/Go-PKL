@@ -712,17 +712,38 @@ async function main() {
   const classIdByName = new Map();
 
   for (const cls of CLASSES) {
+    const program = await prisma.programKeahlian.upsert({
+      where: { name: cls.major },
+      update: {},
+      create: { name: cls.major },
+    });
+
+    const concentration = await prisma.konsentrasiKeahlian.upsert({
+      where: {
+        programKeahlianId_name: {
+          programKeahlianId: program.id,
+          name: cls.major,
+        },
+      },
+      update: {},
+      create: {
+        programKeahlianId: program.id,
+        name: cls.major,
+      },
+    });
+
     const created = await prisma.class.create({
       data: {
         name: cls.name,
-        major: cls.major,
+        programKeahlianId: program.id,
+        konsentrasiKeahlianId: concentration.id,
       },
     });
 
     classIdByName.set(cls.name, created.id);
 
     console.log(
-      `   ✓ ${cls.name.padEnd(10)} | ${cls.major} (${cls.students.length} siswa)`
+      `   ✓ ${cls.name.padEnd(10)} | ${program.name} (${cls.students.length} siswa)`
     );
   }
 

@@ -29,8 +29,53 @@ export const getClasses = async (req, res, next) => {
   try {
     const classes = await prisma.class.findMany({
       orderBy: { id: 'asc' },
-      select: { id: true, name: true, major: true },
+      select: {
+        id: true,
+        name: true,
+        academicYearId: true,
+        programKeahlianId: true,
+        programKeahlian: { select: { id: true, name: true } },
+        konsentrasiKeahlianId: true,
+        konsentrasiKeahlian: { select: { id: true, name: true } },
+      },
     });
-    res.json(classes);
+
+    res.json(
+      classes.map((c) => ({
+        id: c.id,
+        name: c.name,
+        academicYearId: c.academicYearId,
+        programKeahlianId: c.programKeahlianId,
+        programKeahlian: c.programKeahlian?.name ?? null,
+        konsentrasiKeahlianId: c.konsentrasiKeahlianId,
+        konsentrasiKeahlian: c.konsentrasiKeahlian?.name ?? null,
+        // Kompatibilitas API lama.
+        major: c.programKeahlian?.name ?? null,
+      }))
+    );
+  } catch (error) { next(error); }
+};
+
+export const getPrograms = async (req, res, next) => {
+  try {
+    const programs = await prisma.programKeahlian.findMany({
+      orderBy: { name: 'asc' },
+      include: {
+        concentrations: {
+          orderBy: { name: 'asc' },
+          select: { id: true, name: true, programKeahlianId: true },
+        },
+        _count: { select: { classes: true } },
+      },
+    });
+
+    res.json(
+      programs.map((program) => ({
+        id: program.id,
+        name: program.name,
+        concentrations: program.concentrations,
+        totalClasses: program._count.classes,
+      }))
+    );
   } catch (error) { next(error); }
 };

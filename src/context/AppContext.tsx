@@ -143,7 +143,19 @@ export interface PerusahaanItem {
 export interface ClassItem {
   id: number;
   name: string;
+
+  programKeahlianId: number | null;
+  programKeahlian: string;
+
+  konsentrasiKeahlianId: number | null;
+  konsentrasiKeahlian: string;
+
+  // Kompatibilitas API lama.
   major: string;
+
+  academicYearId?: number | null;
+  academicYear?: string;
+
   totalStudents: number;
 }
 
@@ -341,6 +353,10 @@ interface AppContextType {
 
   createClass: (data: {
     name: string;
+    programKeahlianId?: number | null;
+    konsentrasiKeahlianId?: number | null;
+    programKeahlian?: string;
+    konsentrasiKeahlian?: string;
     major?: string;
   }) => Promise<any>;
 
@@ -1813,6 +1829,10 @@ export const AppProvider: React.FC<{
   const createClass =
     async (data: {
       name: string;
+      programKeahlianId?: number | null;
+      konsentrasiKeahlianId?: number | null;
+      programKeahlian?: string;
+      konsentrasiKeahlian?: string;
       major?: string;
     }) => {
       if (
@@ -1830,6 +1850,19 @@ export const AppProvider: React.FC<{
             name:
               data.name,
 
+            programKeahlianId:
+              data.programKeahlianId,
+
+            konsentrasiKeahlianId:
+              data.konsentrasiKeahlianId,
+
+            programKeahlian:
+              data.programKeahlian,
+
+            konsentrasiKeahlian:
+              data.konsentrasiKeahlian,
+
+            // Kompatibilitas API lama.
             major:
               data.major,
 

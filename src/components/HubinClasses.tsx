@@ -11,6 +11,19 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { AcademicYearSelector } from '../components/AcademicYearSelector';
+import { api } from '../utils/api';
+
+interface ConcentrationOption {
+  id: number;
+  name: string;
+  programKeahlianId: number;
+}
+
+interface ProgramOption {
+  id: number;
+  name: string;
+  concentrations: ConcentrationOption[];
+}
 
 const getInitials = (name: string) =>
   (name || '?')
@@ -75,7 +88,9 @@ export const HubinClasses: React.FC = () => {
     setDetail({
       id: cls.id,
       name: cls.name,
-      major: cls.major || '-',
+      programKeahlian: cls.programKeahlian || '-',
+      konsentrasiKeahlian: cls.konsentrasiKeahlian || '-',
+      major: cls.major || cls.programKeahlian || '-',
       students: []
     });
 
@@ -102,7 +117,10 @@ export const HubinClasses: React.FC = () => {
         c.name
           .toLowerCase()
           .includes(search.toLowerCase()) ||
-        (c.major || '')
+        (c.programKeahlian || c.major || '')
+          .toLowerCase()
+          .includes(search.toLowerCase()) ||
+        (c.konsentrasiKeahlian || '')
           .toLowerCase()
           .includes(search.toLowerCase())
       ),
@@ -272,7 +290,10 @@ export const HubinClasses: React.FC = () => {
                       </h3>
 
                       <p className="text-[11px] text-navy/50 truncate mt-0.5">
-                        {c.major || 'Jurusan belum diisi'}
+                        {c.programKeahlian || c.major || 'Program Keahlian belum diisi'}
+                      </p>
+                      <p className="text-[10px] font-semibold text-navy/40 truncate mt-0.5">
+                        Konsentrasi: {c.konsentrasiKeahlian || '-'}
                       </p>
                       <p className="text-[10px] font-bold text-steel mt-1 flex items-center gap-1">
                         <span>Tahun Ajaran:</span> {selectedYearLabel}
@@ -354,7 +375,8 @@ const AddClassModal: React.FC<{
   onClose: () => void;
   onCreate: (data: {
     name: string;
-    major?: string;
+    programKeahlianId?: number | null;
+    konsentrasiKeahlianId?: number | null;
   }) => Promise<any>;
 }> = ({
   onClose,
@@ -363,11 +385,42 @@ const AddClassModal: React.FC<{
 
   const [form, setForm] = useState({
     name: '',
-    major: ''
+    programKeahlianId: '' as number | '',
+    konsentrasiKeahlianId: '' as number | ''
   });
+
+  const [programs, setPrograms] = useState<ProgramOption[]>([]);
+  const [programsLoading, setProgramsLoading] = useState(true);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    api
+      .get<ProgramOption[]>('/api/static/programs')
+      .then((data) => {
+        if (!active) return;
+        setPrograms(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (active) setPrograms([]);
+      })
+      .finally(() => {
+        if (active) setProgramsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const selectedProgram = programs.find(
+    (program) => program.id === Number(form.programKeahlianId)
+  );
+
+  const concentrationOptions = selectedProgram?.concentrations ?? [];
 
   const handleSubmit = async (
     e: React.FormEvent
@@ -380,7 +433,15 @@ const AddClassModal: React.FC<{
 
     try {
 
-      await onCreate(form);
+      await onCreate({
+        name: form.name,
+        programKeahlianId: form.programKeahlianId
+          ? Number(form.programKeahlianId)
+          : null,
+        konsentrasiKeahlianId: form.konsentrasiKeahlianId
+          ? Number(form.konsentrasiKeahlianId)
+          : null
+      });
 
       onClose();
 
@@ -457,25 +518,78 @@ const AddClassModal: React.FC<{
 
           </div>
 
-          {/* JURUSAN */}
+          {/* PROGRAM KEAHLIAN */}
           <div>
 
             <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">
-              Jurusan / Bidang Keahlian
+              Program Keahlian
             </label>
 
-            <input
-              type="text"
-              value={form.major}
+            <select
+              value={form.programKeahlianId}
+              onChange={e => {
+                const programKeahlianId = e.target.value
+                  ? Number(e.target.value)
+                  : '';
+                const program = programs.find(
+                  (item) => item.id === programKeahlianId
+                );
+                const firstConcentration = program?.concentrations?.[0];
+
+                setForm({
+                  ...form,
+                  programKeahlianId,
+                  konsentrasiKeahlianId: firstConcentration?.id ?? ''
+                });
+              }}
+              disabled={programsLoading}
+              className="w-full bg-mist/30 border border-mist rounded-[24px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all disabled:opacity-60"
+            >
+              <option value="">
+                {programsLoading ? 'Memuat program...' : 'Pilih program keahlian'}
+              </option>
+              {programs.map((program) => (
+                <option key={program.id} value={program.id}>
+                  {program.name}
+                </option>
+              ))}
+            </select>
+
+          </div>
+
+          {/* KONSENTRASI KEAHLIAN */}
+          <div>
+
+            <label className="text-[11px] font-bold text-navy/70 uppercase tracking-wide block mb-1.5">
+              Konsentrasi Keahlian
+            </label>
+
+            <select
+              value={form.konsentrasiKeahlianId}
               onChange={e =>
                 setForm({
                   ...form,
-                  major: e.target.value
+                  konsentrasiKeahlianId: e.target.value
+                    ? Number(e.target.value)
+                    : ''
                 })
               }
-              placeholder="Contoh: Rekayasa Perangkat Lunak"
-              className="w-full bg-mist/30 border border-mist rounded-[24px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all placeholder:text-navy/40"
-            />
+              disabled={!form.programKeahlianId || concentrationOptions.length === 0}
+              className="w-full bg-mist/30 border border-mist rounded-[24px] px-3 py-2.5 text-sm font-semibold text-navy outline-none focus:border-steel focus:bg-white transition-all disabled:opacity-60"
+            >
+              <option value="">Pilih konsentrasi keahlian</option>
+              {concentrationOptions.map((concentration) => (
+                <option key={concentration.id} value={concentration.id}>
+                  {concentration.name}
+                </option>
+              ))}
+            </select>
+
+            {form.programKeahlianId && concentrationOptions.length === 0 && (
+              <p className="text-[10px] font-semibold text-navy/45 mt-1.5">
+                Belum ada konsentrasi untuk program ini.
+              </p>
+            )}
 
           </div>
 
@@ -553,7 +667,11 @@ const ClassDetailModal: React.FC<{
               </h3>
 
               <p className="text-[11px] font-semibold text-navy/50 truncate">
-                {detail.major || 'Jurusan belum diisi'} · {students.length} siswa
+                {detail.programKeahlian || detail.major || 'Program Keahlian belum diisi'}
+                {' · '}
+                {detail.konsentrasiKeahlian || 'Konsentrasi belum diisi'}
+                {' · '}
+                {students.length} siswa
               </p>
 
             </div>
@@ -634,7 +752,7 @@ const ClassDetailModal: React.FC<{
                       {s.email} · {s.perusahaan || '-'}
                     </p>
                     <p className="text-[10px] font-semibold text-steel mt-1">
-                      Tahun Ajaran: {s.academicYear || s.academicYearRef?.name || selectedYearLabel}
+                      Tahun Ajaran: {s.academicYear || s.academicYearRef?.name || '-'}
                     </p>
 
                     <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">

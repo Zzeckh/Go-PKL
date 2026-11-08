@@ -17,7 +17,13 @@ const generateToken = (user) =>
 
 const userInclude = {
   teacher: { select: { name: true, nip: true } },
-  class: { select: { name: true, major: true } },
+  class: {
+    select: {
+      name: true,
+      programKeahlian: { select: { id: true, name: true } },
+      konsentrasiKeahlian: { select: { id: true, name: true } },
+    },
+  },
   company: { select: { name: true, address: true, latitude: true, longitude: true, radiusMeters: true } },
   mentoredCompanies: { take: 1, select: { name: true, address: true, latitude: true, longitude: true, radiusMeters: true } },
 };
@@ -37,7 +43,10 @@ const toFrontendUser = (user) => {
     nisn: user.nisn ?? null,
     nik: user.nik ?? null,
     religion: user.religion ?? null,
-    concentration: user.concentration ?? null,
+    concentration:
+      user.concentration ??
+      user.class?.konsentrasiKeahlian?.name ??
+      null,
     address: user.address ?? null,
     parentName: user.parentName ?? null,
     parentAddress: user.parentAddress ?? null,
@@ -53,7 +62,9 @@ const toFrontendUser = (user) => {
       : null,
     teacherName: user.teacher?.name ?? null,
     className: user.class?.name ?? null,
-    major: user.class?.major ?? null,
+    major: user.class?.programKeahlian?.name ?? null,
+    programKeahlian: user.class?.programKeahlian ?? null,
+    konsentrasiKeahlian: user.class?.konsentrasiKeahlian ?? null,
     academicYear: user.academicYear ?? null,
   };
 };

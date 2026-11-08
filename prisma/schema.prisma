@@ -56,18 +56,58 @@ model AcademicYear {
   @@map("academicyear")
 }
 
+model ProgramKeahlian {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  concentrations       KonsentrasiKeahlian[]
+  classes              Class[]
+  achievementTemplates LearningAchievementTemplate[]
+
+  @@map("program_keahlian")
+}
+
+model KonsentrasiKeahlian {
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+
+  programKeahlianId Int
+  programKeahlian   ProgramKeahlian @relation(fields: [programKeahlianId], references: [id], onDelete: Cascade)
+
+  classes Class[]
+
+  @@unique([programKeahlianId, name])
+  @@index([programKeahlianId])
+  @@map("konsentrasi_keahlian")
+}
+
 model Class {
   id        Int      @id @default(autoincrement())
   name      String
-  major     String?
+
+  /// Kolom kompatibilitas untuk deployment lama. Diisi otomatis oleh trigger
+  /// database dari Program Keahlian. Jangan dipakai untuk kode baru.
+  major String?
+
   createdAt DateTime @default(now())
 
   academicYearId Int?
   academicYear   AcademicYear? @relation(fields: [academicYearId], references: [id])
 
+  // Program Keahlian (bidang/jurusan) dan Konsentrasi Keahlian (spesialisasi).
+  programKeahlianId Int?
+  programKeahlian   ProgramKeahlian? @relation(fields: [programKeahlianId], references: [id])
+
+  konsentrasiKeahlianId Int?
+  konsentrasiKeahlian   KonsentrasiKeahlian? @relation(fields: [konsentrasiKeahlianId], references: [id])
+
   users User[]
 
   @@index([academicYearId])
+  @@index([programKeahlianId])
+  @@index([konsentrasiKeahlianId])
   @@map("class")
 }
 
@@ -265,6 +305,25 @@ model Evaluation {
   @@unique([studentId, evaluatorId, type, period])
   @@index([evaluatorId])
   @@map("evaluation")
+}
+
+/// Template Capaian Pembelajaran per Program Keahlian.
+/// Dikelola Hubin. Saat siswa pertama kali membuka capaian, baris template
+/// disalin menjadi learning_achievement milik siswa tersebut.
+model LearningAchievementTemplate {
+  id         Int    @id @default(autoincrement())
+  orderIndex Int
+  title      String @db.Text
+
+  programKeahlianId Int
+  programKeahlian   ProgramKeahlian @relation(fields: [programKeahlianId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([programKeahlianId, orderIndex])
+  @@index([programKeahlianId])
+  @@map("learning_achievement_template")
 }
 
 model LearningAchievement {
