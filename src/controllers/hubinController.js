@@ -599,9 +599,25 @@ export const getUsers = async (
       role,
       search,
       academicYearId,
+      status,
     } = req.query;
 
     const where = {};
+
+    if (
+      status &&
+      !['all', 'active', 'inactive'].includes(status)
+    ) {
+      return res.status(400).json({
+        error: 'Status tidak valid.',
+      });
+    }
+
+    if (status === 'active') {
+      where.isActive = true;
+    } else if (status === 'inactive') {
+      where.isActive = false;
+    }
 
     /* FILTER ROLE */
 
@@ -614,7 +630,10 @@ export const getUsers = async (
 
     /* FILTER TAHUN AJARAN */
 
-    if (academicYearId) {
+    if (
+      academicYearId &&
+      status !== 'inactive'
+    ) {
       const yearId =
         Number(academicYearId);
 
@@ -685,8 +704,6 @@ export const getUsers = async (
         orderBy: {
           id: 'desc',
         },
-
-        take: 200,
       });
 
     const mapped =

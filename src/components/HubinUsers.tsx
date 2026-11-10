@@ -196,6 +196,7 @@ export const HubinUsers: React.FC = () => {
     loadHubinUsers({
       role: roleFilter,
       search,
+      status: statusFilter,
     }).finally(() => {
       setLoading(false);
     });
@@ -204,6 +205,7 @@ export const HubinUsers: React.FC = () => {
     loadHubinUsers,
     roleFilter,
     search,
+    statusFilter,
   ]);
 
   /* =======================================================
@@ -737,6 +739,7 @@ export const HubinUsers: React.FC = () => {
         await loadHubinUsers({
           role: roleFilter,
           search,
+          status: statusFilter,
         });
 
         await openDeactivation(
@@ -802,6 +805,7 @@ export const HubinUsers: React.FC = () => {
         await loadHubinUsers({
           role: roleFilter,
           search,
+          status: statusFilter,
         });
 
         await openDeactivation(
@@ -843,6 +847,7 @@ export const HubinUsers: React.FC = () => {
         await loadHubinUsers({
           role: roleFilter,
           search,
+          status: statusFilter,
         });
 
         alert(
@@ -1321,6 +1326,25 @@ export const HubinUsers: React.FC = () => {
 
                       </div>
 
+                      {!user.isActive && (
+                        <p className="text-[10px] font-medium text-navy/50 mt-1">
+                          {user.inactiveReason && (
+                            <span>
+                              Alasan: {user.inactiveReason}
+                            </span>
+                          )}
+                          {user.inactiveReason && user.inactiveAt && ' · '}
+                          {user.inactiveAt && (
+                            <span>
+                              Dinonaktifkan:{' '}
+                              {new Date(
+                                user.inactiveAt
+                              ).toLocaleDateString('id-ID')}
+                            </span>
+                          )}
+                        </p>
+                      )}
+
                     </div>
 
                     {/* ACTION */}
@@ -1355,6 +1379,11 @@ export const HubinUsers: React.FC = () => {
                                 user.id,
                                 role
                               );
+                              await loadHubinUsers({
+                                role: roleFilter,
+                                search,
+                                status: statusFilter,
+                              });
                             } catch (
                               error: any
                             ) {
@@ -1475,6 +1504,11 @@ export const HubinUsers: React.FC = () => {
                               await deleteUser(
                                 user.id
                               );
+                              await loadHubinUsers({
+                                role: roleFilter,
+                                search,
+                                status: statusFilter,
+                              });
 
                             } catch (
                               error: any

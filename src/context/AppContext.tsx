@@ -371,6 +371,7 @@ interface AppContextType {
   loadHubinUsers: (filters?: {
     role?: string;
     search?: string;
+    status?: 'all' | 'active' | 'inactive';
   }) => Promise<boolean>;
 
   toggleUser: (
@@ -1923,6 +1924,7 @@ export const AppProvider: React.FC<{
         filters?: {
           role?: string;
           search?: string;
+          status?: 'all' | 'active' | 'inactive';
         }
       ): Promise<boolean> => {
         if (
@@ -1956,7 +1958,20 @@ export const AppProvider: React.FC<{
             );
           }
 
-          if (selectedAcademicYearId !== null) {
+          if (
+            filters?.status &&
+            filters.status !== 'all'
+          ) {
+            params.set(
+              'status',
+              filters.status
+            );
+          }
+
+          if (
+            selectedAcademicYearId !== null &&
+            filters?.status !== 'inactive'
+          ) {
             params.set(
               'academicYearId',
               String(selectedAcademicYearId)
