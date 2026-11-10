@@ -7,6 +7,11 @@ import {
   resolveQuotas,
   getFilledBySource,
 } from '../services/quotaService.js';
+import { geocodeCompanyAddress } from '../services/companyGeocodingService.js';
+import {
+  isValidCompanyLocation,
+  normalizeCompanyCategory,
+} from '../utils/companyImport.js';
 
 /**
  * Helper
@@ -226,6 +231,292 @@ export const downloadCompanyTemplate = async (req, res, next) => {
     );
 
     res.send(buffer);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const downloadCompanyImportTemplate = async (req, res, next) => {
+  try {
+    const headers = [
+      'Nama Perusahaan',
+      'Alamat Lengkap',
+      'Nomor Telepon',
+      'Kategori Perusahaan',
+      'Radius Lokasi (meter)',
+      'Kota',
+      'Negara',
+      'Kuota Sekolah',
+      'Kuota Perusahaan',
+      'Latitude',
+      'Longitude',
+    ];
+    const worksheet = XLSX.utils.aoa_to_sheet([headers]);
+    worksheet['!cols'] = [
+      { wch: 30 },
+      { wch: 45 },
+      { wch: 20 },
+      { wch: 24 },
+      { wch: 24 },
+      { wch: 20 },
+      { wch: 18 },
+      { wch: 18 },
+      { wch: 20 },
+      { wch: 15 },
+      { wch: 15 },
+    ];
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Import Perusahaan');
+    const buffer = XLSX.write(workbook, {
+      type: 'buffer',
+      bookType: 'xlsx',
+    });
+
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="template-import-perusahaan.xlsx"'
+    );
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.send(buffer);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const geocodeCompanyImportAddress = async (req, res, next) => {
+  try {
+    const {
+      address,
+      companyName,
+      city,
+      province,
+      country,
+    } = req.body;
+    if (
+      typeof address !== 'string' ||
+      !address.trim() ||
+      address.trim().length > 500 ||
+      [companyName, city, province, country].some(
+        (value) =>
+          value !== undefined &&
+          (typeof value !== 'string' || value.length > 200)
+      )
+    ) {
+      return res.status(400).json({
+        error: 'Alamat wajib diisi (maksimal 500 karakter); konteks lokasi maksimal 200 karakter.',
+      });
+    }
+
+    const response = await geocodeCompanyAddress({
+      address: address.trim(),
+      companyName,
+      city,
+      province,
+      country,
+    });
+    res.json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const parseImportInteger = (value, fallback) => {
+  if (value === undefined || value === null || value === '') {
+    return fallback;
+  }
+  const parsed = Number(value);
+  return Number.isInteger(parsed) ? parsed : null;
+};
+
+export const confirmCompanyImport = async (req, res, next) => {
+  try {
+    const { companies } = req.body;
+    if (
+      !Array.isArray(companies) ||
+      companies.length === 0 ||
+      companies.length > 200
+    ) {
+      return res.status(400).json({
+        error: 'Import harus berisi 1 sampai 200 perusahaan.',
+      });
+    }
+
+    const normalizedRows = companies.map((company, index) => {
+      const row = company && typeof company === 'object' ? company : {};
+      const name = String(row.name ?? '').trim();
+      const address = String(row.address ?? '').trim();
+      const categoryInput = String(row.category ?? '').trim();
+      const category = normalizeCompanyCategory(categoryInput);
+      const radiusMeters = parseImportInteger(row.radiusMeters, 500);
+      const isInternal = category === 'Internal';
+      const quotaSchool = isInternal
+        ? 0
+        : parseImportInteger(row.quotaSchool, 5);
+      const quotaCompany = isInternal
+        ? 0
+        : parseImportInteger(row.quotaCompany, 0);
+      const latitude = row.latitude;
+      const longitude = row.longitude;
+      const errors = [];
+
+      if (!name) errors.push('Nama perusahaan wajib diisi.');
+      if (!address) errors.push('Alamat lengkap wajib diisi.');
+      if (!category) {
+        errors.push('Kategori harus Internal atau Eksternal.');
+      }
+      if (
+        !Number.isInteger(radiusMeters) ||
+        radiusMeters < 50 ||
+        radiusMeters > 2000
+      ) {
+        errors.push('Radius harus bilangan bulat antara 50 dan 2000 meter.');
+      }
+      if (
+        quotaSchool === null ||
+        quotaCompany === null ||
+        quotaSchool < 0 ||
+        quotaCompany < 0
+      ) {
+        errors.push('Kuota harus berupa bilangan bulat 0 atau lebih.');
+      } else if (!isInternal && quotaSchool + quotaCompany <= 0) {
+        errors.push('Total kuota perusahaan Eksternal harus lebih dari 0.');
+      }
+      if (!isValidCompanyLocation(latitude, longitude)) {
+        errors.push('Latitude dan longitude belum valid atau tidak boleh 0,0.');
+      }
+
+      return {
+        rowNumber: Number.isInteger(row.rowNumber)
+          ? row.rowNumber
+          : index + 2,
+        name,
+        address,
+        phone: String(row.phone ?? '').trim() || null,
+        category,
+        city: String(row.city ?? '').trim() || null,
+        country: String(row.country ?? '').trim() || null,
+        radiusMeters,
+        quotaSchool,
+        quotaCompany,
+        latitude,
+        longitude,
+        errors,
+      };
+    });
+
+    const nameCounts = new Map();
+    for (const row of normalizedRows) {
+      const key = normalize(row.name);
+      if (!key) continue;
+      nameCounts.set(key, (nameCounts.get(key) || 0) + 1);
+    }
+
+    for (const row of normalizedRows) {
+      const key = normalize(row.name);
+      if (key && nameCounts.get(key) > 1) {
+        row.errors.push('Nama perusahaan duplikat di dalam file.');
+      }
+    }
+
+    const names = normalizedRows
+      .filter((row) => row.name)
+      .map((row) => row.name);
+    const existingCompanies = names.length
+      ? await prisma.company.findMany({
+          where: {
+            name: {
+              in: names,
+              mode: 'insensitive',
+            },
+          },
+          select: { name: true },
+        })
+      : [];
+    const existingNames = new Set(
+      existingCompanies.map((company) => normalize(company.name))
+    );
+
+    for (const row of normalizedRows) {
+      if (existingNames.has(normalize(row.name))) {
+        row.errors.push('Nama perusahaan sudah terdaftar.');
+      }
+    }
+
+    const created = [];
+    const failed = [];
+    for (const row of normalizedRows) {
+      if (row.errors.length > 0) {
+        failed.push({
+          row: row.rowNumber,
+          name: row.name || undefined,
+          error: row.errors.join(' '),
+        });
+        continue;
+      }
+
+      try {
+        const company = await prisma.company.create({
+          data: {
+            name: row.name,
+            address: row.address,
+            phone: row.phone,
+            category: row.category,
+            city: row.city,
+            country: row.country,
+            latitude: row.latitude,
+            longitude: row.longitude,
+            radiusMeters: row.radiusMeters,
+            quotaSchool: row.quotaSchool,
+            quotaCompany: row.quotaCompany,
+            quota: row.quotaSchool + row.quotaCompany,
+          },
+          select: {
+            id: true,
+            name: true,
+          },
+        });
+        created.push({
+          row: row.rowNumber,
+          id: company.id,
+          name: company.name,
+        });
+      } catch (error) {
+        if (error.code === 'P2002') {
+          failed.push({
+            row: row.rowNumber,
+            name: row.name,
+            error: 'Nama perusahaan sudah terdaftar.',
+          });
+          continue;
+        }
+        console.error('Gagal menyimpan perusahaan saat import.', {
+          row: row.rowNumber,
+          code: error.code,
+          message: error.message,
+        });
+        failed.push({
+          row: row.rowNumber,
+          name: row.name,
+          error:
+            error.code === 'P2003'
+              ? 'Relasi data perusahaan tidak valid.'
+              : 'Gagal menyimpan karena kesalahan database.',
+        });
+      }
+    }
+
+    res.json({
+      created,
+      failed,
+      summary: {
+        total: normalizedRows.length,
+        imported: created.length,
+        failed: failed.length,
+      },
+    });
   } catch (error) {
     next(error);
   }

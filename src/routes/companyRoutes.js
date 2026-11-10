@@ -7,6 +7,9 @@ import {
   createCompany,
   importCompanies,
   downloadCompanyTemplate,
+  downloadCompanyImportTemplate,
+  geocodeCompanyImportAddress,
+  confirmCompanyImport,
   updateCompany,
   deactivateCompany,
   deleteCompany
@@ -30,6 +33,27 @@ router.get(
   authMiddleware,
   authorize('hubin'),
   downloadCompanyTemplate
+);
+
+router.get(
+  '/import/template',
+  authMiddleware,
+  authorize('hubin'),
+  downloadCompanyImportTemplate
+);
+
+router.post(
+  '/import/geocode',
+  authMiddleware,
+  authorize('hubin'),
+  geocodeCompanyImportAddress
+);
+
+router.post(
+  '/import/confirm',
+  authMiddleware,
+  authorize('hubin'),
+  confirmCompanyImport
 );
 
 router.post(

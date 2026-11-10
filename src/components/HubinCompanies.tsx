@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
-  Building2, Search, Plus, Trash2, MapPin, X, Loader2, Pencil,
+  Building2, Search, Plus, Trash2, MapPin, X, Loader2, Pencil, Upload, Download,
   Navigation, MapPinned, SearchX, MousePointer2, Keyboard, Lightbulb,
   AlertCircle, Check, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useApp } from '../context/AppContext';
+import { api } from '../utils/api';
 import { LocationPickerModal } from './LocationPickerModal';
+import { HubinCompanyImportModal } from './HubinCompanyImportModal';
 import {
   STREET_TILE,
   createPickerIcon,
@@ -26,6 +28,7 @@ export const HubinCompanies: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [pickerCompany, setPickerCompany] = useState<any>(null);
 
@@ -71,9 +74,20 @@ export const HubinCompanies: React.FC = () => {
     }
   };
 
+  const handleDownloadTemplate = async () => {
+    try {
+      await api.download(
+        '/api/companies/import/template',
+        'template-import-perusahaan.xlsx'
+      );
+    } catch (error: any) {
+      alert(error?.message || 'Gagal mengunduh template perusahaan.');
+    }
+  };
+
   return (
     <div className="h-full w-full flex flex-col gap-3 md:gap-4 overflow-y-auto custom-scrollbar">
-      <div className="flex items-center justify-between shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm">
+      <div className="flex flex-col gap-3 shrink-0 bg-white rounded-[24px] p-4 md:p-5 border border-mist/60 shadow-sm md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
           <div className="w-11 h-11 md:w-12 md:h-12 bg-navy rounded-[10px] flex items-center justify-center text-white shadow-md shadow-navy/20 shrink-0">
             <Building2 className="w-5 h-5 md:w-6 md:h-6" />
@@ -85,12 +99,29 @@ export const HubinCompanies: React.FC = () => {
             </p>
           </div>
         </div>
-        <button
-          onClick={() => { setEditing(null); setShowForm(true); }}
-          className="flex items-center gap-1.5 bg-steel text-white text-xs font-bold px-4 py-2 rounded-[24px] shadow-md shadow-steel/25 hover:bg-steel/90 hover:-translate-y-0.5 transition-all shrink-0"
-        >
-          <Plus className="w-4 h-4" /> Tambah Perusahaan
-        </button>
+        <div className="flex flex-wrap items-center justify-start gap-2 md:justify-end shrink-0">
+          <button
+            type="button"
+            onClick={() => void handleDownloadTemplate()}
+            className="flex items-center gap-1.5 bg-white border border-mist text-navy text-xs font-bold px-3.5 py-2 rounded-[24px] hover:bg-mist/40 transition-all"
+          >
+            <Download className="w-4 h-4" /> Download Template
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowImportModal(true)}
+            className="flex items-center gap-1.5 bg-white border border-steel/30 text-steel text-xs font-bold px-3.5 py-2 rounded-[24px] hover:bg-steel/5 transition-all"
+          >
+            <Upload className="w-4 h-4" /> Import Perusahaan
+          </button>
+          <button
+            type="button"
+            onClick={() => { setEditing(null); setShowForm(true); }}
+            className="flex items-center gap-1.5 bg-steel text-white text-xs font-bold px-4 py-2 rounded-[24px] shadow-md shadow-steel/25 hover:bg-steel/90 hover:-translate-y-0.5 transition-all"
+          >
+            <Plus className="w-4 h-4" /> Tambah Perusahaan
+          </button>
+        </div>
       </div>
 
       {/* ✅ Search bar: mist/40 + clear button */}
@@ -274,6 +305,13 @@ export const HubinCompanies: React.FC = () => {
           onClose={() => setShowForm(false)}
           onCreate={addCompany}
           onUpdate={updateCompany}
+        />
+      )}
+
+      {showImportModal && (
+        <HubinCompanyImportModal
+          existingCompanies={perusahaanList}
+          onClose={() => setShowImportModal(false)}
         />
       )}
 

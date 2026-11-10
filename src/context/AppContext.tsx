@@ -133,11 +133,26 @@ export interface PerusahaanItem {
 
   latitude?: number | null;
   longitude?: number | null;
-
   radiusMeters?: number;
+  academicYearId?: number | null;
+}
 
-  // ID tahun ajaran
-  academicYearId: number | null;
+export interface CompanyImportResult {
+  created: Array<{
+    row: number;
+    id: number;
+    name: string;
+  }>;
+  failed: Array<{
+    row: number;
+    name?: string;
+    error: string;
+  }>;
+  summary: {
+    total: number;
+    imported: number;
+    failed: number;
+  };
 }
 
 export interface ClassItem {
@@ -400,6 +415,10 @@ interface AppContextType {
   addCompany: (
     data: Partial<PerusahaanItem>
   ) => Promise<any>;
+
+  confirmCompanyImport: (
+    companies: Array<Record<string, unknown>>
+  ) => Promise<CompanyImportResult>;
 
   updateCompany: (
     id: number,
@@ -2294,6 +2313,20 @@ export const AppProvider: React.FC<{
       return res;
     };
 
+  const confirmCompanyImport =
+    async (
+      companies: Array<Record<string, unknown>>
+    ): Promise<CompanyImportResult> => {
+      const result =
+        await api.post<CompanyImportResult>(
+          '/api/companies/import/confirm',
+          { companies }
+        );
+
+      await loadCompanies();
+      return result;
+    };
+
   /*
    * =======================================================
    * UPDATE COMPANY
@@ -3513,6 +3546,7 @@ export const AppProvider: React.FC<{
 
         loadCompanies,
         addCompany,
+        confirmCompanyImport,
         updateCompany,
         deleteCompany,
 
