@@ -13,7 +13,7 @@ import { api } from '../utils/api';
 
 interface StudentImportRow {
   rowNumber: number;
-  nis: string;
+  nis: number | null;
   name: string;
   className: string;
   major: string;
@@ -31,13 +31,28 @@ interface StudentImportPreview {
   duplicateRows: number;
   invalidRows: number;
   rows: StudentImportRow[];
-  saveEnabled: false;
+  saveEnabled: boolean;
   message: string;
 }
 
+interface StudentImportResult {
+  summary: {
+    total: number;
+    created: number;
+    existing: number;
+    failed: number;
+  };
+  rows: Array<{
+    rowNumber: number;
+    nis: number | null;
+    status: 'created' | 'existing' | 'failed';
+    reason?: string;
+  }>;
+}
+
 const statusLabels: Record<StudentImportRow['status'], string> = {
-  existing: 'Siswa sudah terdaftar',
-  'new-candidate': 'Calon akun baru',
+  existing: 'Siswa Existing',
+  'new-candidate': 'Siswa Baru',
   duplicate: 'Duplikat',
   invalid: 'Ditolak',
 };
@@ -46,7 +61,9 @@ export const HubinStudentImport: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<StudentImportPreview | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [downloadingTemplate, setDownloadingTemplate] = useState(false);
+  const [importResult, setImportResult] = useState<StudentImportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -86,6 +103,7 @@ export const HubinStudentImport: React.FC = () => {
     setError(null);
     setNotice(null);
     setPreview(null);
+    setImportResult(null);
     setUploading(true);
 
     try {
@@ -107,6 +125,32 @@ export const HubinStudentImport: React.FC = () => {
       );
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleConfirmImport = async () => {
+    if (!preview?.saveEnabled) return;
+
+    setError(null);
+    setNotice(null);
+    setImporting(true);
+    try {
+      const result = await api.post<StudentImportResult>(
+        '/api/hubin/students/import-confirm',
+        { rows: preview.rows }
+      );
+      setImportResult(result);
+      setNotice(
+        `Import selesai: ${result.summary.created} akun dibuat, ${result.summary.existing} siswa existing dilewati, dan ${result.summary.failed} data gagal.`
+      );
+    } catch (requestError: any) {
+      setError(
+        requestError?.data?.error ||
+          requestError?.message ||
+          'Gagal membuat akun siswa.'
+      );
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -158,7 +202,7 @@ export const HubinStudentImport: React.FC = () => {
           <div className="min-w-0">
             <h2 className="font-bold text-lg md:text-xl text-navy">Import Data Siswa</h2>
             <p className="text-[13px] text-navy/60 font-semibold mt-0.5">
-              Validasi dan preview saja; belum ada data yang disimpan.
+                Pratinjau data sebelum membuat akun siswa baru.
             </p>
           </div>
         </div>
@@ -188,8 +232,10 @@ export const HubinStudentImport: React.FC = () => {
             ref={fileInputRef}
             type="file"
             accept=".xlsx"
+            disabled={uploading || importing}
             onChange={() => {
               setPreview(null);
+              setImportResult(null);
               setError(null);
               setNotice(null);
             }}
@@ -200,7 +246,7 @@ export const HubinStudentImport: React.FC = () => {
         <button
           type="button"
           onClick={handlePreview}
-          disabled={uploading || downloadingTemplate}
+          disabled={uploading || importing || downloadingTemplate}
           className="flex items-center justify-center gap-2 bg-steel text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-steel/90 disabled:opacity-50"
         >
           {uploading ? (
@@ -212,7 +258,7 @@ export const HubinStudentImport: React.FC = () => {
         </button>
 
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs font-medium text-amber-900">
-          Siswa existing hanya dicocokkan berdasarkan NIS dan tidak diperbarui. Calon akun baru belum dibuat; proses pembuatan menunggu kebijakan email dan kredensial.
+          NIS harus berupa angka bulat positif maksimal 15 digit. Baris contoh pada template harus diganti atau dihapus. Siswa existing tidak diubah. Email yang kosong dibuat dengan format NIS@gopkl.id. Password awal akun baru adalah gopkl123 dan disimpan dalam bentuk hash.
         </div>
 
         {error && (
@@ -250,10 +296,31 @@ export const HubinStudentImport: React.FC = () => {
               <button
                 type="button"
                 onClick={handleExportValidation}
+                disabled={importing}
                 className="flex items-center justify-center gap-2 bg-navy text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-navy/90"
               >
                 <Download className="w-3.5 h-3.5" />
                 Unduh Laporan
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmImport}
+                disabled={
+                  !preview.saveEnabled ||
+                  importing ||
+                  uploading ||
+                  Boolean(importResult)
+                }
+                className="flex items-center justify-center gap-2 bg-steel text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-steel/90 disabled:opacity-50"
+              >
+                {importing ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <UserRoundPlus className="w-3.5 h-3.5" />
+                )}
+                {importing
+                  ? 'Membuat akun...'
+                  : `Konfirmasi Import (${preview.newAccountCandidates})`}
               </button>
             </div>
 
@@ -276,7 +343,7 @@ export const HubinStudentImport: React.FC = () => {
                   {preview.rows.map((row) => (
                     <tr key={`${row.rowNumber}-${row.nis}`} className="border-t border-mist/50 align-top">
                       <td className="px-3 py-2 tabular-nums">{row.rowNumber}</td>
-                      <td className="px-3 py-2 font-mono">{row.nis || '-'}</td>
+                      <td className="px-3 py-2 font-mono">{row.nis ?? '-'}</td>
                       <td className="px-3 py-2">{row.name || '-'}</td>
                       <td className="px-3 py-2">{row.className || '-'}</td>
                       <td className="px-3 py-2">{row.major || '-'}</td>
@@ -290,6 +357,61 @@ export const HubinStudentImport: React.FC = () => {
               </table>
             </div>
           </section>
+
+          {importResult && (
+            <section className="bg-white border border-mist/60 rounded-[24px] shadow-sm overflow-hidden">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-4 border-b border-mist/60">
+                {[
+                  ['Total diproses', importResult.summary.total],
+                  ['Akun berhasil dibuat', importResult.summary.created],
+                  ['Siswa existing', importResult.summary.existing],
+                  ['Gagal', importResult.summary.failed],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-xl bg-mist/30 p-3">
+                    <p className="text-[10px] font-bold uppercase text-navy/50">
+                      {label}
+                    </p>
+                    <p className="mt-1 text-xl font-bold tabular-nums text-navy">
+                      {value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <div className="max-h-[40vh] overflow-auto">
+                <table className="w-full min-w-[560px] text-left text-xs">
+                  <thead className="sticky top-0 bg-mist/60 text-navy/60 uppercase">
+                    <tr>
+                      <th className="px-3 py-2">Baris</th>
+                      <th className="px-3 py-2">NIS</th>
+                      <th className="px-3 py-2">Hasil</th>
+                      <th className="px-3 py-2">Keterangan</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {importResult.rows.map((row) => (
+                      <tr
+                        key={`${row.rowNumber}-${row.nis}`}
+                        className="border-t border-mist/50 align-top"
+                      >
+                        <td className="px-3 py-2">{row.rowNumber}</td>
+                        <td className="px-3 py-2 font-mono">{row.nis ?? '-'}</td>
+                        <td className="px-3 py-2 font-bold">
+                          {row.status === 'created'
+                            ? 'Berhasil dibuat'
+                            : row.status === 'existing'
+                              ? 'Siswa existing'
+                              : 'Gagal'}
+                        </td>
+                        <td className="px-3 py-2 whitespace-normal">
+                          {row.reason || '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
         </>
       )}
     </div>

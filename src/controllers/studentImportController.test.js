@@ -4,6 +4,7 @@ import XLSX from 'xlsx';
 
 import {
   downloadStudentImportTemplate,
+  confirmStudentImport,
   previewStudentImport,
 } from './studentImportController.js';
 
@@ -44,7 +45,10 @@ test('downloads the student template with required and optional headers', async 
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   );
 
-  const workbook = XLSX.read(response.body, { type: 'buffer' });
+  const workbook = XLSX.read(response.body, {
+    type: 'buffer',
+    cellStyles: true,
+  });
   const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
   assert.deepEqual(rows[0], [
@@ -55,6 +59,10 @@ test('downloads the student template with required and optional headers', async 
     'Tahun Ajaran',
     'Email',
   ]);
+  assert.equal(firstSheet.A2.t, 'n');
+  assert.equal(firstSheet.A2.z, '0');
+  assert.equal(rows[1][0], 123456);
+  assert.match(rows[1][1], /HAPUS BARIS CONTOH|CONTOH - HAPUS BARIS INI/);
 });
 
 test('rejects a preview request without a file before accessing Prisma', async () => {
@@ -85,4 +93,17 @@ test('rejects a non-XLSX preview file before accessing Prisma', async () => {
   assert.equal(nextError, undefined);
   assert.equal(response.statusCode, 400);
   assert.equal(response.body.error, 'Format file harus .xlsx.');
+});
+
+test('rejects an empty student import confirmation before accessing Prisma', async () => {
+  const response = createResponse();
+  let nextError;
+
+  await confirmStudentImport({ body: { rows: [] } }, response, (error) => {
+    nextError = error;
+  });
+
+  assert.equal(nextError, undefined);
+  assert.equal(response.statusCode, 400);
+  assert.match(response.body.error, /preview siswa wajib dikirim/);
 });

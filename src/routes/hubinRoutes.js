@@ -4,6 +4,7 @@ import multer from 'multer';
 import { authenticate, requireRole } from '../middleware/authMiddleware.js';
 import {
   downloadStudentImportTemplate,
+  confirmStudentImport,
   previewStudentImport,
 } from '../controllers/studentImportController.js';
 
@@ -40,13 +41,13 @@ router.use(authenticate, requireRole('hubin'));
 
 router.get('/stats', getStats);
 
-// Import siswa hanya melakukan preview; penyimpanan akun belum tersedia.
 router.get('/students/import-template', downloadStudentImportTemplate);
 router.post(
   '/students/import-preview',
   studentImportUpload.single('file'),
   previewStudentImport
 );
+router.post('/students/import-confirm', confirmStudentImport);
 
 // =========================
 // KELOLA KELAS

@@ -64,7 +64,7 @@ router.post(
   importCompanies
 );
 
-router.post('/', authMiddleware, authorize('hubin'), createCompany);
+router.post('/', authMiddleware, authorize('hubin'), createCompany)
 router.patch('/:id', authMiddleware, authorize('hubin'), updateCompany);
 router.delete('/:id', authMiddleware, authorize('hubin'), deactivateCompany);
 router.delete('/:id/hard', authMiddleware, authorize('hubin'), deleteCompany);

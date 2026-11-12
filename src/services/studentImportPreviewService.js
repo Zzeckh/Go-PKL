@@ -7,6 +7,8 @@ export const REQUIRED_STUDENT_IMPORT_HEADERS = [
 ];
 
 export const OPTIONAL_STUDENT_IMPORT_HEADERS = ['Email'];
+export const STUDENT_IMPORT_TEMPLATE_SAMPLE_NAME = 'CONTOH - HAPUS BARIS INI';
+const MAX_EXCEL_NUMERIC_NIS = 999_999_999_999_999;
 
 const normalizeText = (value) =>
   String(value ?? '')
@@ -14,14 +16,53 @@ const normalizeText = (value) =>
     .replace(/\s+/g, ' ')
     .toLocaleLowerCase('id');
 
-export const normalizeStudentNis = (value) =>
-  String(value ?? '')
-    .trim()
-    .replace(/\.0$/, '')
-    .toLocaleLowerCase('id');
+export const normalizeStudentNis = (value) => {
+  if (typeof value === 'number') {
+    return Number.isSafeInteger(value) &&
+      value > 0 &&
+      value <= MAX_EXCEL_NUMERIC_NIS
+      ? value
+      : null;
+  }
+  if (typeof value !== 'string' || !/^\d+$/.test(value.trim())) return null;
+  const numericNis = Number(value.trim());
+  return Number.isSafeInteger(numericNis) &&
+    numericNis > 0 &&
+    numericNis <= MAX_EXCEL_NUMERIC_NIS
+    ? numericNis
+    : null;
+};
+
+export const readStudentImportNisCell = (cell) => {
+  if (cell?.v == null || cell.v === '') {
+    return { nis: null, issue: undefined };
+  }
+
+  if (
+    cell.t === 'n' &&
+    typeof cell.v === 'number' &&
+    Number.isSafeInteger(cell.v) &&
+    cell.v > 0 &&
+    cell.v <= MAX_EXCEL_NUMERIC_NIS
+  ) {
+    return { nis: cell.v, issue: undefined };
+  }
+
+  return {
+    nis: null,
+    issue:
+      'NIS harus berupa angka bulat positif maksimal 15 digit di Excel.',
+  };
+};
 
 export const normalizeStudentEmail = (value) =>
   String(value ?? '').trim().toLocaleLowerCase('en-US');
+
+export const resolveStudentImportEmail = (row) => {
+  const email = normalizeStudentEmail(row.email);
+  const nis = normalizeStudentNis(row.nis);
+  return email || (nis !== null ? `${nis}@gopkl.id` : '');
+};
 
 export const validateStudentImportHeaders = (headers) => {
   const normalizedHeaders = headers.map(normalizeText);
@@ -87,17 +128,27 @@ export const previewStudentImportRows = ({
   academicYears,
 }) => {
   const nisOccurrences = countBy(rows, (row) => row.nis, normalizeStudentNis);
-  const emailOccurrences = countBy(rows, (row) => row.email, normalizeStudentEmail);
+  const emailOccurrences = countBy(
+    rows,
+    resolveStudentImportEmail,
+    normalizeStudentEmail
+  );
 
   const studentsByNis = new Map();
   students.forEach((student) => {
-    const nis = normalizeStudentNis(String(student.email || '').split('@')[0]);
+    const nis = normalizeStudentNis(student.nis);
     if (!nis) return;
     const matches = studentsByNis.get(nis) || [];
     matches.push(student);
     studentsByNis.set(nis, matches);
   });
 
+  const nonStudentNis = new Set(
+    emails
+      .filter((account) => account.role !== 'student')
+      .map((account) => normalizeStudentNis(account.nis))
+      .filter(Boolean)
+  );
   const emailOwners = new Map(
     emails.map((account) => [normalizeStudentEmail(account.email), account])
   );
@@ -122,30 +173,60 @@ export const previewStudentImportRows = ({
 
   const results = rows.map((row) => {
     const nis = normalizeStudentNis(row.nis);
-    const email = normalizeStudentEmail(row.email);
+    const email = resolveStudentImportEmail({ ...row, nis });
     const reasons = [];
 
     if (nis && (nisOccurrences.get(nis) || 0) > 1) {
       reasons.push('NIS duplikat di dalam file.');
-    }
-    if (email && (emailOccurrences.get(email) || 0) > 1) {
-      reasons.push('Email duplikat di dalam file.');
     }
 
     if (reasons.length > 0) {
       return { ...row, status: 'duplicate', reason: reasons.join(' ') };
     }
 
-    if (!nis) reasons.push('NIS wajib diisi.');
-    if (row.nisIsNumeric) {
-      reasons.push('NIS harus disimpan sebagai teks agar nol di depan tidak hilang.');
+    if (nis === null) {
+      reasons.push(
+        'NIS wajib diisi sebagai angka bulat positif maksimal 15 digit.'
+      );
     }
+    if (row.nisIssue) reasons.push(row.nisIssue);
+    if (nis !== null && nonStudentNis.has(nis)) {
+      reasons.push('NIS sudah digunakan oleh akun non-siswa.');
+    }
+
+    const existingMatches =
+      nis !== null ? studentsByNis.get(nis) || [] : [];
+    if (existingMatches.length > 1) {
+      reasons.push('NIS cocok dengan lebih dari satu akun siswa.');
+    }
+    if (existingMatches.length === 1 && reasons.length === 0) {
+      return {
+        ...row,
+        nis,
+        status: 'existing',
+        reason: 'NIS ditemukan; data siswa existing tidak akan diubah.',
+      };
+    }
+
+    if (reasons.length > 0) {
+      return { ...row, nis, status: 'invalid', reason: reasons.join(' ') };
+    }
+
+    if (nis !== null && email && (emailOccurrences.get(email) || 0) > 1) {
+      return {
+        ...row,
+        nis,
+        status: 'duplicate',
+        reason: 'Email duplikat di dalam file.',
+      };
+    }
+
     if (!normalizeText(row.name)) reasons.push('Nama Siswa wajib diisi.');
     if (!normalizeText(row.className)) reasons.push('Kelas wajib diisi.');
     if (!normalizeText(row.major)) reasons.push('Jurusan wajib diisi.');
     if (!normalizeText(row.academicYear)) reasons.push('Tahun Ajaran wajib diisi.');
 
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       reasons.push('Format Email tidak valid.');
     }
 
@@ -167,53 +248,25 @@ export const previewStudentImportRows = ({
       reasons.push('Kombinasi Kelas, Jurusan, dan Tahun Ajaran tidak unik.');
     }
 
-    const existingMatches = nis ? studentsByNis.get(nis) || [] : [];
-    if (existingMatches.length > 1) {
-      reasons.push('NIS cocok dengan lebih dari satu akun siswa.');
-    }
-
-    const existingStudent = existingMatches.length === 1 ? existingMatches[0] : null;
-    const emailOwner = email ? emailOwners.get(email) : null;
-
-    if (emailOwner && emailOwner.id !== existingStudent?.id) {
+    const emailOwner = emailOwners.get(email);
+    if (emailOwner) {
       reasons.push('Email sudah digunakan akun lain.');
     }
 
-    if (existingStudent && normalizeText(existingStudent.name) !== normalizeText(row.name)) {
-      reasons.push('Nama tidak cocok dengan siswa yang ditemukan berdasarkan NIS.');
-    }
-
     const matchedClass = classMatches.length === 1 ? classMatches[0] : null;
-    if (existingStudent && matchedClass && existingStudent.classId !== matchedClass.id) {
-      reasons.push('Kelas/Jurusan akun existing berbeda; data existing tidak diubah.');
-    }
-    if (existingStudent && year && existingStudent.academicYearId !== year.id) {
-      reasons.push('Tahun Ajaran akun existing berbeda; data existing tidak diubah.');
-    }
-    if (
-      existingStudent &&
-      email &&
-      normalizeStudentEmail(existingStudent.email) !== email
-    ) {
-      reasons.push('Email berbeda dari akun existing; data existing tidak diubah.');
-    }
-
     if (reasons.length > 0) {
       return { ...row, status: 'invalid', reason: reasons.join(' ') };
     }
 
-    if (existingStudent) {
-      return {
-        ...row,
-        status: 'existing',
-        reason: 'NIS ditemukan; data siswa existing tidak akan diubah.',
-      };
-    }
-
     return {
       ...row,
+      nis,
+      email,
+      classId: matchedClass.id,
+      academicYearId: year.id,
+      academicYearName: year.name,
       status: 'new-candidate',
-      reason: 'Calon akun baru; pembuatan akun menunggu kebijakan kredensial.',
+      reason: 'Akun baru siap dibuat setelah konfirmasi.',
     };
   });
 

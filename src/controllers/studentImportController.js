@@ -1,22 +1,99 @@
 import prisma from '../config/db.js';
 import XLSX from 'xlsx';
+import bcrypt from 'bcryptjs';
 import {
   OPTIONAL_STUDENT_IMPORT_HEADERS,
   REQUIRED_STUDENT_IMPORT_HEADERS,
+  STUDENT_IMPORT_TEMPLATE_SAMPLE_NAME,
+  normalizeStudentNis,
   previewStudentImportRows,
+  readStudentImportNisCell,
   validateStudentImportHeaders,
 } from '../services/studentImportPreviewService.js';
+import { createStudentImportAccounts } from '../services/studentImportAccountService.js';
 
 const templateHeaders = [
   ...REQUIRED_STUDENT_IMPORT_HEADERS,
   ...OPTIONAL_STUDENT_IMPORT_HEADERS,
 ];
 
+const getStudentImportMasterData = async () => {
+  const [students, emails, classes, academicYears] = await Promise.all([
+    prisma.user.findMany({
+      where: { role: 'student' },
+      select: {
+        id: true,
+        nis: true,
+        name: true,
+        email: true,
+        classId: true,
+        academicYearId: true,
+      },
+    }),
+    prisma.user.findMany({
+      select: { id: true, email: true, nis: true, role: true },
+    }),
+    prisma.class.findMany({
+      select: {
+        id: true,
+        name: true,
+        major: true,
+        programKeahlian: { select: { id: true, name: true } },
+        academicYearId: true,
+        academicYear: { select: { name: true } },
+      },
+    }),
+    prisma.academicYear.findMany({
+      select: { id: true, name: true },
+    }),
+  ]);
+
+  return { students, emails, classes, academicYears };
+};
+
+const createPreviewRows = (rows, masterData) =>
+  previewStudentImportRows({ rows, ...masterData });
+
+const sanitizeConfirmationRows = (rows) =>
+  rows
+    .filter((row) => row && typeof row === 'object')
+    .map((row, index) => {
+      const nis = normalizeStudentNis(row.nis);
+      return {
+        rowNumber: Number.isInteger(row.rowNumber) ? row.rowNumber : index + 2,
+        nis,
+        nisIssue:
+          row.nisIssue ||
+          (nis === null
+            ? 'NIS harus berupa angka bulat positif maksimal 15 digit.'
+            : undefined),
+        name: row.name,
+        className: row.className,
+        major: row.major,
+        academicYear: row.academicYear,
+        email: row.email,
+      };
+    })
+    .filter((row) =>
+      [
+        row.nis,
+        row.name,
+        row.className,
+        row.major,
+        row.academicYear,
+        row.email,
+      ].some((value) => String(value ?? '').trim() !== '')
+    );
+
 export const downloadStudentImportTemplate = async (req, res, next) => {
   try {
-    const worksheet = XLSX.utils.aoa_to_sheet([templateHeaders]);
+    const worksheet = XLSX.utils.aoa_to_sheet([
+      templateHeaders,
+      [123456, STUDENT_IMPORT_TEMPLATE_SAMPLE_NAME],
+    ]);
+    worksheet.A2.z = '0';
     worksheet['!cols'] = [
-      { wch: 16, z: '@' },
+      { wch: 16 },
       { wch: 30 },
       { wch: 20 },
       { wch: 20 },
@@ -91,12 +168,16 @@ export const previewStudentImport = async (req, res, next) => {
       .slice(1)
       .map((cells, index) => {
         const getCell = (header) => cells[headerValidation.headerMap.get(header)] ?? '';
-        const rawNis = getCell('NIS');
+        const nisColumn = headerValidation.headerMap.get('NIS');
+        const nisCell = worksheet[
+          XLSX.utils.encode_cell({ r: index + 1, c: nisColumn })
+        ];
+        const { nis, issue: nisIssue } = readStudentImportNisCell(nisCell);
 
-        return {
+        const row = {
           rowNumber: index + 2,
-          nis: rawNis,
-          nisIsNumeric: typeof rawNis === 'number',
+          nis,
+          nisIssue,
           name: getCell('Nama Siswa'),
           className: getCell('Kelas'),
           major: getCell('Jurusan'),
@@ -105,9 +186,25 @@ export const previewStudentImport = async (req, res, next) => {
             ? getCell('Email')
             : '',
         };
+        if (
+          String(row.name).trim().toLocaleUpperCase('id') ===
+          STUDENT_IMPORT_TEMPLATE_SAMPLE_NAME
+        ) {
+          return null;
+        }
+        return row;
       })
+      .filter(Boolean)
       .filter((row) =>
-        [row.nis, row.name, row.className, row.major, row.academicYear, row.email]
+        [
+          row.nis,
+          row.nisIssue,
+          row.name,
+          row.className,
+          row.major,
+          row.academicYear,
+          row.email,
+        ]
           .some((value) => String(value ?? '').trim() !== '')
       );
 
@@ -115,51 +212,47 @@ export const previewStudentImport = async (req, res, next) => {
       return res.status(400).json({ error: 'File tidak memiliki baris data siswa.' });
     }
 
-    const [students, emailOwners, classes, academicYears] = await Promise.all([
-      prisma.user.findMany({
-        where: { role: 'student' },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          classId: true,
-          academicYearId: true,
-        },
-      }),
-      prisma.user.findMany({
-        select: { id: true, email: true },
-      }),
-      prisma.class.findMany({
-        select: {
-          id: true,
-          name: true,
-          programKeahlianId: true,
-          programKeahlian: { select: { id: true, name: true } },
-          konsentrasiKeahlianId: true,
-          konsentrasiKeahlian: { select: { id: true, name: true } },
-          academicYearId: true,
-          academicYear: { select: { name: true } },
-        },
-      }),
-      prisma.academicYear.findMany({
-        select: { id: true, name: true },
-      }),
-    ]);
-
-    const preview = previewStudentImportRows({
-      rows: importRows,
-      students,
-      emails: emailOwners,
-      classes,
-      academicYears,
-    });
+    const masterData = await getStudentImportMasterData();
+    const preview = createPreviewRows(importRows, masterData);
 
     res.json({
       ...preview,
-      saveEnabled: false,
-      message: 'Preview saja. Tidak ada data yang disimpan; calon akun baru menunggu kebijakan kredensial.',
+      saveEnabled: preview.newAccountCandidates > 0,
+      message:
+        preview.newAccountCandidates > 0
+          ? 'Periksa data, lalu konfirmasi untuk membuat akun baru. Siswa existing tidak akan diubah.'
+          : 'Tidak ada akun baru yang siap dibuat.',
     });
   } catch (error) {
     next(error);
+  }
+};
+
+export const confirmStudentImport = async (req, res, next) => {
+  try {
+    if (!Array.isArray(req.body?.rows) || req.body.rows.length === 0) {
+      return res.status(400).json({
+        error: 'Data preview siswa wajib dikirim untuk dikonfirmasi.',
+      });
+    }
+
+    const rows = sanitizeConfirmationRows(req.body.rows);
+    if (rows.length === 0) {
+      return res.status(400).json({
+        error: 'Tidak ada baris data siswa yang dapat diproses.',
+      });
+    }
+
+    const masterData = await getStudentImportMasterData();
+    const preview = createPreviewRows(rows, masterData);
+    const result = await createStudentImportAccounts({
+      rows: preview.rows,
+      prisma,
+      hashPassword: (password) => bcrypt.hash(password, 10),
+    });
+
+    return res.json(result);
+  } catch (error) {
+    return next(error);
   }
 };
