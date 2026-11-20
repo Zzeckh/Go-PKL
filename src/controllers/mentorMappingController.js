@@ -15,7 +15,13 @@ export const getTeacherCompanies = async (req, res, next) => {
         },
       },
       orderBy: { name: 'asc' },
-      include: {
+      // select eksplisit: tidak ikut membaca kolom lain di tabel company,
+      // sehingga halaman ini tidak rusak bila ada kolom yang belum ada di DB.
+      select: {
+        id: true,
+        name: true,
+        address: true,
+        mentorId: true,
         mentor: { select: mentorSelect },
         registeredMentors: {
           where: { mentor: { role: 'mentor', isActive: true } },
@@ -77,17 +83,23 @@ export const assignCompanyMentor = async (req, res, next) => {
 
     const registration = await prisma.companyMentor.findUnique({
       where: { companyId_mentorId: { companyId, mentorId } },
-      include: { mentor: { select: mentorSelect } },
+      // role wajib ikut dipilih: dicek di bawah. Tanpa ini role = undefined dan simpan selalu ditolak.
+      include: { mentor: { select: { ...mentorSelect, role: true } } },
     });
 
-    if (!registration || registration.mentor.role !== 'mentor' || !registration.mentor.isActive) {
-      return res.status(400).json({ error: 'Mentor harus terdaftar dan aktif pada perusahaan ini.' });
+    if (!registration) {
+      return res.status(400).json({
+        error: 'Mentor ini belum didaftarkan pada perusahaan. Minta Hubin menambahkannya di menu Daftar Mentor Perusahaan.',
+      });
+    }
+    if (registration.mentor.role !== 'mentor' || !registration.mentor.isActive) {
+      return res.status(400).json({ error: 'Akun mentor tersebut tidak aktif.' });
     }
 
     const updated = await prisma.company.update({
       where: { id: companyId },
       data: { mentorId },
-      include: { mentor: { select: mentorSelect } },
+      select: { id: true, name: true, mentor: { select: mentorSelect } },
     });
 
     res.json({
