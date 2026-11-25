@@ -67,11 +67,13 @@ const BULAN = [
 
 const HARI = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
+/** Bandingkan dua Date hanya sampai level hari (jamnya diabaikan). */
 const sameDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() &&
   a.getMonth() === b.getMonth() &&
   a.getDate() === b.getDate();
 
+/** Minggu = Minggu(0) atau Sabtu(6) — dipakai menandai sel akhir pekan. */
 const isWeekend = (d: Date) => d.getDay() === 0 || d.getDay() === 6;
 
 export const AttendanceCalendarModal: React.FC<AttendanceCalendarModalProps> = ({

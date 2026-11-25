@@ -6,12 +6,13 @@ import {
 import { api } from '../utils/api';
 
 const emptyProfile = { name: '', email: '', nis: '', gender: '', birthPlace: '', birthDate: '', major: '', concentration: '', address: '', whatsapp: '', parentName: '', parentAddress: '', parentPhone: '', teacherName: '', teacherNip: '', className: '', schoolName: 'SMKN Negeri 11 Bandung', schoolAddress: 'Cilember, Bandung 40175' };
-const display = (v: unknown) => v === null || v === undefined || v === '' ? 'Belum diisi' : String(v);
-const dateFmt = (v: unknown) => v ? new Date(String(v)).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : 'Belum diisi';
-const isoVal = (v: unknown) => (v ? String(v).slice(0, 10) : '');
+const display = (v: unknown) => v === null || v === undefined || v === '' ? 'Belum diisi' : String(v); // null/kosong → placeholder
+const dateFmt = (v: unknown) => v ? new Date(String(v)).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : 'Belum diisi'; // tanggal lahir panjang
+const isoVal = (v: unknown) => (v ? String(v).slice(0, 10) : ''); // YYYY-MM-DD untuk <input type="date">
 
 /* field mandiri (tanggung jawab siswa) — untuk bar kelengkapan */
 const SELF_KEYS = ['gender', 'birthPlace', 'birthDate', 'concentration', 'address', 'whatsapp', 'parentName', 'parentAddress', 'parentPhone'];
+/** Hitung field mandiri yang terisi — pembilang bar persentase kelengkapan. */
 const countFilled = (d: any) => SELF_KEYS.filter((k) => { const v = d?.[k]; return v !== null && v !== undefined && String(v).trim() !== ''; }).length;
 
 /* ── Indikator "Mode Edit" — identik dengan dashboard ── */

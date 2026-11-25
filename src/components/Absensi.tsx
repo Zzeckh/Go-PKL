@@ -29,6 +29,10 @@ interface AbsensiProps {
   permissionBlockStatus?: 'izin_pending' | 'izin_approved' | null;
 }
 
+/**
+ * Jarak antara dua koordinat (meter) memakai rumus haversine.
+ * @remarks Hanya untuk preview di UI; validasi geofence tetap dilakukan server.
+ */
 const getDistanceInMeters = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const R = 6371e3;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;

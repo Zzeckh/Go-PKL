@@ -69,13 +69,24 @@ export interface GoalsPayload {
   access: LearningAccess;
 }
 
+/** Daftar minggu penilaian capaian (1–16). */
 export const WEEKS = Array.from({ length: 16 }, (_, index) => index + 1);
 
+/** Tampilkan nilai teks; null/kosong/kosong-spasi → '-' agar layout tidak kosong. */
 export const display = (value?: string | null) => (value && value.trim() ? value : '-');
 
+/**
+ * Ambil pesan error siap tampil dari objek error API.
+ * @param error hasil throw dari api.fetch (punya `data.error`) atau Error biasa
+ * @param fallback pesan dipakai bila tidak ada info sama sekali
+ */
 export const errorMessage = (error: any, fallback: string) =>
   error?.data?.error || error?.message || fallback;
 
+/**
+ * Format tanggal tanda tangan/paraf ("16 Feb 2026").
+ * @returns string kosong bila nilainya kosong atau tanggal tidak valid.
+ */
 export const formatSignatureDate = (value?: string | null) => {
   if (!value) return '';
   const date = new Date(value);
@@ -87,6 +98,11 @@ export const formatSignatureDate = (value?: string | null) => {
   });
 };
 
+/**
+ * Ambil daftar siswa untuk dropdown pemilih siswa (panel Capaian/Tujuan).
+ * @remarks menangani dua bentuk response endpoint /users: array langsung
+ *          atau objek { data: [...] }; siswa tanpa kelas/perusahaan jadi null.
+ */
 export const fetchStudentOptions = async (): Promise<StudentOption[]> => {
   const response = await api.get<any>('/api/users?role=student');
   const items = Array.isArray(response)
@@ -103,6 +119,7 @@ export const fetchStudentOptions = async (): Promise<StudentOption[]> => {
   }));
 };
 
+/** Teks panduan hak akses capaian sesuai peran (mentor mengelola, guru lihat saja). */
 export const achievementRoleHint = (role: string) => {
   if (role === 'mentor') {
     return 'Anda dapat menambah/mengubah capaian, memilih minggu 1–16, dan membubuhkan paraf Mentor.';
@@ -113,6 +130,7 @@ export const achievementRoleHint = (role: string) => {
   return 'Anda dapat melihat capaian pembelajaran, minggu, dan paraf pembimbing.';
 };
 
+/** Teks panduan hak akses tujuan pembelajaran — selain mentor hanya bisa melihat. */
 export const goalRoleHint = (role: string) => {
   if (role === 'mentor') {
     return 'Anda dapat mengisi nilai 10–100 dan deskripsi tujuan pembelajaran.';

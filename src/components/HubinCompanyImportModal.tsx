@@ -50,6 +50,7 @@ type CompanyImportRow = {
   geocodeDetails?: string;
 };
 
+/** Samakan header kolom template: huruf kecil, tanpa spasi/tanda baca ("Nama Perusahaan" → "namaperusahaan"). */
 const normalizeHeader = (value: unknown) =>
   String(value ?? '')
     .trim()
@@ -70,6 +71,11 @@ const columnAliases: Record<string, string[]> = {
   longitude: ['longitude', 'lon', 'lng'],
 };
 
+/**
+ * Baca satu sel sebagai angka.
+ * @returns `fallback` bila sel kosong, `null` bila terisi tapi bukan angka
+ *          (null dipakai sebagai penanda "tidak valid" — bukan 0).
+ */
 const numberFromCell = (value: unknown, fallback: number) => {
   if (value === undefined || value === null || String(value).trim() === '') {
     return fallback;
@@ -84,9 +90,15 @@ const isValidLocation = (row: CompanyImportRow) =>
     row.longitude ?? Number.NaN
   );
 
+/** Kunci identik perusahaan untuk deteksi duplikat (lowercase + huruf Indonesia). */
 const duplicateKey = (name: string) =>
   name.trim().toLocaleLowerCase('id');
 
+/**
+ * Posisi kolom tiap field pada baris header.
+ * @returns Record field → indeks kolom; field yang tidak ada di template
+ *          TIDAK dimasukkan, sehingga bisa dicek sebagai kolom wajib hilang.
+ */
 const findColumnIndexes = (headers: unknown[]) => {
   const normalizedHeaders = headers.map(normalizeHeader);
   const indexes: Record<string, number> = {};
@@ -101,6 +113,13 @@ const findColumnIndexes = (headers: unknown[]) => {
   return indexes;
 };
 
+/**
+ * Ubah isi sheet (baris pertama = header) menjadi daftar baris impor + daftar issue.
+ * @throws Error bila tanpa header atau kolom wajib tidak lengkap (pesan
+ *         ditampilkan apa adanya ke pengguna).
+ * @remarks Baris kosong dilewati; radius default 500 m; kuota sekolah
+ *          default 5 untuk perusahaan Eksternal dan 0 untuk Internal.
+ */
 const parseCompanySheet = (sheetRows: unknown[][]) => {
   if (sheetRows.length === 0) {
     throw new Error('File tidak memiliki baris header.');

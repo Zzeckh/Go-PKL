@@ -28,6 +28,11 @@ interface AuthError {
   icon: React.ElementType;
 }
 
+/**
+ * Petakan error login/daftar ke tipe + pesan tampilan.
+ * @param _isLogin dipertahankan untuk kompatibilitas pemanggil — saat ini
+ *        tidak memengaruhi hasil; pesan dipilih dari status & teks error.
+ */
 function classifyAuthError(error: any, _isLogin: boolean): AuthError {
   const msg = error?.message?.toLowerCase() || '';
   const status = error?.status;

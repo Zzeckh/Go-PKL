@@ -17,9 +17,11 @@ import { api } from '../utils/api';
 ============================================================ */
 
 /* ── Helpers bulan (YYYY-MM) ── */
+/** Kunci bulan YYYY-MM dari tanggal (untuk query & state navigasi bulan). */
 const monthKey = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 
+/** Geser kunci bulan YYYY-MM sebanyak delta bulan (bisa negatif). */
 const shiftMonth = (key: string, delta: number): string => {
   const [y, m] = key.split('-').map(Number);
   const d = new Date(Date.UTC(y, m - 1 + delta, 1));
@@ -31,6 +33,7 @@ const MONTH_NAMES = [
   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
 ];
 
+/** Kunci bulan YYYY-MM → label "Februari 2026" (kosong bila bulan tak dikenal). */
 const monthLabel = (key: string): string => {
   const [y, m] = key.split('-').map(Number);
   return `${MONTH_NAMES[m - 1] ?? ''} ${y}`;
@@ -57,12 +60,17 @@ interface RecapRow {
   jam: string | null;
 }
 
+/**
+ * Petakan ISO datetime ke epoch (milidetik) untuk dihitung selisihnya.
+ * @returns null bila kosong/tidak valid — dipakai penanda "waktu belum ada".
+ */
 const parseHM = (iso: string | null | undefined): number | null => {
   if (!iso) return null;
   const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? null : d.getTime();
 };
 
+/** Jam masuk/pulang → "16.30"; null bila kosong/tidak valid. */
 const fmtTime = (iso: string | null | undefined): string | null => {
   const t = parseHM(iso);
   if (t === null) return null;
@@ -72,12 +80,18 @@ const fmtTime = (iso: string | null | undefined): string | null => {
   });
 };
 
+/** Menit → "8j" atau "7j 30m" (bagian menit hilang bila 0). */
 const fmtDuration = (minutes: number): string => {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return m === 0 ? `${h}j` : `${h}j ${m}m`;
 };
 
+/**
+ * Ubah satu record absensi mentah jadi baris tabel rekap.
+ * Jam kerja hanya dihitung bila pulang > masuk; status selain 'hadir'
+ * tidak menampilkan jam masuk/pulang (kolom jadi null).
+ */
 const toRow = (a: any): RecapRow => {
   const inT = parseHM(a?.checkInTime);
   const outT = parseHM(a?.checkOutTime ?? null);

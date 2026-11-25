@@ -22,6 +22,12 @@ interface LoginError {
   icon: React.ElementType;
 }
 
+/**
+ * Petakan error login ke judul/pesan/icon yang ditampilkan ke pengguna.
+ * @remarks Urutan percabangan penting: gangguan jaringan (>500 / tanpa status)
+ *          dicek dulu agar pesan server "Email salah" tidak tampil untuk
+ *          error koneksi. Cabang terakhir = fallback umum.
+ */
 const classifyLoginError = (error: any): LoginError => {
   const message = error?.message?.toLowerCase() || '';
   const status = error?.status;

@@ -115,6 +115,14 @@ export interface GeoResult {
   lng: number;
 }
 
+/**
+ * Cari alamat lewat Nominatim (OSM).
+ * @param query teks pencarian alamat
+ * @param limit jumlah hasil (default 5)
+ * @param near opsional: bias hasil ke sekitar titik ini (viewbox ±50 km)
+ * @returns daftar { label, lat, lng } — kosong bila tidak ada hasil
+ * @throws Error bila request Nominatim gagal (rate limit/jaringan).
+ */
 export const searchAddress = async (
   query: string,
   limit = 5,
@@ -147,6 +155,7 @@ export const searchAddress = async (
    HAVERSINE — jarak dua koordinat (meter)
    ══════════════════════════════════════════════════════ */
 
+/** Jarak dua koordinat (meter, dibulatkan) — hanya untuk preview UI. */
 export const haversineMeters = (
   lat1: number, lon1: number,
   lat2: number, lon2: number
@@ -162,7 +171,7 @@ export const haversineMeters = (
   return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 };
 
-/* ── Validasi koordinat ── */
+/* ── Validasi koordinat: angka finit dan masih dalam rentang dunia ── */
 export const isValidCoord = (lat: number, lng: number) =>
   Number.isFinite(lat) && Number.isFinite(lng) &&
   lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;

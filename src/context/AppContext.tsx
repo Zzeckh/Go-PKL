@@ -456,6 +456,11 @@ const AppContext =
  * =========================================================
  */
 
+/**
+ * Petakan role dari backend ke role internal UI.
+ * @remarks role tak dikenal (termasuk 'super_admin' yang sudah dihapus) jadi 'intern',
+ *          supaya tampilan selalu punya nilai yang aman.
+ */
 const mapBackendRoleToUserRole = (
   role: string
 ): UserRole => {
@@ -477,6 +482,7 @@ const mapBackendRoleToUserRole = (
   }
 };
 
+/** Format ISO date → "16 Feb 2026" (en-GB, bulan pendek); nilai tak valid → dikembalikan apa adanya. */
 const formatDate = (value: string) => {
   const date = new Date(value);
 
@@ -3565,6 +3571,10 @@ export const AppProvider: React.FC<{
  * =========================================================
  */
 
+/**
+ * Akses seluruh state & aksi global aplikasi.
+ * @throws Error bila dipanggil di luar <AppProvider> — penanda wiring provider salah.
+ */
 export const useApp = () => {
   const context =
     useContext(AppContext);
